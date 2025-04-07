@@ -106,13 +106,11 @@ void AMyCharacter::Tick(float DeltaTime)
 		FVector ForwardVector = CameraRotation.Vector();
 		FVector TargetLocation = CameraLocation + (ForwardVector * 300.f);
 
-		// Smooth interpolation for network correction
-		FVector CurrentLocation = PhysicsHandle->GrabbedComponent->GetComponentLocation();
-		FVector NewLocation = FMath::VInterpTo(CurrentLocation, TargetLocation, DeltaTime, 10.0f);
+
 
 		if (PhysicsHandle)
 		{
-			PhysicsHandle->SetTargetLocationAndRotation(NewLocation, CameraRotation);
+			PhysicsHandle->SetTargetLocationAndRotation(TargetLocation, CameraRotation);
 		}
 	}
 }
