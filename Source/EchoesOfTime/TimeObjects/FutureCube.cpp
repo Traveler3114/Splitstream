@@ -26,15 +26,13 @@ void AFutureCube::BeginPlay()
 
         // Store the initial offset on the X-axis (X difference only)
         InitialXOffset = PresentLocation.X - FutureLocation.X;
+        PreviousPresentObjectTransform.SetLocation(PresentObject->GetActorLocation());
     }
 }
 
 void AFutureCube::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
-    if (Check) {
-        Check = false;
-    }
 
     if (PresentObject)
     {
@@ -50,27 +48,29 @@ void AFutureCube::Tick(float DeltaTime)
 
         if (!bPresentIsMoving)
         {
-            // If the PresentObject isn't moving, allow the FutureCube to move freely
-            // Move the FutureCube independently based on its own physics
-            FVector CurrentVelocity = ObjectMesh->GetPhysicsLinearVelocity();
-            CurrentVelocity.X += 10.f * DeltaTime;  // Example: move along the X-axis
+            // Allow FutureCube to move independently (physics enabled)
+            if (!ObjectMesh->IsSimulatingPhysics())
+            {
+                ObjectMesh->SetSimulatePhysics(true);
+            }
 
-            ObjectMesh->SetPhysicsLinearVelocity(CurrentVelocity);  // Apply independent velocity to the FutureCube
+            FVector CurrentVelocity = ObjectMesh->GetPhysicsLinearVelocity();
+            CurrentVelocity.X += 10.f * DeltaTime;  // Your independent movement logic
+            ObjectMesh->SetPhysicsLinearVelocity(CurrentVelocity);
         }
         else
         {
-            // Otherwise, mirror the PresentObject's position and rotation using physics
-            FVector FutureLocation = PresentLocation;
+            // Strictly mirror PresentObject position and rotation
+            if (ObjectMesh->IsSimulatingPhysics())
+            {
+                ObjectMesh->SetSimulatePhysics(false);  // Disable physics while mirroring position
+            }
 
-            // Apply the stored X offset to maintain the initial relative X difference
+            FVector FutureLocation = PresentLocation;
             FutureLocation.X = PresentLocation.X - InitialXOffset;
 
-            // Set the FutureCube's location and rotation to match the PresentObject's mirrored movement
-            SetActorLocation(FutureLocation);
+            SetActorLocation(FutureLocation, false, nullptr, ETeleportType::TeleportPhysics);
             SetActorRotation(PresentObject->GetActorRotation());
-
-            // Apply the velocity of the PresentObject to the FutureCube to mirror the physics-based movement
-            ObjectMesh->SetPhysicsLinearVelocity(PresentVelocity);  // Apply velocity for mirroring
         }
 
         // Store the current location as previous for the next tick comparison

@@ -34,6 +34,4 @@ public:
 
 	double InitialXOffset;
 
-	bool Check = true;
-
 };
