@@ -17,7 +17,7 @@ protected:
 	virtual void BeginPlay() override;
 
 	UPROPERTY(EditAnywhere, Category = "Bridge")
-	TSoftObjectPtr<class ABridge> PresentObject;
+	TSoftObjectPtr<class APresentBridge> PresentObject;
 
 	UPROPERTY(EditAnywhere, Category = "Bridge")
 	UStaticMesh* TileMesh;

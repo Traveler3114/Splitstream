@@ -65,7 +65,7 @@ void AFutureBridge::MirrorBridge(APresentBridge* SourceBridge)
 				Tile->SetStaticMesh(TileMesh);
 				Tile->SetRelativeLocation(FVector(Col * TileSpacing, Row * TileSpacing, 5.f)); // Slight Z offset
 				Tile->SetWorldScale3D(BoxScale);
-				Tile->SetCollisionEnabled(ECollisionEnabled::NoCollision); // Visual only
+				Tile->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics); // Visual only
 			}
 			BridgeTiles.Add(Tile);
 		}
