@@ -4,14 +4,17 @@
 #include "GameFramework/Actor.h"
 #include "Bridge.generated.h"
 
+// Struct representing each tile of the bridge
 USTRUCT()
 struct FBridgeTile
 {
     GENERATED_BODY()
 
+    // Mesh component representing the tile visually and physically
     UPROPERTY()
     UStaticMeshComponent* Mesh = nullptr;
 
+    // Flag indicating if this tile can fall when stepped on
     UPROPERTY()
     bool bCanFall = false;
 };
@@ -22,58 +25,68 @@ class ECHOESOFTIME_API ABridge : public AActor
     GENERATED_BODY()
 
 public:
+    // Constructor
     ABridge();
 
 protected:
+    // Called when the game starts or the actor is spawned
     virtual void BeginPlay() override;
 
+    // Overlap event handler for when something overlaps a tile
     UFUNCTION()
     void OnTileOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
         UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
         bool bFromSweep, const FHitResult& SweepResult);
 
+    // Server RPC to handle tile falling logic securely on the server
     UFUNCTION(Server, Reliable)
     void Server_HandleTileFall(int32 TileIndex);
     void Server_HandleTileFall_Implementation(int32 TileIndex);
 
+    // Multicast RPC to inform all clients that a tile should drop
     UFUNCTION(NetMulticast, Reliable)
     void Multicast_DropTile(int32 TileIndex);
     void Multicast_DropTile_Implementation(int32 TileIndex);
 
+    // Helper function to apply physics and collision changes to a tile to make it fall
     void DropTile(UStaticMeshComponent* Tile);
 
+    // Initializes and creates the bridge tiles grid
     void CreateBridge();
-    void CreateFutureBridge();
 
+    // Setup properties that need to be replicated across network
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:
+    // Bridge configuration parameters editable in the editor
+
+    // Number of rows in the bridge grid
     UPROPERTY(EditAnywhere, Category = "Bridge")
     int32 NumRows = 5;
 
+    // Number of columns in the bridge grid
     UPROPERTY(EditAnywhere, Category = "Bridge")
     int32 NumColumns = 5;
 
+    // Distance between tiles
     UPROPERTY(EditAnywhere, Category = "Bridge")
     float TileSpacing = 150.f;
 
+    // Scale of each tile's collision box
     UPROPERTY(EditAnywhere, Category = "Bridge")
     FVector BoxScale = FVector(1.f, 1.f, 0.25f);
 
+    // Mesh to use for each tile
     UPROPERTY(EditAnywhere, Category = "Bridge")
     UStaticMesh* TileMesh;
 
-    // Replicated array storing which tiles fall
+    // Array replicated across network to keep track of which tiles can fall
     UPROPERTY(Replicated)
     TArray<bool> TileFallStates;
 
-    UPROPERTY(EditAnywhere, Category = "Bridge")
-    FVector FutureStartLocation = FVector(-20260.000000, 2300.000000, 400.000000);
-
 private:
+    // Internal storage of bridge tiles with mesh and fall state
     UPROPERTY()
     TArray<FBridgeTile> BridgeTiles;
 
-    UPROPERTY()
-    TArray<UStaticMeshComponent*> FutureBridgeTiles;
 };
