@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Bridge.h" // Required for ABridge forward access
+#include "PresentBridge.h" // Required for ABridge forward access
 #include "FutureBridge.generated.h"
 
 UCLASS()
@@ -36,7 +36,7 @@ protected:
 
 public:
 	// Mirrors the tile layout from PresentObject
-	void MirrorBridge(ABridge* SourceBridge);
+	void MirrorBridge(APresentBridge* SourceBridge);
 
 	UFUNCTION()
 	void DelayedMirror();

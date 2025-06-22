@@ -1,5 +1,5 @@
 #include "FutureBridge.h"
-#include "Bridge.h"
+#include "PresentBridge.h"
 #include "Components/StaticMeshComponent.h"
 
 AFutureBridge::AFutureBridge()
@@ -33,7 +33,7 @@ void AFutureBridge::DelayedMirror()
 }
 
 
-void AFutureBridge::MirrorBridge(ABridge* SourceBridge)
+void AFutureBridge::MirrorBridge(APresentBridge* SourceBridge)
 {
 	if (!SourceBridge) return;
 

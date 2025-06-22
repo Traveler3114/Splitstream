@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Bridge.generated.h"
+#include "PresentBridge.generated.h"
 
 // Struct representing each tile of the bridge
 USTRUCT()
@@ -20,13 +20,13 @@ struct FBridgeTile
 };
 
 UCLASS()
-class ECHOESOFTIME_API ABridge : public AActor
+class ECHOESOFTIME_API APresentBridge : public AActor
 {
     GENERATED_BODY()
 
 public:
     // Constructor
-    ABridge();
+    APresentBridge();
 
 protected:
     // Called when the game starts or the actor is spawned

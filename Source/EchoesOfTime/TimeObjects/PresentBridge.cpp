@@ -1,9 +1,9 @@
-#include "Bridge.h"
+#include "PresentBridge.h"
 #include "Net/UnrealNetwork.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/Character.h"
 
-ABridge::ABridge()
+APresentBridge::APresentBridge()
 {
     PrimaryActorTick.bCanEverTick = false; // No need to tick every frame
     bReplicates = true;                    // Enable replication for multiplayer
@@ -12,7 +12,7 @@ ABridge::ABridge()
     RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 }
 
-void ABridge::BeginPlay()
+void APresentBridge::BeginPlay()
 {
     Super::BeginPlay();
 
@@ -27,15 +27,15 @@ void ABridge::BeginPlay()
     }
 }
 
-void ABridge::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+void APresentBridge::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
     // Register TileFallStates for replication
-    DOREPLIFETIME(ABridge, TileFallStates);
+    DOREPLIFETIME(APresentBridge, TileFallStates);
 }
 
-void ABridge::CreateBridge()
+void APresentBridge::CreateBridge()
 {
     // Set the size of BridgeTiles to total number of tiles
     BridgeTiles.SetNum(NumRows * NumColumns);
@@ -65,7 +65,7 @@ void ABridge::CreateBridge()
             Tile->SetNotifyRigidBodyCollision(true);
 
             // Bind the overlap event to your handler function
-            Tile->OnComponentBeginOverlap.AddDynamic(this, &ABridge::OnTileOverlap);
+            Tile->OnComponentBeginOverlap.AddDynamic(this, &APresentBridge::OnTileOverlap);
 
             bool bFall = false;
 
@@ -103,7 +103,7 @@ void ABridge::CreateBridge()
 }
 
 // Called when a tile overlaps with another component (e.g., player steps on it)
-void ABridge::OnTileOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+void APresentBridge::OnTileOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
     bool bFromSweep, const FHitResult& SweepResult)
 {
@@ -128,14 +128,14 @@ void ABridge::OnTileOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherAc
 }
 
 // Server RPC to handle tile fall event
-void ABridge::Server_HandleTileFall_Implementation(int32 TileIndex)
+void APresentBridge::Server_HandleTileFall_Implementation(int32 TileIndex)
 {
     // Call multicast RPC to update all clients
     Multicast_DropTile(TileIndex);
 }
 
 // Multicast RPC implementation to drop the tile on all clients
-void ABridge::Multicast_DropTile_Implementation(int32 TileIndex)
+void APresentBridge::Multicast_DropTile_Implementation(int32 TileIndex)
 {
     if (BridgeTiles.IsValidIndex(TileIndex))
     {
@@ -145,7 +145,7 @@ void ABridge::Multicast_DropTile_Implementation(int32 TileIndex)
 }
 
 // Drops a tile by enabling physics and setting its collision profile
-void ABridge::DropTile(UStaticMeshComponent* Tile)
+void APresentBridge::DropTile(UStaticMeshComponent* Tile)
 {
     if (Tile)
     {
