@@ -37,11 +37,12 @@ void AFutureBridge::MirrorBridge(APresentBridge* SourceBridge)
 {
 	if (!SourceBridge) return;
 
-	NumRows = SourceBridge->NumRows;
-	NumColumns = SourceBridge->NumColumns;
-	TileSpacing = SourceBridge->TileSpacing;
-	TileMesh = SourceBridge->TileMesh;
-	BoxScale = SourceBridge->BoxScale;
+	int32 NumRows = SourceBridge->NumRows;
+	int32 NumColumns = SourceBridge->NumColumns;
+	float TileSpacingX = SourceBridge->TileSpacingX;
+	float TileSpacingY = SourceBridge->TileSpacingY;
+	UStaticMesh*  TileMesh = SourceBridge->TileMesh;
+	FVector BoxScale = SourceBridge->BoxScale;
 
 	const TArray<bool>& FallStates = SourceBridge->TileFallStates;
 
@@ -63,7 +64,7 @@ void AFutureBridge::MirrorBridge(APresentBridge* SourceBridge)
 				Tile->RegisterComponent();
 				Tile->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
 				Tile->SetStaticMesh(TileMesh);
-				Tile->SetRelativeLocation(FVector(Col * TileSpacing, Row * TileSpacing, 5.f)); // Slight Z offset
+				Tile->SetRelativeLocation(FVector(Col * TileSpacingX, Row * TileSpacingY, 0.f)); // Slight Z offset
 				Tile->SetWorldScale3D(BoxScale);
 				Tile->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics); // Visual only
 			}

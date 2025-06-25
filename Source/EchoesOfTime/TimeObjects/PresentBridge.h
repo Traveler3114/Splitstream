@@ -70,7 +70,11 @@ public:
 
     // Distance between tiles
     UPROPERTY(EditAnywhere, Category = "Bridge")
-    float TileSpacing = 150.f;
+    float TileSpacingX = 150.f;
+
+    // Distance between tiles
+    UPROPERTY(EditAnywhere, Category = "Bridge")
+    float TileSpacingY = 150.f;
 
     // Scale of each tile's collision box
     UPROPERTY(EditAnywhere, Category = "Bridge")
@@ -79,6 +83,9 @@ public:
     // Mesh to use for each tile
     UPROPERTY(EditAnywhere, Category = "Bridge")
     UStaticMesh* TileMesh;
+
+    UPROPERTY(EditAnywhere, Category = "Bridge")
+    float FallForceMultiplier = 50000.f; // Expose to editor
 
     // Array replicated across network to keep track of which tiles can fall
     UPROPERTY(Replicated)

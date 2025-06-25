@@ -19,21 +19,6 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Bridge")
 	TSoftObjectPtr<class APresentBridge> PresentObject;
 
-	UPROPERTY(EditAnywhere, Category = "Bridge")
-	UStaticMesh* TileMesh;
-
-	UPROPERTY(EditAnywhere, Category = "Bridge")
-	FVector BoxScale = FVector(1.f, 1.f, 1.f);
-
-	UPROPERTY(EditAnywhere, Category = "Bridge")
-	float TileSpacing = 100.f;
-
-	UPROPERTY(EditAnywhere, Category = "Bridge")
-	int32 NumRows = 5;
-
-	UPROPERTY(EditAnywhere, Category = "Bridge")
-	int32 NumColumns = 5;
-
 public:
 	// Mirrors the tile layout from PresentObject
 	void MirrorBridge(APresentBridge* SourceBridge);

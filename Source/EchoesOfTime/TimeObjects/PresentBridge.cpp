@@ -57,7 +57,7 @@ void APresentBridge::CreateBridge()
             Tile->SetStaticMesh(TileMesh); // Set the mesh to your chosen tile mesh
 
             // Position the tile according to row and column with spacing
-            Tile->SetRelativeLocation(FVector(Col * TileSpacing, Row * TileSpacing, 0.f));
+            Tile->SetRelativeLocation(FVector(Col * TileSpacingX, Row * TileSpacingY, 0.f));
             Tile->SetWorldScale3D(BoxScale); // Set collision box scale
 
             // Enable overlap events and notify on collisions for detecting player stepping
@@ -144,12 +144,16 @@ void APresentBridge::Multicast_DropTile_Implementation(int32 TileIndex)
     }
 }
 
-// Drops a tile by enabling physics and setting its collision profile
 void APresentBridge::DropTile(UStaticMeshComponent* Tile)
 {
     if (Tile)
     {
-        Tile->SetSimulatePhysics(true);                // Enable physics simulation so it falls
-        Tile->SetCollisionProfileName(TEXT("PhysicsActor")); // Change collision to physics actor
+        Tile->SetSimulatePhysics(true);
+        Tile->SetCollisionProfileName(TEXT("PhysicsActor"));
+
+        // Apply downward force for faster falling
+        const FVector ForceDirection = FVector(0, 0, -1); // World-down direction
+        const float ForceMagnitude = FallForceMultiplier; // Adjust as needed
+        Tile->AddForce(ForceDirection * ForceMagnitude * Tile->GetMass());
     }
 }
