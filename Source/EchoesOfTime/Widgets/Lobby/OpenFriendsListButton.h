@@ -6,24 +6,26 @@
 
 class UButton;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnShowFriendListRequested);
+
 UCLASS()
 class ECHOESOFTIME_API UOpenFriendsListButton : public UUserWidget
 {
 	GENERATED_BODY()
 
-
 public:
-	UPROPERTY()
-	class ALobbyPlatformActor* LobbyActor;
-protected:
-	virtual void NativeConstruct() override;
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnShowFriendListRequested OnShowFriendListRequested;
 
 	UPROPERTY(meta = (BindWidget))
 	UButton* OpenFriendsList_btn;
 
+protected:
+	virtual void NativeConstruct() override;
+
 	UFUNCTION()
 	void OnFriendsListButtonClicked();
-
-	// Add this to your UOpenFriendsListButton class
-
 };
+
+
+

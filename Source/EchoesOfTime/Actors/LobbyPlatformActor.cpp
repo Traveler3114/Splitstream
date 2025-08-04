@@ -29,25 +29,17 @@ ALobbyPlatformActor::ALobbyPlatformActor()
 
 void ALobbyPlatformActor::BeginPlay()
 {
-	Super::BeginPlay();
+    Super::BeginPlay();
 
-	// Set reference for button widget
-	if (UUserWidget* Widget = Cast<UUserWidget>(OpenFriendsListButtonWidget->GetUserWidgetObject()))
-	{
-		if (UOpenFriendsListButton* ButtonWidget = Cast<UOpenFriendsListButton>(Widget))
-		{
-			ButtonWidget->LobbyActor = this;
-		}
-	}
+    if (UOpenFriendsListButton* ButtonWidget = Cast<UOpenFriendsListButton>(OpenFriendsListButtonWidget->GetUserWidgetObject()))
+    {
+        ButtonWidget->OnShowFriendListRequested.AddDynamic(this, &ALobbyPlatformActor::ShowFriendList);
+    }
 
-	// Set reference for friend list widget
-	if (UUserWidget* Widget = Cast<UUserWidget>(FriendListWidget->GetUserWidgetObject()))
-	{
-		if (UFriendList* FriendList = Cast<UFriendList>(Widget))
-		{
-			FriendList->LobbyActor = this;
-		}
-	}
+    if (UFriendList* FriendList = Cast<UFriendList>(FriendListWidget->GetUserWidgetObject()))
+    {
+        FriendList->OnShowButtonRequested.AddDynamic(this, &ALobbyPlatformActor::ShowButton);
+    }
 }
 
 void ALobbyPlatformActor::ShowFriendList()

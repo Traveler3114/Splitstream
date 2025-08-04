@@ -2,8 +2,10 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "EchoesOfTime/Actors/LobbyPlatformActor.h"
 #include "FriendList.generated.h"
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnShowButtonRequested);
+
 
 UCLASS()
 class ECHOESOFTIME_API UFriendList : public UUserWidget
@@ -11,8 +13,9 @@ class ECHOESOFTIME_API UFriendList : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	UPROPERTY()
-	ALobbyPlatformActor* LobbyActor;
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnShowButtonRequested OnShowButtonRequested;
+
 
 protected:
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;

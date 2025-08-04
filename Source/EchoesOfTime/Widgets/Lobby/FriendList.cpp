@@ -23,9 +23,7 @@ void UFriendList::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	// Check if mouse is outside the expanded area
 	if (MouseX < Min.X || MouseX > Max.X || MouseY < Min.Y || MouseY > Max.Y)
 	{
-		if (LobbyActor)
-		{
-			LobbyActor->ShowButton();
-		}
+		OnShowButtonRequested.Broadcast();
 	}
 }
+

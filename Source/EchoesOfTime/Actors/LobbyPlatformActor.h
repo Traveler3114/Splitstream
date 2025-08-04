@@ -14,7 +14,9 @@ class ECHOESOFTIME_API ALobbyPlatformActor : public AActor
 public:
     ALobbyPlatformActor();
 	virtual void BeginPlay() override;
+    UFUNCTION()
     void ShowFriendList();
+    UFUNCTION()
     void ShowButton();
 
 protected:
