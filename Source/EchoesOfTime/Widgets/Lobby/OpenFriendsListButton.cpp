@@ -2,6 +2,7 @@
 #include "Components/Button.h"
 #include "FriendList.h"
 #include "Blueprint/UserWidget.h"
+#include "EchoesOfTime/Actors/LobbyPlatformActor.h"
 #include "Kismet/GameplayStatics.h"
 
 void UOpenFriendsListButton::NativeConstruct()
@@ -16,13 +17,8 @@ void UOpenFriendsListButton::NativeConstruct()
 
 void UOpenFriendsListButton::OnFriendsListButtonClicked()
 {
-	if (UWorld* World = GetWorld())
+	if (LobbyActor)
 	{
-		// Use the Blueprint class if set, otherwise fallback to C++ class
-		TSubclassOf<UFriendList> WidgetClass = FriendListWidgetClass;
-		if (UFriendList* FriendListWidget = CreateWidget<UFriendList>(World, WidgetClass))
-		{
-			FriendListWidget->AddToViewport();
-		}
+		LobbyActor->ShowFriendList();
 	}
 }

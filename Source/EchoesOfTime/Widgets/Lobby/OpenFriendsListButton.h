@@ -11,16 +11,19 @@ class ECHOESOFTIME_API UOpenFriendsListButton : public UUserWidget
 {
 	GENERATED_BODY()
 
+
+public:
+	UPROPERTY()
+	class ALobbyPlatformActor* LobbyActor;
 protected:
 	virtual void NativeConstruct() override;
 
 	UPROPERTY(meta = (BindWidget))
 	UButton* OpenFriendsList_btn;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Friends")
-	TSubclassOf<class UFriendList> FriendListWidgetClass;
-
-
 	UFUNCTION()
 	void OnFriendsListButtonClicked();
+
+	// Add this to your UOpenFriendsListButton class
+
 };

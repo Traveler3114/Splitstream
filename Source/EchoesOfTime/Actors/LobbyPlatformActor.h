@@ -4,6 +4,8 @@
 #include "GameFramework/Actor.h"
 #include "LobbyPlatformActor.generated.h"
 
+
+class UWidgetComponent;
 UCLASS()
 class ECHOESOFTIME_API ALobbyPlatformActor : public AActor
 {
@@ -11,6 +13,9 @@ class ECHOESOFTIME_API ALobbyPlatformActor : public AActor
 
 public:
     ALobbyPlatformActor();
+	virtual void BeginPlay() override;
+    void ShowFriendList();
+    void ShowButton();
 
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Platform")
@@ -19,6 +24,9 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Platform")
     UStaticMeshComponent* PlatformMesh;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Platform")
-    class UWidgetComponent* InviteWidget;
+    UPROPERTY(VisibleAnywhere)
+    UWidgetComponent* OpenFriendsListButtonWidget;
+
+    UPROPERTY(VisibleAnywhere)
+    UWidgetComponent* FriendListWidget;
 };
