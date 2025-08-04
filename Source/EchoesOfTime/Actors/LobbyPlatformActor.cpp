@@ -1,7 +1,7 @@
 #include "LobbyPlatformActor.h"
 #include "Components/SceneComponent.h"
-#include "EchoesOfTime/Widgets/Lobby/OpenFriendsListButton.h"
-#include "EchoesOfTime/Widgets/Lobby/FriendList.h"
+#include "Widgets/Lobby/OpenFriendsListButton.h"
+#include "Widgets/Lobby/FriendList.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/WidgetComponent.h"
 
