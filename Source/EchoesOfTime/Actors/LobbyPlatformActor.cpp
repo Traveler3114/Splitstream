@@ -13,6 +13,6 @@ ALobbyPlatformActor::ALobbyPlatformActor()
 
     InviteWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("InviteWidget"));
     InviteWidget->SetupAttachment(RootComponent);
-    InviteWidget->SetWidgetSpace(EWidgetSpace::World); // Or World, as needed
+    InviteWidget->SetWidgetSpace(EWidgetSpace::Screen); // Or World, as needed
     // Set the widget class in Blueprint or here if you have a reference
 }
