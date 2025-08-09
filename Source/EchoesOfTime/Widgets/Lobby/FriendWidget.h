@@ -16,12 +16,12 @@ class ECHOESOFTIME_API UFriendWidget : public UUserWidget
 	
 
 public:
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(BlueprintReadWrite, meta = (BindWidget), Category = "FriendWidget")
 	class UButton* invite_btn;
 
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(BlueprintReadWrite, meta = (BindWidget), Category = "FriendWidget")
 	class UTextBlock* playername_txt;
 
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(BlueprintReadWrite, meta = (BindWidget), Category = "FriendWidget")
 	class UImage* avatar_img;
 };

@@ -16,16 +16,13 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FOnShowButtonRequested OnShowButtonRequested;
 
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(BlueprintReadWrite, meta = (BindWidget), Category = "FriendList")
 	class UVerticalBox* FriendListContainer;
 
 protected:
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
-/*	void PopulateFriends()*/;
 
 	// How much extra area (in pixels) beyond the widget bounds
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FriendList")
 	float ExtraArea = 20.0f;
-
-	//TSubclassOf<class UFriendWidget> FriendWidgetClass;
 };
