@@ -1,5 +1,7 @@
 #include "FriendList.h"
 #include "Kismet/GameplayStatics.h"
+#include "Components/VerticalBox.h"
+#include "Components/TextBlock.h"
 
 void UFriendList::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
@@ -27,3 +29,24 @@ void UFriendList::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	}
 }
 
+
+//void UFriendList::PopulateFriends()
+//{
+//	TArray<FBPFriendInfo> Friends;
+//	UAdvancedSteamFriendsLibrary::GetSteamFriendsList(Friends);
+//
+//	for (const FBPFriendInfo& Friend : Friends)
+//	{
+//		UFriendWidget* FriendWidget = CreateWidget<UFriendWidget>(GetWorld(), FriendWidgetClass);
+//		if (FriendWidget)
+//		{
+//			// Set friend name
+//			FriendWidget->playeraname_txt->SetText(FText::FromString(Friend.DisplayName));
+//
+//			// Optionally set avatar and bind invite button here
+//
+//			// Add to your UI (e.g., a vertical box or scroll box)
+//			FriendListContainer->AddChild(FriendWidget);
+//		}
+//	}
+//}
