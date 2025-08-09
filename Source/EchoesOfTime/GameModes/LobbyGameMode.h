@@ -13,5 +13,14 @@ UCLASS()
 class ECHOESOFTIME_API ALobbyGameMode : public AGameMode
 {
 	GENERATED_BODY()
+
+public:
+	virtual void BeginPlay() override;
+	virtual void PostLogin(APlayerController* NewPlayer) override;
+
+	// Use AActor* for compatibility with GetAllActorsOfClass
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+
+	TArray<AActor*> LobbyPlatforms;
 	
 };

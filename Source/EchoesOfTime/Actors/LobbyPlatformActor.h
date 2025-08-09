@@ -19,6 +19,12 @@ public:
     UFUNCTION()
     void ShowButton();
 
+    UFUNCTION(BlueprintCallable, Category = "Platform")
+    APawn* SpawnCharacterAtPlatform(AController* NewController);
+
+    APawn* OccupyingPawn;
+
+
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Platform")
     USceneComponent* RootScene;
@@ -31,4 +37,20 @@ protected:
 
     UPROPERTY(VisibleAnywhere)
     UWidgetComponent* FriendListWidget;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Platform")
+    class UArrowComponent* SpawnPoint;
+
+    // Character class to spawn, assignable in Blueprint
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Platform")
+    TSubclassOf<APawn> CharacterClassToSpawn;
+
+    // Add to your ALobbyPlatformActor class
+    UPROPERTY(ReplicatedUsing = OnRep_IsOccupied)
+    bool bIsOccupied = false;
+
+    UFUNCTION()
+    void OnRep_IsOccupied();
+
+
 };
