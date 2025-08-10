@@ -10,7 +10,34 @@ void ULobbyUI::NativeConstruct()
     {
         ready_btn->OnClicked.AddDynamic(this, &ULobbyUI::OnReadyButtonClicked);
     }
+
+    if (changeteam_btn)
+    {
+        changeteam_btn->OnClicked.AddDynamic(this, &ULobbyUI::OnChangeButtonClicked);
+    }
 }
+
+void ULobbyUI::OnChangeButtonClicked()
+{
+    const FString CurrentText = team_txt->GetText().ToString();
+	FGameplayTag NewTag;
+    if (CurrentText.Equals(TEXT("Future"), ESearchCase::IgnoreCase))
+    {
+        team_txt->SetText(FText::FromString(TEXT("Past")));
+		NewTag = FGameplayTag::RequestGameplayTag(FName("Team.Past"));
+    }
+    else
+    {
+        team_txt->SetText(FText::FromString(TEXT("Future")));
+        NewTag = FGameplayTag::RequestGameplayTag(FName("Team.Future"));
+    }
+    if (ALobbyPlayerController* PC = Cast<ALobbyPlayerController>(GetOwningPlayer()))
+    {
+        PC->ServerSetTeamTag(NewTag);
+    }
+
+}
+
 void ULobbyUI::SetStartButtonEnabled(bool bEnabled)
 {
     if (start_btn)

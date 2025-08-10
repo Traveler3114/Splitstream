@@ -5,6 +5,7 @@
 #include "LobbyUI.generated.h"
 
 class UButton;
+class UTextBlock;
 
 UCLASS()
 class ECHOESOFTIME_API ULobbyUI : public UUserWidget
@@ -17,6 +18,9 @@ public:
 
     void SetStartButtonVisibility(ESlateVisibility InVisibility);
 
+    UFUNCTION()
+    void OnChangeButtonClicked();
+
     UPROPERTY(meta = (BindWidget))
     UButton* start_btn;
 
@@ -25,6 +29,12 @@ public:
 
     UPROPERTY(meta = (BindWidget))
     UButton* ready_btn;
+
+    UPROPERTY(meta = (BindWidget))
+    UButton* changeteam_btn;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* team_txt;
 
     UFUNCTION()
     void OnReadyButtonClicked();

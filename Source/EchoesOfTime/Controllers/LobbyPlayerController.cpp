@@ -2,6 +2,10 @@
 #include "Widgets/Lobby/LobbyUI.h"
 #include "Actors/LobbyPlatformActor.h"
 #include "GameModes/LobbyGameMode.h"
+#include "Widgets/Lobby/PlayerLobbyInfo.h"
+#include "Components/WidgetComponent.h"
+#include "DefaultPlayerState.h"
+#include "AbilitySystemComponent.h"
 #include "Net/UnrealNetwork.h"
 
 void ALobbyPlayerController::BeginPlay()
@@ -37,10 +41,6 @@ void ALobbyPlayerController::ServerSetReadyState_Implementation(bool bReady)
     OnRep_ReadyState();
     if (HasAuthority())
     {
-        if (ALobbyGameMode* GM = GetWorld() ? GetWorld()->GetAuthGameMode<ALobbyGameMode>() : nullptr)
-        {
-            GM->CheckAllPlayersReady();
-        }
         OnPlayerReady.Broadcast();
     }
 }
@@ -58,4 +58,45 @@ void ALobbyPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(ALobbyPlayerController, bIsReady);
     DOREPLIFETIME(ALobbyPlayerController, AssignedPlatform);
+    DOREPLIFETIME(ALobbyPlayerController, TeamTag); // Add this line
+}
+
+
+void ALobbyPlayerController::ServerSetTeamTag_Implementation(FGameplayTag NewTeamTag)
+{
+    TeamTag = NewTeamTag;
+    OnRep_TeamTag();
+
+    // Set the tag on the assigned platform so it replicates to all clients
+    if (AssignedPlatform)
+    {
+        AssignedPlatform->TeamTag = NewTeamTag;
+        AssignedPlatform->OnRep_PlayerInfo(); // Update UI immediately on server
+    }
+
+    // Add the tag to the PlayerState's ASC
+    if (ADefaultPlayerState* PS = Cast<ADefaultPlayerState>(PlayerState))
+    {
+        if (UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent())
+        {
+            // Remove old team tags (if you only allow one team tag at a time)
+            ASC->RemoveLooseGameplayTag(FGameplayTag::RequestGameplayTag(FName("Team.Future")));
+            ASC->RemoveLooseGameplayTag(FGameplayTag::RequestGameplayTag(FName("Team.Past")));
+            // Add the new team tag
+            ASC->AddLooseGameplayTag(NewTeamTag);
+        }
+    }
+}
+
+void ALobbyPlayerController::OnRep_TeamTag()
+{
+    // Update your UI here, e.g.:
+    if (AssignedPlatform && AssignedPlatform->PlayerInfoWidget)
+    {
+        UUserWidget* UserWidget = AssignedPlatform->PlayerInfoWidget->GetUserWidgetObject();
+        if (UPlayerLobbyInfo* LobbyInfo = Cast<UPlayerLobbyInfo>(UserWidget))
+        {
+            LobbyInfo->SetTeamTag(TeamTag); // You need to implement SetTeamTag in your widget
+        }
+    }
 }

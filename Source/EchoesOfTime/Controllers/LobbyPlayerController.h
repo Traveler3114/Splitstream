@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "GameplayTagContainer.h"
 #include "LobbyPlayerController.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FPlayerReadySignature);
@@ -20,11 +21,21 @@ public:
     UPROPERTY(ReplicatedUsing = OnRep_ReadyState)
     bool bIsReady = false;
 
+    UPROPERTY(ReplicatedUsing = OnRep_TeamTag)
+    FGameplayTag TeamTag;
+
     UFUNCTION()
     void OnRep_ReadyState();
 
     UFUNCTION(Server, Reliable)
     void ServerSetReadyState(bool bReady);
+
+    UFUNCTION()
+    void OnRep_TeamTag();
+
+    UFUNCTION(Server, Reliable)
+    void ServerSetTeamTag(FGameplayTag NewTeamTag);
+
 
     UPROPERTY(Replicated)
     class ALobbyPlatformActor* AssignedPlatform = nullptr;

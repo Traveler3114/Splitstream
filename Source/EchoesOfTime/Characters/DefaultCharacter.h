@@ -2,7 +2,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "InputActionValue.h"
 #include "DefaultCharacter.generated.h"
+
+class UCameraComponent;
+class UInputMappingContext;
+class UInputAction;
+struct FInputActionValue;
 
 UCLASS()
 class ECHOESOFTIME_API ADefaultCharacter : public ACharacter
@@ -10,18 +16,91 @@ class ECHOESOFTIME_API ADefaultCharacter : public ACharacter
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	ADefaultCharacter();
+	virtual void PostInitializeComponents() override;
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	// Movement and looking functions
+	void Move(const FInputActionValue& Value);
+	void Look(const FInputActionValue& Value);
+
+	void StartCrouch();
+	void StopCrouching();
+
+	// Sprint functions
+	void StartSprint();
+	void StopSprint();
+
+
+	// Input actions
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UInputMappingContext* DefaultMappingContext;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UInputAction* MoveAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UInputAction* LookAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UInputAction* SprintAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UInputAction* JumpAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UInputAction* CrouchAction;
+
+	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	//UInputAction* PickupAction;
+
+	//UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	//class UPhysicsHandleComponent* PhysicsHandle;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
+	UCameraComponent* CameraComponent;
+
+	//UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
+	//AActor* HitActor;
+
+	//void Pickup();
+	//void Drop();
+
+	//UFUNCTION(Server, Reliable)
+	//void ServerPickup();
+
+	//UFUNCTION(Server, Reliable)
+	//void ServerDrop();
+
+	// Server-side sprinting
+	UFUNCTION(Server, Reliable)
+	void ServerStartSprint();
+	UFUNCTION(Server, Reliable)
+	void ServerStopSprint();
+
+
+	// Replicated sprint state
+	UPROPERTY(ReplicatedUsing = OnRep_SprintState)
+	bool bIsSprinting;
+
+	UFUNCTION()
+	void OnRep_SprintState();
+
+	UFUNCTION(Server, Reliable)
+	void ServerCameraRotationUpdate(float NewPitch);
+
+	UPROPERTY(ReplicatedUsing = OnRep_Pitch)
+	float Pitch = 0.0f;
+
+	UFUNCTION()
+	void OnRep_Pitch();
+
 public:
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

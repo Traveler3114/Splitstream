@@ -3,35 +3,17 @@
 #include "Components/Image.h"
 #include "Engine/Texture2D.h"
 #include "Components/Button.h"
+#include "Components/SlateWrapperTypes.h"
+#include "GameplayTagContainer.h"
+
+
+
 
 void UPlayerLobbyInfo::NativeConstruct()
 {
     Super::NativeConstruct();
-
-    if (changeteam_btn)
-    {
-        changeteam_btn->OnClicked.AddDynamic(this, &UPlayerLobbyInfo::OnChangeButtonClicked);
-    }
-    if (changeteam_btn2)
-    {
-        changeteam_btn2->OnClicked.AddDynamic(this, &UPlayerLobbyInfo::OnChangeButtonClicked);
-    }
 }
 
-void UPlayerLobbyInfo::OnChangeButtonClicked()
-{
-    if (!team_txt) return;
-
-    const FString CurrentText = team_txt->GetText().ToString();
-    if (CurrentText.Equals(TEXT("Future"), ESearchCase::IgnoreCase))
-    {
-        team_txt->SetText(FText::FromString(TEXT("Past")));
-    }
-    else
-    {
-        team_txt->SetText(FText::FromString(TEXT("Future")));
-    }
-}
 
 void UPlayerLobbyInfo::SetPlayerName(const FText& Name)
 {
@@ -65,5 +47,16 @@ void UPlayerLobbyInfo::SetReadyState(bool bReady)
     if (ready_txt)
     {
         ready_txt->SetText(bReady ? FText::FromString(TEXT("Ready")) : FText::FromString(TEXT("Not Ready")));
+    }
+}
+
+// PlayerLobbyInfo.cpp
+void UPlayerLobbyInfo::SetTeamTag(FGameplayTag NewTag)
+{
+    if (team_txt)
+    {
+        // Get only the last part of the tag (e.g., "Future" from "Team.Future")
+        FString Leaf = NewTag.GetTagLeafName().ToString();
+        team_txt->SetText(FText::FromString(Leaf));
     }
 }

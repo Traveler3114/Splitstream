@@ -5,6 +5,8 @@
 #include "Engine/Engine.h" // For GEngine->AddOnScreenDebugMessage
 #include "Widgets/Lobby/LobbyUI.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
+#include "GameplayTagContainer.h"
+#include "DefaultPlayerState.h"
 
 
 void ALobbyGameMode::BeginPlay()
@@ -32,13 +34,31 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
             APawn* SpawnedPawn = Platform->SpawnCharacterAtPlatform(NewPlayer);
             if (PC)
             {
-                PC->AssignedPlatform = Platform;
+                if (PC)
+                {
+                    PC->AssignedPlatform = Platform;
+                }
+            }
+			FGameplayTag DefaultTeamTag = FGameplayTag::RequestGameplayTag(FName("Team.Future"));
+            PC->TeamTag = DefaultTeamTag;
+            if (PC->AssignedPlatform)
+            {
+                PC->AssignedPlatform->TeamTag = DefaultTeamTag;
+                PC->AssignedPlatform->OnRep_PlayerInfo(); // Update UI immediately
+            }
+
+            // Set on PlayerState's ASC
+            if (ADefaultPlayerState* PS = Cast<ADefaultPlayerState>(PC->PlayerState))
+            {
+                if (UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent())
+                {
+                    ASC->AddLooseGameplayTag(DefaultTeamTag);
+                }
             }
             break; // Exit after assigning the first available platform
         }
     }
 }
-
 
 
 void ALobbyGameMode::CheckAllPlayersReady()
@@ -73,4 +93,3 @@ void ALobbyGameMode::CheckAllPlayersReady()
         }
     }
 }
-

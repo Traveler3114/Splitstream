@@ -9,6 +9,13 @@
 #include "Components/ArrowComponent.h"
 #include "Engine/World.h"
 #include "Net/UnrealNetwork.h"
+#include "GameplayTagContainer.h"
+
+
+#include "GameModes/LobbyGameMode.h"
+#include "Kismet/GameplayStatics.h"
+#include "DefaultPlayerState.h"
+#include "AbilitySystemComponent.h"
 
 ALobbyPlatformActor::ALobbyPlatformActor()
 {
@@ -124,6 +131,7 @@ void ALobbyPlatformActor::OnRep_PlayerInfo()
             LobbyInfo->SetPlayerName(FText::FromString(ReplicatedPlayerName));
             LobbyInfo->SetAvatarTexture(ReplicatedAvatarTexture);
             LobbyInfo->SetKickButtonVisible(HasAuthority());
+            LobbyInfo->SetTeamTag(TeamTag);
         }
     }
 }
@@ -157,5 +165,6 @@ void ALobbyPlatformActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
     DOREPLIFETIME(ALobbyPlatformActor, bIsOccupied);
     DOREPLIFETIME(ALobbyPlatformActor, ReplicatedPlayerName);
     DOREPLIFETIME(ALobbyPlatformActor, ReplicatedAvatarTexture);
-    DOREPLIFETIME(ALobbyPlatformActor, bIsReady); // <-- Add this line
+    DOREPLIFETIME(ALobbyPlatformActor, bIsReady); 
+    DOREPLIFETIME(ALobbyPlatformActor, TeamTag);
 }
