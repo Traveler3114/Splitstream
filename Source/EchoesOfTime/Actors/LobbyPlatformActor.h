@@ -4,8 +4,8 @@
 #include "GameFramework/Actor.h"
 #include "LobbyPlatformActor.generated.h"
 
-
 class UWidgetComponent;
+
 UCLASS()
 class ECHOESOFTIME_API ALobbyPlatformActor : public AActor
 {
@@ -13,7 +13,9 @@ class ECHOESOFTIME_API ALobbyPlatformActor : public AActor
 
 public:
     ALobbyPlatformActor();
-	virtual void BeginPlay() override;
+    virtual void BeginPlay() override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
     UFUNCTION()
     void ShowFriendList();
     UFUNCTION()
@@ -27,6 +29,11 @@ public:
 
     APawn* OccupyingPawn;
 
+    UFUNCTION(BlueprintCallable, Category = "Platform")
+    void SetPlayerReadyState(bool bReady);
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Platform")
+    UWidgetComponent* PlayerInfoWidget;
 
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Platform")
@@ -41,19 +48,32 @@ protected:
     UPROPERTY(VisibleAnywhere)
     UWidgetComponent* FriendListWidget;
 
+
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Platform")
     class UArrowComponent* SpawnPoint;
 
-    // Character class to spawn, assignable in Blueprint
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Platform")
     TSubclassOf<APawn> CharacterClassToSpawn;
 
-    // Add to your ALobbyPlatformActor class
     UPROPERTY(ReplicatedUsing = OnRep_IsOccupied)
     bool bIsOccupied = false;
 
     UFUNCTION()
     void OnRep_IsOccupied();
 
+    UPROPERTY(ReplicatedUsing = OnRep_PlayerInfo)
+    FString ReplicatedPlayerName;
 
+    UPROPERTY(ReplicatedUsing = OnRep_PlayerInfo)
+    UTexture2D* ReplicatedAvatarTexture;
+
+    UFUNCTION()
+    void OnRep_PlayerInfo();
+
+    UPROPERTY(ReplicatedUsing = OnRep_ReadyState)
+    bool bIsReady = false;
+
+    UFUNCTION()
+    void OnRep_ReadyState();
 };

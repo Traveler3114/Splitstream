@@ -1,7 +1,11 @@
 #include "LobbyGameMode.h"
 #include "Kismet/GameplayStatics.h"
 #include "Actors/LobbyPlatformActor.h"
+#include "Controllers/LobbyPlayerController.h"
 #include "Engine/Engine.h" // For GEngine->AddOnScreenDebugMessage
+#include "Widgets/Lobby/LobbyUI.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
+
 
 void ALobbyGameMode::BeginPlay()
 {
@@ -16,35 +20,57 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
     if (LobbyPlatforms.Num() == 0)
     {
         UGameplayStatics::GetAllActorsOfClass(GetWorld(), ALobbyPlatformActor::StaticClass(), LobbyPlatforms);
-        UE_LOG(LogTemp, Warning, TEXT("PostLogin: Refreshed LobbyPlatforms, now found %d"), LobbyPlatforms.Num());
     }
-    if (!NewPlayer)
-    {
-        UE_LOG(LogTemp, Error, TEXT("PostLogin: NewPlayer is nullptr!"));
-        return;
-    }
-
-    UE_LOG(LogTemp, Warning, TEXT("PostLogin: New player joined. LobbyPlatforms.Num() = %d"), LobbyPlatforms.Num());
-
+    ALobbyPlayerController* PC = Cast<ALobbyPlayerController>(NewPlayer);
+    PC->OnPlayerReady.AddDynamic(this, &ALobbyGameMode::CheckAllPlayersReady);
     // Find the first available platform
     for (AActor* Actor : LobbyPlatforms)
     {
         ALobbyPlatformActor* Platform = Cast<ALobbyPlatformActor>(Actor);
-        if (!Platform)
-        {
-            UE_LOG(LogTemp, Error, TEXT("PostLogin: Actor in LobbyPlatforms is not a LobbyPlatformActor!"));
-            continue;
-        }
-
-        UE_LOG(LogTemp, Warning, TEXT("PostLogin: Checking platform %s, OccupyingPawn=%s"),
-            *Platform->GetName(),
-            Platform->OccupyingPawn ? *Platform->OccupyingPawn->GetName() : TEXT("nullptr"));
-
         if (!Platform->OccupyingPawn)
         {
             APawn* SpawnedPawn = Platform->SpawnCharacterAtPlatform(NewPlayer);
-            UE_LOG(LogTemp, Warning, TEXT("PostLogin: SpawnedPawn=%s"), SpawnedPawn ? *SpawnedPawn->GetName() : TEXT("nullptr"));
+            if (PC)
+            {
+                PC->AssignedPlatform = Platform;
+            }
             break; // Exit after assigning the first available platform
         }
     }
 }
+
+
+
+void ALobbyGameMode::CheckAllPlayersReady()
+{
+    bool bEveryoneReady = true;
+    for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+    {
+        ALobbyPlayerController* PC = Cast<ALobbyPlayerController>(It->Get());
+        if (!PC || !PC->bIsReady)
+        {
+            bEveryoneReady = false;
+            break;
+        }
+    }
+
+    // Only the server/host should enable the start button
+    for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+    {
+        ALobbyPlayerController* PC = Cast<ALobbyPlayerController>(It->Get());
+        if (PC && PC->IsLocalController() && PC->HasAuthority())
+        {
+            // Find the LobbyUI instance and enable the start button
+            TArray<UUserWidget*> FoundWidgets;
+            UWidgetBlueprintLibrary::GetAllWidgetsOfClass(GetWorld(), FoundWidgets, ULobbyUI::StaticClass(), false);
+            for (UUserWidget* Widget : FoundWidgets)
+            {
+                if (ULobbyUI* LobbyUI = Cast<ULobbyUI>(Widget))
+                {
+                    LobbyUI->SetStartButtonEnabled(bEveryoneReady);
+                }
+            }
+        }
+    }
+}
+

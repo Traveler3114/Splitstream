@@ -24,19 +24,4 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class UWidgetComponent* PlayerInfoWidget;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	class UArrowComponent* ArrowComp;
-
-	UPROPERTY(ReplicatedUsing = OnRep_PlayerInfo)
-	FString ReplicatedPlayerName;
-
-	UPROPERTY(ReplicatedUsing = OnRep_PlayerInfo)
-	UTexture2D* ReplicatedAvatarTexture;
-
-	UFUNCTION()
-	void OnRep_PlayerInfo();
-
 };

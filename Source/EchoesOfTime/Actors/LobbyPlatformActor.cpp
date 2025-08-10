@@ -5,7 +5,6 @@
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/PlayerState.h"
 #include "Components/WidgetComponent.h"
-#include "Characters/DefaultCharacter.h"
 #include "Widgets/Lobby/PlayerLobbyInfo.h"
 #include "Components/ArrowComponent.h"
 #include "Engine/World.h"
@@ -27,13 +26,20 @@ ALobbyPlatformActor::ALobbyPlatformActor()
     FriendListWidget->SetupAttachment(RootComponent);
     FriendListWidget->SetWidgetSpace(EWidgetSpace::Screen);
 
-    // Add arrow component for spawn location
     SpawnPoint = CreateDefaultSubobject<UArrowComponent>(TEXT("SpawnPoint"));
     SpawnPoint->SetupAttachment(RootComponent);
 
-
     OpenFriendsListButtonWidget->SetVisibility(true);
     FriendListWidget->SetVisibility(false);
+
+    PlayerInfoWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("PlayerInfoWidget"));
+    PlayerInfoWidget->SetupAttachment(RootComponent);
+    PlayerInfoWidget->SetWidgetSpace(EWidgetSpace::Screen);
+    PlayerInfoWidget->SetDrawSize(FVector2D(500.f, 500.f));
+    PlayerInfoWidget->SetRelativeLocation(FVector(0.f, 0.f, 120.f));
+    PlayerInfoWidget->SetPivot(FVector2D(0.5f, 0.5f));
+    PlayerInfoWidget->SetBlendMode(EWidgetBlendMode::Transparent);
+    PlayerInfoWidget->SetTwoSided(true);
 }
 
 void ALobbyPlatformActor::BeginPlay()
@@ -68,35 +74,31 @@ APawn* ALobbyPlatformActor::SpawnCharacterAtPlatform(AController* NewController)
     FTransform SpawnTransform = SpawnPoint->GetComponentTransform();
     APawn* SpawnedPawn = GetWorld()->SpawnActor<APawn>(CharacterClassToSpawn, SpawnTransform);
     OccupyingPawn = SpawnedPawn;
-    ADefaultCharacter* DefaultChar = Cast<ADefaultCharacter>(OccupyingPawn);
-    DefaultChar->PlayerInfoWidget->InitWidget(); // Ensure widget is created
-    UUserWidget* UserWidget = DefaultChar->PlayerInfoWidget->GetUserWidgetObject();
-    UPlayerLobbyInfo* LobbyInfo = Cast<UPlayerLobbyInfo>(UserWidget);
-    FString PlayerName = NewController->PlayerState->GetPlayerName();
-    LobbyInfo->SetKickButtonVisible(HasAuthority());
-    if (DefaultChar)
+
+    if (NewController && NewController->PlayerState)
     {
-        DefaultChar->ReplicatedPlayerName = PlayerName;
-        DefaultChar->ReplicatedAvatarTexture = GetPlayerAvatar(NewController);
-        // Optionally call OnRep_PlayerInfo() on the server to update the server's widget immediately
-        DefaultChar->OnRep_PlayerInfo();
+        ReplicatedPlayerName = NewController->PlayerState->GetPlayerName();
+        ReplicatedAvatarTexture = GetPlayerAvatar(NewController);
     }
+
+    if (OccupyingPawn && PlayerInfoWidget)
+    {
+        FVector PawnLocation = OccupyingPawn->GetActorLocation();
+        FVector WidgetLocation = PawnLocation + FVector(0.f, 0.f, 120.f);
+        PlayerInfoWidget->SetWorldLocation(WidgetLocation);
+    }
+
+    OnRep_PlayerInfo();
+
     bIsOccupied = true;
-    OnRep_IsOccupied(); // Update server immediately
+    OnRep_IsOccupied();
+
     return SpawnedPawn;
 }
+
 UTexture2D* ALobbyPlatformActor::GetPlayerAvatar_Implementation(AController* NewController)
 {
-    // Provide your default logic here, or just return nullptr if you only want Blueprint to handle it
     return nullptr;
-}
-
-
-// Replication setup
-void ALobbyPlatformActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-    DOREPLIFETIME(ALobbyPlatformActor, bIsOccupied);
 }
 
 void ALobbyPlatformActor::OnRep_IsOccupied()
@@ -105,4 +107,55 @@ void ALobbyPlatformActor::OnRep_IsOccupied()
     {
         OpenFriendsListButtonWidget->SetVisibility(!bIsOccupied);
     }
+    if (PlayerInfoWidget)
+    {
+        PlayerInfoWidget->SetVisibility(bIsOccupied);
+    }
+}
+
+void ALobbyPlatformActor::OnRep_PlayerInfo()
+{
+    if (PlayerInfoWidget)
+    {
+        PlayerInfoWidget->InitWidget();
+        UUserWidget* UserWidget = PlayerInfoWidget->GetUserWidgetObject();
+        if (UPlayerLobbyInfo* LobbyInfo = Cast<UPlayerLobbyInfo>(UserWidget))
+        {
+            LobbyInfo->SetPlayerName(FText::FromString(ReplicatedPlayerName));
+            LobbyInfo->SetAvatarTexture(ReplicatedAvatarTexture);
+            LobbyInfo->SetKickButtonVisible(HasAuthority());
+        }
+    }
+}
+
+
+void ALobbyPlatformActor::SetPlayerReadyState(bool bReady)
+{
+    if (HasAuthority())
+    {
+        bIsReady = bReady;
+        OnRep_ReadyState(); // Update server's own UI immediately
+    }
+}
+
+void ALobbyPlatformActor::OnRep_ReadyState()
+{
+    if (PlayerInfoWidget)
+    {
+        PlayerInfoWidget->InitWidget();
+        UUserWidget* UserWidget = PlayerInfoWidget->GetUserWidgetObject();
+        if (UPlayerLobbyInfo* LobbyInfo = Cast<UPlayerLobbyInfo>(UserWidget))
+        {
+            LobbyInfo->SetReadyState(bIsReady);
+        }
+    }
+}
+
+void ALobbyPlatformActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(ALobbyPlatformActor, bIsOccupied);
+    DOREPLIFETIME(ALobbyPlatformActor, ReplicatedPlayerName);
+    DOREPLIFETIME(ALobbyPlatformActor, ReplicatedAvatarTexture);
+    DOREPLIFETIME(ALobbyPlatformActor, bIsReady); // <-- Add this line
 }

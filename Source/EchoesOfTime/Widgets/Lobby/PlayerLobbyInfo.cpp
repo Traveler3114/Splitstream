@@ -1,6 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "PlayerLobbyInfo.h"
 #include "Components/TextBlock.h"
 #include "Components/Image.h"
@@ -15,8 +12,6 @@ void UPlayerLobbyInfo::SetPlayerName(const FText& Name)
     }
 }
 
-
-
 void UPlayerLobbyInfo::SetAvatarTexture(UTexture2D* Texture)
 {
     if (avatar_img && Texture)
@@ -28,11 +23,18 @@ void UPlayerLobbyInfo::SetAvatarTexture(UTexture2D* Texture)
     }
 }
 
-
 void UPlayerLobbyInfo::SetKickButtonVisible(bool bVisible)
 {
     if (kick_btn)
     {
         kick_btn->SetVisibility(bVisible ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+    }
+}
+
+void UPlayerLobbyInfo::SetReadyState(bool bReady)
+{
+    if (ready_txt)
+    {
+        ready_txt->SetText(bReady ? FText::FromString(TEXT("Ready")) : FText::FromString(TEXT("Not Ready")));
     }
 }
