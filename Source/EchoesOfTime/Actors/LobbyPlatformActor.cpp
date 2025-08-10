@@ -3,8 +3,12 @@
 #include "Widgets/Lobby/OpenFriendsListButton.h"
 #include "Widgets/Lobby/FriendList.h"
 #include "Components/StaticMeshComponent.h"
+#include "GameFramework/PlayerState.h"
 #include "Components/WidgetComponent.h"
+#include "Characters/DefaultCharacter.h"
+#include "Widgets/Lobby/PlayerLobbyInfo.h"
 #include "Components/ArrowComponent.h"
+#include "Engine/World.h"
 #include "Net/UnrealNetwork.h"
 
 ALobbyPlatformActor::ALobbyPlatformActor()
@@ -61,17 +65,32 @@ void ALobbyPlatformActor::ShowButton()
 
 APawn* ALobbyPlatformActor::SpawnCharacterAtPlatform(AController* NewController)
 {
-    if (!CharacterClassToSpawn || !SpawnPoint || !GetWorld())
-        return nullptr;
-
     FTransform SpawnTransform = SpawnPoint->GetComponentTransform();
     APawn* SpawnedPawn = GetWorld()->SpawnActor<APawn>(CharacterClassToSpawn, SpawnTransform);
     OccupyingPawn = SpawnedPawn;
-
+    ADefaultCharacter* DefaultChar = Cast<ADefaultCharacter>(OccupyingPawn);
+    DefaultChar->PlayerInfoWidget->InitWidget(); // Ensure widget is created
+    UUserWidget* UserWidget = DefaultChar->PlayerInfoWidget->GetUserWidgetObject();
+    UPlayerLobbyInfo* LobbyInfo = Cast<UPlayerLobbyInfo>(UserWidget);
+    FString PlayerName = NewController->PlayerState->GetPlayerName();
+    LobbyInfo->SetPlayerName(FText::FromString(PlayerName));
+	LobbyInfo->SetAvatarTexture(GetPlayerAvatar(NewController)); // Set avatar texture
+    LobbyInfo->SetKickButtonVisible(HasAuthority());
+    if (DefaultChar)
+    {
+        DefaultChar->ReplicatedPlayerName = PlayerName;
+        DefaultChar->ReplicatedAvatarTexture = GetPlayerAvatar(NewController);
+        // Optionally call OnRep_PlayerInfo() on the server to update the server's widget immediately
+        DefaultChar->OnRep_PlayerInfo();
+    }
     bIsOccupied = true;
     OnRep_IsOccupied(); // Update server immediately
-
     return SpawnedPawn;
+}
+UTexture2D* ALobbyPlatformActor::GetPlayerAvatar_Implementation(AController* NewController)
+{
+    // Provide your default logic here, or just return nullptr if you only want Blueprint to handle it
+    return nullptr;
 }
 
 

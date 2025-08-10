@@ -22,6 +22,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Platform")
     APawn* SpawnCharacterAtPlatform(AController* NewController);
 
+    UFUNCTION(BlueprintNativeEvent, Category = "Platform")
+    UTexture2D* GetPlayerAvatar(AController* NewController);
+
     APawn* OccupyingPawn;
 
 
