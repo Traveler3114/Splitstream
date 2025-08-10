@@ -73,8 +73,6 @@ APawn* ALobbyPlatformActor::SpawnCharacterAtPlatform(AController* NewController)
     UUserWidget* UserWidget = DefaultChar->PlayerInfoWidget->GetUserWidgetObject();
     UPlayerLobbyInfo* LobbyInfo = Cast<UPlayerLobbyInfo>(UserWidget);
     FString PlayerName = NewController->PlayerState->GetPlayerName();
-    LobbyInfo->SetPlayerName(FText::FromString(PlayerName));
-	LobbyInfo->SetAvatarTexture(GetPlayerAvatar(NewController)); // Set avatar texture
     LobbyInfo->SetKickButtonVisible(HasAuthority());
     if (DefaultChar)
     {
