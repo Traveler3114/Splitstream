@@ -2,6 +2,7 @@
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "Controllers/LobbyPlayerController.h"
+#include "GameModes/LobbyGameMode.h"
 
 void ULobbyUI::NativeConstruct()
 {
@@ -14,6 +15,21 @@ void ULobbyUI::NativeConstruct()
     if (changeteam_btn)
     {
         changeteam_btn->OnClicked.AddDynamic(this, &ULobbyUI::OnChangeButtonClicked);
+    }
+    if (start_btn)
+    {
+        start_btn->OnClicked.AddDynamic(this, &ULobbyUI::OnStartButtonClicked);
+    }
+}
+
+void ULobbyUI::OnStartButtonClicked()
+{
+    if (APlayerController* PC = GetOwningPlayer())
+    {
+        if (ALobbyGameMode* GM = Cast<ALobbyGameMode>(PC->GetWorld()->GetAuthGameMode()))
+        {
+            GM->StartGame();
+        }
     }
 }
 
@@ -37,6 +53,8 @@ void ULobbyUI::OnChangeButtonClicked()
     }
 
 }
+
+
 
 void ULobbyUI::SetStartButtonEnabled(bool bEnabled)
 {

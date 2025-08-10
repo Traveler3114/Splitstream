@@ -100,3 +100,15 @@ void ALobbyPlayerController::OnRep_TeamTag()
         }
     }
 }
+
+void ALobbyPlayerController::OnStartGame_Implementation()
+{
+    if (LoadingWidgetClass)
+    {
+        UUserWidget* LoadingWidget = CreateWidget<UUserWidget>(this, LoadingWidgetClass, TEXT("LoadingWidget"));
+        if (LoadingWidget)
+        {
+            LoadingWidget->AddToViewport();
+        }
+    }
+}

@@ -13,5 +13,6 @@ UCLASS()
 class ECHOESOFTIME_API ADefaultGameMode : public AGameMode
 {
 	GENERATED_BODY()
-	
+public:
+	AActor* ChoosePlayerStart_Implementation(AController* Player) override;
 };

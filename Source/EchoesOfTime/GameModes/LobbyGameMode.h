@@ -23,4 +23,7 @@ public:
 
 	UFUNCTION()
 	void CheckAllPlayersReady();
+
+	UFUNCTION(BlueprintCallable)
+	void StartGame();
 };

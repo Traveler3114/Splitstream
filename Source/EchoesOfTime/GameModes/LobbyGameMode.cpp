@@ -93,3 +93,24 @@ void ALobbyGameMode::CheckAllPlayersReady()
         }
     }
 }
+
+void ALobbyGameMode::StartGame()
+{
+    // 1. Get all LobbyPlayerControllers
+    TArray<AActor*> FoundPlayers;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ALobbyPlayerController::StaticClass(), FoundPlayers);
+
+    // 2. For each, call OnStartGame
+    for (AActor* Actor : FoundPlayers)
+    {
+        ALobbyPlayerController* PC = Cast<ALobbyPlayerController>(Actor);
+        if (PC)
+        {
+            PC->OnStartGame(); // Assumes this function exists and is BlueprintCallable or implemented in C++
+        }
+    }
+
+    // 3. Server travel to the map
+    FString MapPath = TEXT("/Game/Maps/TestMap?listen");
+    GetWorld()->ServerTravel(MapPath);
+}

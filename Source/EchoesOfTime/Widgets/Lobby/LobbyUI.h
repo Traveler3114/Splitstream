@@ -21,6 +21,9 @@ public:
     UFUNCTION()
     void OnChangeButtonClicked();
 
+    UFUNCTION()
+    void OnStartButtonClicked();
+
     UPROPERTY(meta = (BindWidget))
     UButton* start_btn;
 

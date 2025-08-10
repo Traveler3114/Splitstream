@@ -18,6 +18,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
     TSubclassOf<class ULobbyUI> LobbyUIClass;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+    TSubclassOf<class UUserWidget> LoadingWidgetClass;
+
     UPROPERTY(ReplicatedUsing = OnRep_ReadyState)
     bool bIsReady = false;
 
@@ -43,4 +46,7 @@ public:
 
     UPROPERTY(BlueprintAssignable, Category = "Events")
     FPlayerReadySignature OnPlayerReady;
+
+	UFUNCTION(Client,Reliable)
+	void OnStartGame();
 };
