@@ -11,7 +11,6 @@
 #include "Net/UnrealNetwork.h"
 #include "GameplayTagContainer.h"
 
-
 #include "GameModes/LobbyGameMode.h"
 #include "Kismet/GameplayStatics.h"
 #include "DefaultPlayerState.h"
@@ -47,6 +46,10 @@ ALobbyPlatformActor::ALobbyPlatformActor()
     PlayerInfoWidget->SetPivot(FVector2D(0.5f, 0.5f));
     PlayerInfoWidget->SetBlendMode(EWidgetBlendMode::Transparent);
     PlayerInfoWidget->SetTwoSided(true);
+
+    // Optional: slightly higher update rate in lobby
+    NetUpdateFrequency = 20.f;
+    MinNetUpdateFrequency = 20.f;
 }
 
 void ALobbyPlatformActor::BeginPlay()
@@ -81,15 +84,20 @@ APawn* ALobbyPlatformActor::SpawnCharacterAtPlatform(AController* NewController)
     FTransform SpawnTransform = SpawnPoint->GetComponentTransform();
     APawn* SpawnedPawn = GetWorld()->SpawnActor<APawn>(CharacterClassToSpawn, SpawnTransform);
     OccupyingPawn = SpawnedPawn;
+
     if (OccupyingPawn && PlayerInfoWidget)
     {
         FVector PawnLocation = OccupyingPawn->GetActorLocation();
         FVector WidgetLocation = PawnLocation + FVector(0.f, 0.f, 120.f);
         PlayerInfoWidget->SetWorldLocation(WidgetLocation);
+        PlayerInfoWidget->InitWidget(); // ensure widget instance exists on clients
     }
 
     bIsOccupied = true;
     OnRep_IsOccupied();
+
+    // Push replication right away so widgets become visible promptly
+    ForceNetUpdate();
 
     return SpawnedPawn;
 }
@@ -111,14 +119,10 @@ void ALobbyPlatformActor::OnRep_IsOccupied()
     }
 }
 
-
 void ALobbyPlatformActor::HandleKickRequested()
 {
     OnKickRequested.Broadcast(this);
 }
-
-
-
 
 void ALobbyPlatformActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {

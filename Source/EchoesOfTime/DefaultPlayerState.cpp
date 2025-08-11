@@ -8,6 +8,10 @@ ADefaultPlayerState::ADefaultPlayerState()
 {
     AbilitySystemComponent = CreateDefaultSubobject<UDefaultAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
     AttributeSet = CreateDefaultSubobject<UDefaultAttributeSet>(TEXT("AttributeSet"));
+
+    // Make lobby updates feel snappy
+    NetUpdateFrequency = 30.f;       // 30–60 is fine for lobby
+    MinNetUpdateFrequency = 30.f;
 }
 
 UAbilitySystemComponent* ADefaultPlayerState::GetAbilitySystemComponent() const
@@ -15,70 +19,99 @@ UAbilitySystemComponent* ADefaultPlayerState::GetAbilitySystemComponent() const
     return AbilitySystemComponent;
 }
 
+void ADefaultPlayerState::ApplyLobbyInfoToWidget()
+{
+    if (!AssignedPlatform || !AssignedPlatform->PlayerInfoWidget)
+    {
+        return;
+    }
+
+    AssignedPlatform->PlayerInfoWidget->InitWidget();
+
+    if (UUserWidget* UserWidget = AssignedPlatform->PlayerInfoWidget->GetUserWidgetObject())
+    {
+        if (UPlayerLobbyInfo* LobbyInfo = Cast<UPlayerLobbyInfo>(UserWidget))
+        {
+            // Name
+            LobbyInfo->SetPlayerName(FText::FromString(GetPlayerName()));
+
+            // Ready + Team
+            LobbyInfo->SetReadyState(bIsReady);
+            LobbyInfo->SetTeamTag(TeamTag);
+
+            // Kick button: visible on server, hidden on clients
+            LobbyInfo->SetKickButtonVisible(HasAuthority());
+        }
+    }
+}
+
+void ADefaultPlayerState::RefreshLobbyInfoUI()
+{
+    ApplyLobbyInfoToWidget();
+
+    // Optionally nudge replication so others see visibility flips quickly
+    if (AssignedPlatform)
+    {
+        AssignedPlatform->ForceNetUpdate();
+    }
+}
 
 void ADefaultPlayerState::ServerSetReadyState_Implementation(bool bReady)
 {
     bIsReady = bReady;
-    OnRep_ReadyState();
+
+    // Update server immediately
+    ApplyLobbyInfoToWidget();
     if (HasAuthority())
     {
         OnPlayerReady.Broadcast();
     }
+
+    // Push replication to clients right away
+    ForceNetUpdate();
+    if (AssignedPlatform) { AssignedPlatform->ForceNetUpdate(); }
 }
 
 void ADefaultPlayerState::OnRep_ReadyState()
 {
-    if (AssignedPlatform && AssignedPlatform->PlayerInfoWidget)
-    {
-        UUserWidget* UserWidget = AssignedPlatform->PlayerInfoWidget->GetUserWidgetObject();
-        if (UPlayerLobbyInfo* LobbyInfo = Cast<UPlayerLobbyInfo>(UserWidget))
-        {
-			LobbyInfo->SetReadyState(bIsReady); // Assuming you have a method to set the ready state in your widget
-        }
-    }
+    ApplyLobbyInfoToWidget();
 }
-
 
 void ADefaultPlayerState::ServerSetTeamTag_Implementation(FGameplayTag NewTeamTag)
 {
     TeamTag = NewTeamTag;
-    OnRep_TeamTag();
 
-    // Set the tag on the assigned platform so it replicates to all clients
-    if (AssignedPlatform)
-    {
-        //AssignedPlatform->TeamTag = NewTeamTag;
-        //AssignedPlatform->OnRep_PlayerInfo(); // Update UI immediately on server
-    }
-
+    // Update ASC tags (authoritative on server)
     if (AbilitySystemComponent)
     {
-        // Remove old team tags (if you only allow one team tag at a time)
         AbilitySystemComponent->RemoveLooseGameplayTag(FGameplayTag::RequestGameplayTag(FName("Team.Future")));
         AbilitySystemComponent->RemoveLooseGameplayTag(FGameplayTag::RequestGameplayTag(FName("Team.Past")));
-        // Add the new team tag
         AbilitySystemComponent->AddLooseGameplayTag(NewTeamTag);
     }
+
+    // Update server UI immediately
+    ApplyLobbyInfoToWidget();
+
+    // Push replication
+    ForceNetUpdate();
+    if (AssignedPlatform) { AssignedPlatform->ForceNetUpdate(); }
 }
 
 void ADefaultPlayerState::OnRep_TeamTag()
 {
-    // Update your UI here, e.g.:
-    if (AssignedPlatform && AssignedPlatform->PlayerInfoWidget)
-    {
-        UUserWidget* UserWidget = AssignedPlatform->PlayerInfoWidget->GetUserWidgetObject();
-        if (UPlayerLobbyInfo* LobbyInfo = Cast<UPlayerLobbyInfo>(UserWidget))
-        {
-            LobbyInfo->SetTeamTag(TeamTag); // You need to implement SetTeamTag in your widget
-        }
-    }
+    ApplyLobbyInfoToWidget();
+}
+
+void ADefaultPlayerState::OnRep_PlayerName()
+{
+    Super::OnRep_PlayerName();
+    ApplyLobbyInfoToWidget();
 }
 
 void ADefaultPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME_CONDITION_NOTIFY(ADefaultPlayerState, AssignedPlatform, COND_None, REPNOTIFY_Always);
-    //DOREPLIFETIME(ADefaultPlayerState, AssignedPlatform);
     DOREPLIFETIME(ADefaultPlayerState, bIsReady);
     DOREPLIFETIME(ADefaultPlayerState, TeamTag);
 }
@@ -86,6 +119,5 @@ void ADefaultPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 void ADefaultPlayerState::OnRep_AssignedPlatform()
 {
     // When AssignedPlatform is set, update the widget with current values
-    OnRep_ReadyState();
-    OnRep_TeamTag();
+    ApplyLobbyInfoToWidget();
 }

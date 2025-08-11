@@ -7,7 +7,6 @@
 #include "AbilitySystem/AttributeSets/DefaultAttributeSet.h"
 #include "DefaultPlayerState.generated.h"
 
-
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FPlayerReadySignature);
 
 UCLASS()
@@ -27,22 +26,16 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
     TObjectPtr<UDefaultAttributeSet> AttributeSet;
 
-
-
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-
 
     UPROPERTY(BlueprintAssignable, Category = "Events")
     FPlayerReadySignature OnPlayerReady;
 
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, ReplicatedUsing= OnRep_AssignedPlatform)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, ReplicatedUsing = OnRep_AssignedPlatform)
     class ALobbyPlatformActor* AssignedPlatform = nullptr;
 
     UFUNCTION()
     void OnRep_AssignedPlatform();
-
 
     UPROPERTY(ReplicatedUsing = OnRep_ReadyState)
     bool bIsReady = false;
@@ -53,7 +46,6 @@ public:
     UFUNCTION(Server, Reliable)
     void ServerSetReadyState(bool bReady);
 
-
     UPROPERTY(ReplicatedUsing = OnRep_TeamTag)
     FGameplayTag TeamTag;
 
@@ -63,4 +55,14 @@ public:
     UFUNCTION(Server, Reliable)
     void ServerSetTeamTag(FGameplayTag NewTeamTag);
 
+    // Refresh the lobby widget with current values (server or client)
+    UFUNCTION(BlueprintCallable, Category = "Lobby")
+    void RefreshLobbyInfoUI();
+
+protected:
+    // Update when the replicated player name changes
+    virtual void OnRep_PlayerName() override;
+
+private:
+    void ApplyLobbyInfoToWidget();
 };
