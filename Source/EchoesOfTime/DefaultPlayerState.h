@@ -7,6 +7,9 @@
 #include "AbilitySystem/AttributeSets/DefaultAttributeSet.h"
 #include "DefaultPlayerState.generated.h"
 
+class ALobbyPlatformActor;
+class UTexture2D;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FPlayerReadySignature);
 
 UCLASS()
@@ -32,7 +35,7 @@ public:
     FPlayerReadySignature OnPlayerReady;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, ReplicatedUsing = OnRep_AssignedPlatform)
-    class ALobbyPlatformActor* AssignedPlatform = nullptr;
+    ALobbyPlatformActor* AssignedPlatform = nullptr;
 
     UFUNCTION()
     void OnRep_AssignedPlatform();
@@ -55,14 +58,24 @@ public:
     UFUNCTION(Server, Reliable)
     void ServerSetTeamTag(FGameplayTag NewTeamTag);
 
-    // Refresh the lobby widget with current values (server or client)
+    // Refresh the lobby widget with current values (name, ready, team, avatar, kick visibility)
     UFUNCTION(BlueprintCallable, Category = "Lobby")
     void RefreshLobbyInfoUI();
 
+    // Your Blueprint-implementable avatar fetcher (already implemented in BP)
+    UFUNCTION(BlueprintImplementableEvent, Category = "Platform")
+    UTexture2D* GetPlayerAvatar(AController* NewController);
+
 protected:
-    // Update when the replicated player name changes
     virtual void OnRep_PlayerName() override;
 
 private:
     void ApplyLobbyInfoToWidget();
+
+    // Find the AController that owns this PlayerState (may be nullptr on clients for remote players)
+    AController* FindOwningController() const;
+
+    // Cache avatar to avoid repeated BP calls
+    UPROPERTY(Transient)
+    UTexture2D* CachedAvatarTexture = nullptr;
 };

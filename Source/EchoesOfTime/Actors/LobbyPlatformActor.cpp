@@ -113,11 +113,6 @@ APawn* ALobbyPlatformActor::SpawnCharacterAtPlatform(AController* NewController)
     return SpawnedPawn;
 }
 
-UTexture2D* ALobbyPlatformActor::GetPlayerAvatar_Implementation(AController* NewController)
-{
-    return nullptr;
-}
-
 void ALobbyPlatformActor::OnRep_IsOccupied()
 {
     if (OpenFriendsListButtonWidget)
