@@ -11,8 +11,8 @@ ADefaultPlayerState::ADefaultPlayerState()
     AbilitySystemComponent = CreateDefaultSubobject<UDefaultAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
     AttributeSet = CreateDefaultSubobject<UDefaultAttributeSet>(TEXT("AttributeSet"));
 
-    NetUpdateFrequency = 30.f;
-    MinNetUpdateFrequency = 30.f;
+	SetNetUpdateFrequency(30.f);
+	SetMinNetUpdateFrequency(30.f);
 }
 
 UAbilitySystemComponent* ADefaultPlayerState::GetAbilitySystemComponent() const
