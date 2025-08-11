@@ -9,6 +9,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnKickRequestedPlatform, ALobbyPlat
 
 
 
+
 class UWidgetComponent;
 
 UCLASS()
@@ -19,7 +20,8 @@ class ECHOESOFTIME_API ALobbyPlatformActor : public AActor
 public:
 
     UPROPERTY(BlueprintAssignable, Category = "PlayerLobbyInfo")
-    FOnKickRequestedPlatform OnKickRequested;
+    FOnKickRequestedPlatform OnKickRequestedPlatform;
+    // ... rest of your code ...
 
     UFUNCTION()
     void HandleKickRequested();

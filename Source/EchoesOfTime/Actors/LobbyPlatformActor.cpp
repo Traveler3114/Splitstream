@@ -65,6 +65,17 @@ void ALobbyPlatformActor::BeginPlay()
     {
         FriendList->OnShowButtonRequested.AddDynamic(this, &ALobbyPlatformActor::ShowButton);
     }
+    if (UPlayerLobbyInfo* PlayerInfo = Cast<UPlayerLobbyInfo>(PlayerInfoWidget->GetUserWidgetObject()))
+    {
+        // Bind the widget's delegate to the platform's handler (NO parentheses!)
+        PlayerInfo->OnKickRequested.AddDynamic(this, &ALobbyPlatformActor::HandleKickRequested);
+    }
+}
+
+void ALobbyPlatformActor::HandleKickRequested()
+{
+    // Broadcast to game mode (or whoever is listening)
+    OnKickRequestedPlatform.Broadcast(this);
 }
 
 void ALobbyPlatformActor::ShowFriendList()
@@ -118,12 +129,6 @@ void ALobbyPlatformActor::OnRep_IsOccupied()
         PlayerInfoWidget->SetVisibility(bIsOccupied);
     }
 }
-
-void ALobbyPlatformActor::HandleKickRequested()
-{
-    OnKickRequested.Broadcast(this);
-}
-
 void ALobbyPlatformActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);

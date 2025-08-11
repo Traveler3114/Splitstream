@@ -44,7 +44,8 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
         if (PlayerState)
         {
             PlayerState->AssignedPlatform = Platform;
-            //Platform->OnKickRequested.AddDynamic(this, &ALobbyGameMode::HandleKickRequestedFromPlatform);
+            // In PostLogin or wherever you assign the platform:
+            Platform->OnKickRequestedPlatform.AddDynamic(this, &ALobbyGameMode::HandleKickRequestedFromPlatform);
 
             // Set default team tag on PlayerState
             FGameplayTag DefaultTeamTag = FGameplayTag::RequestGameplayTag(FName("Team.Future"));
@@ -54,5 +55,24 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
             PlayerState->RefreshLobbyInfoUI();
         }
         break; // Exit after assigning the first available platform
+    }
+}
+
+void ALobbyGameMode::HandleKickRequestedFromPlatform(ALobbyPlatformActor* Platform)
+{
+    // Iterate through all player controllers in the world
+    for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
+    {
+        ALobbyPlayerController* PC = Cast<ALobbyPlayerController>(Iterator->Get());
+        if (PC)
+        {
+            // You can now access each PC here
+            // For example, check if this PC is associated with the given Platform
+            ADefaultPlayerState* PlayerState = Cast<ADefaultPlayerState>(PC->PlayerState);
+            if (PlayerState && PlayerState->AssignedPlatform == Platform)        
+            {
+				KickPlayer(PC);
+            }
+        }
     }
 }
