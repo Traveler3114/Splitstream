@@ -7,6 +7,7 @@
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "GameplayTagContainer.h"
 #include "DefaultPlayerState.h"
+#include "Components/WidgetComponent.h"
 
 
 void ALobbyGameMode::BeginPlay()
@@ -37,6 +38,7 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
                 if (PC)
                 {
                     PC->AssignedPlatform = Platform;
+                    Platform->OnKickRequested.AddDynamic(this, &ALobbyGameMode::HandleKickRequestedFromPlatform);
                 }
             }
 			FGameplayTag DefaultTeamTag = FGameplayTag::RequestGameplayTag(FName("Team.Future"));
@@ -114,3 +116,51 @@ void ALobbyGameMode::StartGame()
     FString MapPath = TEXT("/Game/Maps/TestMap?listen");
     GetWorld()->ServerTravel(MapPath);
 }
+
+
+void ALobbyGameMode::HandleKickRequestedFromPlatform(ALobbyPlatformActor* Platform)
+{
+    if (!Platform) return;
+
+    UWorld* World = GetWorld();
+    if (!World) return;
+
+    for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
+    {
+        ALobbyPlayerController* PC = Cast<ALobbyPlayerController>(It->Get());
+        if (PC && PC->AssignedPlatform == Platform)
+        {
+			KickPlayer(PC);
+            break;
+        }
+    }
+}
+
+//void ALobbyGameMode::KickPlayer_Implementation(APlayerController* PlayerController)
+//{
+//    if (!HasAuthority() || !PlayerController) return;
+//
+//    ALobbyPlayerController* LobbyPC = Cast<ALobbyPlayerController>(PlayerController);
+//    if (!LobbyPC || !LobbyPC->AssignedPlatform) return;
+//
+//    ALobbyPlatformActor* Platform = LobbyPC->AssignedPlatform;
+//
+//    // Destroy the pawn if it exists
+//    if (Platform->OccupyingPawn)
+//    {
+//        Platform->OccupyingPawn->Destroy();
+//        Platform->OccupyingPawn = nullptr;
+//    }
+//
+//    // Hide the player info widget
+//    if (Platform->PlayerInfoWidget)
+//    {
+//        Platform->PlayerInfoWidget->SetVisibility(false);
+//    }
+//
+//    // Clear the controller's reference to the platform
+//    LobbyPC->AssignedPlatform = nullptr;
+//
+//    // Optionally: update platform UI for all clients
+//    Platform->OnRep_PlayerInfo();
+//}

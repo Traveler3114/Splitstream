@@ -132,8 +132,16 @@ void ALobbyPlatformActor::OnRep_PlayerInfo()
             LobbyInfo->SetAvatarTexture(ReplicatedAvatarTexture);
             LobbyInfo->SetKickButtonVisible(HasAuthority());
             LobbyInfo->SetTeamTag(TeamTag);
+
+            LobbyInfo->OnKickRequested.RemoveAll(this);
+            LobbyInfo->OnKickRequested.AddDynamic(this, &ALobbyPlatformActor::HandleKickRequested);
         }
     }
+}
+
+void ALobbyPlatformActor::HandleKickRequested()
+{
+    OnKickRequested.Broadcast(this);
 }
 
 

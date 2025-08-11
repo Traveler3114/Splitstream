@@ -20,7 +20,20 @@ void ULobbyUI::NativeConstruct()
     {
         start_btn->OnClicked.AddDynamic(this, &ULobbyUI::OnStartButtonClicked);
     }
+    if (leave_btn)
+    {
+        leave_btn->OnClicked.AddDynamic(this, &ULobbyUI::OnLeaveButtonClicked);
+    }
 }
+
+void ULobbyUI::OnLeaveButtonClicked()
+{
+    if (ALobbyPlayerController* PC = Cast<ALobbyPlayerController>(GetOwningPlayer()))
+    {
+        PC->ServerRequestLeaveLobby();
+    }
+}
+
 
 void ULobbyUI::OnStartButtonClicked()
 {

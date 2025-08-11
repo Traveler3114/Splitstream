@@ -31,6 +31,32 @@ void ALobbyPlayerController::BeginPlay()
     }
 }
 
+void ALobbyPlayerController::ServerRequestLeaveLobby_Implementation()
+{
+    if (HasAuthority())
+    {
+        // Remove player from platform
+        if (AssignedPlatform)
+        {
+            if (AssignedPlatform->OccupyingPawn)
+            {
+                AssignedPlatform->OccupyingPawn->Destroy();
+                AssignedPlatform->OccupyingPawn = nullptr;
+            }
+            if (AssignedPlatform->PlayerInfoWidget)
+            {
+                AssignedPlatform->PlayerInfoWidget->SetVisibility(false);
+            }
+            AssignedPlatform->OnRep_PlayerInfo();
+            AssignedPlatform = nullptr;
+        }
+
+        // Remove from game (destroy controller or travel to main menu)
+        // For listen servers, you may want to call ClientReturnToMainMenu
+        //ClientReturnToMainMenuWithTextReason(FText::FromString(TEXT("You have left the lobby.")));
+    }
+}
+
 void ALobbyPlayerController::ServerSetReadyState_Implementation(bool bReady)
 {
     bIsReady = bReady;

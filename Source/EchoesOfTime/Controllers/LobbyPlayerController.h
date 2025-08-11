@@ -40,7 +40,7 @@ public:
     void ServerSetTeamTag(FGameplayTag NewTeamTag);
 
 
-    UPROPERTY(Replicated)
+    UPROPERTY(EditAnywhere,BlueprintReadWrite,Replicated)
     class ALobbyPlatformActor* AssignedPlatform = nullptr;
 
 
@@ -49,4 +49,8 @@ public:
 
 	UFUNCTION(Client,Reliable)
 	void OnStartGame();
+
+    // Add this public method declaration:
+    UFUNCTION(Server, Reliable)
+    void ServerRequestLeaveLobby();
 };

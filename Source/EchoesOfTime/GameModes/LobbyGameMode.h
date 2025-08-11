@@ -26,4 +26,14 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void StartGame();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Lobby")
+	void KickPlayer(APlayerController* PlayerController);
+
+
+	//UFUNCTION(BlueprintNativeEvent, Category = "Lobby")
+	//void KickPlayer(APlayerController* PlayerController);
+
+	UFUNCTION(BlueprintCallable)
+	void HandleKickRequestedFromPlatform(class ALobbyPlatformActor* Platform);
 };

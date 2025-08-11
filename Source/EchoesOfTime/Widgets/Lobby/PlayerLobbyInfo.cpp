@@ -12,6 +12,16 @@
 void UPlayerLobbyInfo::NativeConstruct()
 {
     Super::NativeConstruct();
+
+    if (kick_btn)
+    {
+        kick_btn->OnClicked.AddDynamic(this, &UPlayerLobbyInfo::HandleKickClicked);
+    }
+}
+
+void UPlayerLobbyInfo::HandleKickClicked()
+{
+    OnKickRequested.Broadcast();
 }
 
 

@@ -5,6 +5,9 @@
 #include "GameplayTagContainer.h"
 #include "PlayerLobbyInfo.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnKickRequested);
+
+
 class UButton;
 class UTextBlock;
 class UImage;
@@ -50,5 +53,11 @@ public:
     // PlayerLobbyInfo.h
     UFUNCTION(BlueprintCallable, Category = "PlayerLobbyInfo")
     void SetTeamTag(FGameplayTag NewTag);
+
+    UPROPERTY(BlueprintAssignable, Category = "PlayerLobbyInfo")
+    FOnKickRequested OnKickRequested;
+
+	UFUNCTION()
+	void HandleKickClicked();
 
 };
