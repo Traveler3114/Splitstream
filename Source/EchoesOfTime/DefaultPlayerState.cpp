@@ -138,6 +138,12 @@ void ADefaultPlayerState::OnRep_AssignedPlatform()
 }
 
 
+UTexture2D* ADefaultPlayerState::GetPlayerAvatar_Implementation(AController* NewController)
+{
+    // This is a Blueprint-implementable event, so you can override it in your BP
+    return nullptr; // Default implementation returns null
+}
+
 
 void ADefaultPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -145,4 +151,5 @@ void ADefaultPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
     DOREPLIFETIME_CONDITION_NOTIFY(ADefaultPlayerState, AssignedPlatform, COND_None, REPNOTIFY_Always);
     DOREPLIFETIME(ADefaultPlayerState, bIsReady);
     DOREPLIFETIME(ADefaultPlayerState, TeamTag);
+    DOREPLIFETIME(ADefaultPlayerState, CachedAvatarTexture);
 }

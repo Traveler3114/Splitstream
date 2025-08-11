@@ -63,7 +63,7 @@ public:
     void RefreshLobbyInfoUI();
 
     // Your Blueprint-implementable avatar fetcher (already implemented in BP)
-    UFUNCTION(BlueprintImplementableEvent, Category = "Platform")
+    UFUNCTION(BlueprintNativeEvent, Category = "Platform")
     UTexture2D* GetPlayerAvatar(AController* NewController);
 
 protected:
@@ -76,6 +76,6 @@ private:
     AController* FindOwningController() const;
 
     // Cache avatar to avoid repeated BP calls
-    UPROPERTY(Transient)
+    UPROPERTY(Replicated)
     UTexture2D* CachedAvatarTexture = nullptr;
 };
