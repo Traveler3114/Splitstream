@@ -42,7 +42,7 @@ void ULobbyUI::OnStartButtonClicked()
     {
         if (ALobbyGameMode* GM = Cast<ALobbyGameMode>(PC->GetWorld()->GetAuthGameMode()))
         {
-            GM->StartGame();
+            //GM->StartGame();
         }
     }
 }

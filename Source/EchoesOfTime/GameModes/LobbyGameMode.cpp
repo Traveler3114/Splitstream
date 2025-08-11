@@ -9,6 +9,12 @@
 #include "DefaultPlayerState.h"
 #include "Components/WidgetComponent.h"
 
+void ALobbyGameMode::BeginPlay()
+{
+    Super::BeginPlay();
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ALobbyPlatformActor::StaticClass(), LobbyPlatforms);
+}
+
 void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 {
     Super::PostLogin(NewPlayer);
@@ -22,7 +28,7 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 
     if (PlayerState)
     {
-        PlayerState->OnPlayerReady.AddDynamic(this, &ALobbyGameMode::CheckAllPlayersReady);
+        //PlayerState->OnPlayerReady.AddDynamic(this, &ALobbyGameMode::CheckAllPlayersReady);
     }
 
     // Find the first available platform
@@ -38,7 +44,7 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
         if (PlayerState)
         {
             PlayerState->AssignedPlatform = Platform;
-            Platform->OnKickRequested.AddDynamic(this, &ALobbyGameMode::HandleKickRequestedFromPlatform);
+            //Platform->OnKickRequested.AddDynamic(this, &ALobbyGameMode::HandleKickRequestedFromPlatform);
 
             // Set default team tag on PlayerState
             FGameplayTag DefaultTeamTag = FGameplayTag::RequestGameplayTag(FName("Team.Future"));
