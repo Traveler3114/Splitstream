@@ -45,6 +45,10 @@ void ALobbyPlayerController::ServerRequestLeaveLobby_Implementation()
         {
             PS->AssignedPlatform->PlayerInfoWidget->SetVisibility(false);
         }
+        if (PS->AssignedPlatform->OpenFriendsListButtonWidget)
+        {
+            PS->AssignedPlatform->OpenFriendsListButtonWidget->SetVisibility(true);
+        }
         PS->AssignedPlatform = nullptr;
     }
 }

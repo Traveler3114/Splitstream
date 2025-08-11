@@ -9,9 +9,9 @@ ADefaultPlayerState::ADefaultPlayerState()
     AbilitySystemComponent = CreateDefaultSubobject<UDefaultAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
     AttributeSet = CreateDefaultSubobject<UDefaultAttributeSet>(TEXT("AttributeSet"));
 
-    // Make lobby updates feel snappy
-    NetUpdateFrequency = 30.f;       // 30–60 is fine for lobby
-    MinNetUpdateFrequency = 30.f;
+    // Make lobby updates feel snappy    // 30–60 is fine for lobby
+	SetNetUpdateFrequency(30.f);
+	SetMinNetUpdateFrequency(30.f);
 }
 
 UAbilitySystemComponent* ADefaultPlayerState::GetAbilitySystemComponent() const

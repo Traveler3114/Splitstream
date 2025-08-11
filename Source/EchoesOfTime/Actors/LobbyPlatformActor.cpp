@@ -47,9 +47,9 @@ ALobbyPlatformActor::ALobbyPlatformActor()
     PlayerInfoWidget->SetBlendMode(EWidgetBlendMode::Transparent);
     PlayerInfoWidget->SetTwoSided(true);
 
-    // Optional: slightly higher update rate in lobby
-    NetUpdateFrequency = 20.f;
-    MinNetUpdateFrequency = 20.f;
+
+    SetNetUpdateFrequency(20.f);
+    SetMinNetUpdateFrequency(20.f);
 }
 
 void ALobbyPlatformActor::BeginPlay()

@@ -47,6 +47,9 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Platform")
     UWidgetComponent* PlayerInfoWidget;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Platform")
+    UWidgetComponent* OpenFriendsListButtonWidget;
+
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Platform")
     USceneComponent* RootScene;
@@ -54,8 +57,7 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Platform")
     UStaticMeshComponent* PlatformMesh;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Platform")
-    UWidgetComponent* OpenFriendsListButtonWidget;
+
 
     UPROPERTY(VisibleAnywhere)
     UWidgetComponent* FriendListWidget;
