@@ -35,11 +35,8 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
             APawn* SpawnedPawn = Platform->SpawnCharacterAtPlatform(NewPlayer);
             if (PC)
             {
-                if (PC)
-                {
-                    PC->AssignedPlatform = Platform;
-                    Platform->OnKickRequested.AddDynamic(this, &ALobbyGameMode::HandleKickRequestedFromPlatform);
-                }
+                PC->AssignedPlatform = Platform;
+                Platform->OnKickRequested.AddDynamic(this, &ALobbyGameMode::HandleKickRequestedFromPlatform);
             }
 			FGameplayTag DefaultTeamTag = FGameplayTag::RequestGameplayTag(FName("Team.Future"));
             PC->TeamTag = DefaultTeamTag;
@@ -135,32 +132,3 @@ void ALobbyGameMode::HandleKickRequestedFromPlatform(ALobbyPlatformActor* Platfo
         }
     }
 }
-
-//void ALobbyGameMode::KickPlayer_Implementation(APlayerController* PlayerController)
-//{
-//    if (!HasAuthority() || !PlayerController) return;
-//
-//    ALobbyPlayerController* LobbyPC = Cast<ALobbyPlayerController>(PlayerController);
-//    if (!LobbyPC || !LobbyPC->AssignedPlatform) return;
-//
-//    ALobbyPlatformActor* Platform = LobbyPC->AssignedPlatform;
-//
-//    // Destroy the pawn if it exists
-//    if (Platform->OccupyingPawn)
-//    {
-//        Platform->OccupyingPawn->Destroy();
-//        Platform->OccupyingPawn = nullptr;
-//    }
-//
-//    // Hide the player info widget
-//    if (Platform->PlayerInfoWidget)
-//    {
-//        Platform->PlayerInfoWidget->SetVisibility(false);
-//    }
-//
-//    // Clear the controller's reference to the platform
-//    LobbyPC->AssignedPlatform = nullptr;
-//
-//    // Optionally: update platform UI for all clients
-//    Platform->OnRep_PlayerInfo();
-//}
