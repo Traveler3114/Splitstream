@@ -28,7 +28,7 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 
     if (PlayerState)
     {
-        //PlayerState->OnPlayerReady.AddDynamic(this, &ALobbyGameMode::CheckAllPlayersReady);
+        PlayerState->OnPlayerReady.AddDynamic(this, &ALobbyGameMode::CheckAllPlayersReady);
     }
 
     // Find the first available platform
@@ -73,6 +73,36 @@ void ALobbyGameMode::HandleKickRequestedFromPlatform(ALobbyPlatformActor* Platfo
             {
 				KickPlayer(PC);
             }
+        }
+    }
+}
+
+void ALobbyGameMode::CheckAllPlayersReady()
+{
+    bool bEveryoneReady = true;
+
+    // Evaluate readiness from PlayerState
+    for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+    {
+        ALobbyPlayerController* PC = Cast<ALobbyPlayerController>(It->Get());
+        if (!PC) { bEveryoneReady = false; break; }
+
+        ADefaultPlayerState* PlayerState = Cast<ADefaultPlayerState>(PC->PlayerState);
+        if (!PlayerState || !PlayerState->bIsReady)
+        {
+            bEveryoneReady = false;
+            break;
+        }
+    }
+
+    // Tell the host's client to toggle the Start button
+    for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+    {
+        ALobbyPlayerController* PC = Cast<ALobbyPlayerController>(It->Get());
+        if (PC && PC->IsLocalController() && PC->HasAuthority())
+        {
+            PC->ClientSetStartButtonEnabled(bEveryoneReady);
+            break; // only the host needs this
         }
     }
 }

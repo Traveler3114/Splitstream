@@ -5,6 +5,7 @@
 #include "GameplayTagContainer.h"
 #include "LobbyPlayerController.generated.h"
 
+class ULobbyUI;
 
 UCLASS()
 class ECHOESOFTIME_API ALobbyPlayerController : public APlayerController
@@ -20,11 +21,18 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
     TSubclassOf<class UUserWidget> LoadingWidgetClass;
 
+    UFUNCTION(Client, Reliable)
+    void OnStartGame();
 
-	UFUNCTION(Client,Reliable)
-	void OnStartGame();
-
-    // Add this public method declaration:
     UFUNCTION(Server, Reliable)
     void ServerRequestLeaveLobby();
+
+    // NEW: client RPC to toggle Start button
+    UFUNCTION(Client, Reliable)
+    void ClientSetStartButtonEnabled(bool bEnabled);
+
+private:
+    // NEW: keep a reference to the created Lobby UI on the local client
+    UPROPERTY()
+    ULobbyUI* LobbyUIInstance = nullptr;
 };

@@ -7,6 +7,7 @@
 #include "DefaultPlayerState.h"
 #include "AbilitySystemComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
 
 void ALobbyPlayerController::BeginPlay()
 {
@@ -23,9 +24,18 @@ void ALobbyPlayerController::BeginPlay()
         if (LobbyUI)
         {
             LobbyUI->AddToViewport();
+            LobbyUIInstance = LobbyUI; // store for later use
+
+            // Host sees Start button; clients don’t
             if (HasAuthority())
             {
                 LobbyUI->SetStartButtonVisibility(ESlateVisibility::Visible);
+                // Ensure disabled by default; GameMode will enable when everyone is ready
+                LobbyUI->SetStartButtonEnabled(false);
+            }
+            else
+            {
+                LobbyUI->SetStartButtonVisibility(ESlateVisibility::Collapsed);
             }
         }
     }
@@ -34,7 +44,7 @@ void ALobbyPlayerController::BeginPlay()
 void ALobbyPlayerController::ServerRequestLeaveLobby_Implementation()
 {
     ADefaultPlayerState* PS = Cast<ADefaultPlayerState>(PlayerState);
-    if (PS->AssignedPlatform)
+    if (PS && PS->AssignedPlatform)
     {
         if (PS->AssignedPlatform->OccupyingPawn)
         {
@@ -45,18 +55,9 @@ void ALobbyPlayerController::ServerRequestLeaveLobby_Implementation()
         {
             PS->AssignedPlatform->PlayerInfoWidget->SetVisibility(false);
         }
-        if (PS->AssignedPlatform->OpenFriendsListButtonWidget)
-        {
-            PS->AssignedPlatform->OpenFriendsListButtonWidget->SetVisibility(true);
-        }
         PS->AssignedPlatform = nullptr;
     }
 }
-
-
-
-
-
 
 void ALobbyPlayerController::OnStartGame_Implementation()
 {
@@ -66,6 +67,27 @@ void ALobbyPlayerController::OnStartGame_Implementation()
         if (LoadingWidget)
         {
             LoadingWidget->AddToViewport();
+        }
+    }
+}
+
+// NEW: Client RPC called by server to toggle Start button on host client
+void ALobbyPlayerController::ClientSetStartButtonEnabled_Implementation(bool bEnabled)
+{
+    if (LobbyUIInstance)
+    {
+        LobbyUIInstance->SetStartButtonEnabled(bEnabled);
+        return;
+    }
+
+    // Fallback if UI pointer wasn’t cached
+    TArray<UUserWidget*> FoundWidgets;
+    UWidgetBlueprintLibrary::GetAllWidgetsOfClass(GetWorld(), FoundWidgets, ULobbyUI::StaticClass(), false);
+    for (UUserWidget* Widget : FoundWidgets)
+    {
+        if (ULobbyUI* LobbyUI = Cast<ULobbyUI>(Widget))
+        {
+            LobbyUI->SetStartButtonEnabled(bEnabled);
         }
     }
 }

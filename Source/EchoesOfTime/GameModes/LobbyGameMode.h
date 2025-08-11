@@ -22,8 +22,8 @@ public:
 	TArray<AActor*> LobbyPlatforms;
 
 
-	//UFUNCTION()
-	//void CheckAllPlayersReady();
+	UFUNCTION()
+	void CheckAllPlayersReady();
 
 	//UFUNCTION(BlueprintCallable)
 	//void StartGame();
