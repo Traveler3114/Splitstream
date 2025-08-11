@@ -62,7 +62,7 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Platform")
     UStaticMeshComponent* PlatformMesh;
 
-    UPROPERTY(VisibleAnywhere)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Platform")
     UWidgetComponent* OpenFriendsListButtonWidget;
 
     UPROPERTY(VisibleAnywhere)
