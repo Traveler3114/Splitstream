@@ -25,8 +25,8 @@ public:
 	UFUNCTION()
 	void CheckAllPlayersReady();
 
-	//UFUNCTION(BlueprintCallable)
-	//void StartGame();
+	UFUNCTION(BlueprintCallable)
+	void StartGame();
 
 	//UFUNCTION(BlueprintNativeEvent, Category = "Lobby")
 	//void KickPlayer(APlayerController* PlayerController);

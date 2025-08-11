@@ -106,3 +106,19 @@ void ALobbyGameMode::CheckAllPlayersReady()
         }
     }
 }
+
+void ALobbyGameMode::StartGame()
+{
+    // 1) Ask all clients to show a loading UI
+    for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+    {
+        if (ALobbyPlayerController* PC = Cast<ALobbyPlayerController>(It->Get()))
+        {
+            PC->OnStartGame(); // Client RPC already in your project
+        }
+    }
+
+    // 2) Seamless server travel to the game map (listen server)
+    const FString MapPath = TEXT("/Game/Maps/TestMap?listen");
+    GetWorld()->ServerTravel(MapPath);
+}
