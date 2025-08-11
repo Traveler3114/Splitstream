@@ -2,7 +2,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Actors/LobbyPlatformActor.h"
 #include "Controllers/LobbyPlayerController.h"
-#include "Engine/Engine.h" // For GEngine->AddOnScreenDebugMessage
+#include "Engine/Engine.h"
 #include "Widgets/Lobby/LobbyUI.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "GameplayTagContainer.h"
@@ -25,7 +25,10 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
         UGameplayStatics::GetAllActorsOfClass(GetWorld(), ALobbyPlatformActor::StaticClass(), LobbyPlatforms);
     }
     ALobbyPlayerController* PC = Cast<ALobbyPlayerController>(NewPlayer);
-    PC->OnPlayerReady.AddDynamic(this, &ALobbyGameMode::CheckAllPlayersReady);
+	ADefaultPlayerState* PlayerState = Cast<ADefaultPlayerState>(NewPlayer->PlayerState);
+
+
+    PlayerState->OnPlayerReady.AddDynamic(this, &ALobbyGameMode::CheckAllPlayersReady);
     // Find the first available platform
     for (AActor* Actor : LobbyPlatforms)
     {
@@ -33,27 +36,18 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
         if (!Platform->OccupyingPawn)
         {
             APawn* SpawnedPawn = Platform->SpawnCharacterAtPlatform(NewPlayer);
-            if (PC)
+            if (PlayerState)
             {
-                PC->AssignedPlatform = Platform;
+                PlayerState->AssignedPlatform = Platform;
                 Platform->OnKickRequested.AddDynamic(this, &ALobbyGameMode::HandleKickRequestedFromPlatform);
             }
 			FGameplayTag DefaultTeamTag = FGameplayTag::RequestGameplayTag(FName("Team.Future"));
-            PC->TeamTag = DefaultTeamTag;
-            if (PC->AssignedPlatform)
-            {
-                PC->AssignedPlatform->TeamTag = DefaultTeamTag;
-                PC->AssignedPlatform->OnRep_PlayerInfo(); // Update UI immediately
-            }
-
-            // Set on PlayerState's ASC
-            if (ADefaultPlayerState* PS = Cast<ADefaultPlayerState>(PC->PlayerState))
-            {
-                if (UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent())
-                {
-                    ASC->AddLooseGameplayTag(DefaultTeamTag);
-                }
-            }
+			PlayerState->ServerSetTeamTag(DefaultTeamTag); // Set default team tag on PlayerState
+            //if (PlayerState->AssignedPlatform)
+            //{
+            //    PlayerState->AssignedPlatform->TeamTag = DefaultTeamTag;
+            //    PlayerState->AssignedPlatform->OnRep_PlayerInfo(); // Update UI immediately
+            //}
             break; // Exit after assigning the first available platform
         }
     }
@@ -66,7 +60,8 @@ void ALobbyGameMode::CheckAllPlayersReady()
     for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
     {
         ALobbyPlayerController* PC = Cast<ALobbyPlayerController>(It->Get());
-        if (!PC || !PC->bIsReady)
+        ADefaultPlayerState* PlayerState = Cast<ADefaultPlayerState>(PC->PlayerState);
+        if (!PlayerState || !PlayerState->bIsReady)
         {
             bEveryoneReady = false;
             break;
@@ -125,7 +120,8 @@ void ALobbyGameMode::HandleKickRequestedFromPlatform(ALobbyPlatformActor* Platfo
     for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
     {
         ALobbyPlayerController* PC = Cast<ALobbyPlayerController>(It->Get());
-        if (PC && PC->AssignedPlatform == Platform)
+        ADefaultPlayerState* PlayerState = Cast<ADefaultPlayerState>(PC->PlayerState);
+        if (PC && PlayerState->AssignedPlatform == Platform)
         {
 			KickPlayer(PC);
             break;

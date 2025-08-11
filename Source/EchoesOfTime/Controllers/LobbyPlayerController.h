@@ -5,7 +5,6 @@
 #include "GameplayTagContainer.h"
 #include "LobbyPlayerController.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FPlayerReadySignature);
 
 UCLASS()
 class ECHOESOFTIME_API ALobbyPlayerController : public APlayerController
@@ -21,31 +20,6 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
     TSubclassOf<class UUserWidget> LoadingWidgetClass;
 
-    UPROPERTY(ReplicatedUsing = OnRep_ReadyState)
-    bool bIsReady = false;
-
-    UPROPERTY(ReplicatedUsing = OnRep_TeamTag)
-    FGameplayTag TeamTag;
-
-    UFUNCTION()
-    void OnRep_ReadyState();
-
-    UFUNCTION(Server, Reliable)
-    void ServerSetReadyState(bool bReady);
-
-    UFUNCTION()
-    void OnRep_TeamTag();
-
-    UFUNCTION(Server, Reliable)
-    void ServerSetTeamTag(FGameplayTag NewTeamTag);
-
-
-    UPROPERTY(EditAnywhere,BlueprintReadWrite,Replicated)
-    class ALobbyPlatformActor* AssignedPlatform = nullptr;
-
-
-    UPROPERTY(BlueprintAssignable, Category = "Events")
-    FPlayerReadySignature OnPlayerReady;
 
 	UFUNCTION(Client,Reliable)
 	void OnStartGame();

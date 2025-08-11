@@ -43,17 +43,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Platform")
     APawn* OccupyingPawn;
 
-    UFUNCTION(BlueprintCallable, Category = "Platform")
-    void SetPlayerReadyState(bool bReady);
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Platform")
     UWidgetComponent* PlayerInfoWidget;
-
-    UPROPERTY(ReplicatedUsing = OnRep_PlayerInfo)
-    FGameplayTag TeamTag;
-
-    UFUNCTION()
-    void OnRep_PlayerInfo();
 
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Platform")
@@ -82,19 +74,6 @@ protected:
     UFUNCTION()
     void OnRep_IsOccupied();
 
-    UPROPERTY(ReplicatedUsing = OnRep_PlayerInfo)
-    FString ReplicatedPlayerName;
-
-    UPROPERTY(ReplicatedUsing = OnRep_PlayerInfo)
-    UTexture2D* ReplicatedAvatarTexture;
-
-
-
-    UPROPERTY(ReplicatedUsing = OnRep_ReadyState)
-    bool bIsReady = false;
-
-    UFUNCTION()
-    void OnRep_ReadyState();
 
 
 

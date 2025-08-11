@@ -81,21 +81,12 @@ APawn* ALobbyPlatformActor::SpawnCharacterAtPlatform(AController* NewController)
     FTransform SpawnTransform = SpawnPoint->GetComponentTransform();
     APawn* SpawnedPawn = GetWorld()->SpawnActor<APawn>(CharacterClassToSpawn, SpawnTransform);
     OccupyingPawn = SpawnedPawn;
-
-    if (NewController && NewController->PlayerState)
-    {
-        ReplicatedPlayerName = NewController->PlayerState->GetPlayerName();
-        ReplicatedAvatarTexture = GetPlayerAvatar(NewController);
-    }
-
     if (OccupyingPawn && PlayerInfoWidget)
     {
         FVector PawnLocation = OccupyingPawn->GetActorLocation();
         FVector WidgetLocation = PawnLocation + FVector(0.f, 0.f, 120.f);
         PlayerInfoWidget->SetWorldLocation(WidgetLocation);
     }
-
-    OnRep_PlayerInfo();
 
     bIsOccupied = true;
     OnRep_IsOccupied();
@@ -120,24 +111,6 @@ void ALobbyPlatformActor::OnRep_IsOccupied()
     }
 }
 
-void ALobbyPlatformActor::OnRep_PlayerInfo()
-{
-    if (PlayerInfoWidget)
-    {
-        PlayerInfoWidget->InitWidget();
-        UUserWidget* UserWidget = PlayerInfoWidget->GetUserWidgetObject();
-        if (UPlayerLobbyInfo* LobbyInfo = Cast<UPlayerLobbyInfo>(UserWidget))
-        {
-            LobbyInfo->SetPlayerName(FText::FromString(ReplicatedPlayerName));
-            LobbyInfo->SetAvatarTexture(ReplicatedAvatarTexture);
-            LobbyInfo->SetKickButtonVisible(HasAuthority());
-            LobbyInfo->SetTeamTag(TeamTag);
-
-            LobbyInfo->OnKickRequested.RemoveAll(this);
-            LobbyInfo->OnKickRequested.AddDynamic(this, &ALobbyPlatformActor::HandleKickRequested);
-        }
-    }
-}
 
 void ALobbyPlatformActor::HandleKickRequested()
 {
@@ -145,34 +118,10 @@ void ALobbyPlatformActor::HandleKickRequested()
 }
 
 
-void ALobbyPlatformActor::SetPlayerReadyState(bool bReady)
-{
-    if (HasAuthority())
-    {
-        bIsReady = bReady;
-        OnRep_ReadyState(); // Update server's own UI immediately
-    }
-}
 
-void ALobbyPlatformActor::OnRep_ReadyState()
-{
-    if (PlayerInfoWidget)
-    {
-        PlayerInfoWidget->InitWidget();
-        UUserWidget* UserWidget = PlayerInfoWidget->GetUserWidgetObject();
-        if (UPlayerLobbyInfo* LobbyInfo = Cast<UPlayerLobbyInfo>(UserWidget))
-        {
-            LobbyInfo->SetReadyState(bIsReady);
-        }
-    }
-}
 
 void ALobbyPlatformActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(ALobbyPlatformActor, bIsOccupied);
-    DOREPLIFETIME(ALobbyPlatformActor, ReplicatedPlayerName);
-    DOREPLIFETIME(ALobbyPlatformActor, ReplicatedAvatarTexture);
-    DOREPLIFETIME(ALobbyPlatformActor, bIsReady); 
-    DOREPLIFETIME(ALobbyPlatformActor, TeamTag);
 }

@@ -3,6 +3,7 @@
 #include "Components/TextBlock.h"
 #include "Controllers/LobbyPlayerController.h"
 #include "GameModes/LobbyGameMode.h"
+#include "DefaultPlayerState.h"
 
 void ULobbyUI::NativeConstruct()
 {
@@ -46,28 +47,6 @@ void ULobbyUI::OnStartButtonClicked()
     }
 }
 
-void ULobbyUI::OnChangeButtonClicked()
-{
-    const FString CurrentText = team_txt->GetText().ToString();
-	FGameplayTag NewTag;
-    if (CurrentText.Equals(TEXT("Future"), ESearchCase::IgnoreCase))
-    {
-        team_txt->SetText(FText::FromString(TEXT("Past")));
-		NewTag = FGameplayTag::RequestGameplayTag(FName("Team.Past"));
-    }
-    else
-    {
-        team_txt->SetText(FText::FromString(TEXT("Future")));
-        NewTag = FGameplayTag::RequestGameplayTag(FName("Team.Future"));
-    }
-    if (ALobbyPlayerController* PC = Cast<ALobbyPlayerController>(GetOwningPlayer()))
-    {
-        PC->ServerSetTeamTag(NewTag);
-    }
-
-}
-
-
 
 void ULobbyUI::SetStartButtonEnabled(bool bEnabled)
 {
@@ -100,6 +79,35 @@ void ULobbyUI::OnReadyButtonClicked()
 
     if (ALobbyPlayerController* PC = Cast<ALobbyPlayerController>(GetOwningPlayer()))
     {
-        PC->ServerSetReadyState(bLocalReady);
+        ADefaultPlayerState* PlayerState = Cast<ADefaultPlayerState>(PC ? PC->PlayerState : nullptr);
+        if (PlayerState)
+        {
+            PlayerState->ServerSetReadyState(bLocalReady);
+        }
     }
+}
+
+void ULobbyUI::OnChangeButtonClicked()
+{
+    const FString CurrentText = team_txt->GetText().ToString();
+    FGameplayTag NewTag;
+    if (CurrentText.Equals(TEXT("Future"), ESearchCase::IgnoreCase))
+    {
+        team_txt->SetText(FText::FromString(TEXT("Past")));
+        NewTag = FGameplayTag::RequestGameplayTag(FName("Team.Past"));
+    }
+    else
+    {
+        team_txt->SetText(FText::FromString(TEXT("Future")));
+        NewTag = FGameplayTag::RequestGameplayTag(FName("Team.Future"));
+    }
+    if (ALobbyPlayerController* PC = Cast<ALobbyPlayerController>(GetOwningPlayer()))
+    {
+        ADefaultPlayerState* PlayerState = Cast<ADefaultPlayerState>(PC ? PC->PlayerState : nullptr);
+        if (PlayerState)
+        {
+            PlayerState->ServerSetTeamTag(NewTag);
+        }
+    }
+
 }
