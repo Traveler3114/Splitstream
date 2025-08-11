@@ -20,6 +20,42 @@ UAbilitySystemComponent* ADefaultPlayerState::GetAbilitySystemComponent() const
     return AbilitySystemComponent;
 }
 
+void ADefaultPlayerState::ServerSetReadyState_Implementation(bool bReady)
+{
+    bIsReady = bReady;
+
+    // Update server immediately
+    ApplyLobbyInfoToWidget();
+    if (HasAuthority())
+    {
+        OnPlayerReady.Broadcast();
+    }
+
+    // Push replication to clients right away
+    ForceNetUpdate();
+    if (AssignedPlatform) { AssignedPlatform->ForceNetUpdate(); }
+}
+
+void ADefaultPlayerState::ServerSetTeamTag_Implementation(FGameplayTag NewTeamTag)
+{
+    TeamTag = NewTeamTag;
+
+    // Update ASC tags (authoritative on server)
+    if (AbilitySystemComponent)
+    {
+        AbilitySystemComponent->RemoveLooseGameplayTag(FGameplayTag::RequestGameplayTag(FName("Team.Future")));
+        AbilitySystemComponent->RemoveLooseGameplayTag(FGameplayTag::RequestGameplayTag(FName("Team.Past")));
+        AbilitySystemComponent->AddLooseGameplayTag(NewTeamTag);
+    }
+
+    // Update server UI immediately
+    ApplyLobbyInfoToWidget();
+
+    // Push replication
+    ForceNetUpdate();
+    if (AssignedPlatform) { AssignedPlatform->ForceNetUpdate(); }
+}
+
 void ADefaultPlayerState::ApplyLobbyInfoToWidget()
 {
     if (!AssignedPlatform || !AssignedPlatform->PlayerInfoWidget)
@@ -42,20 +78,32 @@ void ADefaultPlayerState::ApplyLobbyInfoToWidget()
             LobbyInfo->SetKickButtonVisible(HasAuthority());
 
             // Avatar: fetch on clients via your BP event; cache to avoid repeated calls
-            if (!HasAuthority())
+            if (!CachedAvatarTexture)
             {
-                if (!CachedAvatarTexture)
-                {
-                    AController* OwningController = FindOwningController();
-                    CachedAvatarTexture = GetPlayerAvatar(OwningController);
-                }
-                if (CachedAvatarTexture)
-                {
-                    LobbyInfo->SetAvatarTexture(CachedAvatarTexture);
-                }
+                AController* OwningController = FindOwningController();
+                CachedAvatarTexture = GetPlayerAvatar(OwningController);
+            }
+            if (CachedAvatarTexture)
+            {
+                LobbyInfo->SetAvatarTexture(CachedAvatarTexture);
             }
         }
     }
+}
+AController* ADefaultPlayerState::FindOwningController() const
+{
+    UWorld* World = GetWorld();
+    if (!World) return nullptr;
+
+    for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
+    {
+        APlayerController* PC = It->Get();
+        if (PC && PC->PlayerState == this)
+        {
+            return PC;
+        }
+    }
+    return nullptr;
 }
 
 void ADefaultPlayerState::RefreshLobbyInfoUI()
@@ -89,21 +137,7 @@ void ADefaultPlayerState::OnRep_AssignedPlatform()
     ApplyLobbyInfoToWidget();
 }
 
-AController* ADefaultPlayerState::FindOwningController() const
-{
-    UWorld* World = GetWorld();
-    if (!World) return nullptr;
 
-    for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
-    {
-        APlayerController* PC = It->Get();
-        if (PC && PC->PlayerState == this)
-        {
-            return PC;
-        }
-    }
-    return nullptr;
-}
 
 void ADefaultPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
