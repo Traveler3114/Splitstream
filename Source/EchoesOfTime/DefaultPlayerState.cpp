@@ -6,13 +6,35 @@
 #include "Engine/Texture2D.h"
 #include "Engine/World.h"
 
+// Static cached gameplay tags for teams
+namespace CachedGameplayTags
+{
+	static FGameplayTag TeamFuture;
+	static FGameplayTag TeamPast;
+	static bool bTagsInitialized = false;
+
+	void InitializeTags()
+	{
+		if (!bTagsInitialized)
+		{
+			TeamFuture = FGameplayTag::RequestGameplayTag(FName("Team.Future"));
+			TeamPast = FGameplayTag::RequestGameplayTag(FName("Team.Past"));
+			bTagsInitialized = true;
+		}
+	}
+}
+
 ADefaultPlayerState::ADefaultPlayerState()
 {
     AbilitySystemComponent = CreateDefaultSubobject<UDefaultAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
     AttributeSet = CreateDefaultSubobject<UDefaultAttributeSet>(TEXT("AttributeSet"));
 
-	SetNetUpdateFrequency(30.f);
-	SetMinNetUpdateFrequency(30.f);
+	// Initialize cached gameplay tags
+	CachedGameplayTags::InitializeTags();
+
+	// Lower replication frequencies for lobby (mostly static state)
+	SetNetUpdateFrequency(10.f);
+	SetMinNetUpdateFrequency(5.f);
 }
 
 UAbilitySystemComponent* ADefaultPlayerState::GetAbilitySystemComponent() const
@@ -31,29 +53,25 @@ void ADefaultPlayerState::ServerSetReadyState_Implementation(bool bReady)
         OnPlayerReady.Broadcast();
     }
 
-    // Push replication to clients right away
-    ForceNetUpdate();
-    if (AssignedPlatform) { AssignedPlatform->ForceNetUpdate(); }
+    // Normal replication will handle updates (no need for immediate flush)
 }
 
 void ADefaultPlayerState::ServerSetTeamTag_Implementation(FGameplayTag NewTeamTag)
 {
     TeamTag = NewTeamTag;
 
-    // Update ASC tags (authoritative on server)
+    // Update ASC tags (authoritative on server) using cached tags
     if (AbilitySystemComponent)
     {
-        AbilitySystemComponent->RemoveLooseGameplayTag(FGameplayTag::RequestGameplayTag(FName("Team.Future")));
-        AbilitySystemComponent->RemoveLooseGameplayTag(FGameplayTag::RequestGameplayTag(FName("Team.Past")));
+        AbilitySystemComponent->RemoveLooseGameplayTag(CachedGameplayTags::TeamFuture);
+        AbilitySystemComponent->RemoveLooseGameplayTag(CachedGameplayTags::TeamPast);
         AbilitySystemComponent->AddLooseGameplayTag(NewTeamTag);
     }
 
     // Update server UI immediately
     ApplyLobbyInfoToWidget();
 
-    // Push replication
-    ForceNetUpdate();
-    if (AssignedPlatform) { AssignedPlatform->ForceNetUpdate(); }
+    // Normal replication will handle updates
 }
 
 void ADefaultPlayerState::ApplyLobbyInfoToWidget()
@@ -92,28 +110,14 @@ void ADefaultPlayerState::ApplyLobbyInfoToWidget()
 }
 AController* ADefaultPlayerState::FindOwningController() const
 {
-    UWorld* World = GetWorld();
-    if (!World) return nullptr;
-
-    for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
-    {
-        APlayerController* PC = It->Get();
-        if (PC && PC->PlayerState == this)
-        {
-            return PC;
-        }
-    }
-    return nullptr;
+    // Use existing ownership instead of O(n) iteration
+    return Cast<AController>(GetOwner());
 }
 
 void ADefaultPlayerState::RefreshLobbyInfoUI()
 {
     ApplyLobbyInfoToWidget();
-
-    if (AssignedPlatform)
-    {
-        AssignedPlatform->ForceNetUpdate();
-    }
+    // Normal replication will handle updates
 }
 
 void ADefaultPlayerState::OnRep_ReadyState()
