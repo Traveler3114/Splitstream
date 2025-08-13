@@ -82,8 +82,14 @@ void UPlayerLobbyInfo::ApplyLobbyPlayerViewData(const FLobbyPlayerViewData& View
     SetKickButtonVisible(ViewData.bCanKick);
     
     // TODO: Future avatar loading based on ViewData.AvatarId
-    // For now, keep existing avatar texture logic in place
+    // When async avatar system is implemented, this will fetch avatar by ID
+    // For now, keep existing avatar texture logic in DefaultPlayerState
     
-    // TODO: Future role display based on ViewData.RoleTag
-    // Reserved for future role selection UI
+    // TODO: Future role display based on ViewData.RoleTag  
+    // When role selection UI is implemented, display role in separate UI element
+    // Reserved for future role selection and specialization system
+    
+    // TODO: Future analytics integration
+    // Track UI update patterns and performance metrics
+    // Log user interaction patterns for lobby optimization
 }

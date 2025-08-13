@@ -5,6 +5,7 @@
 #include "GameModes/LobbyGameMode.h"
 #include "GameStates/LobbyGameState.h"
 #include "DefaultPlayerState.h"
+#include "GameplayTagContainer.h"
 #include "Engine/World.h"
 
 void ULobbyUI::NativeConstruct()

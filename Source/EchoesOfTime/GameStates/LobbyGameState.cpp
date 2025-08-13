@@ -216,7 +216,7 @@ void ALobbyGameState::EvaluateReadinessAndPhase()
     int32 ReadyCount = CountReadyPlayers();
     int32 TotalPlayers = PlayerRoster.Items.Num();
 
-    // Update aggregate ready state
+    // Update aggregate ready state for fast client access
     if (bAllPlayersReady != bNewAllPlayersReady)
     {
         bAllPlayersReady = bNewAllPlayersReady;
@@ -224,10 +224,11 @@ void ALobbyGameState::EvaluateReadinessAndPhase()
                ReadyCount, TotalPlayers, bAllPlayersReady ? TEXT("Yes") : TEXT("No"));
     }
 
-    // Phase transition logic
+    // Phase transition logic - core of the new lobby state machine
     if (LobbyPhase == ELobbyPhase::Gathering)
     {
         // Start countdown if all players ready and minimum met
+        // This replaces the old per-tick readiness checking in GameMode
         if (bAllPlayersReady && TotalPlayers >= MinPlayersToStart)
         {
             StartCountdown();
@@ -236,6 +237,7 @@ void ALobbyGameState::EvaluateReadinessAndPhase()
     else if (LobbyPhase == ELobbyPhase::Countdown)
     {
         // Cancel countdown if readiness condition no longer met
+        // Provides responsive feedback when players change state during countdown
         if (!bAllPlayersReady || TotalPlayers < MinPlayersToStart)
         {
             CancelCountdown();

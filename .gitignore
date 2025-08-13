@@ -14,3 +14,7 @@ Build
 *.xcodeproj
 *.xcworkspace
 Echoes of Time.docx
+
+# Testing and temporary files
+/tmp/
+*.tmp

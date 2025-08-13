@@ -8,6 +8,9 @@ class UButton;
 class UTextBlock;
 class ALobbyGameState;
 
+// Forward declaration
+enum class ELobbyPhase : uint8;
+
 UCLASS()
 class ECHOESOFTIME_API ULobbyUI : public UUserWidget
 {
