@@ -125,7 +125,84 @@ void ALobbyPlatformActor::NotifyOccupantChanged()
 	OnOccupantChanged.Broadcast(this, OccupantPlayerState);
 }
 
-// (Spawn/Destroy pawn stubs left commented out as before...)
+void ALobbyPlatformActor::SpawnOccupantPawn()
+{
+	// Server only
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	// Need a pawn class and an occupant
+	if (!LobbyPawnClass || !OccupantPlayerState)
+	{
+		return;
+	}
+
+	// Clean up any existing display pawn
+	if (IsValid(OccupantLobbyPawn))
+	{
+		OccupantLobbyPawn->Destroy();
+		OccupantLobbyPawn = nullptr;
+	}
+
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
+	const FVector SpawnLoc = SpawnPoint ? SpawnPoint->GetComponentLocation() : GetActorLocation();
+	const FRotator SpawnRot = SpawnPoint ? SpawnPoint->GetComponentRotation() : GetActorRotation();
+
+	FActorSpawnParameters Params;
+	Params.Owner = this;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+	APawn* NewPawn = World->SpawnActor<APawn>(LobbyPawnClass, SpawnLoc, SpawnRot, Params);
+	if (!NewPawn)
+	{
+		return;
+	}
+
+	// Ensure it replicates so other clients see it (most Pawn classes already have bReplicates=true, but we enforce)
+	NewPawn->SetReplicates(true);
+
+	OccupantLobbyPawn = NewPawn;
+
+	// Optional: possession (ONLY if you actually want the occupant to control / animate this pawn).
+	// If this is just a static lobby display, you can skip this block.
+	if (AController* Controller = Cast<AController>(OccupantPlayerState->GetOwner()))
+	{
+		// If you do NOT want to override their current pawn (e.g. they already have one),
+		// remove or comment the possess call.
+		Controller->Possess(NewPawn);
+	}
+
+	// OPTIONAL cosmetic adjustments:
+	// NewPawn->SetActorEnableCollision(false);
+	// NewPawn->DisableInput(nullptr);
+}
+
+void ALobbyPlatformActor::DestroyOccupantPawn()
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	if (IsValid(OccupantLobbyPawn))
+	{
+		// If possessed, unpossess to avoid the controller trying to tick a destroyed pawn
+		if (AController* Controller = OccupantLobbyPawn->GetController())
+		{
+			Controller->UnPossess();
+		}
+
+		OccupantLobbyPawn->Destroy();
+		OccupantLobbyPawn = nullptr;
+	}
+}
 
 void ALobbyPlatformActor::UpdateWidgetsForOccupant()
 {
