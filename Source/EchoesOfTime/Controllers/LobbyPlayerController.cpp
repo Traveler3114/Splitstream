@@ -1,51 +1,61 @@
 #include "LobbyPlayerController.h"
 #include "Widgets/Lobby/LobbyUI.h"
-#include "Actors/LobbyPlatformActor.h"
-#include "Widgets/Lobby/PlayerLobbyInfo.h"
-#include "Components/WidgetComponent.h"
-#include "Net/UnrealNetwork.h"
-#include "Blueprint/WidgetBlueprintLibrary.h"
+#include "Blueprint/UserWidget.h"
+#include "GameModes/LobbyGameMode.h"
 
 void ALobbyPlayerController::BeginPlay()
 {
-    Super::BeginPlay();
+	Super::BeginPlay();
 
-    if (!IsLocalController())
-    {
-        return;
-    }
+	if (!IsLocalController()) return;
 
-    if (LobbyUIClass)
-    {
-        ULobbyUI* LobbyUI = CreateWidget<ULobbyUI>(this, LobbyUIClass);
-        if (LobbyUI)
-        {
-            LobbyUI->AddToViewport();
-            LobbyUIInstance = LobbyUI; // store for later use
+	if (LobbyUIClass)
+	{
+		LobbyUIInstance = CreateWidget<ULobbyUI>(this, LobbyUIClass);
+		if (LobbyUIInstance)
+		{
+			LobbyUIInstance->AddToViewport();
 
-            // Host sees Start button; clients don�t
-            if (HasAuthority())
-            {
-                LobbyUI->SetStartButtonVisibility(ESlateVisibility::Visible);
-                // Ensure disabled by default; GameMode will enable when everyone is ready
-                LobbyUI->SetStartButtonEnabled(false);
-            }
-            else
-            {
-                LobbyUI->SetStartButtonVisibility(ESlateVisibility::Collapsed);
-            }
-        }
-    }
+			if (HasAuthority())
+			{
+				LobbyUIInstance->SetStartButtonVisibility(ESlateVisibility::Visible);
+				LobbyUIInstance->SetStartButtonEnabled(false);
+			}
+			else
+			{
+				LobbyUIInstance->SetStartButtonVisibility(ESlateVisibility::Collapsed);
+			}
+		}
+	}
 }
 
-void ALobbyPlayerController::OnStartGame_Implementation()
+void ALobbyPlayerController::ClientSetStartButtonEnabled_Implementation(bool bEnabled)
 {
-    if (LoadingWidgetClass)
-    {
-        UUserWidget* LoadingWidget = CreateWidget<UUserWidget>(this, LoadingWidgetClass, TEXT("LoadingWidget"));
-        if (LoadingWidget)
-        {
-            LoadingWidget->AddToViewport();
-        }
-    }
+	if (LobbyUIInstance)
+	{
+		LobbyUIInstance->SetStartButtonEnabled(bEnabled);
+	}
+}
+
+void ALobbyPlayerController::ServerStartGame_Implementation()
+{
+	if (HasAuthority())
+	{
+		if (ALobbyGameMode* GM = GetWorld()->GetAuthGameMode<ALobbyGameMode>())
+		{
+			GM->StartGameIfAllowed(this);
+		}
+	}
+}
+
+void ALobbyPlayerController::ClientShowLoadingScreen_Implementation()
+{
+	if (LoadingWidgetClass)
+	{
+		if (UUserWidget* LoadingWidget = CreateWidget<UUserWidget>(this, LoadingWidgetClass, TEXT("LoadingWidget")))
+		{
+			LoadingWidget->AddToViewport();
+		}
+	}
+	// Optional: set input mode / show mouse, etc.
 }

@@ -5,14 +5,13 @@
 #include "Components/WidgetComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/PlayerState.h"
-#include "GameFramework/PlayerController.h"
 #include "GameFramework/Pawn.h"
-
 #include "Widgets/Lobby/OpenFriendsListButton.h"
 #include "Widgets/Lobby/FriendList.h"
-#include "Widgets/Lobby/PlayerLobbyInfo.h"          // NEW
-#include "DefaultPlayerState.h"                    // NEW
+#include "Widgets/Lobby/PlayerLobbyInfo.h"
+#include "DefaultPlayerState.h"
 #include "Blueprint/UserWidget.h"
+#include "TimerManager.h"
 
 ALobbyPlatformActor::ALobbyPlatformActor()
 {
@@ -44,7 +43,20 @@ void ALobbyPlatformActor::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// Start with friend list hidden (also sets button visibility)
 	SetFriendListVisible(false);
+
+	// Force early construction attempt for player info (optional)
+	if (PlayerLobbyInfo)
+	{
+		PlayerLobbyInfo->GetUserWidgetObject();
+		// Hide it initially (unoccupied)
+		PlayerLobbyInfo->SetVisibility(false);
+		if (UUserWidget* InfoUW = PlayerLobbyInfo->GetUserWidgetObject())
+		{
+			InfoUW->SetVisibility(ESlateVisibility::Collapsed);
+		}
+	}
 
 	if (OpenFriendListButton)
 	{
@@ -67,9 +79,13 @@ void ALobbyPlatformActor::BeginPlay()
 			}
 		}
 	}
+
+	// Cover construction race
+	SchedulePlayerInfoRetry();
+	UpdateOpenFriendButtonVisibility();
 }
 
-void ALobbyPlatformActor::EndPlay(const EEndPlayReason::Type EndPlayReason) // NEW
+void ALobbyPlatformActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	UnbindFromOccupantPlayerState();
 	Super::EndPlay(EndPlayReason);
@@ -91,6 +107,7 @@ bool ALobbyPlatformActor::ServerAssignOccupant(APlayerState* NewOccupant)
 	OccupantPlayerState = NewOccupant;
 	SpawnOccupantPawn();
 	NotifyOccupantChanged();
+	SchedulePlayerInfoRetry();
 	return true;
 }
 
@@ -108,38 +125,38 @@ bool ALobbyPlatformActor::ServerClearOccupant()
 
 	OccupantPlayerState = nullptr;
 	NotifyOccupantChanged();
+	SchedulePlayerInfoRetry();
 	return true;
 }
 
 void ALobbyPlatformActor::OnRep_OccupantPlayerState()
 {
 	NotifyOccupantChanged();
+	SchedulePlayerInfoRetry();
 }
 
 void ALobbyPlatformActor::NotifyOccupantChanged()
 {
-	UnbindFromOccupantPlayerState();    // NEW
-	BindToOccupantPlayerState();        // NEW
+	UnbindFromOccupantPlayerState();
+	BindToOccupantPlayerState();
+
+	// Optionally auto-close friend list when occupied
+	if (OccupantPlayerState && FriendList && FriendList->IsVisible())
+	{
+		SetFriendListVisible(false);
+	}
 
 	UpdateWidgetsForOccupant();
+	UpdateOpenFriendButtonVisibility();
+
 	OnOccupantChanged.Broadcast(this, OccupantPlayerState);
 }
 
 void ALobbyPlatformActor::SpawnOccupantPawn()
 {
-	// Server only
-	if (!HasAuthority())
-	{
-		return;
-	}
+	if (!HasAuthority()) return;
+	if (!LobbyPawnClass || !OccupantPlayerState) return;
 
-	// Need a pawn class and an occupant
-	if (!LobbyPawnClass || !OccupantPlayerState)
-	{
-		return;
-	}
-
-	// Clean up any existing display pawn
 	if (IsValid(OccupantLobbyPawn))
 	{
 		OccupantLobbyPawn->Destroy();
@@ -147,10 +164,7 @@ void ALobbyPlatformActor::SpawnOccupantPawn()
 	}
 
 	UWorld* World = GetWorld();
-	if (!World)
-	{
-		return;
-	}
+	if (!World) return;
 
 	const FVector SpawnLoc = SpawnPoint ? SpawnPoint->GetComponentLocation() : GetActorLocation();
 	const FRotator SpawnRot = SpawnPoint ? SpawnPoint->GetComponentRotation() : GetActorRotation();
@@ -160,45 +174,18 @@ void ALobbyPlatformActor::SpawnOccupantPawn()
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
 	APawn* NewPawn = World->SpawnActor<APawn>(LobbyPawnClass, SpawnLoc, SpawnRot, Params);
-	if (!NewPawn)
-	{
-		return;
-	}
+	if (!NewPawn) return;
 
-	// Ensure it replicates so other clients see it (most Pawn classes already have bReplicates=true, but we enforce)
 	NewPawn->SetReplicates(true);
-
 	OccupantLobbyPawn = NewPawn;
-
-	// Optional: possession (ONLY if you actually want the occupant to control / animate this pawn).
-	// If this is just a static lobby display, you can skip this block.
-	if (AController* Controller = Cast<AController>(OccupantPlayerState->GetOwner()))
-	{
-		// If you do NOT want to override their current pawn (e.g. they already have one),
-		// remove or comment the possess call.
-		Controller->Possess(NewPawn);
-	}
-
-	// OPTIONAL cosmetic adjustments:
-	// NewPawn->SetActorEnableCollision(false);
-	// NewPawn->DisableInput(nullptr);
 }
 
 void ALobbyPlatformActor::DestroyOccupantPawn()
 {
-	if (!HasAuthority())
-	{
-		return;
-	}
+	if (!HasAuthority()) return;
 
 	if (IsValid(OccupantLobbyPawn))
 	{
-		// If possessed, unpossess to avoid the controller trying to tick a destroyed pawn
-		if (AController* Controller = OccupantLobbyPawn->GetController())
-		{
-			Controller->UnPossess();
-		}
-
 		OccupantLobbyPawn->Destroy();
 		OccupantLobbyPawn = nullptr;
 	}
@@ -206,35 +193,65 @@ void ALobbyPlatformActor::DestroyOccupantPawn()
 
 void ALobbyPlatformActor::UpdateWidgetsForOccupant()
 {
-	if (!PlayerLobbyInfo)
-		return;
+	if (!PlayerLobbyInfo) return;
 
 	UUserWidget* UW = PlayerLobbyInfo->GetUserWidgetObject();
 	if (!UW)
+	{
+		SchedulePlayerInfoRetry();
 		return;
+	}
+
+	// Show/hide PlayerLobbyInfo component based on occupancy.
+	if (!OccupantPlayerState)
+	{
+		// Hide when empty
+		PlayerLobbyInfo->SetVisibility(false);
+		if (UUserWidget* InfoUW = PlayerLobbyInfo->GetUserWidgetObject())
+		{
+			InfoUW->SetVisibility(ESlateVisibility::Collapsed);
+		}
+		return;
+	}
+
+	// Ensure visible when occupied
+	PlayerLobbyInfo->SetVisibility(true);
+	if (UUserWidget* InfoUW = PlayerLobbyInfo->GetUserWidgetObject())
+	{
+		InfoUW->SetVisibility(ESlateVisibility::Visible);
+	}
 
 	if (UPlayerLobbyInfo* Info = Cast<UPlayerLobbyInfo>(UW))
 	{
-		if (OccupantPlayerState)
-		{
-			FString NameToShow = OccupantPlayerState->GetPlayerName();
-			bool bReady = false;
+		FString NameToShow = OccupantPlayerState->GetPlayerName();
+		bool bReady = false;
 
-			if (ADefaultPlayerState* DPS = Cast<ADefaultPlayerState>(OccupantPlayerState))
-			{
-				NameToShow = DPS->GetDisplayName();
-				bReady = DPS->IsReady();
-			}
-
-			Info->SetPlayerName(FText::FromString(NameToShow));
-			Info->SetReadyState(bReady);
-		}
-		else
+		if (ADefaultPlayerState* DPS = Cast<ADefaultPlayerState>(OccupantPlayerState))
 		{
-			Info->SetPlayerName(FText::FromString(TEXT("Empty")));
-			Info->SetReadyState(false);
+			NameToShow = DPS->GetDisplayName();
+			bReady = DPS->IsReady();
 		}
+
+		Info->SetPlayerName(FText::FromString(NameToShow));
+		Info->SetReadyState(bReady);
 	}
+}
+
+void ALobbyPlatformActor::SchedulePlayerInfoRetry()
+{
+	if (bPendingPlayerInfoRetry) return;
+	if (!GetWorld()) return;
+
+	bPendingPlayerInfoRetry = true;
+	FTimerHandle Tmp;
+	GetWorld()->GetTimerManager().SetTimerForNextTick(
+		FTimerDelegate::CreateUObject(this, &ALobbyPlatformActor::RetryUpdatePlayerInfo));
+}
+
+void ALobbyPlatformActor::RetryUpdatePlayerInfo()
+{
+	bPendingPlayerInfoRetry = false;
+	UpdateWidgetsForOccupant();
 }
 
 void ALobbyPlatformActor::SetFriendListVisible(bool bVisible)
@@ -247,15 +264,7 @@ void ALobbyPlatformActor::SetFriendListVisible(bool bVisible)
 			UW->SetVisibility(bVisible ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
 		}
 	}
-	if (OpenFriendListButton)
-	{
-		const bool bShowButton = !bVisible;
-		OpenFriendListButton->SetVisibility(bShowButton);
-		if (UUserWidget* UW = OpenFriendListButton->GetUserWidgetObject())
-		{
-			UW->SetVisibility(bShowButton ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
-		}
-	}
+	UpdateOpenFriendButtonVisibility();
 }
 
 void ALobbyPlatformActor::HandleShowFriendListRequested()
@@ -268,9 +277,24 @@ void ALobbyPlatformActor::HandleShowOpenButtonRequested()
 	SetFriendListVisible(false);
 }
 
-// -------- NEW: Binding logic --------
+void ALobbyPlatformActor::UpdateOpenFriendButtonVisibility()
+{
+	if (!OpenFriendListButton) return;
+
+	const bool bFriendListVisible = FriendList && FriendList->IsVisible();
+	const bool bUnoccupied = (OccupantPlayerState == nullptr);
+	const bool bShowButton = bUnoccupied && !bFriendListVisible;
+
+	OpenFriendListButton->SetVisibility(bShowButton);
+	if (UUserWidget* UW = OpenFriendListButton->GetUserWidgetObject())
+	{
+		UW->SetVisibility(bShowButton ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+	}
+}
+
 void ALobbyPlatformActor::BindToOccupantPlayerState()
 {
+	CachedDefaultPlayerState = nullptr;
 	if (!OccupantPlayerState) return;
 
 	if (ADefaultPlayerState* DPS = Cast<ADefaultPlayerState>(OccupantPlayerState))
@@ -291,12 +315,12 @@ void ALobbyPlatformActor::UnbindFromOccupantPlayerState()
 	}
 }
 
-void ALobbyPlatformActor::HandleOccupantMetaChanged(ADefaultPlayerState* PS)
+void ALobbyPlatformActor::HandleOccupantMetaChanged(ADefaultPlayerState* /*PS*/)
 {
 	UpdateWidgetsForOccupant();
 }
 
-void ALobbyPlatformActor::HandleOccupantReadyChanged(ADefaultPlayerState* PS)
+void ALobbyPlatformActor::HandleOccupantReadyChanged(ADefaultPlayerState* /*PS*/)
 {
 	UpdateWidgetsForOccupant();
 }

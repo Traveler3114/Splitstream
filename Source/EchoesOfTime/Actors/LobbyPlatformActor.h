@@ -11,8 +11,8 @@ class UWidgetComponent;
 class APawn;
 class UOpenFriendsListButton;
 class UFriendList;
-class ADefaultPlayerState;                // NEW forward declaration
-class UPlayerLobbyInfo;                   // NEW forward declaration
+class ADefaultPlayerState;
+class UPlayerLobbyInfo;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnLobbyPlatformOccupantChanged, ALobbyPlatformActor*, Platform, APlayerState*, NewOccupant);
 
@@ -54,7 +54,7 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;             // NEW
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Platform")
 	USceneComponent* RootScene;
@@ -94,25 +94,30 @@ protected:
 	UPROPERTY(Transient)
 	APawn* OccupantLobbyPawn = nullptr;
 
-	void UpdateWidgetsForOccupant();
-	void SetFriendListVisible(bool bVisible);
+	// Player info widget updates / retry (construction race)
+	void UpdateWidgetsForOccupant();     // now also handles PlayerLobbyInfo visibility
+	void SchedulePlayerInfoRetry();
+	void RetryUpdatePlayerInfo();
+	UPROPERTY(Transient)
+	bool bPendingPlayerInfoRetry = false;
 
+	// Friend list open/close
+	void SetFriendListVisible(bool bVisible);
 	UFUNCTION()
 	void HandleShowFriendListRequested();
-
 	UFUNCTION()
 	void HandleShowOpenButtonRequested();
 
-	// ---------- NEW: Binding to occupant PlayerState ----------
+	// Unified rule: button visible only if (unoccupied && friend list hidden)
+	void UpdateOpenFriendButtonVisibility();
+
+	// Binding to occupant player state
 	UPROPERTY()
 	ADefaultPlayerState* CachedDefaultPlayerState = nullptr;
-
 	void BindToOccupantPlayerState();
 	void UnbindFromOccupantPlayerState();
-
 	UFUNCTION()
 	void HandleOccupantMetaChanged(ADefaultPlayerState* PS);
-
 	UFUNCTION()
 	void HandleOccupantReadyChanged(ADefaultPlayerState* PS);
 };

@@ -20,39 +20,22 @@ public:
 
 	UFUNCTION()
 	void OnChangeTeamButtonClicked();
-
 	UFUNCTION()
 	void OnStartButtonClicked();
-
 	UFUNCTION()
 	void OnLeaveButtonClicked();
-
 	UFUNCTION()
 	void OnReadyButtonClicked();
 
-	UPROPERTY(meta = (BindWidget))
-	UButton* start_btn;
-
-	UPROPERTY(meta = (BindWidget))
-	UButton* leave_btn;
-
-	UPROPERTY(meta = (BindWidget))
-	UButton* ready_btn;
-
-	UPROPERTY(meta = (BindWidget))
-	UButton* changeteam_btn;
-
-	UPROPERTY(meta = (BindWidget))
-	UTextBlock* team_txt;
-
-	// NEW: label inside the ready button
-	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
-	UTextBlock* ready_txt;   // Make sure the Blueprint has this
+	UPROPERTY(meta = (BindWidget)) UButton* start_btn;
+	UPROPERTY(meta = (BindWidget)) UButton* leave_btn;
+	UPROPERTY(meta = (BindWidget)) UButton* ready_btn;
+	UPROPERTY(meta = (BindWidget)) UButton* changeteam_btn;
+	UPROPERTY(meta = (BindWidget)) UTextBlock* team_txt;
+	UPROPERTY(meta = (BindWidget), BlueprintReadOnly) UTextBlock* ready_txt;
 
 private:
-	// NEW helper functions
 	void RefreshReadyLabel(bool bIsReady);
-
 	UFUNCTION()
 	void HandleLocalReadyChanged(ADefaultPlayerState* PS);
 };
