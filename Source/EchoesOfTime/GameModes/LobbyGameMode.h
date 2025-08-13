@@ -13,8 +13,11 @@ class ECHOESOFTIME_API ALobbyGameMode : public AGameMode
 	GENERATED_BODY()
 
 public:
+	ALobbyGameMode();
+
 	virtual void BeginPlay() override;
 	virtual void PostLogin(APlayerController* NewPlayer) override;
+	virtual void Logout(AController* Exiting) override;
 
 	// Use AActor* for compatibility with GetAllActorsOfClass
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
@@ -27,6 +30,10 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void StartGame();
+
+	// Helper function to sync PlayerState changes to GameState
+	UFUNCTION(BlueprintCallable)
+	void SyncPlayerStateToGameState(ADefaultPlayerState* PlayerState);
 
 	//UFUNCTION(BlueprintNativeEvent, Category = "Lobby")
 	//void KickPlayer(APlayerController* PlayerController);

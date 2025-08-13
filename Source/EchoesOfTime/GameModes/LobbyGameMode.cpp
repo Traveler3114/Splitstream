@@ -8,6 +8,14 @@
 #include "GameplayTagContainer.h"
 #include "DefaultPlayerState.h"
 #include "Components/WidgetComponent.h"
+#include "GameStates/LobbyGameState.h"
+#include "TimerManager.h"
+
+ALobbyGameMode::ALobbyGameMode()
+{
+    // Set the default GameState class to use our new LobbyGameState
+    GameStateClass = ALobbyGameState::StaticClass();
+}
 
 void ALobbyGameMode::BeginPlay()
 {
@@ -32,9 +40,10 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
     }
 
     // Find the first available platform
-    for (AActor* Actor : LobbyPlatforms)
+    int32 PlatformIndex = -1;
+    for (int32 i = 0; i < LobbyPlatforms.Num(); ++i)
     {
-        ALobbyPlatformActor* Platform = Cast<ALobbyPlatformActor>(Actor);
+        ALobbyPlatformActor* Platform = Cast<ALobbyPlatformActor>(LobbyPlatforms[i]);
         if (!Platform || Platform->OccupyingPawn)
         {
             continue;
@@ -44,6 +53,8 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
         if (PlayerState)
         {
             PlayerState->AssignedPlatform = Platform;
+            PlatformIndex = i;
+            
             // In PostLogin or wherever you assign the platform:
             Platform->OnKickRequestedPlatform.AddDynamic(this, &ALobbyGameMode::HandleKickRequestedFromPlatform);
 
@@ -56,6 +67,44 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
         }
         break; // Exit after assigning the first available platform
     }
+
+    // Add player to the new GameState roster for improved networking
+    if (ALobbyGameState* LobbyGS = GetGameState<ALobbyGameState>())
+    {
+        if (PlayerState)
+        {
+            FString PlayerName = PlayerState->GetPlayerName();
+            int32 PlayerId = PlayerState->GetPlayerId();
+            
+            LobbyGS->AddPlayerToRoster(PlayerId, PlayerName, PlatformIndex);
+            
+            // Sync initial team tag
+            FGameplayTag TeamTag = PlayerState->TeamTag;
+            if (TeamTag.IsValid())
+            {
+                LobbyGS->UpdatePlayerTeam(PlayerId, TeamTag);
+            }
+            
+            UE_LOG(LogTemp, Log, TEXT("Added player %s to lobby GameState roster"), *PlayerName);
+        }
+    }
+}
+
+void ALobbyGameMode::Logout(AController* Exiting)
+{
+    // Remove player from GameState roster before calling super
+    if (ALobbyGameState* LobbyGS = GetGameState<ALobbyGameState>())
+    {
+        if (ADefaultPlayerState* PlayerState = Cast<ADefaultPlayerState>(Exiting->PlayerState))
+        {
+            int32 PlayerId = PlayerState->GetPlayerId();
+            LobbyGS->RemovePlayerFromRoster(PlayerId);
+            
+            UE_LOG(LogTemp, Log, TEXT("Removed player %s from lobby GameState roster"), *PlayerState->GetPlayerName());
+        }
+    }
+    
+    Super::Logout(Exiting);
 }
 
 void ALobbyGameMode::HandleKickRequestedFromPlatform(ALobbyPlatformActor* Platform)
@@ -81,17 +130,25 @@ void ALobbyGameMode::CheckAllPlayersReady()
 {
     bool bEveryoneReady = true;
 
-    // Evaluate readiness from PlayerState
-    for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+    // Use new GameState for more efficient ready checking
+    if (ALobbyGameState* LobbyGS = GetGameState<ALobbyGameState>())
     {
-        ALobbyPlayerController* PC = Cast<ALobbyPlayerController>(It->Get());
-        if (!PC) { bEveryoneReady = false; break; }
-
-        ADefaultPlayerState* PlayerState = Cast<ADefaultPlayerState>(PC->PlayerState);
-        if (!PlayerState || !PlayerState->bIsReady)
+        bEveryoneReady = LobbyGS->AreAllPlayersReady();
+    }
+    else
+    {
+        // Fallback: Evaluate readiness from PlayerState
+        for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
         {
-            bEveryoneReady = false;
-            break;
+            ALobbyPlayerController* PC = Cast<ALobbyPlayerController>(It->Get());
+            if (!PC) { bEveryoneReady = false; break; }
+
+            ADefaultPlayerState* PlayerState = Cast<ADefaultPlayerState>(PC->PlayerState);
+            if (!PlayerState || !PlayerState->bIsReady)
+            {
+                bEveryoneReady = false;
+                break;
+            }
         }
     }
 
@@ -107,8 +164,37 @@ void ALobbyGameMode::CheckAllPlayersReady()
     }
 }
 
+void ALobbyGameMode::SyncPlayerStateToGameState(ADefaultPlayerState* PlayerState)
+{
+    if (!PlayerState)
+    {
+        return;
+    }
+
+    if (ALobbyGameState* LobbyGS = GetGameState<ALobbyGameState>())
+    {
+        int32 PlayerId = PlayerState->GetPlayerId();
+        
+        // Update ready state
+        LobbyGS->UpdatePlayerReady(PlayerId, PlayerState->bIsReady);
+        
+        // Update team tag
+        if (PlayerState->TeamTag.IsValid())
+        {
+            LobbyGS->UpdatePlayerTeam(PlayerId, PlayerState->TeamTag);
+        }
+    }
+}
+
 void ALobbyGameMode::StartGame()
 {
+    // Set lobby to countdown phase
+    if (ALobbyGameState* LobbyGS = GetGameState<ALobbyGameState>())
+    {
+        LobbyGS->SetLobbyPhase(ELobbyPhase::Countdown);
+        LobbyGS->StartCountdown(5.0f); // 5 second countdown
+    }
+
     // 1) Ask all clients to show a loading UI
     for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
     {
@@ -118,7 +204,16 @@ void ALobbyGameMode::StartGame()
         }
     }
 
-    // 2) Seamless server travel to the game map (listen server)
-    const FString MapPath = TEXT("/Game/Maps/TestMap?listen");
-    GetWorld()->ServerTravel(MapPath);
+    // 2) Seamless server travel to the game map (listen server) after a delay
+    FTimerHandle TravelTimerHandle;
+    GetWorldTimerManager().SetTimer(TravelTimerHandle, [this]()
+    {
+        if (ALobbyGameState* LobbyGS = GetGameState<ALobbyGameState>())
+        {
+            LobbyGS->SetLobbyPhase(ELobbyPhase::Traveling);
+        }
+        
+        const FString MapPath = TEXT("/Game/Maps/TestMap?listen");
+        GetWorld()->ServerTravel(MapPath);
+    }, 5.0f, false);
 }
