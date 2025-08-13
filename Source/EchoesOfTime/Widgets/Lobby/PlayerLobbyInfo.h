@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "GameplayTagContainer.h"
 #include "PlayerLobbyInfo.generated.h"
 
 
@@ -49,11 +48,11 @@ public:
     UFUNCTION(BlueprintCallable, Category = "PlayerLobbyInfo")
     void SetReadyState(bool bReady);
 
-    // PlayerLobbyInfo.h
-    UFUNCTION(BlueprintCallable, Category = "PlayerLobbyInfo")
-    void SetTeamTag(FGameplayTag NewTag);
+
+    //UFUNCTION(BlueprintCallable, Category = "PlayerLobbyInfo")
+    //void SetTeamTag(FGameplayTag NewTag);
 
     UFUNCTION()
-    void OnKickButtonClicked()
+    void OnKickButtonClicked();
 
 };

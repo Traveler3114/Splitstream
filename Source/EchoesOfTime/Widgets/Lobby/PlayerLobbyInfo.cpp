@@ -4,7 +4,6 @@
 #include "Engine/Texture2D.h"
 #include "Components/Button.h"
 #include "Components/SlateWrapperTypes.h"
-#include "GameplayTagContainer.h"
 
 
 
@@ -15,7 +14,7 @@ void UPlayerLobbyInfo::NativeConstruct()
 
     if (kick_btn)
     {
-        kick_btn->OnClicked.AddDynamic(this, &UPlayerLobbyInfo::OnKickButtonClicked());
+        kick_btn->OnClicked.AddDynamic(this, &UPlayerLobbyInfo::OnKickButtonClicked);
     }
 }
 
@@ -60,11 +59,10 @@ void UPlayerLobbyInfo::SetReadyState(bool bReady)
     }
 }
 
-// PlayerLobbyInfo.cpp
-void UPlayerLobbyInfo::SetTeamTag(FGameplayTag NewTag)
-{
-    if (team_txt)
-    {
-
-    }
-}
+//void UPlayerLobbyInfo::SetTeamTag(FGameplayTag NewTag)
+//{
+//    if (team_txt)
+//    {
+//
+//    }
+//}

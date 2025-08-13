@@ -2,8 +2,6 @@
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "Controllers/LobbyPlayerController.h"
-#include "GameModes/LobbyGameMode.h"
-#include "DefaultPlayerState.h"
 
 void ULobbyUI::NativeConstruct()
 {
@@ -15,7 +13,7 @@ void ULobbyUI::NativeConstruct()
 
     if (changeteam_btn)
     {
-        changeteam_btn->OnClicked.AddDynamic(this, &ULobbyUI::OnChangeButtonClicked);
+        changeteam_btn->OnClicked.AddDynamic(this, &ULobbyUI::OnChangeTeamButtonClicked);
     }
     if (start_btn)
     {
