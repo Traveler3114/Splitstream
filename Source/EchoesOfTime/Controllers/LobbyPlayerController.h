@@ -27,6 +27,10 @@ public:
     UFUNCTION(Server, Reliable)
     void ServerRequestLeaveLobby();
 
+    // NEW: Server RPC for validated kick functionality
+    UFUNCTION(Server, Reliable)
+    void ServerKickPlayer(const FString& TargetPlayerId);
+
     // NEW: client RPC to toggle Start button
     UFUNCTION(Client, Reliable)
     void ClientSetStartButtonEnabled(bool bEnabled);

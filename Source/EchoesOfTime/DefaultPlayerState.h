@@ -58,6 +58,20 @@ public:
     UFUNCTION(Server, Reliable)
     void ServerSetTeamTag(FGameplayTag NewTeamTag);
 
+    // New fields for enhanced lobby system
+    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Lobby")
+    int32 AvatarId = 0; // Placeholder for future avatar system
+
+    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Lobby")
+    FGameplayTag RoleTag; // Placeholder for future role selection
+
+    // Rate limiting for actions (timestamp fields)
+    UPROPERTY()
+    float LastReadyToggleTime = 0.0f;
+
+    UPROPERTY()
+    float LastTeamChangeTime = 0.0f;
+
     // Refresh the lobby widget with current values (name, ready, team, avatar, kick visibility)
     UFUNCTION(BlueprintCallable, Category = "Lobby")
     void RefreshLobbyInfoUI();

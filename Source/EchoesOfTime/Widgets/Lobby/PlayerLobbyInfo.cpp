@@ -5,6 +5,7 @@
 #include "Components/Button.h"
 #include "Components/SlateWrapperTypes.h"
 #include "GameplayTagContainer.h"
+#include "GameStates/LobbyGameState.h"
 
 
 
@@ -69,4 +70,20 @@ void UPlayerLobbyInfo::SetTeamTag(FGameplayTag NewTag)
         FString Leaf = NewTag.GetTagLeafName().ToString();
         team_txt->SetText(FText::FromString(Leaf));
     }
+}
+
+// NEW: Unified method for batch UI updates - preferred over individual setters
+void UPlayerLobbyInfo::ApplyLobbyPlayerViewData(const FLobbyPlayerViewData& ViewData)
+{
+    // Update all fields at once to reduce individual calls
+    SetPlayerName(ViewData.DisplayName);
+    SetReadyState(ViewData.bReady);
+    SetTeamTag(ViewData.TeamTag);
+    SetKickButtonVisible(ViewData.bCanKick);
+    
+    // TODO: Future avatar loading based on ViewData.AvatarId
+    // For now, keep existing avatar texture logic in place
+    
+    // TODO: Future role display based on ViewData.RoleTag
+    // Reserved for future role selection UI
 }

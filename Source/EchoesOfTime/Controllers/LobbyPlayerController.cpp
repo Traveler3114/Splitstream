@@ -2,6 +2,7 @@
 #include "Widgets/Lobby/LobbyUI.h"
 #include "Actors/LobbyPlatformActor.h"
 #include "GameModes/LobbyGameMode.h"
+#include "GameStates/LobbyGameState.h"
 #include "Widgets/Lobby/PlayerLobbyInfo.h"
 #include "Components/WidgetComponent.h"
 #include "DefaultPlayerState.h"
@@ -26,7 +27,7 @@ void ALobbyPlayerController::BeginPlay()
             LobbyUI->AddToViewport();
             LobbyUIInstance = LobbyUI; // store for later use
 
-            // Host sees Start button; clients don’t
+            // Host sees Start button; clients donï¿½t
             if (HasAuthority())
             {
                 LobbyUI->SetStartButtonVisibility(ESlateVisibility::Visible);
@@ -80,7 +81,7 @@ void ALobbyPlayerController::ClientSetStartButtonEnabled_Implementation(bool bEn
         return;
     }
 
-    // Fallback if UI pointer wasn’t cached
+    // Fallback if UI pointer wasn't cached
     TArray<UUserWidget*> FoundWidgets;
     UWidgetBlueprintLibrary::GetAllWidgetsOfClass(GetWorld(), FoundWidgets, ULobbyUI::StaticClass(), false);
     for (UUserWidget* Widget : FoundWidgets)
@@ -89,5 +90,14 @@ void ALobbyPlayerController::ClientSetStartButtonEnabled_Implementation(bool bEn
         {
             LobbyUI->SetStartButtonEnabled(bEnabled);
         }
+    }
+}
+
+// NEW: Server RPC for validated kick functionality
+void ALobbyPlayerController::ServerKickPlayer_Implementation(const FString& TargetPlayerId)
+{
+    if (ALobbyGameMode* LobbyGameMode = Cast<ALobbyGameMode>(GetWorld()->GetAuthGameMode()))
+    {
+        LobbyGameMode->ServerKickPlayer(TargetPlayerId, this);
     }
 }

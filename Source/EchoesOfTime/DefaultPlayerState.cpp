@@ -3,6 +3,7 @@
 #include "Actors/LobbyPlatformActor.h"
 #include "Components/WidgetComponent.h"
 #include "Widgets/Lobby/PlayerLobbyInfo.h"
+#include "GameStates/LobbyGameState.h"
 #include "Engine/Texture2D.h"
 #include "Engine/World.h"
 
@@ -22,23 +23,63 @@ UAbilitySystemComponent* ADefaultPlayerState::GetAbilitySystemComponent() const
 
 void ADefaultPlayerState::ServerSetReadyState_Implementation(bool bReady)
 {
+    // Rate limiting check
+    float CurrentTime = GetWorld()->GetTimeSeconds();
+    if (CurrentTime - LastReadyToggleTime < 1.0f) // 1 second rate limit
+    {
+        UE_LOG(LogLobby, Warning, TEXT("Ready toggle rate limited for player %s"), *GetPlayerName());
+        return;
+    }
+    LastReadyToggleTime = CurrentTime;
+
     bIsReady = bReady;
 
-    // Update server immediately
+    // Update GameState roster
+    if (ALobbyGameState* LobbyGameState = GetWorld()->GetGameState<ALobbyGameState>())
+    {
+        const FString PlayerId = GetUniqueId().ToString();
+        LobbyGameState->UpdatePlayerRosterEntry(PlayerId, TeamTag, bIsReady);
+    }
+
+    // Legacy: Update server immediately and broadcast for backward compatibility
     ApplyLobbyInfoToWidget();
     if (HasAuthority())
     {
         OnPlayerReady.Broadcast();
     }
 
-    // Push replication to clients right away
-    ForceNetUpdate();
-    if (AssignedPlatform) { AssignedPlatform->ForceNetUpdate(); }
+    // Remove ForceNetUpdate calls - rely on RepNotifies and FastArray replication
 }
 
 void ADefaultPlayerState::ServerSetTeamTag_Implementation(FGameplayTag NewTeamTag)
 {
+    // Rate limiting check
+    float CurrentTime = GetWorld()->GetTimeSeconds();
+    if (CurrentTime - LastTeamChangeTime < 2.0f) // 2 second rate limit for team changes
+    {
+        UE_LOG(LogLobby, Warning, TEXT("Team change rate limited for player %s"), *GetPlayerName());
+        return;
+    }
+    LastTeamChangeTime = CurrentTime;
+
+    // Check if team changes are allowed based on lobby phase
+    if (ALobbyGameState* LobbyGameState = GetWorld()->GetGameState<ALobbyGameState>())
+    {
+        if (!LobbyGameState->CanPlayersChangeTeams())
+        {
+            UE_LOG(LogLobby, Warning, TEXT("Team changes not allowed in current lobby phase"));
+            return;
+        }
+    }
+
     TeamTag = NewTeamTag;
+
+    // Update GameState roster
+    if (ALobbyGameState* LobbyGameState = GetWorld()->GetGameState<ALobbyGameState>())
+    {
+        const FString PlayerId = GetUniqueId().ToString();
+        LobbyGameState->UpdatePlayerRosterEntry(PlayerId, TeamTag, bIsReady);
+    }
 
     // Update ASC tags (authoritative on server)
     if (AbilitySystemComponent)
@@ -48,12 +89,10 @@ void ADefaultPlayerState::ServerSetTeamTag_Implementation(FGameplayTag NewTeamTa
         AbilitySystemComponent->AddLooseGameplayTag(NewTeamTag);
     }
 
-    // Update server UI immediately
+    // Legacy: Update server UI immediately for backward compatibility
     ApplyLobbyInfoToWidget();
 
-    // Push replication
-    ForceNetUpdate();
-    if (AssignedPlatform) { AssignedPlatform->ForceNetUpdate(); }
+    // Remove ForceNetUpdate calls - rely on RepNotifies and FastArray replication
 }
 
 void ADefaultPlayerState::ApplyLobbyInfoToWidget()
@@ -109,11 +148,7 @@ AController* ADefaultPlayerState::FindOwningController() const
 void ADefaultPlayerState::RefreshLobbyInfoUI()
 {
     ApplyLobbyInfoToWidget();
-
-    if (AssignedPlatform)
-    {
-        AssignedPlatform->ForceNetUpdate();
-    }
+    // Remove ForceNetUpdate - rely on RepNotifies
 }
 
 void ADefaultPlayerState::OnRep_ReadyState()
@@ -152,4 +187,6 @@ void ADefaultPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
     DOREPLIFETIME(ADefaultPlayerState, bIsReady);
     DOREPLIFETIME(ADefaultPlayerState, TeamTag);
     DOREPLIFETIME(ADefaultPlayerState, CachedAvatarTexture);
+    DOREPLIFETIME(ADefaultPlayerState, AvatarId);
+    DOREPLIFETIME(ADefaultPlayerState, RoleTag);
 }

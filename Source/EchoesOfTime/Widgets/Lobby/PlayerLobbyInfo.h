@@ -5,6 +5,9 @@
 #include "GameplayTagContainer.h"
 #include "PlayerLobbyInfo.generated.h"
 
+// Forward declaration for the struct
+struct FLobbyPlayerViewData;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnKickRequested);
 
 
@@ -53,6 +56,10 @@ public:
     // PlayerLobbyInfo.h
     UFUNCTION(BlueprintCallable, Category = "PlayerLobbyInfo")
     void SetTeamTag(FGameplayTag NewTag);
+
+    // NEW: Unified method for batch UI updates
+    UFUNCTION(BlueprintCallable, Category = "PlayerLobbyInfo")
+    void ApplyLobbyPlayerViewData(const struct FLobbyPlayerViewData& ViewData);
 
     UPROPERTY(BlueprintAssignable, Category = "PlayerLobbyInfo")
     FOnKickRequested OnKickRequested;
