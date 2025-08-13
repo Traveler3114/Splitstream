@@ -1,79 +1,65 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "GameplayTagContainer.h"
 #include "LobbyPlatformActor.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnKickRequestedPlatform, ALobbyPlatformActor*, Platform);
 
-
-
-
+class APlayerState;
+class UStaticMeshComponent;
+class UArrowComponent;
 class UWidgetComponent;
+class APawn;
+
 
 UCLASS()
 class ECHOESOFTIME_API ALobbyPlatformActor : public AActor
 {
-    GENERATED_BODY()
+	GENERATED_BODY()
+	
+public:	
+	// Sets default values for this actor's properties
+	ALobbyPlatformActor();
 
-public:
+	UFUNCTION(BlueprintPure, Category = "Lobby|Platform")
+	bool IsOccupied() const { return OccupantPlayerState != nullptr; }
 
-    UPROPERTY(BlueprintAssignable, Category = "PlayerLobbyInfo")
-    FOnKickRequestedPlatform OnKickRequestedPlatform;
-    // ... rest of your code ...
+	UFUNCTION(BlueprintPure, Category = "Lobby|Platform")
+	APlayerState* GetOccupant() const { return OccupantPlayerState; }
 
-    UFUNCTION()
-    void HandleKickRequested();
-
-    ALobbyPlatformActor();
-    virtual void BeginPlay() override;
-    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-    // ...
-
-    UFUNCTION()
-    void ShowFriendList();
-    UFUNCTION()
-    void ShowButton();
-
-    UFUNCTION(BlueprintCallable, Category = "Platform")
-    APawn* SpawnCharacterAtPlatform(AController* NewController);
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Platform")
-    APawn* OccupyingPawn;
-
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Platform")
-    UWidgetComponent* PlayerInfoWidget;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Platform")
-    UWidgetComponent* OpenFriendsListButtonWidget;
 
 protected:
-    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Platform")
-    USceneComponent* RootScene;
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Platform")
-    UStaticMeshComponent* PlatformMesh;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	/* Visual base */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lobby|Platform")
+	UStaticMeshComponent* PlatformMesh;
+
+	/* Forward marker / spawn anchor for display pawn */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lobby|Platform")
+	UArrowComponent* SpawnPoint;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lobby|Platform")
+	UWidgetComponent* OpenFriendListButton;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lobby|Platform")
+	UWidgetComponent* FriendList;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lobby|Platform")
+	UWidgetComponent* PlayerLobbyInfo;
 
 
+	/* Replicated occupant player state */
+	UPROPERTY(ReplicatedUsing = OnRep_OccupantPlayerState)
+	APlayerState* OccupantPlayerState = nullptr;
 
-    UPROPERTY(VisibleAnywhere)
-    UWidgetComponent* FriendListWidget;
-
-
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Platform")
-    class UArrowComponent* SpawnPoint;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Platform")
-    TSubclassOf<APawn> CharacterClassToSpawn;
-
-    UPROPERTY(ReplicatedUsing = OnRep_IsOccupied)
-    bool bIsOccupied = false;
-
-    UFUNCTION()
-    void OnRep_IsOccupied();
+	UFUNCTION()
+	void OnRep_OccupantPlayerState();
 
 
 
