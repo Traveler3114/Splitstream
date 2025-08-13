@@ -1,67 +1,109 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "LobbyPlatformActor.generated.h"
 
-
 class APlayerState;
 class UStaticMeshComponent;
 class UArrowComponent;
 class UWidgetComponent;
 class APawn;
+class UOpenFriendsListButton;
+class UFriendList;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnLobbyPlatformOccupantChanged, ALobbyPlatformActor*, Platform, APlayerState*, NewOccupant);
 
 UCLASS()
 class ECHOESOFTIME_API ALobbyPlatformActor : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
-	// Sets default values for this actor's properties
+
+public:
 	ALobbyPlatformActor();
 
+	// Queries
 	UFUNCTION(BlueprintPure, Category = "Lobby|Platform")
 	bool IsOccupied() const { return OccupantPlayerState != nullptr; }
 
 	UFUNCTION(BlueprintPure, Category = "Lobby|Platform")
 	APlayerState* GetOccupant() const { return OccupantPlayerState; }
 
+	UFUNCTION(BlueprintPure, Category = "Lobby|Platform")
+	APawn* GetLobbyPawn() const { return OccupantLobbyPawn; }
+
+	UFUNCTION(BlueprintPure, Category = "Lobby|Platform|UI")
+	UWidgetComponent* GetOpenFriendListButton() const { return OpenFriendListButton; }
+
+	UFUNCTION(BlueprintPure, Category = "Lobby|Platform|UI")
+	UWidgetComponent* GetFriendListWidget() const { return FriendList; }
+
+	UFUNCTION(BlueprintPure, Category = "Lobby|Platform|UI")
+	UWidgetComponent* GetPlayerLobbyInfoWidget() const { return PlayerLobbyInfo; }
+
+	// Server control
+	UFUNCTION(BlueprintCallable, Category = "Lobby|Platform")
+	bool ServerAssignOccupant(APlayerState* NewOccupant);
+
+	UFUNCTION(BlueprintCallable, Category = "Lobby|Platform")
+	bool ServerClearOccupant();
+
+	UPROPERTY(BlueprintAssignable, Category = "Lobby|Platform")
+	FOnLobbyPlatformOccupantChanged OnOccupantChanged;
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	/* Visual base */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lobby|Platform")
+	// Components
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Platform")
+	USceneComponent* RootScene;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lobby|Platform")
 	UStaticMeshComponent* PlatformMesh;
 
-	/* Forward marker / spawn anchor for display pawn */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lobby|Platform")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lobby|Platform")
 	UArrowComponent* SpawnPoint;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lobby|Platform")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lobby|Platform|UI")
 	UWidgetComponent* OpenFriendListButton;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lobby|Platform")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lobby|Platform|UI")
 	UWidgetComponent* FriendList;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lobby|Platform")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lobby|Platform|UI")
 	UWidgetComponent* PlayerLobbyInfo;
 
-
-	/* Replicated occupant player state */
+	// Replicated occupant
 	UPROPERTY(ReplicatedUsing = OnRep_OccupantPlayerState)
 	APlayerState* OccupantPlayerState = nullptr;
 
 	UFUNCTION()
 	void OnRep_OccupantPlayerState();
 
+	void NotifyOccupantChanged();
 
+	// Pawn handling
+	void SpawnOccupantPawn();
+	void DestroyOccupantPawn();
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Lobby|Platform|Display")
+	TSubclassOf<APawn> LobbyPawnClass;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Lobby|Platform|Display")
+	bool bDestroyPawnOnClear = true;
+
+	UPROPERTY(Transient)
+	APawn* OccupantLobbyPawn = nullptr;
+
+	// UI state helpers
+	void UpdateWidgetsForOccupant();
+	void SetFriendListVisible(bool bVisible);
+
+	// Delegate handlers
+	UFUNCTION()
+	void HandleShowFriendListRequested();   // From button click
+
+	UFUNCTION()
+	void HandleShowOpenButtonRequested();   // From friend list mouse leave
 };
