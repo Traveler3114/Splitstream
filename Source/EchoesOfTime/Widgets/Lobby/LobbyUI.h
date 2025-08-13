@@ -6,42 +6,53 @@
 
 class UButton;
 class UTextBlock;
+class ADefaultPlayerState;
 
 UCLASS()
 class ECHOESOFTIME_API ULobbyUI : public UUserWidget
 {
-    GENERATED_BODY()
+	GENERATED_BODY()
 public:
-    virtual void NativeConstruct() override;
+	virtual void NativeConstruct() override;
 
-    void SetStartButtonEnabled(bool bEnabled);
+	void SetStartButtonEnabled(bool bEnabled);
+	void SetStartButtonVisibility(ESlateVisibility InVisibility);
 
-    void SetStartButtonVisibility(ESlateVisibility InVisibility);
+	UFUNCTION()
+	void OnChangeTeamButtonClicked();
 
-    UFUNCTION()
-    void OnChangeTeamButtonClicked();
+	UFUNCTION()
+	void OnStartButtonClicked();
 
-    UFUNCTION()
-    void OnStartButtonClicked();
+	UFUNCTION()
+	void OnLeaveButtonClicked();
 
-    UFUNCTION()
-    void OnLeaveButtonClicked();
+	UFUNCTION()
+	void OnReadyButtonClicked();
 
-    UPROPERTY(meta = (BindWidget))
-    UButton* start_btn;
+	UPROPERTY(meta = (BindWidget))
+	UButton* start_btn;
 
-    UPROPERTY(meta = (BindWidget))
-    UButton* leave_btn;
+	UPROPERTY(meta = (BindWidget))
+	UButton* leave_btn;
 
-    UPROPERTY(meta = (BindWidget))
-    UButton* ready_btn;
+	UPROPERTY(meta = (BindWidget))
+	UButton* ready_btn;
 
-    UPROPERTY(meta = (BindWidget))
-    UButton* changeteam_btn;
+	UPROPERTY(meta = (BindWidget))
+	UButton* changeteam_btn;
 
-    UPROPERTY(meta = (BindWidget))
-    UTextBlock* team_txt;
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* team_txt;
 
-    UFUNCTION()
-    void OnReadyButtonClicked();
+	// NEW: label inside the ready button
+	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
+	UTextBlock* ready_txt;   // Make sure the Blueprint has this
+
+private:
+	// NEW helper functions
+	void RefreshReadyLabel(bool bIsReady);
+
+	UFUNCTION()
+	void HandleLocalReadyChanged(ADefaultPlayerState* PS);
 };

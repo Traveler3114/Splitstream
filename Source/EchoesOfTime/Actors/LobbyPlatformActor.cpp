@@ -10,9 +10,10 @@
 
 #include "Widgets/Lobby/OpenFriendsListButton.h"
 #include "Widgets/Lobby/FriendList.h"
+#include "Widgets/Lobby/PlayerLobbyInfo.h"          // NEW
+#include "DefaultPlayerState.h"                    // NEW
 #include "Blueprint/UserWidget.h"
 
-// Constructor
 ALobbyPlatformActor::ALobbyPlatformActor()
 {
 	PrimaryActorTick.bCanEverTick = false;
@@ -20,7 +21,6 @@ ALobbyPlatformActor::ALobbyPlatformActor()
 
 	RootScene = CreateDefaultSubobject<USceneComponent>(TEXT("RootScene"));
 	RootComponent = RootScene;
-	SetRootComponent(RootScene);
 
 	PlatformMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PlatformMesh"));
 	PlatformMesh->SetupAttachment(RootScene);
@@ -44,10 +44,8 @@ void ALobbyPlatformActor::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// Initial UI state: show button, hide friend list
 	SetFriendListVisible(false);
 
-	// Bind to button widget delegate
 	if (OpenFriendListButton)
 	{
 		if (UUserWidget* UW = OpenFriendListButton->GetUserWidgetObject())
@@ -59,7 +57,6 @@ void ALobbyPlatformActor::BeginPlay()
 		}
 	}
 
-	// Bind to friend list widget delegate
 	if (FriendList)
 	{
 		if (UUserWidget* UW = FriendList->GetUserWidgetObject())
@@ -72,18 +69,24 @@ void ALobbyPlatformActor::BeginPlay()
 	}
 }
 
+void ALobbyPlatformActor::EndPlay(const EEndPlayReason::Type EndPlayReason) // NEW
+{
+	UnbindFromOccupantPlayerState();
+	Super::EndPlay(EndPlayReason);
+}
+
 void ALobbyPlatformActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ALobbyPlatformActor, OccupantPlayerState);
 }
 
-// Seat control
 bool ALobbyPlatformActor::ServerAssignOccupant(APlayerState* NewOccupant)
 {
-	if (!HasAuthority())     return false;
-	if (OccupantPlayerState) return false;
-	if (!NewOccupant)        return false;
+	if (!HasAuthority() || OccupantPlayerState || !NewOccupant)
+	{
+		return false;
+	}
 
 	OccupantPlayerState = NewOccupant;
 	SpawnOccupantPawn();
@@ -93,8 +96,10 @@ bool ALobbyPlatformActor::ServerAssignOccupant(APlayerState* NewOccupant)
 
 bool ALobbyPlatformActor::ServerClearOccupant()
 {
-	if (!HasAuthority())      return false;
-	if (!OccupantPlayerState) return false;
+	if (!HasAuthority() || !OccupantPlayerState)
+	{
+		return false;
+	}
 
 	if (bDestroyPawnOnClear)
 	{
@@ -106,7 +111,6 @@ bool ALobbyPlatformActor::ServerClearOccupant()
 	return true;
 }
 
-// Rep notify
 void ALobbyPlatformActor::OnRep_OccupantPlayerState()
 {
 	NotifyOccupantChanged();
@@ -114,70 +118,48 @@ void ALobbyPlatformActor::OnRep_OccupantPlayerState()
 
 void ALobbyPlatformActor::NotifyOccupantChanged()
 {
+	UnbindFromOccupantPlayerState();    // NEW
+	BindToOccupantPlayerState();        // NEW
+
 	UpdateWidgetsForOccupant();
 	OnOccupantChanged.Broadcast(this, OccupantPlayerState);
 }
 
-// Pawn spawn/destroy
-void ALobbyPlatformActor::SpawnOccupantPawn()
-{
-	//if (!HasAuthority())          return;
-	//if (!OccupantPlayerState)     return;
-	//if (!LobbyPawnClass)          return;
+// (Spawn/Destroy pawn stubs left commented out as before...)
 
-	//if (OccupantLobbyPawn && !OccupantLobbyPawn->IsPendingKill())
-	//{
-	//	DestroyOccupantPawn();
-	//}
-
-	//UWorld* World = GetWorld();
-	//if (!World) return;
-
-	//AController* Controller = Cast<AController>(OccupantPlayerState->GetOwner());
-
-	//const FVector Loc = SpawnPoint ? SpawnPoint->GetComponentLocation() : GetActorLocation();
-	//const FRotator Rot = SpawnPoint ? SpawnPoint->GetComponentRotation() : GetActorRotation();
-
-	//FActorSpawnParameters Params;
-	//Params.Owner = Controller;
-	//Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-
-	//APawn* NewPawn = World->SpawnActor<APawn>(LobbyPawnClass, Loc, Rot, Params);
-	//if (NewPawn)
-	//{
-	//	OccupantLobbyPawn = NewPawn;
-	//	if (Controller)
-	//	{
-	//		Controller->Possess(NewPawn);
-	//	}
-	//}
-}
-
-void ALobbyPlatformActor::DestroyOccupantPawn()
-{
-	//if (!HasAuthority()) return;
-	//if (OccupantLobbyPawn && !OccupantLobbyPawn->IsPendingKill())
-	//{
-	//	OccupantLobbyPawn->Destroy();
-	//}
-	//OccupantLobbyPawn = nullptr;
-}
-
-// UI update based on occupant (expand later as needed)
 void ALobbyPlatformActor::UpdateWidgetsForOccupant()
 {
-	// Example placeholder: you can push occupant data to PlayerLobbyInfo here.
-	if (PlayerLobbyInfo)
+	if (!PlayerLobbyInfo)
+		return;
+
+	UUserWidget* UW = PlayerLobbyInfo->GetUserWidgetObject();
+	if (!UW)
+		return;
+
+	if (UPlayerLobbyInfo* Info = Cast<UPlayerLobbyInfo>(UW))
 	{
-		if (UUserWidget* UW = PlayerLobbyInfo->GetUserWidgetObject())
+		if (OccupantPlayerState)
 		{
-			// Implement a BlueprintImplementableEvent on that widget to receive occupant info if desired.
-			// E.g., call UW->SetVisibility(...) or ProcessEvent on a custom function.
+			FString NameToShow = OccupantPlayerState->GetPlayerName();
+			bool bReady = false;
+
+			if (ADefaultPlayerState* DPS = Cast<ADefaultPlayerState>(OccupantPlayerState))
+			{
+				NameToShow = DPS->GetDisplayName();
+				bReady = DPS->IsReady();
+			}
+
+			Info->SetPlayerName(FText::FromString(NameToShow));
+			Info->SetReadyState(bReady);
+		}
+		else
+		{
+			Info->SetPlayerName(FText::FromString(TEXT("Empty")));
+			Info->SetReadyState(false);
 		}
 	}
 }
 
-// Helper to toggle friend list vs button
 void ALobbyPlatformActor::SetFriendListVisible(bool bVisible)
 {
 	if (FriendList)
@@ -199,7 +181,6 @@ void ALobbyPlatformActor::SetFriendListVisible(bool bVisible)
 	}
 }
 
-// Delegate handlers
 void ALobbyPlatformActor::HandleShowFriendListRequested()
 {
 	SetFriendListVisible(true);
@@ -208,4 +189,37 @@ void ALobbyPlatformActor::HandleShowFriendListRequested()
 void ALobbyPlatformActor::HandleShowOpenButtonRequested()
 {
 	SetFriendListVisible(false);
+}
+
+// -------- NEW: Binding logic --------
+void ALobbyPlatformActor::BindToOccupantPlayerState()
+{
+	if (!OccupantPlayerState) return;
+
+	if (ADefaultPlayerState* DPS = Cast<ADefaultPlayerState>(OccupantPlayerState))
+	{
+		CachedDefaultPlayerState = DPS;
+		DPS->OnPlayerMetaChanged.AddDynamic(this, &ALobbyPlatformActor::HandleOccupantMetaChanged);
+		DPS->OnReadyChanged.AddDynamic(this, &ALobbyPlatformActor::HandleOccupantReadyChanged);
+	}
+}
+
+void ALobbyPlatformActor::UnbindFromOccupantPlayerState()
+{
+	if (CachedDefaultPlayerState)
+	{
+		CachedDefaultPlayerState->OnPlayerMetaChanged.RemoveDynamic(this, &ALobbyPlatformActor::HandleOccupantMetaChanged);
+		CachedDefaultPlayerState->OnReadyChanged.RemoveDynamic(this, &ALobbyPlatformActor::HandleOccupantReadyChanged);
+		CachedDefaultPlayerState = nullptr;
+	}
+}
+
+void ALobbyPlatformActor::HandleOccupantMetaChanged(ADefaultPlayerState* PS)
+{
+	UpdateWidgetsForOccupant();
+}
+
+void ALobbyPlatformActor::HandleOccupantReadyChanged(ADefaultPlayerState* PS)
+{
+	UpdateWidgetsForOccupant();
 }

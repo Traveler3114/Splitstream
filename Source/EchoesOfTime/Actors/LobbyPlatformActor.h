@@ -11,6 +11,8 @@ class UWidgetComponent;
 class APawn;
 class UOpenFriendsListButton;
 class UFriendList;
+class ADefaultPlayerState;                // NEW forward declaration
+class UPlayerLobbyInfo;                   // NEW forward declaration
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnLobbyPlatformOccupantChanged, ALobbyPlatformActor*, Platform, APlayerState*, NewOccupant);
 
@@ -22,7 +24,6 @@ class ECHOESOFTIME_API ALobbyPlatformActor : public AActor
 public:
 	ALobbyPlatformActor();
 
-	// Queries
 	UFUNCTION(BlueprintPure, Category = "Lobby|Platform")
 	bool IsOccupied() const { return OccupantPlayerState != nullptr; }
 
@@ -41,7 +42,6 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Lobby|Platform|UI")
 	UWidgetComponent* GetPlayerLobbyInfoWidget() const { return PlayerLobbyInfo; }
 
-	// Server control
 	UFUNCTION(BlueprintCallable, Category = "Lobby|Platform")
 	bool ServerAssignOccupant(APlayerState* NewOccupant);
 
@@ -54,8 +54,8 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;             // NEW
 
-	// Components
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Platform")
 	USceneComponent* RootScene;
 
@@ -74,7 +74,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lobby|Platform|UI")
 	UWidgetComponent* PlayerLobbyInfo;
 
-	// Replicated occupant
 	UPROPERTY(ReplicatedUsing = OnRep_OccupantPlayerState)
 	APlayerState* OccupantPlayerState = nullptr;
 
@@ -83,7 +82,6 @@ protected:
 
 	void NotifyOccupantChanged();
 
-	// Pawn handling
 	void SpawnOccupantPawn();
 	void DestroyOccupantPawn();
 
@@ -96,14 +94,25 @@ protected:
 	UPROPERTY(Transient)
 	APawn* OccupantLobbyPawn = nullptr;
 
-	// UI state helpers
 	void UpdateWidgetsForOccupant();
 	void SetFriendListVisible(bool bVisible);
 
-	// Delegate handlers
 	UFUNCTION()
-	void HandleShowFriendListRequested();   // From button click
+	void HandleShowFriendListRequested();
 
 	UFUNCTION()
-	void HandleShowOpenButtonRequested();   // From friend list mouse leave
+	void HandleShowOpenButtonRequested();
+
+	// ---------- NEW: Binding to occupant PlayerState ----------
+	UPROPERTY()
+	ADefaultPlayerState* CachedDefaultPlayerState = nullptr;
+
+	void BindToOccupantPlayerState();
+	void UnbindFromOccupantPlayerState();
+
+	UFUNCTION()
+	void HandleOccupantMetaChanged(ADefaultPlayerState* PS);
+
+	UFUNCTION()
+	void HandleOccupantReadyChanged(ADefaultPlayerState* PS);
 };
