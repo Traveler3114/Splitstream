@@ -18,7 +18,7 @@ void ADefaultPlayerState::BeginPlay()
 	FTimerHandle Tmp;
 	GetWorldTimerManager().SetTimerForNextTick([this]()
 		{
-				BP_RequestAvatar(); // You implement this in BP to fetch the Steam avatar and call SetAvatarTexture
+			BP_RequestAvatar();
 		});
 }
 
@@ -71,6 +71,15 @@ void ADefaultPlayerState::SetAvatarTexture(UTexture2D* InTexture)
 	if (AvatarTexture == InTexture) return;
 	AvatarTexture = InTexture;
 	OnAvatarChanged.Broadcast(this);
-	// Also fire meta changed so any listeners update UI
 	OnPlayerMetaChanged.Broadcast(this);
+}
+
+void ADefaultPlayerState::SetReadyLocal(bool bNewReady)
+{
+	// In Standalone there is no RPC; also allow direct authority updates
+	if (GetNetMode() == NM_Standalone || HasAuthority())
+	{
+		ApplyReady(bNewReady);
+	}
+	// else: in networked clients, use ServerSetReady instead (call site handles this)
 }

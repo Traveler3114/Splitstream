@@ -67,7 +67,19 @@ void ULobbyUI::OnReadyButtonClicked()
 		if (ADefaultPlayerState* DPS = PC->GetPlayerState<ADefaultPlayerState>())
 		{
 			const bool NewState = !DPS->IsReady();
-			DPS->ServerSetReady(NewState);
+
+			// Standalone/Authority: apply locally (no RPC in Standalone)
+			if (PC->GetNetMode() == NM_Standalone || PC->HasAuthority())
+			{
+				DPS->SetReadyLocal(NewState);
+			}
+			else
+			{
+				// Networked client: go through server
+				DPS->ServerSetReady(NewState);
+			}
+
+			// Update local button label immediately for UX
 			RefreshReadyLabel(NewState);
 		}
 	}
