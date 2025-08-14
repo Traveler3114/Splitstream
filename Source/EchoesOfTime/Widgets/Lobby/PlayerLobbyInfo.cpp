@@ -4,9 +4,8 @@
 #include "Engine/Texture2D.h"
 #include "Components/Button.h"
 #include "Components/SlateWrapperTypes.h"
-
-
-
+#include "Kismet/GameplayStatics.h"
+#include "Controllers/LobbyPlayerController.h"
 
 void UPlayerLobbyInfo::NativeConstruct()
 {
@@ -20,9 +19,21 @@ void UPlayerLobbyInfo::NativeConstruct()
 
 void UPlayerLobbyInfo::OnKickButtonClicked()
 {
+    if (!TargetPlayerState) return;
 
+    // Find owning player controller (fallback to index 0)
+    APlayerController* PC = GetOwningPlayer();
+    if (!PC)
+    {
+        PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+    }
+    if (!PC) return;
+
+    if (ALobbyPlayerController* LPC = Cast<ALobbyPlayerController>(PC))
+    {
+        LPC->ServerKickPlayer(TargetPlayerState);
+    }
 }
-
 
 void UPlayerLobbyInfo::SetPlayerName(const FText& Name)
 {
@@ -59,10 +70,7 @@ void UPlayerLobbyInfo::SetReadyState(bool bReady)
     }
 }
 
-//void UPlayerLobbyInfo::SetTeamTag(FGameplayTag NewTag)
-//{
-//    if (team_txt)
-//    {
-//
-//    }
-//}
+void UPlayerLobbyInfo::SetTargetPlayerState(APlayerState* InTarget)
+{
+    TargetPlayerState = InTarget;
+}

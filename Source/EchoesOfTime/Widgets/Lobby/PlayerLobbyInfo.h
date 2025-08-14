@@ -4,13 +4,11 @@
 #include "Blueprint/UserWidget.h"
 #include "PlayerLobbyInfo.generated.h"
 
-
-
 class UButton;
 class UTextBlock;
 class UImage;
 class UTexture2D;
-
+class APlayerState;
 
 UCLASS()
 class ECHOESOFTIME_API UPlayerLobbyInfo : public UUserWidget
@@ -18,8 +16,7 @@ class ECHOESOFTIME_API UPlayerLobbyInfo : public UUserWidget
     GENERATED_BODY()
 
 public:
-
-	virtual void NativeConstruct() override;
+    virtual void NativeConstruct() override;
 
     UPROPERTY(BlueprintReadWrite, meta = (BindWidget), Category = "PlayerLobbyInfo")
     UButton* kick_btn;
@@ -48,11 +45,14 @@ public:
     UFUNCTION(BlueprintCallable, Category = "PlayerLobbyInfo")
     void SetReadyState(bool bReady);
 
-
-    //UFUNCTION(BlueprintCallable, Category = "PlayerLobbyInfo")
-    //void SetTeamTag(FGameplayTag NewTag);
+    // Target player to kick (set by the platform actor)
+    UFUNCTION(BlueprintCallable, Category = "PlayerLobbyInfo")
+    void SetTargetPlayerState(APlayerState* InTarget);
 
     UFUNCTION()
     void OnKickButtonClicked();
 
+private:
+    UPROPERTY(Transient)
+    APlayerState* TargetPlayerState = nullptr;
 };

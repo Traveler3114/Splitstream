@@ -1,4 +1,4 @@
-// (Only change: OnStartButtonClicked now calls ServerStartGame; already correct)
+// (Only the OnLeaveButtonClicked implementation is added/changed)
 #include "LobbyUI.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
@@ -35,8 +35,14 @@ void ULobbyUI::SetStartButtonVisibility(ESlateVisibility InVisibility)
 	if (start_btn) start_btn->SetVisibility(InVisibility);
 }
 
-void ULobbyUI::OnLeaveButtonClicked() {}
-void ULobbyUI::OnChangeTeamButtonClicked() {}
+void ULobbyUI::OnLeaveButtonClicked()
+{
+	if (ALobbyPlayerController* LPC = Cast<ALobbyPlayerController>(GetOwningPlayer()))
+	{
+		// Always go through server; it will handle host vs. client
+		LPC->ServerLeaveLobby();
+	}
+}
 
 void ULobbyUI::OnStartButtonClicked()
 {
@@ -51,6 +57,8 @@ void ULobbyUI::OnStartButtonClicked()
 		}
 	}
 }
+
+void ULobbyUI::OnChangeTeamButtonClicked() {}
 
 void ULobbyUI::OnReadyButtonClicked()
 {

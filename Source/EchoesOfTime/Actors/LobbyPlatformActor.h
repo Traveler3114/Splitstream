@@ -95,7 +95,7 @@ protected:
 	APawn* OccupantLobbyPawn = nullptr;
 
 	// Player info widget updates / retry (construction race)
-	void UpdateWidgetsForOccupant();     // now also handles PlayerLobbyInfo visibility
+	void UpdateWidgetsForOccupant();     // also handles PlayerLobbyInfo visibility and kick button visibility
 	void SchedulePlayerInfoRetry();
 	void RetryUpdatePlayerInfo();
 	UPROPERTY(Transient)

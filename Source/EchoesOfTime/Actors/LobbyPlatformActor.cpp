@@ -5,6 +5,7 @@
 #include "Components/WidgetComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/PlayerState.h"
+#include "GameFramework/PlayerController.h"
 #include "GameFramework/Pawn.h"
 #include "Widgets/Lobby/OpenFriendsListButton.h"
 #include "Widgets/Lobby/FriendList.h"
@@ -140,7 +141,7 @@ void ALobbyPlatformActor::NotifyOccupantChanged()
 	UnbindFromOccupantPlayerState();
 	BindToOccupantPlayerState();
 
-	// Optionally auto-close friend list when occupied
+	// Optional: auto-close friend list when occupied
 	if (OccupantPlayerState && FriendList && FriendList->IsVisible())
 	{
 		SetFriendListVisible(false);
@@ -210,6 +211,12 @@ void ALobbyPlatformActor::UpdateWidgetsForOccupant()
 		if (UUserWidget* InfoUW = PlayerLobbyInfo->GetUserWidgetObject())
 		{
 			InfoUW->SetVisibility(ESlateVisibility::Collapsed);
+			if (UPlayerLobbyInfo* Info = Cast<UPlayerLobbyInfo>(InfoUW))
+			{
+				// Clear any previous target to be safe
+				Info->SetTargetPlayerState(nullptr);
+				Info->SetKickButtonVisible(false);
+			}
 		}
 		return;
 	}
@@ -223,6 +230,7 @@ void ALobbyPlatformActor::UpdateWidgetsForOccupant()
 
 	if (UPlayerLobbyInfo* Info = Cast<UPlayerLobbyInfo>(UW))
 	{
+		// Fill name/ready
 		FString NameToShow = OccupantPlayerState->GetPlayerName();
 		bool bReady = false;
 
@@ -234,6 +242,22 @@ void ALobbyPlatformActor::UpdateWidgetsForOccupant()
 
 		Info->SetPlayerName(FText::FromString(NameToShow));
 		Info->SetReadyState(bReady);
+
+		// Kick button visibility: only host should see it, and never on their own slot
+		bool bShowKick = false;
+		if (UWorld* World = GetWorld())
+		{
+			if (APlayerController* LocalPC = World->GetFirstPlayerController())
+			{
+				const bool bIsHostLocal = LocalPC->HasAuthority();
+				const bool bIsSelfSlot = (LocalPC->PlayerState == OccupantPlayerState);
+				bShowKick = bIsHostLocal && !bIsSelfSlot;
+			}
+		}
+		Info->SetKickButtonVisible(bShowKick);
+
+		// CRITICAL: set the target PlayerState so the kick RPC knows whom to kick
+		Info->SetTargetPlayerState(OccupantPlayerState);
 	}
 }
 
