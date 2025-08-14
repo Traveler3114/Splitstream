@@ -13,6 +13,7 @@
 #include "DefaultPlayerState.h"
 #include "Blueprint/UserWidget.h"
 #include "TimerManager.h"
+#include "Engine/Texture2D.h"
 
 ALobbyPlatformActor::ALobbyPlatformActor()
 {
@@ -256,8 +257,18 @@ void ALobbyPlatformActor::UpdateWidgetsForOccupant()
 		}
 		Info->SetKickButtonVisible(bShowKick);
 
-		// CRITICAL: set the target PlayerState so the kick RPC knows whom to kick
+		// Set target for kick
 		Info->SetTargetPlayerState(OccupantPlayerState);
+
+		// Apply avatar from PlayerState if available
+		if (ADefaultPlayerState* DPS2 = Cast<ADefaultPlayerState>(OccupantPlayerState))
+		{
+			if (UTexture2D* Avatar = DPS2->GetAvatarTexture())
+			{
+				Info->SetAvatarTexture(Avatar);
+			}
+			// If not yet available, when it does arrive we'll update via the avatar delegate binding (see BindToOccupantPlayerState).
+		}
 	}
 }
 
@@ -318,7 +329,9 @@ void ALobbyPlatformActor::UpdateOpenFriendButtonVisibility()
 
 void ALobbyPlatformActor::BindToOccupantPlayerState()
 {
-	CachedDefaultPlayerState = nullptr;
+	// Unbind first (safety)
+	UnbindFromOccupantPlayerState();
+
 	if (!OccupantPlayerState) return;
 
 	if (ADefaultPlayerState* DPS = Cast<ADefaultPlayerState>(OccupantPlayerState))
@@ -326,6 +339,7 @@ void ALobbyPlatformActor::BindToOccupantPlayerState()
 		CachedDefaultPlayerState = DPS;
 		DPS->OnPlayerMetaChanged.AddDynamic(this, &ALobbyPlatformActor::HandleOccupantMetaChanged);
 		DPS->OnReadyChanged.AddDynamic(this, &ALobbyPlatformActor::HandleOccupantReadyChanged);
+		DPS->OnAvatarChanged.AddDynamic(this, &ALobbyPlatformActor::HandleOccupantAvatarChanged);
 	}
 }
 
@@ -335,6 +349,7 @@ void ALobbyPlatformActor::UnbindFromOccupantPlayerState()
 	{
 		CachedDefaultPlayerState->OnPlayerMetaChanged.RemoveDynamic(this, &ALobbyPlatformActor::HandleOccupantMetaChanged);
 		CachedDefaultPlayerState->OnReadyChanged.RemoveDynamic(this, &ALobbyPlatformActor::HandleOccupantReadyChanged);
+		CachedDefaultPlayerState->OnAvatarChanged.RemoveDynamic(this, &ALobbyPlatformActor::HandleOccupantAvatarChanged);
 		CachedDefaultPlayerState = nullptr;
 	}
 }
@@ -346,5 +361,11 @@ void ALobbyPlatformActor::HandleOccupantMetaChanged(ADefaultPlayerState* /*PS*/)
 
 void ALobbyPlatformActor::HandleOccupantReadyChanged(ADefaultPlayerState* /*PS*/)
 {
+	UpdateWidgetsForOccupant();
+}
+
+void ALobbyPlatformActor::HandleOccupantAvatarChanged(ADefaultPlayerState* /*PS*/)
+{
+	// Avatar is now available/changed -> update UI
 	UpdateWidgetsForOccupant();
 }

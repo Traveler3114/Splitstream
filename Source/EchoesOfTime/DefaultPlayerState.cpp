@@ -1,7 +1,26 @@
 #include "DefaultPlayerState.h"
 #include "Net/UnrealNetwork.h"
+#include "TimerManager.h"
 
 ADefaultPlayerState::ADefaultPlayerState() {}
+
+void ADefaultPlayerState::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// Only do avatar fetch on clients (no need on dedicated server)
+	if (GetNetMode() == NM_DedicatedServer)
+	{
+		return;
+	}
+
+	// Schedule a call next tick to request the avatar from BP, to ensure UniqueId is valid
+	FTimerHandle Tmp;
+	GetWorldTimerManager().SetTimerForNextTick([this]()
+		{
+				BP_RequestAvatar(); // You implement this in BP to fetch the Steam avatar and call SetAvatarTexture
+		});
+}
 
 void ADefaultPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -45,4 +64,13 @@ void ADefaultPlayerState::OnRep_Meta()
 void ADefaultPlayerState::OnRep_Ready()
 {
 	OnReadyChanged.Broadcast(this);
+}
+
+void ADefaultPlayerState::SetAvatarTexture(UTexture2D* InTexture)
+{
+	if (AvatarTexture == InTexture) return;
+	AvatarTexture = InTexture;
+	OnAvatarChanged.Broadcast(this);
+	// Also fire meta changed so any listeners update UI
+	OnPlayerMetaChanged.Broadcast(this);
 }

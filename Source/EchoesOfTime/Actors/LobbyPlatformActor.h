@@ -94,8 +94,8 @@ protected:
 	UPROPERTY(Transient)
 	APawn* OccupantLobbyPawn = nullptr;
 
-	// Player info widget updates / retry (construction race)
-	void UpdateWidgetsForOccupant();     // also handles PlayerLobbyInfo visibility and kick button visibility
+	// Player info widget updates / retry
+	void UpdateWidgetsForOccupant();     // also handles PlayerLobbyInfo visibility, kick button visibility, and avatar binding
 	void SchedulePlayerInfoRetry();
 	void RetryUpdatePlayerInfo();
 	UPROPERTY(Transient)
@@ -120,4 +120,7 @@ protected:
 	void HandleOccupantMetaChanged(ADefaultPlayerState* PS);
 	UFUNCTION()
 	void HandleOccupantReadyChanged(ADefaultPlayerState* PS);
+	// New: listen for avatar changes to update the UI
+	UFUNCTION()
+	void HandleOccupantAvatarChanged(ADefaultPlayerState* PS);
 };
