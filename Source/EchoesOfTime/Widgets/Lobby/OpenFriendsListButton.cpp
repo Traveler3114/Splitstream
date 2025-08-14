@@ -10,6 +10,7 @@ void UOpenFriendsListButton::NativeConstruct()
 
 	if (OpenFriendsList_btn)
 	{
+		OpenFriendsList_btn->OnClicked.RemoveDynamic(this, &UOpenFriendsListButton::OnFriendsListButtonClicked);
 		OpenFriendsList_btn->OnClicked.AddDynamic(this, &UOpenFriendsListButton::OnFriendsListButtonClicked);
 	}
 }
