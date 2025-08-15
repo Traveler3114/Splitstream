@@ -85,44 +85,44 @@ void ANavNode::OnConstruction(const FTransform& Transform)
 	// Keep the list tidy when placed/edited
 	SanitizeNeighbours();
 
-	if (!bDebugDraw)
-	{
-		return;
-	}
+	//if (!bDebugDraw)
+	//{
+	//	return;
+	//}
 
-	if (UWorld* World = GetWorld())
-	{
-		const FVector Location = GetActorLocation();
+	//if (UWorld* World = GetWorld())
+	//{
+	//	const FVector Location = GetActorLocation();
 
-		// Editor: persistent, Game: short-lived so it doesn't accumulate
-		const bool bIsGameWorld = World->IsGameWorld();
-		const bool bPersistentLines = !bIsGameWorld;
-		const float LifeTime = bIsGameWorld ? 2.0f : 0.0f;
+	//	// Editor: persistent, Game: short-lived so it doesn't accumulate
+	//	const bool bIsGameWorld = World->IsGameWorld();
+	//	const bool bPersistentLines = !bIsGameWorld;
+	//	const float LifeTime = bIsGameWorld ? 2.0f : 0.0f;
 
-		// Draw node sphere
-		DrawDebugSphere(World, Location, ArrivalRadius, 16, FColor::Green, bPersistentLines, LifeTime, /*DepthPriority*/ 0, /*Thickness*/ 2.f);
+	//	// Draw node sphere
+	//	DrawDebugSphere(World, Location, ArrivalRadius, 16, FColor::Green, bPersistentLines, LifeTime, /*DepthPriority*/ 0, /*Thickness*/ 2.f);
 
-		// Draw arrows to next nodes
-		for (ANavNode* Node : NeighbourNodes)
-		{
-			if (!IsValid(Node) || Node == this)
-			{
-				continue;
-			}
+	//	// Draw arrows to next nodes
+	//	for (ANavNode* Node : NeighbourNodes)
+	//	{
+	//		if (!IsValid(Node) || Node == this)
+	//		{
+	//			continue;
+	//		}
 
-			DrawDebugDirectionalArrow(
-				World,
-				Location,
-				Node->GetActorLocation(),
-				25.f,
-				FColor::Emerald,
-				bPersistentLines,
-				LifeTime,
-				/*DepthPriority*/ 0,
-				/*Thickness*/ 2.f
-			);
-		}
-	}
+	//		DrawDebugDirectionalArrow(
+	//			World,
+	//			Location,
+	//			Node->GetActorLocation(),
+	//			25.f,
+	//			FColor::Emerald,
+	//			bPersistentLines,
+	//			LifeTime,
+	//			/*DepthPriority*/ 0,
+	//			/*Thickness*/ 2.f
+	//		);
+	//	}
+	//}
 }
 
 void ANavNode::MakeLinksBidirectional()
