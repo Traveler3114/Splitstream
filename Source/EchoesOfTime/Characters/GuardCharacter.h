@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "GuardCharacter.generated.h"
 
+
+class ANavNode;
 UCLASS()
 class ECHOESOFTIME_API AGuardCharacter : public ACharacter
 {
@@ -29,5 +31,14 @@ public:
 	// If true, only consider nodes marked bStayPoint
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Idle")
 	bool bOnlyStayOnMarkedNodes = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Nodes")
+	ANavNode* CurrentNode = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Nodes")
+	ANavNode* PreviousNode = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Nodes")
+	ANavNode* NextNode = nullptr;
 
 };

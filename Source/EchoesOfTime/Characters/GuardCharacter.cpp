@@ -2,6 +2,7 @@
 
 
 #include "GuardCharacter.h"
+#include "Actors/NavNode.h"
 
 // Sets default values
 AGuardCharacter::AGuardCharacter()
