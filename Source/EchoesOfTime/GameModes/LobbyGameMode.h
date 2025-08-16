@@ -26,7 +26,7 @@ public:
 
     // Map to travel to when host starts the game
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Lobby|Travel")
-    FString MatchMapPath = TEXT("/Game/Maps/TestMap"); // Must exist & be in packaging list
+    FString MatchMapPath = TEXT("/Game/Maps/PersistentTestMap"); // Must exist & be in packaging list
 
     // Map to travel to when leaving the lobby (main menu)
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Lobby|Travel")
