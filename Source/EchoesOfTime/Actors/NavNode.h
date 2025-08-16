@@ -18,10 +18,12 @@ protected:
 	// Shows up fine without Category, but adding one is tidy
 	UPROPERTY(VisibleAnywhere, Category = "NavNode")
 	TObjectPtr<USceneComponent> Root;
-
 	// Make this editable per-instance in the level Details panel
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "NavNode", meta = (AllowPrivateAccess = "true"))
 	TArray<TObjectPtr<ANavNode>> NeighbourNodes;
+
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "NavNode|Stay")
+	bool bStayPoint = false;
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "NavNode")
