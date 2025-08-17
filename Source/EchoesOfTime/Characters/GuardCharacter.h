@@ -40,6 +40,10 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Nodes")
 	ANavNode* NextNode = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ghost")
+
+	TSubclassOf<class AGhostCharacterActor> GhostClass;
 protected:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Ghost", meta = (AllowPrivateAccess = "true"))
 	class AGhostCharacterActor* SpawnedGhost = nullptr;

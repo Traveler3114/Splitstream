@@ -5,7 +5,6 @@
 #include "Actors/NavNode.h"
 #include "Engine/Engine.h"
 
-DEFINE_LOG_CATEGORY_STATIC(LogGuardCharacter, Log, All);
 
 // Sets default values
 AGuardCharacter::AGuardCharacter()
@@ -28,7 +27,7 @@ void AGuardCharacter::BeginPlay()
 		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 		SpawnedGhost = GetWorld()->SpawnActor<AGhostCharacterActor>(
-			AGhostCharacterActor::StaticClass(),
+			GhostClass,
 			GetActorLocation(),
 			GetActorRotation(),
 			Params);

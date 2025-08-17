@@ -94,7 +94,9 @@ void AGhostCharacterActor::Tick(float DeltaTime)
 				GhostMesh->SetMaterial(i, GhostMaterial);
 			}
 		}
+
 	}
+
 
 	// Sync location and rotation
 	if (CharacterToMirror)
@@ -103,7 +105,6 @@ void AGhostCharacterActor::Tick(float DeltaTime)
 		SetActorRotation(CharacterToMirror->GetActorRotation());
 	}
 }
-
 void AGhostCharacterActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
