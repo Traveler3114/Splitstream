@@ -2,24 +2,29 @@
 #include "Kismet/GameplayStatics.h"
 #include "Components/PrimitiveComponent.h"
 #include "Engine/Engine.h"
-
+#include "GameFramework/Pawn.h"
 
 bool UGCN_PastEchoActivated::OnExecute_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const
 {
+	if (!MyTarget) return false;
 
+	const APawn* Pawn = Cast<APawn>(MyTarget);
+	if (!Pawn || !Pawn->IsLocallyControlled())
+	{
+		// Only the locally controlled client's machine should apply the local presentation
+		return false;
+	}
 
 	UWorld* World = MyTarget->GetWorld();
+	if (!World) return false;
 
 	TArray<AActor*> Ghosts;
 	UGameplayStatics::GetAllActorsWithTag(World, TEXT("Ghost"), Ghosts);
-
 
 	for (AActor* A : Ghosts)
 	{
 		SetActorLocalVisibility(A, /*bVisible*/ true);
 	}
-
-	// TODO: Add local-only SFX/VFX here later (e.g., UGameplayStatics::PlaySound2D, Niagara, etc.)
 
 	return Ghosts.Num() > 0;
 }
@@ -28,7 +33,6 @@ void UGCN_PastEchoActivated::SetActorLocalVisibility(AActor* Actor, bool bVisibl
 {
 	if (!Actor) return;
 
-	// Local-only: does not replicate.
 	const bool bBeforeHidden = Actor->IsHidden();
 	Actor->SetActorHiddenInGame(!bVisible);
 
@@ -39,7 +43,5 @@ void UGCN_PastEchoActivated::SetActorLocalVisibility(AActor* Actor, bool bVisibl
 		if (!C) continue;
 		C->SetVisibility(bVisible, true);
 		++SetCount;
-		// Optionally gate collisions locally:
-		// C->SetCollisionEnabled(bVisible ? ECollisionEnabled::QueryOnly : ECollisionEnabled::NoCollision);
 	}
 }
