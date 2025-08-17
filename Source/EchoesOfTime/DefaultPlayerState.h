@@ -1,20 +1,29 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
+#include "AbilitySystemInterface.h"
 #include "DefaultPlayerState.generated.h"
 
 class UTexture2D;
+class UAbilitySystemComponent;
+class UGameplayAbility;
+class UAttributeSet;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerMetaChanged, ADefaultPlayerState*, PS);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnReadyChanged, ADefaultPlayerState*, PS);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAvatarChanged, ADefaultPlayerState*, PS);
 
 UCLASS()
-class ECHOESOFTIME_API ADefaultPlayerState : public APlayerState
+class ECHOESOFTIME_API ADefaultPlayerState : public APlayerState, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 public:
 	ADefaultPlayerState();
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
+
+	UAttributeSet* GetAttributeSet() const { return AttributeSet; }
+
+	void GiveAbilities();
 
 	UFUNCTION(BlueprintPure, Category = "PlayerMeta")
 	FString GetDisplayName() const { return DisplayName.IsEmpty() ? GetPlayerName() : DisplayName; }
@@ -66,4 +75,13 @@ protected:
 
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
+	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
+	TObjectPtr<UAttributeSet> AttributeSet;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
+	TArray<TSubclassOf<UGameplayAbility>> DefaultAbilities;
 };

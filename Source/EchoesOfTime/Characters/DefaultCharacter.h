@@ -21,6 +21,9 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void PossessedBy(AController* NewController) override;
+	virtual void OnRep_PlayerState() override; // Initialize ASC on clients
+
 
 	// Movement and looking functions
 	void Move(const FInputActionValue& Value);
@@ -32,6 +35,8 @@ protected:
 	// Sprint functions
 	void StartSprint();
 	void StopSprint();
+
+	void ActivateFutureGAShowGhosts();
 
 
 	// Input actions
@@ -52,6 +57,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputAction* CrouchAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UInputAction* ShowGhostsAction;
 
 	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	//UInputAction* PickupAction;

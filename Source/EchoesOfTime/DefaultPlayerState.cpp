@@ -1,8 +1,31 @@
 #include "DefaultPlayerState.h"
 #include "Net/UnrealNetwork.h"
+#include "AbilitySystemComponent.h"
+#include "AbilitySystem/DefaultAbilitySystemComponent.h"
+#include "AbilitySystem/AttributeSets/DefaultAttributeSet.h"
+#include "Abilities/GameplayAbility.h"
+#include "AttributeSet.h"
 #include "TimerManager.h"
 
-ADefaultPlayerState::ADefaultPlayerState() {}
+
+ADefaultPlayerState::ADefaultPlayerState()
+{
+	AbilitySystemComponent = CreateDefaultSubobject<UDefaultAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	AbilitySystemComponent->SetIsReplicated(true);
+	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
+
+	AttributeSet = CreateDefaultSubobject<UDefaultAttributeSet>(TEXT("AttributeSet"));
+}
+
+void ADefaultPlayerState::GiveAbilities()
+{
+	if (!HasAuthority()) return; // Only run on server
+
+	for (TSubclassOf<UGameplayAbility>& AbilityClass : DefaultAbilities)
+	{
+		AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(AbilityClass, 1, 0));
+	}
+}
 
 void ADefaultPlayerState::BeginPlay()
 {

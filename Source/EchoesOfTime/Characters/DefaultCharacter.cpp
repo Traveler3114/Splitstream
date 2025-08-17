@@ -7,6 +7,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "PhysicsEngine/PhysicsHandleComponent.h"
+#include "DefaultPlayerState.h"
+#include "AbilitySystemComponent.h"
 #include "InputActionValue.h"
 #include "Net/UnrealNetwork.h"
 
@@ -65,7 +67,32 @@ void ADefaultCharacter::BeginPlay()
 }
 
 
+void ADefaultCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
 
+	// Server init
+	if (!HasAuthority()) return;
+
+	ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
+	if (PS && PS->GetAbilitySystemComponent())
+	{
+		PS->GetAbilitySystemComponent()->InitAbilityActorInfo(PS, this);
+		PS->GiveAbilities();
+	}
+}
+
+void ADefaultCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+
+	// Client init
+	ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
+	if (PS && PS->GetAbilitySystemComponent())
+	{
+		PS->GetAbilitySystemComponent()->InitAbilityActorInfo(PS, this);
+	}
+}
 
 
 void ADefaultCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -84,11 +111,22 @@ void ADefaultCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &ADefaultCharacter::StopCrouching);
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &ADefaultCharacter::ServerStartSprint);
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ADefaultCharacter::ServerStopSprint);
+		EnhancedInputComponent->BindAction(ShowGhostsAction, ETriggerEvent::Completed, this, &ADefaultCharacter::ActivateFutureGAShowGhosts);
 		//EnhancedInputComponent->BindAction(PickupAction, ETriggerEvent::Started, this, &ADefaultCharacter::ServerPickup);
 		//EnhancedInputComponent->BindAction(PickupAction, ETriggerEvent::Completed, this, &ADefaultCharacter::ServerDrop);
 	}
 }
 
+
+void ADefaultCharacter::ActivateFutureGAShowGhosts()
+{
+	ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
+	if (PS && PS->GetAbilitySystemComponent())
+	{
+		const FGameplayTag MyTag = FGameplayTag::RequestGameplayTag(FName("Character.Ability.ShowGhosts"));
+		PS->GetAbilitySystemComponent()->TryActivateAbilitiesByTag(FGameplayTagContainer(MyTag));
+	}
+}
 
 void ADefaultCharacter::Tick(float DeltaTime)
 {
