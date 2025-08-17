@@ -1,9 +1,9 @@
-#include "GCN_ShowGhostLocal.h"
+#include "GCN_PastEchoActivated.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Pawn.h"
 #include "Components/PrimitiveComponent.h"
 
-bool UGCN_ShowGhostLocal::OnExecute_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const
+bool UGCN_PastEchoActivated::OnExecute_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const
 {
 	if (!MyTarget) return false;
 
@@ -31,7 +31,7 @@ bool UGCN_ShowGhostLocal::OnExecute_Implementation(AActor* MyTarget, const FGame
 	return Ghosts.Num() > 0;
 }
 
-void UGCN_ShowGhostLocal::SetActorLocalVisibility(AActor* Actor, bool bVisible)
+void UGCN_PastEchoActivated::SetActorLocalVisibility(AActor* Actor, bool bVisible)
 {
 	if (!Actor) return;
 

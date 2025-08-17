@@ -2,12 +2,12 @@
 
 #include "CoreMinimal.h"
 #include "GameplayCueNotify_Static.h"
-#include "GCN_ShowGhostLocal.generated.h"
+#include "GCN_PastEchoActivated.generated.h"
 
 // Triggers only on the locally controlled client for the target actor.
 // Makes all actors with tag "Ghost" locally visible. Add SFX/VFX here later.
 UCLASS()
-class ECHOESOFTIME_API UGCN_ShowGhostLocal : public UGameplayCueNotify_Static
+class ECHOESOFTIME_API UGCN_PastEchoActivated : public UGameplayCueNotify_Static
 {
 	GENERATED_BODY()
 

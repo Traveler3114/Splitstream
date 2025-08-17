@@ -1,19 +1,19 @@
-#include "FutureGAShowGhosts.h"
+#include "FutureGAPastEcho.h"
 #include "AbilitySystemComponent.h"
 #include "GameplayTagContainer.h"
 
-UFutureGAShowGhosts::UFutureGAShowGhosts()
+UFutureGAPastEcho::UFutureGAPastEcho()
 {
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::ServerInitiated;
 
 	FGameplayTagContainer Tags;
-	FGameplayTag MyTag = FGameplayTag::RequestGameplayTag(FName("Character.Ability.ShowGhosts"));
+	FGameplayTag MyTag = FGameplayTag::RequestGameplayTag(FName("Character.Ability.Future.PastEcho"));
 	Tags.AddTag(MyTag);
 	SetAssetTags(Tags);
 }
 
-void UFutureGAShowGhosts::ActivateAbility(
+void UFutureGAPastEcho::ActivateAbility(
 	const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActorInfo* ActorInfo,
 	FGameplayAbilityActivationInfo ActivationInfo,
@@ -26,7 +26,7 @@ void UFutureGAShowGhosts::ActivateAbility(
 	}
 
 	// Execute Gameplay Cue; cue will handle local-only visibility on the owning client.
-	const FGameplayTag CueTag = FGameplayTag::RequestGameplayTag(FName("GameplayCue.Ghost.Show"));
+	const FGameplayTag CueTag = FGameplayTag::RequestGameplayTag(FName("GameplayCue.PastEcho.Activated"));
 	FGameplayCueParameters Params; // Add custom params later if needed
 	ActorInfo->AbilitySystemComponent->ExecuteGameplayCue(CueTag, Params);
 

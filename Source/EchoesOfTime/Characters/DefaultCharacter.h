@@ -35,7 +35,7 @@ protected:
 	void StartSprint();
 	void StopSprint();
 
-	void ActivateFutureGAShowGhosts();
+	void ActivateFutureGAPastEcho();
 
 	// Input actions
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
@@ -57,7 +57,7 @@ protected:
 	UInputAction* CrouchAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputAction* ShowGhostsAction;
+	UInputAction* PastEchoAction;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	UCameraComponent* CameraComponent;

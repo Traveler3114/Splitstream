@@ -106,16 +106,16 @@ void ADefaultCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &ADefaultCharacter::StopCrouching);
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &ADefaultCharacter::ServerStartSprint);
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ADefaultCharacter::ServerStopSprint);
-		EnhancedInputComponent->BindAction(ShowGhostsAction, ETriggerEvent::Completed, this, &ADefaultCharacter::ActivateFutureGAShowGhosts);
+		EnhancedInputComponent->BindAction(PastEchoAction, ETriggerEvent::Completed, this, &ADefaultCharacter::ActivateFutureGAPastEcho);
 	}
 }
 
-void ADefaultCharacter::ActivateFutureGAShowGhosts()
+void ADefaultCharacter::ActivateFutureGAPastEcho()
 {
 	ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
 	if (PS && PS->GetAbilitySystemComponent())
 	{
-		const FGameplayTag MyTag = FGameplayTag::RequestGameplayTag(FName("Character.Ability.ShowGhosts"));
+		const FGameplayTag MyTag = FGameplayTag::RequestGameplayTag(FName("Character.Ability.Future.PastEcho"));
 		PS->GetAbilitySystemComponent()->TryActivateAbilitiesByTag(FGameplayTagContainer(MyTag));
 	}
 }

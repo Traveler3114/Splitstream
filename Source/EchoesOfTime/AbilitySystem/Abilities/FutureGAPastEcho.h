@@ -4,17 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
-#include "FutureGAShowGhosts.generated.h"
+#include "FutureGAPastEcho.generated.h"
 
 /**
  * Shows ghost locally via a Gameplay Cue.
  */
 UCLASS()
-class ECHOESOFTIME_API UFutureGAShowGhosts : public UGameplayAbility
+class ECHOESOFTIME_API UFutureGAPastEcho : public UGameplayAbility
 {
 	GENERATED_BODY()
 public:
-	UFutureGAShowGhosts();
+	UFutureGAPastEcho();
 
 	virtual void ActivateAbility(
 		const FGameplayAbilitySpecHandle Handle,
