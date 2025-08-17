@@ -16,7 +16,7 @@ class ECHOESOFTIME_API AGuardCharacter : public ACharacter
 public:
 	// Sets default values for this character's properties
 	AGuardCharacter();
-
+	virtual void BeginPlay() override;
 	// Base probability to idle when allowed
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Idle")
 	float BaseStayChance = 0.5f; // 0..1
@@ -40,5 +40,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Nodes")
 	ANavNode* NextNode = nullptr;
-
+protected:
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Ghost", meta = (AllowPrivateAccess = "true"))
+	class AGhostCharacterActor* SpawnedGhost = nullptr;
 };

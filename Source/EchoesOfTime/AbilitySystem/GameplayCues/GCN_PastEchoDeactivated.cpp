@@ -1,12 +1,11 @@
-#include "GCN_PastEchoActivated.h"
+#include "GCN_PastEchoDeactivated.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/PrimitiveComponent.h"
 #include "Engine/Engine.h"
 
 
-bool UGCN_PastEchoActivated::OnExecute_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const
+bool UGCN_PastEchoDeactivated::OnExecute_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const
 {
-
 
 	UWorld* World = MyTarget->GetWorld();
 
@@ -16,19 +15,16 @@ bool UGCN_PastEchoActivated::OnExecute_Implementation(AActor* MyTarget, const FG
 
 	for (AActor* A : Ghosts)
 	{
-		SetActorLocalVisibility(A, /*bVisible*/ true);
+		SetActorLocalVisibility(A, /*bVisible*/ false);
 	}
-
-	// TODO: Add local-only SFX/VFX here later (e.g., UGameplayStatics::PlaySound2D, Niagara, etc.)
 
 	return Ghosts.Num() > 0;
 }
 
-void UGCN_PastEchoActivated::SetActorLocalVisibility(AActor* Actor, bool bVisible)
+void UGCN_PastEchoDeactivated::SetActorLocalVisibility(AActor* Actor, bool bVisible)
 {
 	if (!Actor) return;
 
-	// Local-only: does not replicate.
 	const bool bBeforeHidden = Actor->IsHidden();
 	Actor->SetActorHiddenInGame(!bVisible);
 
@@ -39,7 +35,5 @@ void UGCN_PastEchoActivated::SetActorLocalVisibility(AActor* Actor, bool bVisibl
 		if (!C) continue;
 		C->SetVisibility(bVisible, true);
 		++SetCount;
-		// Optionally gate collisions locally:
-		// C->SetCollisionEnabled(bVisible ? ECollisionEnabled::QueryOnly : ECollisionEnabled::NoCollision);
 	}
 }

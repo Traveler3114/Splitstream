@@ -7,6 +7,9 @@
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/Character.h"
 #include "DrawDebugHelpers.h"
+#include "Engine/Engine.h"
+
+DEFINE_LOG_CATEGORY_STATIC(LogGhostCharacter, Log, All);
 
 // Sets default values
 AGhostCharacterActor::AGhostCharacterActor()
@@ -40,12 +43,14 @@ void AGhostCharacterActor::BeginPlay()
 		GhostMesh->SetVisibility(false, true);
 		GhostMesh->bOnlyOwnerSee = false; // ensure we are not gating by single owner
 	}
+
 }
 
 // Local-only visibility toggle
 void AGhostCharacterActor::SetGhostVisibleLocal(bool bVisible)
 {
 	// This is not replicated; it only affects the calling machine.
+	const bool bBeforeHidden = IsHidden();
 	SetActorHiddenInGame(!bVisible);
 	if (GhostMesh)
 	{
@@ -58,21 +63,17 @@ void AGhostCharacterActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	// Only draw debug if visible locally
-	if (GhostMesh && GhostMesh->IsVisible())
-	{
-		DrawDebugSphere(
-			GetWorld(),
-			GetActorLocation(),
-			30.0f,           // Radius
-			12,              // Segments
-			FColor::Green,   // Color
-			false,           // Persistent lines
-			-1.0f,           // Life time
-			0,               // Depth priority
-			2.0f             // Thickness
-		);
-	}
+	DrawDebugSphere(
+		GetWorld(),
+		GetActorLocation(),
+		30.0f,           // Radius
+		12,              // Segments
+		FColor::Green,   // Color
+		false,           // Persistent lines
+		-1.0f,           // Life time
+		0,               // Depth priority
+		2.0f             // Thickness
+	);
 
 	// Sync mesh and pose from mirrored character (if any)
 	if (CharacterToMirror && CharacterToMirror->GetMesh() && GhostMesh)
