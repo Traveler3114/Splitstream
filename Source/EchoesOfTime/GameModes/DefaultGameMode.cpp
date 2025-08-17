@@ -1,6 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "DefaultGameMode.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerStart.h"
@@ -9,6 +6,7 @@
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
 #include "GameplayTagContainer.h"
+
 
 AActor* ADefaultGameMode::ChoosePlayerStart_Implementation(AController* Player)
 {
@@ -26,22 +24,26 @@ AActor* ADefaultGameMode::ChoosePlayerStart_Implementation(AController* Player)
         return Super::ChoosePlayerStart_Implementation(Player);
     }
 
-    // Assign team tag if not set
-    FGameplayTag AttackersTag = FGameplayTag::RequestGameplayTag(TEXT("Team.Attackers"));
-    FGameplayTag DefendersTag = FGameplayTag::RequestGameplayTag(TEXT("Team.Defenders"));
+    FGameplayTag PastTag = FGameplayTag::RequestGameplayTag(TEXT("Team.Past"));
+    FGameplayTag FutureTag = FGameplayTag::RequestGameplayTag(TEXT("Team.Future"));
 
     FName DesiredTag;
     FString TeamString;
 
-    if (ASC->HasMatchingGameplayTag(AttackersTag))
+    if (ASC->HasMatchingGameplayTag(PastTag))
     {
-        DesiredTag = FName("PlayerStart_Attackers");
-        TeamString = "Attackers";
+        DesiredTag = FName("PlayerStart_Past");
+        TeamString = "Past";
+    }
+    else if (ASC->HasMatchingGameplayTag(FutureTag))
+    {
+        DesiredTag = FName("PlayerStart_Future");
+        TeamString = "Future";
     }
     else
     {
-        DesiredTag = FName("PlayerStart_Defenders");
-        TeamString = "Defenders";
+        DesiredTag = FName("PlayerStart_Past");
+        TeamString = "Past";
     }
 
     // Find all PlayerStart actors for this team
