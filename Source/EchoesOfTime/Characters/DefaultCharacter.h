@@ -24,7 +24,6 @@ protected:
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override; // Initialize ASC on clients
 
-
 	// Movement and looking functions
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
@@ -37,7 +36,6 @@ protected:
 	void StopSprint();
 
 	void ActivateFutureGAShowGhosts();
-
 
 	// Input actions
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
@@ -61,33 +59,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputAction* ShowGhostsAction;
 
-	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	//UInputAction* PickupAction;
-
-	//UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	//class UPhysicsHandleComponent* PhysicsHandle;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	UCameraComponent* CameraComponent;
-
-	//UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
-	//AActor* HitActor;
-
-	//void Pickup();
-	//void Drop();
-
-	//UFUNCTION(Server, Reliable)
-	//void ServerPickup();
-
-	//UFUNCTION(Server, Reliable)
-	//void ServerDrop();
 
 	// Server-side sprinting
 	UFUNCTION(Server, Reliable)
 	void ServerStartSprint();
 	UFUNCTION(Server, Reliable)
 	void ServerStopSprint();
-
 
 	// Replicated sprint state
 	UPROPERTY(ReplicatedUsing = OnRep_SprintState)

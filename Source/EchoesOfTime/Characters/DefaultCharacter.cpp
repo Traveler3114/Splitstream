@@ -6,7 +6,6 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
-#include "PhysicsEngine/PhysicsHandleComponent.h"
 #include "DefaultPlayerState.h"
 #include "AbilitySystemComponent.h"
 #include "InputActionValue.h"
@@ -18,7 +17,6 @@ ADefaultCharacter::ADefaultCharacter()
 
 	// Set default character collision size
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
-	//PhysicsHandle = CreateDefaultSubobject<UPhysicsHandleComponent>(TEXT("PhysicsHandle"));
 
 	GetMesh()->SetOwnerNoSee(false); // Make sure the mesh is visible in first-person
 
@@ -27,6 +25,7 @@ ADefaultCharacter::ADefaultCharacter()
 	bUseControllerRotationYaw = true;
 	bUseControllerRotationRoll = false;
 	GetCharacterMovement()->bOrientRotationToMovement = false;
+
 	// Character movement settings
 	GetCharacterMovement()->JumpZVelocity = 500.f;
 	GetCharacterMovement()->AirControl = 0.35f;
@@ -37,6 +36,7 @@ ADefaultCharacter::ADefaultCharacter()
 
 	bReplicates = true;
 	SetReplicateMovement(true);
+
 	// Initialize sprint state
 	bIsSprinting = false;
 }
@@ -44,9 +44,6 @@ ADefaultCharacter::ADefaultCharacter()
 void ADefaultCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
-	//if (TimeManager) {
-	//	TimeManager->Character = this;
-	//}
 }
 
 void ADefaultCharacter::BeginPlay()
@@ -67,7 +64,6 @@ void ADefaultCharacter::BeginPlay()
 		UE_LOG(LogTemp, Warning, TEXT("CameraComponent not found!"));
 	}
 }
-
 
 void ADefaultCharacter::PossessedBy(AController* NewController)
 {
@@ -96,7 +92,6 @@ void ADefaultCharacter::OnRep_PlayerState()
 	}
 }
 
-
 void ADefaultCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -105,8 +100,6 @@ void ADefaultCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	{
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ADefaultCharacter::Move);
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ADefaultCharacter::Look);
-		//EnhancedInputComponent->BindAction(SwitchMapAction, ETriggerEvent::Started, this, &ADefaultCharacter::MapSwitch);
-		//EnhancedInputComponent->BindAction(SwitchMapAction, ETriggerEvent::Completed, this, &ADefaultCharacter::MapSwitchReleased);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ADefaultCharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ADefaultCharacter::StopJumping);
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &ADefaultCharacter::StartCrouch);
@@ -114,11 +107,8 @@ void ADefaultCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &ADefaultCharacter::ServerStartSprint);
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ADefaultCharacter::ServerStopSprint);
 		EnhancedInputComponent->BindAction(ShowGhostsAction, ETriggerEvent::Completed, this, &ADefaultCharacter::ActivateFutureGAShowGhosts);
-		//EnhancedInputComponent->BindAction(PickupAction, ETriggerEvent::Started, this, &ADefaultCharacter::ServerPickup);
-		//EnhancedInputComponent->BindAction(PickupAction, ETriggerEvent::Completed, this, &ADefaultCharacter::ServerDrop);
 	}
 }
-
 
 void ADefaultCharacter::ActivateFutureGAShowGhosts()
 {
@@ -133,54 +123,7 @@ void ADefaultCharacter::ActivateFutureGAShowGhosts()
 void ADefaultCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	//if (PhysicsHandle->GrabbedComponent)
-	//{
-	//	FVector CameraLocation = CameraComponent->GetComponentLocation();
-	//	FRotator CameraRotation = CameraComponent->GetComponentRotation();
-	//	FVector ForwardVector = CameraRotation.Vector();
-	//	FVector TargetLocation = CameraLocation + (ForwardVector * 300.f);
-
-
-
-	//	if (PhysicsHandle)
-	//	{
-	//		PhysicsHandle->SetTargetLocationAndRotation(TargetLocation, CameraRotation);
-	//	}
-	//}
 }
-
-
-//void ADefaultCharacter::Pickup()
-//{
-//	if (HitActor) {
-//		UPrimitiveComponent* HitComponent = Cast<UPrimitiveComponent>(HitActor->GetRootComponent());
-//
-//		PhysicsHandle->GrabComponentAtLocation(
-//			HitComponent,
-//			NAME_None,
-//			HitComponent->GetComponentLocation()
-//		);
-//	}
-//}
-
-//void ADefaultCharacter::ServerPickup_Implementation()
-//{
-//	Pickup();
-//}
-//
-//void ADefaultCharacter::Drop()
-//{
-//	if (PhysicsHandle)
-//	{
-//		PhysicsHandle->ReleaseComponent();
-//	}
-//}
-//
-//void ADefaultCharacter::ServerDrop_Implementation()
-//{
-//	Drop();
-//}
 
 void ADefaultCharacter::StartCrouch()
 {
@@ -241,39 +184,6 @@ void ADefaultCharacter::OnRep_Pitch() {
 	}
 }
 
-
-//void ADefaultCharacter::ServerMapSwitch_Implementation()
-//{
-//	if (TimeManager)
-//	{
-//		TimeManager->SwitchMap(this);
-//	}
-//}
-//
-//void ADefaultCharacter::MapSwitch(const FInputActionValue& Value)
-//{
-//	if (bCanSwitchMap)
-//	{
-//		if (TimeManager)
-//		{
-//			if (HasAuthority())
-//			{
-//				TimeManager->SwitchMap(this);
-//			}
-//			else
-//			{
-//				ServerMapSwitch();
-//			}
-//		}
-//		bCanSwitchMap = false;
-//	}
-//}
-//
-//void ADefaultCharacter::MapSwitchReleased(const FInputActionValue& Value)
-//{
-//	bCanSwitchMap = true;
-//}
-
 void ADefaultCharacter::StartSprint()
 {
 	if (!GetCharacterMovement()->IsCrouching() && GetCharacterMovement()->Velocity.Size() > 0)
@@ -316,6 +226,5 @@ void ADefaultCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ADefaultCharacter, bIsSprinting);
-	//DOREPLIFETIME(ADefaultCharacter, HitActor);
 	DOREPLIFETIME(ADefaultCharacter, Pitch);
 }

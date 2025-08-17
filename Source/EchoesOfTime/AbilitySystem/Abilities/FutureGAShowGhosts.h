@@ -7,18 +7,18 @@
 #include "FutureGAShowGhosts.generated.h"
 
 /**
- * 
+ * Shows ghost locally via a Gameplay Cue.
  */
 UCLASS()
 class ECHOESOFTIME_API UFutureGAShowGhosts : public UGameplayAbility
 {
 	GENERATED_BODY()
 public:
-
 	UFutureGAShowGhosts();
+
 	virtual void ActivateAbility(
-		const FGameplayAbilitySpecHandle Handle, 
-		const FGameplayAbilityActorInfo* ActorInfo, 
-		FGameplayAbilityActivationInfo ActivationInfo, 
+		const FGameplayAbilitySpecHandle Handle,
+		const FGameplayAbilityActorInfo* ActorInfo,
+		FGameplayAbilityActivationInfo ActivationInfo,
 		const FGameplayEventData* TriggerEventData) override;
 };

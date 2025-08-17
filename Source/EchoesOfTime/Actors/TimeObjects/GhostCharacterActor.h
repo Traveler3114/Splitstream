@@ -10,29 +10,37 @@ UCLASS()
 class ECHOESOFTIME_API AGhostCharacterActor : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
 	AGhostCharacterActor();
-
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-public:	
+
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	// Root
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components")
 	USceneComponent* DefaultSceneRoot;
 
+	// Visible mesh for the ghost
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components")
 	USkeletalMeshComponent* GhostMesh;
 
-	UPROPERTY(Replicated,EditAnywhere, BlueprintReadWrite, Category = "GhostCharacter")
+	// Character whose pose we mirror (replicated)
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "GhostCharacter")
 	ACharacter* CharacterToMirror;
 
-	UPROPERTY(Replicated,EditAnywhere, BlueprintReadWrite, Category="Ghost")
+	// Material to apply on the ghost (replicated)
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Ghost")
 	UMaterialInterface* GhostMaterial = nullptr;
 
+	// Local-only toggle. Safe to call on any machine; visibility is not replicated.
+	UFUNCTION(BlueprintCallable, Category = "Ghost")
+	void SetGhostVisibleLocal(bool bVisible);
 };

@@ -1,5 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+// Copyright
 
 #include "GhostCharacterActor.h"
 #include "Components/SceneComponent.h"
@@ -7,12 +6,13 @@
 #include "Materials/MaterialInterface.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/Character.h"
+#include "DrawDebugHelpers.h"
 
 // Sets default values
 AGhostCharacterActor::AGhostCharacterActor()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
 	DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
 	RootComponent = DefaultSceneRoot;
 
@@ -20,16 +20,37 @@ AGhostCharacterActor::AGhostCharacterActor()
 	GhostMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMesh"));
 	GhostMesh->SetupAttachment(RootComponent);
 
+	// Replicate actor and movement for syncing
 	bReplicates = true;
 	SetReplicateMovement(true);
 
+	// Tag for cue lookup
+	Tags.AddUnique(TEXT("Ghost"));
 }
 
 // Called when the game starts or when spawned
 void AGhostCharacterActor::BeginPlay()
 {
 	Super::BeginPlay();
-	GhostMesh->bOnlyOwnerSee = true; // Only the owner can see this mesh
+
+	// Start hidden for all clients. We'll selectively show it on individual clients.
+	SetActorHiddenInGame(true);
+	if (GhostMesh)
+	{
+		GhostMesh->SetVisibility(false, true);
+		GhostMesh->bOnlyOwnerSee = false; // ensure we are not gating by single owner
+	}
+}
+
+// Local-only visibility toggle
+void AGhostCharacterActor::SetGhostVisibleLocal(bool bVisible)
+{
+	// This is not replicated; it only affects the calling machine.
+	SetActorHiddenInGame(!bVisible);
+	if (GhostMesh)
+	{
+		GhostMesh->SetVisibility(bVisible, true);
+	}
 }
 
 // Called every frame
@@ -37,33 +58,32 @@ void AGhostCharacterActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	// Draw a debug sphere at the actor's location
-	DrawDebugSphere(
-		GetWorld(),
-		GetActorLocation(),
-		30.0f,           // Radius
-		12,              // Segments
-		FColor::Green,   // Color
-		false,           // Persistent lines
-		-1.0f,           // Life time
-		0,               // Depth priority
-		2.0f             // Thickness
-	);
+	// Only draw debug if visible locally
+	if (GhostMesh && GhostMesh->IsVisible())
+	{
+		DrawDebugSphere(
+			GetWorld(),
+			GetActorLocation(),
+			30.0f,           // Radius
+			12,              // Segments
+			FColor::Green,   // Color
+			false,           // Persistent lines
+			-1.0f,           // Life time
+			0,               // Depth priority
+			2.0f             // Thickness
+		);
+	}
 
-
-
-	// Debug: Mesh assignment and error reporting
+	// Sync mesh and pose from mirrored character (if any)
 	if (CharacterToMirror && CharacterToMirror->GetMesh() && GhostMesh)
 	{
-		USkeletalMesh* MeshAsset = CharacterToMirror->GetMesh()->GetSkeletalMeshAsset();
-		if (MeshAsset)
+		if (USkeletalMesh* MeshAsset = CharacterToMirror->GetMesh()->GetSkeletalMeshAsset())
 		{
 			GhostMesh->SetSkeletalMesh(MeshAsset);
 			GhostMesh->SetLeaderPoseComponent(CharacterToMirror->GetMesh(), true, true);
-
 		}
 
-		// Material assignment
+		// Apply ghost material locally
 		if (GhostMaterial)
 		{
 			const int32 Num = GhostMesh->GetNumMaterials();

@@ -7,7 +7,6 @@
 #include "AttributeSet.h"
 #include "TimerManager.h"
 
-
 ADefaultPlayerState::ADefaultPlayerState()
 {
 	AbilitySystemComponent = CreateDefaultSubobject<UDefaultAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
