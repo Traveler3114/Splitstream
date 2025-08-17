@@ -37,7 +37,7 @@ public:
 	ACharacter* CharacterToMirror;
 
 	// Material to apply on the ghost (replicated)
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Ghost")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ghost")
 	UMaterialInterface* GhostMaterial = nullptr;
 
 	// Local-only toggle. Safe to call on any machine; visibility is not replicated.
