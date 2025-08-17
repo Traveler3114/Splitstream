@@ -11,6 +11,7 @@ UFutureGAPastEcho::UFutureGAPastEcho()
 	FGameplayTag MyTag = FGameplayTag::RequestGameplayTag(FName("Character.Ability.Future.PastEcho"));
 	Tags.AddTag(MyTag);
 	SetAssetTags(Tags);
+	ActivationOwnedTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Character.Status.PastEcho")));
 }
 
 void UFutureGAPastEcho::ActivateAbility(
