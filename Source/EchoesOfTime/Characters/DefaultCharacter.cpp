@@ -35,6 +35,8 @@ ADefaultCharacter::ADefaultCharacter()
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 
+	bReplicates = true;
+	SetReplicateMovement(true);
 	// Initialize sprint state
 	bIsSprinting = false;
 }

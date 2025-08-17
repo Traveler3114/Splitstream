@@ -19,7 +19,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -29,10 +29,10 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components")
 	USkeletalMeshComponent* GhostMesh;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GhostCharacter")
+	UPROPERTY(Replicated,EditAnywhere, BlueprintReadWrite, Category = "GhostCharacter")
 	ACharacter* CharacterToMirror;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ghost")
+	UPROPERTY(Replicated,EditAnywhere, BlueprintReadWrite, Category="Ghost")
 	UMaterialInterface* GhostMaterial = nullptr;
 
 };

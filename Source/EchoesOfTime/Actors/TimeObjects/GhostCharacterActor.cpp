@@ -5,6 +5,7 @@
 #include "Components/SceneComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Materials/MaterialInterface.h"
+#include "Net/UnrealNetwork.h"
 #include "GameFramework/Character.h"
 
 // Sets default values
@@ -18,6 +19,9 @@ AGhostCharacterActor::AGhostCharacterActor()
 	// Create skeletal mesh component
 	GhostMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMesh"));
 	GhostMesh->SetupAttachment(RootComponent);
+
+	bReplicates = true;
+	SetReplicateMovement(true);
 
 }
 
@@ -47,14 +51,6 @@ void AGhostCharacterActor::Tick(float DeltaTime)
 	);
 
 
-	// Debug: Ensure mesh is visible and not hidden
-	if (GhostMesh)
-	{
-		GhostMesh->SetVisibility(true, true);
-		GhostMesh->SetHiddenInGame(false, true);
-		GhostMesh->SetWorldScale3D(FVector(1.0f, 1.0f, 1.0f));
-		GhostMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	}
 
 	// Debug: Mesh assignment and error reporting
 	if (CharacterToMirror && CharacterToMirror->GetMesh() && GhostMesh)
@@ -86,3 +82,9 @@ void AGhostCharacterActor::Tick(float DeltaTime)
 	}
 }
 
+void AGhostCharacterActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AGhostCharacterActor, CharacterToMirror);
+	DOREPLIFETIME(AGhostCharacterActor, GhostMaterial);
+}

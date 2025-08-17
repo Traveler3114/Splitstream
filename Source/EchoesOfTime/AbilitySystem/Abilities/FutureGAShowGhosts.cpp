@@ -7,6 +7,8 @@
 
 UFutureGAShowGhosts::UFutureGAShowGhosts()
 {
+	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
+	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::ServerInitiated;
 	// Keep your existing tag setup as-is (assuming activation works now)
 	FGameplayTagContainer Tags;
 	FGameplayTag MyTag = FGameplayTag::RequestGameplayTag(FName("Character.Ability.ShowGhosts"));

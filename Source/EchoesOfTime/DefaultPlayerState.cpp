@@ -15,6 +15,8 @@ ADefaultPlayerState::ADefaultPlayerState()
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 
 	AttributeSet = CreateDefaultSubobject<UDefaultAttributeSet>(TEXT("AttributeSet"));
+
+	bReplicates = true;
 }
 
 void ADefaultPlayerState::GiveAbilities()
