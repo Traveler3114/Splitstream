@@ -36,6 +36,9 @@ public:
 
 private:
 	void RefreshReadyLabel(bool bIsReady);
+	void RefreshTeamLabel(const FString& Team);
 	UFUNCTION()
 	void HandleLocalReadyChanged(ADefaultPlayerState* PS);
+	UFUNCTION()
+	void HandleLocalTeamChanged(ADefaultPlayerState* PS);
 };

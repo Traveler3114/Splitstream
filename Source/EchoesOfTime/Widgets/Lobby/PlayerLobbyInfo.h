@@ -45,7 +45,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "PlayerLobbyInfo")
     void SetReadyState(bool bReady);
 
-    // Target player to kick (set by the platform actor)
+    UFUNCTION(BlueprintCallable, Category = "PlayerLobbyInfo")
+    void SetTeamState(const FString& Team);
+
     UFUNCTION(BlueprintCallable, Category = "PlayerLobbyInfo")
     void SetTargetPlayerState(APlayerState* InTarget);
 

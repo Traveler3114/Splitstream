@@ -6,6 +6,7 @@
 #include "Components/SlateWrapperTypes.h"
 #include "Kismet/GameplayStatics.h"
 #include "Controllers/LobbyPlayerController.h"
+#include "DefaultPlayerState.h"
 
 void UPlayerLobbyInfo::NativeConstruct()
 {
@@ -21,7 +22,6 @@ void UPlayerLobbyInfo::OnKickButtonClicked()
 {
 	if (!TargetPlayerState) return;
 
-	// Find owning player controller (fallback to index 0)
 	APlayerController* PC = GetOwningPlayer();
 	if (!PC)
 	{
@@ -54,7 +54,6 @@ void UPlayerLobbyInfo::SetAvatarTexture(UTexture2D* Texture)
 	}
 	else
 	{
-		// Optional: hide or set placeholder when null
 		avatar_img->SetVisibility(ESlateVisibility::Collapsed);
 	}
 }
@@ -75,7 +74,20 @@ void UPlayerLobbyInfo::SetReadyState(bool bReady)
 	}
 }
 
+void UPlayerLobbyInfo::SetTeamState(const FString& Team)
+{
+	if (team_txt)
+	{
+		team_txt->SetText(FText::FromString(Team));
+	}
+}
+
 void UPlayerLobbyInfo::SetTargetPlayerState(APlayerState* InTarget)
 {
 	TargetPlayerState = InTarget;
+	// Update team text when set
+	if (ADefaultPlayerState* DPS = Cast<ADefaultPlayerState>(TargetPlayerState))
+	{
+		SetTeamState(DPS->GetTeamName());
+	}
 }

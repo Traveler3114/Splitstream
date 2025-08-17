@@ -12,6 +12,7 @@ class UAttributeSet;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerMetaChanged, ADefaultPlayerState*, PS);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnReadyChanged, ADefaultPlayerState*, PS);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAvatarChanged, ADefaultPlayerState*, PS);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTeamChanged, ADefaultPlayerState*, PS);
 
 UCLASS()
 class ECHOESOFTIME_API ADefaultPlayerState : public APlayerState, public IAbilitySystemInterface
@@ -34,29 +35,37 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Lobby")
 	bool IsReady() const { return bIsReady; }
 
+	UFUNCTION(BlueprintPure, Category = "Lobby|Team")
+	FString GetTeamName() const { return TeamName; }
+
 	UFUNCTION(BlueprintPure, Category = "PlayerMeta")
 	UTexture2D* GetAvatarTexture() const { return AvatarTexture; }
 
 	UFUNCTION(BlueprintCallable, Category = "PlayerMeta")
 	void SetAvatarTexture(UTexture2D* InTexture);
 
-	// Blueprint event you call to fetch avatar
+	// == Team system ==
+	UPROPERTY(ReplicatedUsing = OnRep_TeamName) FString TeamName = "Past"; // Past/Future
+
+	UFUNCTION(Server, Reliable) void ServerSetTeam(const FString& NewTeam);
+	UFUNCTION(BlueprintCallable, Category = "Lobby|Team") void SetTeamLocal(const FString& NewTeam);
+
+	// == Avatar system ==
 	UFUNCTION(BlueprintImplementableEvent, Category = "PlayerMeta")
 	void BP_RequestAvatar();
 
-	// Server RPCs (called by owning client in networked play)
+	// == Ready system ==
 	UFUNCTION(Server, Reliable) void ServerSetDisplayName(const FString& NewName);
 	UFUNCTION(Server, Reliable) void ServerSetAvatarIndex(int32 NewIndex);
 	UFUNCTION(Server, Reliable) void ServerSetReady(bool bNewReady);
 	UFUNCTION(Server, Reliable) void ServerToggleReady();
 
-	// Local path for Standalone/Authority so UI can change readiness without RPC
-	UFUNCTION(BlueprintCallable, Category = "Lobby")
-	void SetReadyLocal(bool bNewReady);
+	UFUNCTION(BlueprintCallable, Category = "Lobby") void SetReadyLocal(bool bNewReady);
 
 	UPROPERTY(BlueprintAssignable, Category = "PlayerMeta") FOnPlayerMetaChanged OnPlayerMetaChanged;
 	UPROPERTY(BlueprintAssignable, Category = "PlayerMeta") FOnAvatarChanged     OnAvatarChanged;
 	UPROPERTY(BlueprintAssignable, Category = "Lobby")      FOnReadyChanged     OnReadyChanged;
+	UPROPERTY(BlueprintAssignable, Category = "Lobby")      FOnTeamChanged      OnTeamChanged;
 
 protected:
 	UPROPERTY(ReplicatedUsing = OnRep_Meta) FString DisplayName;
@@ -68,10 +77,15 @@ protected:
 
 	UFUNCTION() void OnRep_Meta();
 	UFUNCTION() void OnRep_Ready();
+	UFUNCTION() void OnRep_TeamName();
 
 	void ApplyDisplayName(const FString& NewName);
 	void ApplyAvatarIndex(int32 NewIndex);
 	void ApplyReady(bool bNewReady);
+
+	// TEAM
+	void ApplyTeam(const FString& NewTeam);
+	void UpdateTeamGameplayTag();
 
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

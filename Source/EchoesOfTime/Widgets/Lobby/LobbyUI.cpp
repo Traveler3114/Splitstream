@@ -1,4 +1,3 @@
-// (Only the OnLeaveButtonClicked implementation is added/changed)
 #include "LobbyUI.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
@@ -20,9 +19,36 @@ void ULobbyUI::NativeConstruct()
 		if (ADefaultPlayerState* DPS = PC->GetPlayerState<ADefaultPlayerState>())
 		{
 			DPS->OnReadyChanged.AddDynamic(this, &ULobbyUI::HandleLocalReadyChanged);
+			DPS->OnTeamChanged.AddDynamic(this, &ULobbyUI::HandleLocalTeamChanged);
 			RefreshReadyLabel(DPS->IsReady());
+			RefreshTeamLabel(DPS->GetTeamName());
 		}
 	}
+}
+
+void ULobbyUI::OnChangeTeamButtonClicked()
+{
+	APlayerController* PC = GetOwningPlayer();
+	if (!PC) return;
+
+	if (ADefaultPlayerState* DPS = PC->GetPlayerState<ADefaultPlayerState>())
+	{
+		FString NewTeam = DPS->GetTeamName() == "Past" ? "Future" : "Past";
+		DPS->SetTeamLocal(NewTeam);
+	}
+}
+
+void ULobbyUI::RefreshTeamLabel(const FString& Team)
+{
+	if (team_txt)
+	{
+		team_txt->SetText(FText::FromString(Team));
+	}
+}
+
+void ULobbyUI::HandleLocalTeamChanged(ADefaultPlayerState* PS)
+{
+	if (PS) RefreshTeamLabel(PS->GetTeamName());
 }
 
 void ULobbyUI::SetStartButtonEnabled(bool bEnabled)
@@ -39,7 +65,6 @@ void ULobbyUI::OnLeaveButtonClicked()
 {
 	if (ALobbyPlayerController* LPC = Cast<ALobbyPlayerController>(GetOwningPlayer()))
 	{
-		// Always go through server; it will handle host vs. client
 		LPC->ServerLeaveLobby();
 	}
 }
@@ -58,8 +83,6 @@ void ULobbyUI::OnStartButtonClicked()
 	}
 }
 
-void ULobbyUI::OnChangeTeamButtonClicked() {}
-
 void ULobbyUI::OnReadyButtonClicked()
 {
 	if (APlayerController* PC = GetOwningPlayer())
@@ -68,18 +91,15 @@ void ULobbyUI::OnReadyButtonClicked()
 		{
 			const bool NewState = !DPS->IsReady();
 
-			// Standalone/Authority: apply locally (no RPC in Standalone)
 			if (PC->GetNetMode() == NM_Standalone || PC->HasAuthority())
 			{
 				DPS->SetReadyLocal(NewState);
 			}
 			else
 			{
-				// Networked client: go through server
 				DPS->ServerSetReady(NewState);
 			}
 
-			// Update local button label immediately for UX
 			RefreshReadyLabel(NewState);
 		}
 	}
