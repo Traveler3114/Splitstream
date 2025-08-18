@@ -29,6 +29,17 @@ void ADefaultPlayerState::GiveAbilities()
 	}
 }
 
+void ADefaultPlayerState::CopyProperties(APlayerState* NewPlayerState)
+{
+	Super::CopyProperties(NewPlayerState);
+
+	if (ADefaultPlayerState* PS = Cast<ADefaultPlayerState>(NewPlayerState))
+	{
+		PS->TeamName = TeamName;
+		PS->UpdateTeamGameplayTag();
+	}
+}
+
 void ADefaultPlayerState::BeginPlay()
 {
 	Super::BeginPlay();

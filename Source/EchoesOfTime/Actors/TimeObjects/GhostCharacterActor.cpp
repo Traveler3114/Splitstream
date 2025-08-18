@@ -42,7 +42,6 @@ void AGhostCharacterActor::BeginPlay()
 	{
 		GhostMesh->SetVisibility(false, true);
 		GhostMesh->bOnlyOwnerSee = false; // ensure we are not gating by single owner
-		GhostMesh->AddLocalRotation(FRotator(0, -90, 0)); // flip the ghost mesh to face the player
 	}
 
 }

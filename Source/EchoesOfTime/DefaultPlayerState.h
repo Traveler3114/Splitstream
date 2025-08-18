@@ -26,6 +26,8 @@ public:
 
 	void GiveAbilities();
 
+	virtual void CopyProperties(APlayerState* NewPlayerState) override;
+
 	UFUNCTION(BlueprintPure, Category = "PlayerMeta")
 	FString GetDisplayName() const { return DisplayName.IsEmpty() ? GetPlayerName() : DisplayName; }
 
