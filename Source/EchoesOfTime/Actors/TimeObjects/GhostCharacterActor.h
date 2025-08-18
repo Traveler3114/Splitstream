@@ -40,7 +40,4 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ghost")
 	UMaterialInterface* GhostMaterial = nullptr;
 
-	// Local-only toggle. Safe to call on any machine; visibility is not replicated.
-	UFUNCTION(BlueprintCallable, Category = "Ghost")
-	void SetGhostVisibleLocal(bool bVisible);
 };

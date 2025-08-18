@@ -28,13 +28,23 @@ void ULobbyUI::NativeConstruct()
 
 void ULobbyUI::OnChangeTeamButtonClicked()
 {
-	APlayerController* PC = GetOwningPlayer();
-	if (!PC) return;
-
-	if (ADefaultPlayerState* DPS = PC->GetPlayerState<ADefaultPlayerState>())
+	if (APlayerController* PC = GetOwningPlayer())
 	{
-		FString NewTeam = DPS->GetTeamName() == "Past" ? "Future" : "Past";
-		DPS->SetTeamLocal(NewTeam);
+		if (ADefaultPlayerState* DPS = PC->GetPlayerState<ADefaultPlayerState>())
+		{
+			FString NewTeam = DPS->GetTeamName() == "Past" ? "Future" : "Past";
+
+			if (PC->GetNetMode() == NM_Standalone || PC->HasAuthority())
+			{
+				DPS->SetTeamLocal(NewTeam);
+			}
+			else
+			{
+				DPS->ServerSetTeam(NewTeam);
+			}
+
+			RefreshTeamLabel(NewTeam);
+		}
 	}
 }
 

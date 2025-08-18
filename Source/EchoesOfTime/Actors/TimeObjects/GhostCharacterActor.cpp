@@ -37,7 +37,6 @@ void AGhostCharacterActor::BeginPlay()
 	Super::BeginPlay();
 
 	// Start hidden for all clients. We'll selectively show it on individual clients.
-	SetActorHiddenInGame(true);
 	if (GhostMesh)
 	{
 		GhostMesh->SetVisibility(false, true);
@@ -46,17 +45,6 @@ void AGhostCharacterActor::BeginPlay()
 
 }
 
-// Local-only visibility toggle
-void AGhostCharacterActor::SetGhostVisibleLocal(bool bVisible)
-{
-	// This is not replicated; it only affects the calling machine.
-	const bool bBeforeHidden = IsHidden();
-	SetActorHiddenInGame(!bVisible);
-	if (GhostMesh)
-	{
-		GhostMesh->SetVisibility(bVisible, true);
-	}
-}
 
 // Called every frame
 void AGhostCharacterActor::Tick(float DeltaTime)

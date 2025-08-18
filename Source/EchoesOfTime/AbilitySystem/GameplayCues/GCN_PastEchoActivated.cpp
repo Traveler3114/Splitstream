@@ -34,7 +34,6 @@ void UGCN_PastEchoActivated::SetActorLocalVisibility(AActor* Actor, bool bVisibl
 	if (!Actor) return;
 
 	const bool bBeforeHidden = Actor->IsHidden();
-	Actor->SetActorHiddenInGame(!bVisible);
 
 	int32 SetCount = 0;
 	TInlineComponentArray<UPrimitiveComponent*> PrimComps(Actor);
