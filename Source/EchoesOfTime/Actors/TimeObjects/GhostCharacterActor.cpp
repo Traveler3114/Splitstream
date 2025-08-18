@@ -88,7 +88,7 @@ void AGhostCharacterActor::Tick(float DeltaTime)
     }
 
     // Sync location and rotation
-    SetActorLocation(CharacterToMirror->GetActorLocation() + FVector(0, -4910, -80));
+    SetActorLocation(CharacterToMirror->GetActorLocation() + GhostOffset);
     SetActorRotation(CharacterToMirror->GetActorRotation());
 }
 
