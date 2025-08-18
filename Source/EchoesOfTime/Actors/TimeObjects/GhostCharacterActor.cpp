@@ -49,49 +49,49 @@ void AGhostCharacterActor::BeginPlay()
 // Called every frame
 void AGhostCharacterActor::Tick(float DeltaTime)
 {
-	Super::Tick(DeltaTime);
+    Super::Tick(DeltaTime);
 
-	DrawDebugSphere(
-		GetWorld(),
-		GetActorLocation(),
-		30.0f,           // Radius
-		12,              // Segments
-		FColor::Green,   // Color
-		false,           // Persistent lines
-		-1.0f,           // Life time
-		0,               // Depth priority
-		2.0f             // Thickness
-	);
+    DrawDebugSphere(
+        GetWorld(),
+        GetActorLocation(),
+        30.0f,           // Radius
+        12,              // Segments
+        FColor::Green,   // Color
+        false,           // Persistent lines
+        -1.0f,           // Life time
+        0,               // Depth priority
+        2.0f             // Thickness
+    );
 
-	// Sync mesh and pose from mirrored character (if any)
-	if (CharacterToMirror && CharacterToMirror->GetMesh() && GhostMesh)
-	{
-		if (USkeletalMesh* MeshAsset = CharacterToMirror->GetMesh()->GetSkeletalMeshAsset())
-		{
-			GhostMesh->SetSkeletalMesh(MeshAsset);
-			GhostMesh->SetLeaderPoseComponent(CharacterToMirror->GetMesh(), true, true);
-		}
+    if (!CharacterToMirror || !CharacterToMirror->GetMesh() || !GhostMesh)
+    {
+        return;
+    }
 
-		// Apply ghost material locally
-		if (GhostMaterial)
-		{
-			const int32 Num = GhostMesh->GetNumMaterials();
-			for (int32 i = 0; i < Num; ++i)
-			{
-				GhostMesh->SetMaterial(i, GhostMaterial);
-			}
-		}
+    // Set the mesh once if not already set
+    if (GhostMesh->GetSkeletalMeshAsset() != CharacterToMirror->GetMesh()->GetSkeletalMeshAsset())
+    {
+        GhostMesh->SetSkeletalMeshAsset(CharacterToMirror->GetMesh()->GetSkeletalMeshAsset());
+    }
 
-	}
+    // Mirror animation pose
+    GhostMesh->SetLeaderPoseComponent(CharacterToMirror->GetMesh(), true, true);
 
+    // Apply ghost material once (optional optimization)
+    if (GhostMaterial && GhostMesh->GetMaterial(0) != GhostMaterial)
+    {
+        const int32 NumMaterials = GhostMesh->GetNumMaterials();
+        for (int32 i = 0; i < NumMaterials; ++i)
+        {
+            GhostMesh->SetMaterial(i, GhostMaterial);
+        }
+    }
 
-	// Sync location and rotation
-	if (CharacterToMirror)
-	{
-		SetActorLocation(CharacterToMirror->GetActorLocation() + FVector(0, -4910, -80));
-		SetActorRotation(CharacterToMirror->GetActorRotation());
-	}
+    // Sync location and rotation
+    SetActorLocation(CharacterToMirror->GetActorLocation() + FVector(0, -4910, -80));
+    SetActorRotation(CharacterToMirror->GetActorRotation());
 }
+
 void AGhostCharacterActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
