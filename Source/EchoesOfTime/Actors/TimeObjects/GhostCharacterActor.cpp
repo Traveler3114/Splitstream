@@ -8,7 +8,6 @@
 #include "DrawDebugHelpers.h"
 #include "Engine/Engine.h"
 
-DEFINE_LOG_CATEGORY_STATIC(LogGhostCharacter, Log, All);
 
 AGhostCharacterActor::AGhostCharacterActor()
 {

@@ -50,6 +50,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Pan")
     float MaxYaw = 45.0f;
 
+	//If PanSpeed = 0, camera will not pan
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Pan")
     float PanSpeed = 30.0f; // degrees per second
 
