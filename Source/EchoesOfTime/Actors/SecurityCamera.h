@@ -18,6 +18,7 @@ protected:
 public:
     virtual void Tick(float DeltaTime) override;
     virtual void OnConstruction(const FTransform& Transform) override;
+
     // Components
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Camera")
     USceneComponent* DefaultSceneRoot;
@@ -41,4 +42,22 @@ public:
     // Debug: draw vision cone and trace
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection|Debug")
     bool bDrawDebug = true;
+
+    // --- New: Camera rotation (pan) settings ---
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Pan")
+    float MinYaw = -45.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Pan")
+    float MaxYaw = 45.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Pan")
+    float PanSpeed = 30.0f; // degrees per second
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Pan")
+    float PauseAtLimit = 2.0f; // seconds to pause at each end
+
+private:
+    float CurrentYaw = 0.0f;
+    bool bPanningRight = true;
+    float PauseTimer = 0.0f;
 };

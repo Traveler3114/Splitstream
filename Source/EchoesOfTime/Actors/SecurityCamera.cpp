@@ -27,12 +27,50 @@ ASecurityCamera::ASecurityCamera()
 void ASecurityCamera::BeginPlay()
 {
     Super::BeginPlay();
+    CurrentYaw = 0.0f;
+    bPanningRight = true;
+    PauseTimer = 0.0f;
 }
+
 
 void ASecurityCamera::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
+    // --- Camera panning logic with pause at ends ---
+    if (PanSpeed > 0.0f)
+    {
+        if (PauseTimer > 0.0f)
+        {
+            PauseTimer -= DeltaTime;
+            if (PauseTimer < 0.0f)
+                PauseTimer = 0.0f;
+        }
+        else
+        {
+            float DeltaYaw = PanSpeed * DeltaTime * (bPanningRight ? 1.0f : -1.0f);
+            CurrentYaw += DeltaYaw;
+
+            if (CurrentYaw > MaxYaw)
+            {
+                CurrentYaw = MaxYaw;
+                bPanningRight = false;
+                PauseTimer = PauseAtLimit;
+            }
+            else if (CurrentYaw < MinYaw)
+            {
+                CurrentYaw = MinYaw;
+                bPanningRight = true;
+                PauseTimer = PauseAtLimit;
+            }
+        }
+
+        // Apply rotation to CameraMesh (relative to root)
+        FRotator NewRot = FRotator(0.0f, CurrentYaw, 0.0f);
+        SetActorRotation(NewRot);
+    }
+
+    // --- Existing debug drawing code (unchanged) ---
     if (bDrawDebug && ArrowComp && SceneCapture)
     {
         FVector Start = ArrowComp->GetComponentLocation();
@@ -40,25 +78,17 @@ void ASecurityCamera::Tick(float DeltaTime)
         FCollisionQueryParams Params;
         Params.AddIgnoredActor(this);
 
-        // Get FOV from SceneCapture
         float HorizontalFOV = SceneCapture->FOVAngle;
-
-        // Get aspect ratio from render target if available
         float AspectRatio = 1.0f;
         if (SceneCapture->TextureTarget)
         {
             AspectRatio = (float)SceneCapture->TextureTarget->SizeX / (float)SceneCapture->TextureTarget->SizeY;
         }
-
-        // Calculate vertical FOV from horizontal FOV and aspect ratio
         float VerticalFOV = FMath::RadiansToDegrees(
             2 * FMath::Atan(FMath::Tan(FMath::DegreesToRadians(HorizontalFOV) / 2) / AspectRatio)
         );
-
-        // Optionally, update ViewConeAngle to match SceneCapture for display
         ViewConeAngle = HorizontalFOV;
 
-        // Draw the debug cone matching the camera's frustum
         DrawDebugCone(
             GetWorld(),
             Start,
@@ -74,7 +104,6 @@ void ASecurityCamera::Tick(float DeltaTime)
             1.0f
         );
 
-        // Center ray
         FVector RayEnd = Start + Forward * DetectionDistance;
         FHitResult RayHit;
         bool bRayHit = GetWorld()->LineTraceSingleByChannel(
@@ -93,6 +122,12 @@ void ASecurityCamera::OnConstruction(const FTransform& Transform)
 
     FlushPersistentDebugLines(GetWorld());
 
+    // Reset yaw, direction, and pause for editor preview
+    CurrentYaw = 0.0f;
+    bPanningRight = true;
+    PauseTimer = 0.0f;
+    SetActorRotation(FRotator(0.0f, CurrentYaw, 0.0f));
+
     if (bDrawDebug && ArrowComp && SceneCapture)
     {
         FVector Start = ArrowComp->GetComponentLocation();
@@ -100,25 +135,17 @@ void ASecurityCamera::OnConstruction(const FTransform& Transform)
         FCollisionQueryParams Params;
         Params.AddIgnoredActor(this);
 
-        // Get FOV from SceneCapture
         float HorizontalFOV = SceneCapture->FOVAngle;
-
-        // Get aspect ratio from render target if available
         float AspectRatio = 1.0f;
         if (SceneCapture->TextureTarget)
         {
             AspectRatio = (float)SceneCapture->TextureTarget->SizeX / (float)SceneCapture->TextureTarget->SizeY;
         }
-
-        // Calculate vertical FOV from horizontal FOV and aspect ratio
         float VerticalFOV = FMath::RadiansToDegrees(
             2 * FMath::Atan(FMath::Tan(FMath::DegreesToRadians(HorizontalFOV) / 2) / AspectRatio)
         );
-
-        // Optionally, update ViewConeAngle to match SceneCapture for display
         ViewConeAngle = HorizontalFOV;
 
-        // Draw the debug cone matching the camera's frustum
         DrawDebugCone(
             GetWorld(),
             Start,
@@ -134,7 +161,6 @@ void ASecurityCamera::OnConstruction(const FTransform& Transform)
             1.0f
         );
 
-        // Center ray
         FVector RayEnd = Start + Forward * DetectionDistance;
         FHitResult RayHit;
         bool bRayHit = GetWorld()->LineTraceSingleByChannel(
