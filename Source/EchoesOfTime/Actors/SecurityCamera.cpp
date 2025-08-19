@@ -31,7 +31,8 @@ ASecurityCamera::ASecurityCamera()
 void ASecurityCamera::BeginPlay()
 {
     Super::BeginPlay();
-    CurrentYaw = 0.0f;
+    CurrentYaw = GetActorRotation().Yaw;
+    PanOffset = 0.0f;
     bPanningRight = true;
     PauseTimer = 0.0f;
 }
@@ -41,7 +42,6 @@ void ASecurityCamera::Tick(float DeltaTime)
     Super::Tick(DeltaTime);
 
     // --- Guard visibility update for multi-camera support ---
-    // First, gather all guards and set their view flag to false (reset)
     TArray<AActor*> Guards;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGuardCharacter::StaticClass(), Guards);
     for (AActor* A : Guards)
@@ -51,15 +51,11 @@ void ASecurityCamera::Tick(float DeltaTime)
             Guard->bIsInCameraView = false;
     }
 
-    // Now, for each guard, check if they're visible to this camera and set to true if so
     for (AActor* A : Guards)
     {
         AGuardCharacter* Guard = Cast<AGuardCharacter>(A);
         if (!Guard) continue;
 
-        bool bWasInView = Guard->bIsInCameraView;
-
-        // Vector from camera to guard
         FVector ToGuard = Guard->GetActorLocation() - GetActorLocation();
         float Distance = ToGuard.Size();
         if (Distance > DetectionDistance)
@@ -68,16 +64,13 @@ void ASecurityCamera::Tick(float DeltaTime)
         }
         else
         {
-            // Check angle (cone)
             ToGuard.Normalize();
             FVector CameraForward = ArrowComp ? ArrowComp->GetForwardVector() : GetActorForwardVector();
             float Dot = FVector::DotProduct(CameraForward, ToGuard);
             float CosHalfFOV = FMath::Cos(FMath::DegreesToRadians(ViewConeAngle * 0.5f));
-
             Guard->bIsInCameraView = (Dot >= CosHalfFOV);
         }
 
-        // Only update ghost if the state changed, or always if you want to be extra safe:
         if (Guard->SpawnedGhost)
         {
             Guard->SpawnedGhost->UpdateGhostVisibility();
@@ -96,25 +89,25 @@ void ASecurityCamera::Tick(float DeltaTime)
         else
         {
             float DeltaYaw = PanSpeed * DeltaTime * (bPanningRight ? 1.0f : -1.0f);
-            CurrentYaw += DeltaYaw;
+            PanOffset += DeltaYaw;
 
-            if (CurrentYaw > MaxYaw)
+            if (PanOffset > MaxYaw)
             {
-                CurrentYaw = MaxYaw;
+                PanOffset = MaxYaw;
                 bPanningRight = false;
                 PauseTimer = PauseAtLimit;
             }
-            else if (CurrentYaw < MinYaw)
+            else if (PanOffset < MinYaw)
             {
-                CurrentYaw = MinYaw;
+                PanOffset = MinYaw;
                 bPanningRight = true;
                 PauseTimer = PauseAtLimit;
             }
         }
 
-        // Apply rotation to CameraMesh (relative to root)
-        
-        FRotator NewRot = FRotator(GetActorRotation().Roll,GetActorRotation().Pitch, CurrentYaw);
+        // Apply rotation: initial yaw + pan offset
+        FRotator NewRot = GetActorRotation();
+        NewRot.Yaw = CurrentYaw + PanOffset;
         SetActorRotation(NewRot);
     }
 
@@ -170,8 +163,9 @@ void ASecurityCamera::OnConstruction(const FTransform& Transform)
 
     FlushPersistentDebugLines(GetWorld());
 
-    // Reset yaw, direction, and pause for editor preview
-    CurrentYaw = 0.0f;
+    // Reset for editor preview
+    CurrentYaw = GetActorRotation().Yaw;
+    PanOffset = 0.0f;
     bPanningRight = true;
     PauseTimer = 0.0f;
 

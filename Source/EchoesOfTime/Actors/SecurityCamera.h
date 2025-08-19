@@ -60,4 +60,5 @@ private:
     float CurrentYaw = 0.0f;
     bool bPanningRight = true;
     float PauseTimer = 0.0f;
+    float PanOffset = 0.0f;
 };
