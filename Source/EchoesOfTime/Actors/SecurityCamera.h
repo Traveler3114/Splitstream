@@ -61,4 +61,7 @@ private:
     bool bPanningRight = true;
     float PauseTimer = 0.0f;
     float PanOffset = 0.0f;
+
+    // Keep track of actors detected last frame for state transitions
+    TSet<TWeakObjectPtr<AActor>> LastDetectedActors;
 };

@@ -7,8 +7,7 @@
 #include "Components/ArrowComponent.h"
 #include "DrawDebugHelpers.h"
 
-#include "Characters/GuardCharacter.h"
-#include "Actors/TimeObjects/GhostCharacterActor.h"
+#include "Interfaces/ICameraDetectable.h"
 #include "Kismet/GameplayStatics.h"
 
 ASecurityCamera::ASecurityCamera()
@@ -35,46 +34,75 @@ void ASecurityCamera::BeginPlay()
     PanOffset = 0.0f;
     bPanningRight = true;
     PauseTimer = 0.0f;
+    // Initialize previous detected set as empty
+    LastDetectedActors.Empty();
 }
 
 void ASecurityCamera::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    // --- Guard visibility update for multi-camera support ---
-    TArray<AActor*> Guards;
-    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGuardCharacter::StaticClass(), Guards);
-    for (AActor* A : Guards)
+    // --- Detection logic for generic ICameraDetectable actors ---
+    TArray<AActor*> AllActors;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), AllActors);
+
+    TSet<AActor*> DetectedThisFrame;
+
+    for (AActor* Actor : AllActors)
     {
-        AGuardCharacter* Guard = Cast<AGuardCharacter>(A);
-        if (Guard)
-            Guard->bIsInCameraView = false;
+        if (!Actor || !Actor->GetClass()->ImplementsInterface(UCameraDetectable::StaticClass()))
+            continue;
+
+        // Check distance
+        FVector ToTarget = Actor->GetActorLocation() - GetActorLocation();
+        float Distance = ToTarget.Size();
+        if (Distance > DetectionDistance)
+            continue;
+
+        // Check view cone
+        ToTarget.Normalize();
+        FVector CameraForward = ArrowComp ? ArrowComp->GetForwardVector() : GetActorForwardVector();
+        float Dot = FVector::DotProduct(CameraForward, ToTarget);
+        float CosHalfFOV = FMath::Cos(FMath::DegreesToRadians(ViewConeAngle * 0.5f));
+        if (Dot >= CosHalfFOV)
+        {
+            // This actor is detected
+            DetectedThisFrame.Add(Actor);
+            // Fix: Iterate LastDetectedActors as TWeakObjectPtr
+            bool bWasDetected = false;
+            for (const TWeakObjectPtr<AActor>& WeakActor : LastDetectedActors)
+            {
+                if (WeakActor.Get() == Actor)
+                {
+                    bWasDetected = true;
+                    break;
+                }
+            }
+            if (!bWasDetected)
+            {
+                // Newly detected
+                ICameraDetectable::Execute_OnDetectedByCamera(Actor, this);
+            }
+        }
     }
 
-    for (AActor* A : Guards)
+    // Now process actors lost this frame
+    for (const TWeakObjectPtr<AActor>& WeakActor : LastDetectedActors)
     {
-        AGuardCharacter* Guard = Cast<AGuardCharacter>(A);
-        if (!Guard) continue;
+        AActor* Actor = WeakActor.Get();
+        if (!Actor)
+            continue;
+        if (!DetectedThisFrame.Contains(Actor))
+        {
+            ICameraDetectable::Execute_OnLostByCamera(Actor, this);
+        }
+    }
 
-        FVector ToGuard = Guard->GetActorLocation() - GetActorLocation();
-        float Distance = ToGuard.Size();
-        if (Distance > DetectionDistance)
-        {
-            Guard->bIsInCameraView = false;
-        }
-        else
-        {
-            ToGuard.Normalize();
-            FVector CameraForward = ArrowComp ? ArrowComp->GetForwardVector() : GetActorForwardVector();
-            float Dot = FVector::DotProduct(CameraForward, ToGuard);
-            float CosHalfFOV = FMath::Cos(FMath::DegreesToRadians(ViewConeAngle * 0.5f));
-            Guard->bIsInCameraView = (Dot >= CosHalfFOV);
-        }
-
-        if (Guard->SpawnedGhost)
-        {
-            Guard->SpawnedGhost->UpdateGhostVisibility();
-        }
+    // Store for next frame
+    LastDetectedActors.Empty();
+    for (AActor* Actor : DetectedThisFrame)
+    {
+        LastDetectedActors.Add(Actor);
     }
 
     // --- Camera panning logic with pause at ends ---
