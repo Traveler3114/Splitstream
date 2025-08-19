@@ -6,6 +6,7 @@
 #include "Materials/MaterialInterface.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/Character.h"
+#include "Characters/GuardCharacter.h"
 #include "DrawDebugHelpers.h"
 #include "Engine/Engine.h"
 
@@ -90,6 +91,32 @@ void AGhostCharacterActor::Tick(float DeltaTime)
     // Sync location and rotation
     SetActorLocation(CharacterToMirror->GetActorLocation() + GhostOffset);
     SetActorRotation(CharacterToMirror->GetActorRotation());
+}
+
+void AGhostCharacterActor::UpdateGhostVisibility()
+{
+    bool bInCameraView = false;
+    if (CharacterToMirror)
+    {
+        // Cast just in case (if CharacterToMirror is always a GuardCharacter, you can static_cast)
+        const AGuardCharacter* Guard = Cast<AGuardCharacter>(CharacterToMirror);
+        if (Guard)
+        {
+            bInCameraView = Guard->bIsInCameraView;
+        }
+    }
+
+    bool bShouldShow = bInCameraView && bIsPastEchoAbilityActive;
+    if (GhostMesh)
+    {
+        GhostMesh->SetVisibility(bShouldShow, true);
+    }
+}
+
+void AGhostCharacterActor::SetIsPastEchoAbilityActive(bool bActive)
+{
+    bIsPastEchoAbilityActive = bActive;
+    UpdateGhostVisibility();
 }
 
 void AGhostCharacterActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

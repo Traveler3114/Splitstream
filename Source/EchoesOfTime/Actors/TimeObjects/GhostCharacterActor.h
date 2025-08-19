@@ -15,6 +15,8 @@ public:
 	// Sets default values for this actor's properties
 	AGhostCharacterActor();
 
+	void SetIsPastEchoAbilityActive(bool bActive);
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -43,4 +45,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ghost")
 	FVector GhostOffset = FVector(0.0f, 0.-4190.0f, -80.0f);
+
+	// Whether the Past Echo ability is currently active
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ghost")
+	bool bIsPastEchoAbilityActive = false;
+
+	// Call this whenever either bool changes to update visibility
+	UFUNCTION(BlueprintCallable, Category = "Ghost")
+	void UpdateGhostVisibility();
 };

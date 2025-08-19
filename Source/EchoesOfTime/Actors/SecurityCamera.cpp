@@ -7,6 +7,10 @@
 #include "Components/ArrowComponent.h"
 #include "DrawDebugHelpers.h"
 
+#include "Characters/GuardCharacter.h"
+#include "Actors/TimeObjects/GhostCharacterActor.h"
+#include "Kismet/GameplayStatics.h"
+
 ASecurityCamera::ASecurityCamera()
 {
     PrimaryActorTick.bCanEverTick = true;
@@ -32,10 +36,53 @@ void ASecurityCamera::BeginPlay()
     PauseTimer = 0.0f;
 }
 
-
 void ASecurityCamera::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
+
+    // --- Guard visibility update for multi-camera support ---
+    // First, gather all guards and set their view flag to false (reset)
+    TArray<AActor*> Guards;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGuardCharacter::StaticClass(), Guards);
+    for (AActor* A : Guards)
+    {
+        AGuardCharacter* Guard = Cast<AGuardCharacter>(A);
+        if (Guard)
+            Guard->bIsInCameraView = false;
+    }
+
+    // Now, for each guard, check if they're visible to this camera and set to true if so
+    for (AActor* A : Guards)
+    {
+        AGuardCharacter* Guard = Cast<AGuardCharacter>(A);
+        if (!Guard) continue;
+
+        bool bWasInView = Guard->bIsInCameraView;
+
+        // Vector from camera to guard
+        FVector ToGuard = Guard->GetActorLocation() - GetActorLocation();
+        float Distance = ToGuard.Size();
+        if (Distance > DetectionDistance)
+        {
+            Guard->bIsInCameraView = false;
+        }
+        else
+        {
+            // Check angle (cone)
+            ToGuard.Normalize();
+            FVector CameraForward = ArrowComp ? ArrowComp->GetForwardVector() : GetActorForwardVector();
+            float Dot = FVector::DotProduct(CameraForward, ToGuard);
+            float CosHalfFOV = FMath::Cos(FMath::DegreesToRadians(ViewConeAngle * 0.5f));
+
+            Guard->bIsInCameraView = (Dot >= CosHalfFOV);
+        }
+
+        // Only update ghost if the state changed, or always if you want to be extra safe:
+        if (Guard->SpawnedGhost)
+        {
+            Guard->SpawnedGhost->UpdateGhostVisibility();
+        }
+    }
 
     // --- Camera panning logic with pause at ends ---
     if (PanSpeed > 0.0f)
@@ -66,11 +113,12 @@ void ASecurityCamera::Tick(float DeltaTime)
         }
 
         // Apply rotation to CameraMesh (relative to root)
-        FRotator NewRot = FRotator(0.0f, CurrentYaw, 0.0f);
+        
+        FRotator NewRot = FRotator(GetActorRotation().Roll,GetActorRotation().Pitch, CurrentYaw);
         SetActorRotation(NewRot);
     }
 
-    // --- Existing debug drawing code (unchanged) ---
+    // --- Debug drawing of camera cone and trace ---
     if (bDrawDebug && ArrowComp && SceneCapture)
     {
         FVector Start = ArrowComp->GetComponentLocation();
@@ -126,7 +174,6 @@ void ASecurityCamera::OnConstruction(const FTransform& Transform)
     CurrentYaw = 0.0f;
     bPanningRight = true;
     PauseTimer = 0.0f;
-    SetActorRotation(FRotator(0.0f, CurrentYaw, 0.0f));
 
     if (bDrawDebug && ArrowComp && SceneCapture)
     {

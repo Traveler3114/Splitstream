@@ -44,7 +44,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ghost")
 
 	TSubclassOf<class AGhostCharacterActor> GhostClass;
-protected:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ghost")
+	bool bIsInCameraView = false;
+
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Ghost", meta = (AllowPrivateAccess = "true"))
 	class AGhostCharacterActor* SpawnedGhost = nullptr;
 };
