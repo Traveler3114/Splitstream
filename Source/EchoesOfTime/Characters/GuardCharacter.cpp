@@ -2,7 +2,7 @@
 #include "GuardCharacter.h"
 #include "Actors/NavNode.h"
 #include "Engine/Engine.h"
-#include "Actors/SecurityCamera.h" // Forward declaration or include
+#include "Actors/SecurityCamera.h"
 
 AGuardCharacter::AGuardCharacter()
 {
@@ -34,7 +34,7 @@ void AGuardCharacter::BeginPlay()
     }
 }
 
-// INTERFACE IMPLEMENTATION
+// ICameraDetectable implementation
 
 void AGuardCharacter::OnDetectedByCamera_Implementation(ASecurityCamera* Camera)
 {
@@ -58,4 +58,16 @@ void AGuardCharacter::OnLostByCamera_Implementation(ASecurityCamera* Camera)
             SpawnedGhost->UpdateGhostVisibility();
         }
     }
+}
+
+// IGhostMirrorSource implementation
+
+bool AGuardCharacter::ShouldGhostBeVisible_Implementation() const
+{
+    return bIsInCameraView;
+}
+
+USkeletalMeshComponent* AGuardCharacter::GetMirrorMesh_Implementation() const
+{
+    return GetMesh();
 }

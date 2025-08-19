@@ -4,7 +4,7 @@
 #include "Materials/MaterialInterface.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/Character.h"
-#include "Characters/GuardCharacter.h"
+#include "Interfaces/IGhostMirrorSource.h"
 #include "DrawDebugHelpers.h"
 #include "Engine/Engine.h"
 
@@ -47,17 +47,31 @@ void AGhostCharacterActor::Tick(float DeltaTime)
         30.0f, 12, FColor::Green, false, -1.0f, 0, 2.0f
     );
 
-    if (!CharacterToMirror || !CharacterToMirror->GetMesh() || !GhostMesh)
+    if (!CharacterToMirror || !GhostMesh)
     {
         return;
     }
 
-    if (GhostMesh->GetSkeletalMeshAsset() != CharacterToMirror->GetMesh()->GetSkeletalMeshAsset())
+    // Use IGhostMirrorSource interface for mesh and pose
+    USkeletalMeshComponent* SourceMesh = nullptr;
+    if (CharacterToMirror->GetClass()->ImplementsInterface(UGhostMirrorSource::StaticClass()))
     {
-        GhostMesh->SetSkeletalMeshAsset(CharacterToMirror->GetMesh()->GetSkeletalMeshAsset());
+        SourceMesh = IGhostMirrorSource::Execute_GetMirrorMesh(CharacterToMirror);
+    }
+    if (!SourceMesh)
+    {
+        SourceMesh = CharacterToMirror->FindComponentByClass<USkeletalMeshComponent>();
     }
 
-    GhostMesh->SetLeaderPoseComponent(CharacterToMirror->GetMesh(), true, true);
+    if (!SourceMesh)
+        return;
+
+    if (GhostMesh->GetSkeletalMeshAsset() != SourceMesh->GetSkeletalMeshAsset())
+    {
+        GhostMesh->SetSkeletalMeshAsset(SourceMesh->GetSkeletalMeshAsset());
+    }
+
+    GhostMesh->SetLeaderPoseComponent(SourceMesh, true, true);
 
     if (GhostMaterial && GhostMesh->GetMaterial(0) != GhostMaterial)
     {
@@ -74,17 +88,13 @@ void AGhostCharacterActor::Tick(float DeltaTime)
 
 void AGhostCharacterActor::UpdateGhostVisibility()
 {
-    bool bInCameraView = false;
-    if (CharacterToMirror)
+    bool bShouldShow = false;
+    if (CharacterToMirror && CharacterToMirror->GetClass()->ImplementsInterface(UGhostMirrorSource::StaticClass()))
     {
-        const AGuardCharacter* Guard = Cast<AGuardCharacter>(CharacterToMirror);
-        if (Guard)
-        {
-            bInCameraView = Guard->bIsInCameraView;
-        }
+        bShouldShow = IGhostMirrorSource::Execute_ShouldGhostBeVisible(CharacterToMirror);
     }
+    bShouldShow = bShouldShow && bIsPastEchoAbilityActive;
 
-    bool bShouldShow = bInCameraView && bIsPastEchoAbilityActive;
     if (GhostMesh)
     {
         GhostMesh->SetVisibility(bShouldShow, true);

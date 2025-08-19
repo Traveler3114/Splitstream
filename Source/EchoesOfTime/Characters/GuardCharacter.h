@@ -2,12 +2,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "Interfaces/ICameraDetectable.h" // Include the interface
+#include "Interfaces/ICameraDetectable.h"
+#include "Interfaces/IGhostMirrorSource.h"
 #include "GuardCharacter.generated.h"
 
 class ANavNode;
 UCLASS()
-class ECHOESOFTIME_API AGuardCharacter : public ACharacter, public ICameraDetectable
+class ECHOESOFTIME_API AGuardCharacter : public ACharacter, public ICameraDetectable, public IGhostMirrorSource
 {
     GENERATED_BODY()
 
@@ -15,7 +16,6 @@ public:
     AGuardCharacter();
     virtual void BeginPlay() override;
 
-    // Idle properties...
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Idle")
     float BaseStayChance = 0.5f;
 
@@ -46,7 +46,11 @@ public:
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Ghost", meta = (AllowPrivateAccess = "true"))
     class AGhostCharacterActor* SpawnedGhost = nullptr;
 
-    // Interface implementation
+    // ICameraDetectable implementation
     virtual void OnDetectedByCamera_Implementation(class ASecurityCamera* Camera) override;
     virtual void OnLostByCamera_Implementation(class ASecurityCamera* Camera) override;
+
+    // IGhostMirrorSource implementation
+    virtual bool ShouldGhostBeVisible_Implementation() const override;
+    virtual USkeletalMeshComponent* GetMirrorMesh_Implementation() const override;
 };
