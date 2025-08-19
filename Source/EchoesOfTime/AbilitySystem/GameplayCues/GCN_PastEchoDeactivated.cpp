@@ -1,8 +1,8 @@
 #include "GCN_PastEchoDeactivated.h"
 #include "Kismet/GameplayStatics.h"
+#include "Interfaces/IGhostRevealable.h"
 #include "Engine/Engine.h"
 #include "GameFramework/Pawn.h"
-#include "Actors/TimeObjects/GhostCharacterActor.h" // Include your GhostActor header
 
 bool UGCN_PastEchoDeactivated::OnExecute_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const
 {
@@ -17,16 +17,15 @@ bool UGCN_PastEchoDeactivated::OnExecute_Implementation(AActor* MyTarget, const 
     UWorld* World = MyTarget->GetWorld();
     if (!World) return false;
 
-    TArray<AActor*> Ghosts;
-    UGameplayStatics::GetAllActorsWithTag(World, TEXT("Ghost"), Ghosts);
+    TArray<AActor*> AllActors;
+    UGameplayStatics::GetAllActorsOfClass(World, AActor::StaticClass(), AllActors);
 
     int32 SetCount = 0;
-    for (AActor* A : Ghosts)
+    for (AActor* A : AllActors)
     {
-        AGhostCharacterActor* Ghost = Cast<AGhostCharacterActor>(A);
-        if (Ghost)
+        if (A && A->GetClass()->ImplementsInterface(UGhostRevealable::StaticClass()))
         {
-            Ghost->SetIsPastEchoAbilityActive(false);
+            IGhostRevealable::Execute_SetGhostRevealed(A, false);
             ++SetCount;
         }
     }
