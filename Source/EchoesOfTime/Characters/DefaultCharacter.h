@@ -36,7 +36,8 @@ protected:
 	void StartSprint();
 	void StopSprint();
 
-	void HandleInteract();
+	UFUNCTION(Server, Reliable)
+	void ServerHandleInteract();
 
 	void ActivateFutureGAPastEcho();
 
