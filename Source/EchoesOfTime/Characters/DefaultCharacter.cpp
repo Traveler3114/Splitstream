@@ -106,7 +106,29 @@ void ADefaultCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &ADefaultCharacter::StopCrouching);
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &ADefaultCharacter::ServerStartSprint);
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ADefaultCharacter::ServerStopSprint);
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &ADefaultCharacter::HandleInteract);
 		EnhancedInputComponent->BindAction(PastEchoAction, ETriggerEvent::Completed, this, &ADefaultCharacter::ActivateFutureGAPastEcho);
+	}
+}
+
+void ADefaultCharacter::HandleInteract()
+{
+	FHitResult Hit;
+	FVector Start = CameraComponent->GetComponentLocation();
+	FVector End = Start + (CameraComponent->GetForwardVector() * 300.f);
+
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+
+	if (GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, Params))
+	{
+		if (AActor* HitActor = Hit.GetActor())
+		{
+			if (HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
+			{
+				IInteractable::Execute_Interact(HitActor, this); // 'this' is the interactor
+			}
+		}
 	}
 }
 

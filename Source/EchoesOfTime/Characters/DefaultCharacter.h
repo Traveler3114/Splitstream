@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Interfaces/IInteractable.h"
 #include "InputActionValue.h"
 #include "DefaultCharacter.generated.h"
 
@@ -11,7 +12,7 @@ class UInputAction;
 struct FInputActionValue;
 
 UCLASS()
-class ECHOESOFTIME_API ADefaultCharacter : public ACharacter
+class ECHOESOFTIME_API ADefaultCharacter : public ACharacter, public IInteractable
 {
 	GENERATED_BODY()
 
@@ -35,6 +36,8 @@ protected:
 	void StartSprint();
 	void StopSprint();
 
+	void HandleInteract();
+
 	void ActivateFutureGAPastEcho();
 
 	// Input actions
@@ -57,10 +60,15 @@ protected:
 	UInputAction* CrouchAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UInputAction* InteractAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputAction* PastEchoAction;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	UCameraComponent* CameraComponent;
+
+
 
 	// Server-side sprinting
 	UFUNCTION(Server, Reliable)
