@@ -6,8 +6,11 @@
 // Sets default values
 AKeycardScanner::AKeycardScanner()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+    DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
+    RootComponent = DefaultSceneRoot;
+
+    Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
+    Mesh->SetupAttachment(RootComponent);
 
 }
 
