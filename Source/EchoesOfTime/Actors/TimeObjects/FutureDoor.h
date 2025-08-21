@@ -1,55 +1,33 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
-#include "Interfaces/IInteractable.h"
+#include "Actors/DoorBase.h"
 #include "FutureDoor.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API AFutureDoor : public AActor, public IInteractable
+class ECHOESOFTIME_API AFutureDoor : public ADoorBase
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	AFutureDoor();
+    AFutureDoor();
 
-	virtual void Interact_Implementation(AActor* Interactor) override;
+    virtual void BeginPlay() override;
+    virtual void Interact_Implementation(AActor* Interactor) override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	virtual void BeginPlay() override;
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+    UStaticMeshComponent* StaticMesh1;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+    UStaticMeshComponent* StaticMesh2;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+    UStaticMeshComponent* StaticMesh3;
 
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "FutureDoor")
-	void OpenDoor();
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PastDoor")
+    TSoftObjectPtr<class APastDoor> PastDoor;
 
-	UFUNCTION(BlueprintCallable,BlueprintImplementableEvent, Category = "FutureDoor")
-	void CloseDoor();
+    void OnRep_IsOpen() override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
-	USceneComponent* SceneRoot;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
-	UStaticMeshComponent* Door;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
-	UStaticMeshComponent* StaticMesh1;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
-	UStaticMeshComponent* StaticMesh2;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
-	UStaticMeshComponent* StaticMesh3;
-
-	UPROPERTY(ReplicatedUsing = OnRep_IsOpen, EditAnywhere, BlueprintReadWrite, Category = "Components")
-	bool bIsOpen = false;
-
-	UFUNCTION()
-	void OnRep_IsOpen();
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PastDoor")
-	TSoftObjectPtr<class APastDoor> PastDoor;
-
-	UFUNCTION()
-	void HandlePastDoorStateChanged(bool bPastIsOpen);
+    UFUNCTION()
+    void HandlePastDoorStateChanged(bool bPastIsOpen);
 };

@@ -1,30 +1,56 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "KeycardScanner.h"
+#include "InventorySystem/InventoryComponent.h"
+#include "InventorySystem/Items/ItemBase.h"
+#include "Actors/DoorBase.h"
 
-// Sets default values
 AKeycardScanner::AKeycardScanner()
 {
+    // Initialize components if needed
     DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
     RootComponent = DefaultSceneRoot;
 
-    Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
-    Mesh->SetupAttachment(RootComponent);
+    Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
+    Mesh->SetupAttachment(DefaultSceneRoot);
 
+    LinkedDoor = nullptr;
 }
 
-// Called when the game starts or when spawned
 void AKeycardScanner::BeginPlay()
 {
-	Super::BeginPlay();
-	
+    Super::BeginPlay();
+
+    if (LinkedDoor)
+    {
+        LinkedDoor->bRequiresKeycard = true;
+    }
 }
 
-// Called every frame
-void AKeycardScanner::Tick(float DeltaTime)
+void AKeycardScanner::Interact_Implementation(AActor* Interactor)
 {
-	Super::Tick(DeltaTime);
+    if (!Interactor || !LinkedDoor) return;
 
+    UInventoryComponent* Inventory = Interactor->FindComponentByClass<UInventoryComponent>();
+    if (!Inventory)
+        return;
+
+    // Check for a keycard
+    bool bHasKeycard = false;
+    for (UItemBase* Item : Inventory->GetItems())
+    {
+        if (Item && Item->ItemType == EItemType::Keycard)
+        {
+            bHasKeycard = true;
+            break;
+        }
+    }
+
+    if (bHasKeycard)
+    {
+        LinkedDoor->OpenDoor();
+        // Optional: feedback for success
+    }
+    else
+    {
+        // Optional: feedback for failure
+    }
 }
-
