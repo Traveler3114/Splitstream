@@ -16,12 +16,6 @@ public:
     virtual void Interact_Implementation(AActor* Interactor) override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
-    UStaticMeshComponent* StaticMesh1;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
-    UStaticMeshComponent* StaticMesh2;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
-    UStaticMeshComponent* StaticMesh3;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PastDoor")
     TSoftObjectPtr<class APastDoor> PastDoor;

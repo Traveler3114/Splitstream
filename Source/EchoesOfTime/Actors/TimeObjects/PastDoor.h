@@ -20,13 +20,5 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "PastDoor")
     FOnDoorStateChanged OnDoorStateChanged;
 
-    // If you want unique meshes add here, but you can also use inherited DoorMesh
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
-    UStaticMeshComponent* StaticMesh1;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
-    UStaticMeshComponent* StaticMesh2;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
-    UStaticMeshComponent* StaticMesh3;
-
     void OnRep_IsOpen() override;
 };

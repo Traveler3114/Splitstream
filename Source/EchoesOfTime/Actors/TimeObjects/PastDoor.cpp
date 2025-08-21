@@ -3,14 +3,7 @@
 
 APastDoor::APastDoor()
 {
-    StaticMesh1 = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh1"));
-    StaticMesh1->SetupAttachment(SceneRoot);
 
-    StaticMesh2 = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh2"));
-    StaticMesh2->SetupAttachment(SceneRoot);
-
-    StaticMesh3 = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh3"));
-    StaticMesh3->SetupAttachment(SceneRoot);
 }
 
 void APastDoor::Interact_Implementation(AActor* Interactor)

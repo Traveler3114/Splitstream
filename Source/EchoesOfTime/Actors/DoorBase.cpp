@@ -11,6 +11,8 @@ ADoorBase::ADoorBase()
 
     DoorMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DoorMesh"));
     DoorMesh->SetupAttachment(SceneRoot);
+    DoorFrameMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DoorFrameMesh"));
+    DoorFrameMesh->SetupAttachment(SceneRoot);
 }
 
 void ADoorBase::Interact_Implementation(AActor* Interactor)
