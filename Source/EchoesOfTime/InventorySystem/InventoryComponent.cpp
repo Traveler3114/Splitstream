@@ -43,6 +43,7 @@ bool UInventoryComponent::AddItem(UItemBase* Item)
         if (Slots[i] == nullptr)
         {
             Slots[i] = Item;
+            OnInventoryChanged.Broadcast(Slots);
             return true;
         }
     }
@@ -54,6 +55,7 @@ void UInventoryComponent::RemoveItem(int32 Index)
     if (Slots.IsValidIndex(Index))
     {
         Slots[Index] = nullptr;
+        OnInventoryChanged.Broadcast(Slots);
     }
 }
 

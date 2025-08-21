@@ -4,7 +4,12 @@
 #include "Components/ActorComponent.h"
 #include "InventoryComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInventoryChanged, const TArray<UItemBase*>&, Items);
+
+
 class UItemBase; // Forward declaration for your item class
+
+
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class ECHOESOFTIME_API UInventoryComponent : public UActorComponent
@@ -14,6 +19,11 @@ class ECHOESOFTIME_API UInventoryComponent : public UActorComponent
 public:
     UInventoryComponent();
 
+    UPROPERTY(BlueprintAssignable, Category = "Inventory")
+    FOnInventoryChanged OnInventoryChanged;
+
+    UFUNCTION(BlueprintPure, Category = "Inventory")
+    const TArray<UItemBase*>& GetItems() const { return Slots; }
     // Configurable number of slots
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
     int32 SlotCount = 9;
