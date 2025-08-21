@@ -44,6 +44,9 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
     EItemType ItemType;
 
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
+    FVector PickupMeshScale = FVector(1.0f);
+
     // Called when the item is equipped
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Item")
     void OnEquipped(class AActor* Instigator);

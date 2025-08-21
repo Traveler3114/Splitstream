@@ -6,6 +6,7 @@ AItemPickup::AItemPickup()
 {
     MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComponent"));
     RootComponent = MeshComponent;
+    MeshComponent->SetSimulatePhysics(true);
     ItemData = nullptr;
 }
 
@@ -25,6 +26,7 @@ void AItemPickup::InitFromItemData(UItemBase* InItemData)
     if (ItemData && ItemData->ItemMesh)
     {
         MeshComponent->SetStaticMesh(ItemData->ItemMesh);
+        MeshComponent->SetWorldScale3D(ItemData->PickupMeshScale);
     }
 }
 
