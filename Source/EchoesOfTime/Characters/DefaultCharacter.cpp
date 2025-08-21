@@ -8,8 +8,11 @@
 #include "GameFramework/Controller.h"
 #include "DefaultPlayerState.h"
 #include "AbilitySystemComponent.h"
+#include "InventorySystem/InventoryComponent.h"
 #include "InputActionValue.h"
 #include "Net/UnrealNetwork.h"
+
+
 
 ADefaultCharacter::ADefaultCharacter()
 {
@@ -39,6 +42,8 @@ ADefaultCharacter::ADefaultCharacter()
 
 	// Initialize sprint state
 	bIsSprinting = false;
+
+	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 }
 
 void ADefaultCharacter::PostInitializeComponents()
@@ -49,6 +54,7 @@ void ADefaultCharacter::PostInitializeComponents()
 void ADefaultCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
 
 	// Setup input mapping context
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
@@ -108,7 +114,15 @@ void ADefaultCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ADefaultCharacter::ServerStopSprint);
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &ADefaultCharacter::ServerHandleInteract);
 		EnhancedInputComponent->BindAction(PastEchoAction, ETriggerEvent::Completed, this, &ADefaultCharacter::ActivateFutureGAPastEcho);
+		EnhancedInputComponent->BindAction(DropItemAction, ETriggerEvent::Completed, this, &ADefaultCharacter::DropActiveItem);
 	}
+}
+
+void ADefaultCharacter::DropActiveItem()
+{
+	if (!InventoryComponent) return;
+
+	InventoryComponent->DropActiveItem();
 }
 
 void ADefaultCharacter::ServerHandleInteract_Implementation()

@@ -43,4 +43,10 @@ public:
     // Get item in active slot
     UFUNCTION(BlueprintPure, Category = "Inventory")
     UItemBase* GetActiveItem() const;
+
+    UFUNCTION(BlueprintCallable, Category = "Inventory")
+    void DropActiveItem();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
+	TSubclassOf<UItemBase> DefaultItemClass; // Class to spawn default item
 };

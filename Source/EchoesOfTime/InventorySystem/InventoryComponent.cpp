@@ -10,6 +10,21 @@ void UInventoryComponent::BeginPlay()
 {
     Super::BeginPlay();
     Slots.Init(nullptr, SlotCount);
+
+    // --- Add this block to give a default item at game start ---
+    if (GetOwner()) // Make sure we have a valid owner
+    {
+        // Create a new item (replace UItemBase with your item subclass if needed)
+        UItemBase* NewItem = NewObject<UItemBase>(GetOwner(), DefaultItemClass);
+        if (NewItem)
+        {
+            // Optionally set properties, e.g.:
+            // NewItem->ItemName = FText::FromString("Test Item");
+
+            AddItem(NewItem);
+        }
+    }
+    // -----------------------------------------------------------
 }
 
 void UInventoryComponent::SetActiveSlot(int32 Index)
@@ -45,4 +60,12 @@ void UInventoryComponent::RemoveItem(int32 Index)
 UItemBase* UInventoryComponent::GetActiveItem() const
 {
     return Slots.IsValidIndex(ActiveSlotIndex) ? Slots[ActiveSlotIndex] : nullptr;
+}
+
+void UInventoryComponent::DropActiveItem()
+{
+    UItemBase* ActiveItem = GetActiveItem();
+    if (!ActiveItem) return;
+    ActiveItem->OnDropped(GetOwner()); // 'GetOwner()' is usually the character
+    RemoveItem(ActiveSlotIndex);
 }

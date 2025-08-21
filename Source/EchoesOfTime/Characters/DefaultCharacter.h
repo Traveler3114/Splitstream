@@ -21,6 +21,9 @@ public:
 	virtual void PostInitializeComponents() override;
 
 protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
+	class UInventoryComponent* InventoryComponent;
+
 	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override; // Initialize ASC on clients
@@ -66,10 +69,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputAction* PastEchoAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UInputAction* DropItemAction;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	UCameraComponent* CameraComponent;
 
 
+	void DropActiveItem();
 
 	// Server-side sprinting
 	UFUNCTION(Server, Reliable)
