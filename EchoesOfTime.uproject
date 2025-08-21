@@ -12,7 +12,8 @@
 				"Engine",
 				"UMG",
 				"AdvancedSessions",
-				"GameplayAbilities"
+				"GameplayAbilities",
+				"CoreUObject"
 			]
 		}
 	],
