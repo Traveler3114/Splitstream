@@ -9,12 +9,6 @@ void UCharacterOverlay::OnInventoryChanged(const TArray<FInventorySlot>& Items)
 {
     if (!InventoryBox || !LinkedInventory) return;
 
-    if (GEngine)
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Blue, FString::Printf(TEXT("CharacterOverlay: OnInventoryChanged called, Items.Num() = %d"), Items.Num()));
-    }
-    UE_LOG(LogTemp, Warning, TEXT("CharacterOverlay: OnInventoryChanged called, Items.Num() = %d"), Items.Num());
-
     InventoryBox->ClearChildren();
 
     for (const FInventorySlot& SlotItem : Items)

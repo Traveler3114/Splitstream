@@ -42,11 +42,6 @@ void AItemPickup::Interact_Implementation(AActor* Interactor)
     UInventoryComponent* Inventory = Interactor->FindComponentByClass<UInventoryComponent>();
     if (Inventory && Inventory->AddItem(ItemData->GetClass()))
     {
-        if (GEngine)
-        {
-            GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TEXT("ItemPickup: Item added to inventory!"));
-        }
-        UE_LOG(LogTemp, Warning, TEXT("ItemPickup: %s picked up %s"), *Interactor->GetName(), *ItemData->GetName());
         Destroy();
     }
 }

@@ -27,4 +27,6 @@ public:
 
     // IInteractable
     virtual void Interact_Implementation(AActor* Interactor) override;
+
+
 };

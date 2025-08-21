@@ -35,12 +35,6 @@ bool UInventoryComponent::AddItem(TSubclassOf<UItemBase> ItemClass)
             Slots[i].ItemClass = ItemClass;
             OnInventoryChanged.Broadcast(Slots);
 
-            if (GEngine)
-            {
-                GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Yellow, FString::Printf(TEXT("InventoryComponent: Item added in slot %d"), i));
-            }
-            UE_LOG(LogTemp, Warning, TEXT("InventoryComponent: Item %s added in slot %d (Owner: %s, Role: %d)"),
-                *GetNameSafe(ItemClass), i, *GetOwner()->GetName(), (int32)GetOwnerRole());
             return true;
         }
     }
@@ -94,11 +88,6 @@ void UInventoryComponent::OnRep_Slots()
 {
     OnInventoryChanged.Broadcast(Slots);
 
-    if (GEngine)
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, TEXT("InventoryComponent: OnRep_Slots called (client received update)"));
-    }
-    UE_LOG(LogTemp, Warning, TEXT("InventoryComponent: OnRep_Slots called (Owner: %s, Role: %d)"), *GetOwner()->GetName(), (int32)GetOwnerRole());
 }
 
 void UInventoryComponent::OnRep_ActiveSlotIndex()

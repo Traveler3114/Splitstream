@@ -27,20 +27,6 @@ void AKeycardScanner::BeginPlay()
 
 void AKeycardScanner::Interact_Implementation(AActor* Interactor)
 {
-    if (GEngine)
-    {
-        FString NetModeString;
-        switch (GetNetMode())
-        {
-        case NM_Client: NetModeString = TEXT("Client"); break;
-        case NM_ListenServer: NetModeString = TEXT("ListenServer"); break;
-        case NM_DedicatedServer: NetModeString = TEXT("DedicatedServer"); break;
-        default: NetModeString = TEXT("Standalone"); break;
-        }
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow,
-            FString::Printf(TEXT("KeycardScanner Interact: HasAuthority=%d, NetMode=%s, Role=%d"),
-                (int32)HasAuthority(), *NetModeString, (int32)GetLocalRole()));
-    }
     if (!Interactor || !LinkedDoor) return;
 
     UInventoryComponent* Inventory = Interactor->FindComponentByClass<UInventoryComponent>();
