@@ -35,19 +35,6 @@ void AFutureDoor::BeginPlay()
 void AFutureDoor::Interact_Implementation(AActor* Interactor)
 {
     Super::Interact_Implementation(Interactor); // <--- Add this line
-
-    // Only proceed if not locked (bRequiresKeycard is false)
-    if (bRequiresKeycard)
-        return;
-
-    if (HasAuthority())
-    {
-        bIsOpen = !bIsOpen;
-        if (bIsOpen)
-            OpenDoor();
-        else
-            CloseDoor();
-    }
 }
 
 void AFutureDoor::HandlePastDoorStateChanged(bool bPastIsOpen)

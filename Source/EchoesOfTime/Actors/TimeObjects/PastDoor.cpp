@@ -15,20 +15,10 @@ APastDoor::APastDoor()
 
 void APastDoor::Interact_Implementation(AActor* Interactor)
 {
-    Super::Interact_Implementation(Interactor); // <--- Add this line
-
-    // Only proceed if not locked (bRequiresKeycard is false)
-    if (bRequiresKeycard)
-        return;
-
+    Super::Interact_Implementation(Interactor);
     if (HasAuthority())
     {
-        bIsOpen = !bIsOpen;
-        OnDoorStateChanged.Broadcast(bIsOpen);
-        if (bIsOpen)
-            OpenDoor();
-        else
-            CloseDoor();
+        OnDoorStateChanged.Broadcast(bIsOpen); // Custom logic: broadcast state
     }
 }
 
