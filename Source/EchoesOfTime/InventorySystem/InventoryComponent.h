@@ -18,6 +18,8 @@ class ECHOESOFTIME_API UInventoryComponent : public UActorComponent
 
 public:
     UInventoryComponent();
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 
     UPROPERTY(BlueprintAssignable, Category = "Inventory")
     FOnInventoryChanged OnInventoryChanged;
@@ -29,11 +31,11 @@ public:
     int32 SlotCount = 9;
 
     // Array of items in slots (nullptr for empty)
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
+    UPROPERTY(ReplicatedUsing = OnRep_Slots,VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
     TArray<UItemBase*> Slots;
 
     // Active slot index
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
+    UPROPERTY(ReplicatedUsing = OnRep_ActiveSlotIndex,VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
     int32 ActiveSlotIndex = 0;
 
     virtual void BeginPlay() override;
@@ -59,4 +61,19 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	TSubclassOf<UItemBase> DefaultItemClass; // Class to spawn default item
+
+    UFUNCTION()
+    void OnRep_Slots();
+
+    UFUNCTION()
+    void OnRep_ActiveSlotIndex();
+
+    UFUNCTION(Server, Reliable)
+    void ServerSetActiveSlot(int32 Index);
+
+    UFUNCTION(Server, Reliable)
+    void ServerDropActiveItem();
+
+    UFUNCTION(Server, Reliable)
+    void ServerAddItem(UItemBase* Item);
 };

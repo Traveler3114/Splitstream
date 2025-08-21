@@ -4,9 +4,13 @@
 
 AItemPickup::AItemPickup()
 {
+    bReplicates = true;
+    SetReplicateMovement(true);
+
     MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComponent"));
     RootComponent = MeshComponent;
     MeshComponent->SetSimulatePhysics(true);
+    MeshComponent->SetIsReplicated(true);
     ItemData = nullptr;
 }
 
@@ -30,19 +34,19 @@ void AItemPickup::InitFromItemData(UItemBase* InItemData)
     }
 }
 
+
 void AItemPickup::Interact_Implementation(AActor* Interactor)
 {
     if (!ItemData || !Interactor) return;
 
-    // Try to find an inventory component on the character who interacted
     UInventoryComponent* Inventory = Interactor->FindComponentByClass<UInventoryComponent>();
-    if (Inventory)
+    if (Inventory && Inventory->AddItem(ItemData))
     {
-        // Add the item to inventory. If successful, destroy the pickup.
-        if (Inventory->AddItem(ItemData))
+        if (GEngine)
         {
-            Destroy();
+            GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TEXT("ItemPickup: Item added to inventory!"));
         }
-        // Optionally, you can give feedback if inventory is full
+        UE_LOG(LogTemp, Warning, TEXT("ItemPickup: %s picked up %s"), *Interactor->GetName(), *ItemData->GetName());
+        Destroy(); // Only the server destroys the actor, replicates to all clients
     }
 }

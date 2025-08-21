@@ -5,22 +5,29 @@
 
 void UCharacterOverlay::OnInventoryChanged(const TArray<class UItemBase*>& Items)
 {
-	if (!InventoryBox) return;
+    if (!InventoryBox) return;
 
-	// Clear previous images
-	InventoryBox->ClearChildren();
+    // Debug
+    if (GEngine)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Blue, FString::Printf(TEXT("CharacterOverlay: OnInventoryChanged called, Items.Num() = %d"), Items.Num()));
+    }
+    UE_LOG(LogTemp, Warning, TEXT("CharacterOverlay: OnInventoryChanged called, Items.Num() = %d"), Items.Num());
 
-	for (UItemBase* Item : Items)
-	{
-		if (!Item || !Item->ItemIcon) continue;
+    // Clear previous images
+    InventoryBox->ClearChildren();
 
-		// Create an Image widget dynamically
-		UImage* ItemImage = NewObject<UImage>(InventoryBox);
-		ItemImage->SetBrushFromTexture(Item->ItemIcon);
+    for (UItemBase* Item : Items)
+    {
+        if (!Item || !Item->ItemIcon) continue;
 
-		// Optionally set size, alignment, etc.
-		// ItemImage->SetBrushSize(FVector2D(64, 64));
+        // Create an Image widget dynamically
+        UImage* ItemImage = NewObject<UImage>(InventoryBox);
+        ItemImage->SetBrushFromTexture(Item->ItemIcon);
 
-		InventoryBox->AddChild(ItemImage);
-	}
+        // Optionally set size, alignment, etc.
+        // ItemImage->SetBrushSize(FVector2D(64, 64));
+
+        InventoryBox->AddChild(ItemImage);
+    }
 }

@@ -122,7 +122,7 @@ void ADefaultCharacter::DropActiveItem()
 {
 	if (!InventoryComponent) return;
 
-	InventoryComponent->DropActiveItem();
+	InventoryComponent->ServerDropActiveItem();
 }
 
 void ADefaultCharacter::ServerHandleInteract_Implementation()
