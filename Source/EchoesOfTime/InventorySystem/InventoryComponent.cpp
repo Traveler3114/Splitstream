@@ -1,6 +1,6 @@
 #include "InventoryComponent.h"
-#include "InventorySystem/Items/ItemBase.h" // Your item base class
-#include "Net/UnrealNetwork.h" // For replication
+#include "Net/UnrealNetwork.h"
+#include "Engine/Engine.h"
 
 UInventoryComponent::UInventoryComponent()
 {
@@ -10,23 +10,12 @@ UInventoryComponent::UInventoryComponent()
 void UInventoryComponent::BeginPlay()
 {
     Super::BeginPlay();
-    Slots.Init(nullptr, SlotCount);
+    Slots.SetNum(SlotCount);
 
-
-    // --- Add this block to give a default item at game start ---
-    if (GetOwner()) // Make sure we have a valid owner
+    if (GetOwner()->HasAuthority() && DefaultItemClass)
     {
-        // Create a new item (replace UItemBase with your item subclass if needed)
-        UItemBase* NewItem = NewObject<UItemBase>(GetOwner(), DefaultItemClass);
-        if (NewItem)
-        {
-            // Optionally set properties, e.g.:
-            // NewItem->ItemName = FText::FromString("Test Item");
-
-            AddItem(NewItem);
-        }
+        AddItem(DefaultItemClass);
     }
-    // -----------------------------------------------------------
 }
 
 void UInventoryComponent::SetActiveSlot(int32 Index)
@@ -34,49 +23,62 @@ void UInventoryComponent::SetActiveSlot(int32 Index)
     if (Index >= 0 && Index < Slots.Num())
     {
         ActiveSlotIndex = Index;
-        // Optionally: Broadcast equipped/changed event here
     }
 }
 
-bool UInventoryComponent::AddItem(UItemBase* Item)
+bool UInventoryComponent::AddItem(TSubclassOf<UItemBase> ItemClass)
 {
     for (int32 i = 0; i < Slots.Num(); ++i)
     {
-        if (Slots[i] == nullptr)
+        if (!Slots[i].ItemClass)
         {
-            Slots[i] = Item;
+            Slots[i].ItemClass = ItemClass;
             OnInventoryChanged.Broadcast(Slots);
 
             if (GEngine)
             {
                 GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Yellow, FString::Printf(TEXT("InventoryComponent: Item added in slot %d"), i));
             }
-            UE_LOG(LogTemp, Warning, TEXT("InventoryComponent: Item %s added in slot %d (Owner: %s, Role: %d)"), *Item->GetName(), i, *GetOwner()->GetName(), (int32)GetOwnerRole());
+            UE_LOG(LogTemp, Warning, TEXT("InventoryComponent: Item %s added in slot %d (Owner: %s, Role: %d)"),
+                *GetNameSafe(ItemClass), i, *GetOwner()->GetName(), (int32)GetOwnerRole());
             return true;
         }
     }
-    return false; // Inventory full
+    return false;
 }
 
 void UInventoryComponent::RemoveItem(int32 Index)
 {
     if (Slots.IsValidIndex(Index))
     {
-        Slots[Index] = nullptr;
+        Slots[Index].ItemClass = nullptr;
         OnInventoryChanged.Broadcast(Slots);
     }
 }
 
+UItemBase* UInventoryComponent::CreateItemInstance(const FInventorySlot& Slot) const
+{
+    if (Slot.ItemClass)
+    {
+        return NewObject<UItemBase>(GetOwner(), Slot.ItemClass);
+    }
+    return nullptr;
+}
+
 UItemBase* UInventoryComponent::GetActiveItem() const
 {
-    return Slots.IsValidIndex(ActiveSlotIndex) ? Slots[ActiveSlotIndex] : nullptr;
+    if (Slots.IsValidIndex(ActiveSlotIndex))
+    {
+        return CreateItemInstance(Slots[ActiveSlotIndex]);
+    }
+    return nullptr;
 }
 
 void UInventoryComponent::DropActiveItem()
 {
     UItemBase* ActiveItem = GetActiveItem();
     if (!ActiveItem) return;
-    ActiveItem->OnDropped(GetOwner()); // 'GetOwner()' is usually the character
+    ActiveItem->OnDropped(GetOwner());
     RemoveItem(ActiveSlotIndex);
 }
 
@@ -114,7 +116,7 @@ void UInventoryComponent::ServerDropActiveItem_Implementation()
     DropActiveItem();
 }
 
-void UInventoryComponent::ServerAddItem_Implementation(UItemBase* Item)
+void UInventoryComponent::ServerAddItem_Implementation(TSubclassOf<UItemBase> ItemClass)
 {
-    AddItem(Item);
+    AddItem(ItemClass);
 }

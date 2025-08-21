@@ -2,31 +2,28 @@
 #include "Components/HorizontalBox.h"
 #include "Components/Image.h"
 #include "InventorySystem/Items/ItemBase.h"
+#include "InventorySystem/InventoryComponent.h"
+#include "Engine/Engine.h"
 
-void UCharacterOverlay::OnInventoryChanged(const TArray<class UItemBase*>& Items)
+void UCharacterOverlay::OnInventoryChanged(const TArray<FInventorySlot>& Items)
 {
-    if (!InventoryBox) return;
+    if (!InventoryBox || !LinkedInventory) return;
 
-    // Debug
     if (GEngine)
     {
         GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Blue, FString::Printf(TEXT("CharacterOverlay: OnInventoryChanged called, Items.Num() = %d"), Items.Num()));
     }
     UE_LOG(LogTemp, Warning, TEXT("CharacterOverlay: OnInventoryChanged called, Items.Num() = %d"), Items.Num());
 
-    // Clear previous images
     InventoryBox->ClearChildren();
 
-    for (UItemBase* Item : Items)
+    for (const FInventorySlot& SlotItem : Items)
     {
+        UItemBase* Item = LinkedInventory->CreateItemInstance(SlotItem);
         if (!Item || !Item->ItemIcon) continue;
 
-        // Create an Image widget dynamically
         UImage* ItemImage = NewObject<UImage>(InventoryBox);
         ItemImage->SetBrushFromTexture(Item->ItemIcon);
-
-        // Optionally set size, alignment, etc.
-        // ItemImage->SetBrushSize(FVector2D(64, 64));
 
         InventoryBox->AddChild(ItemImage);
     }

@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "InventorySystem/InventoryComponent.h"
 #include "CharacterOverlay.generated.h"
 
 class UHorizontalBox;
@@ -9,14 +10,15 @@ class UHorizontalBox;
 UCLASS()
 class ECHOESOFTIME_API UCharacterOverlay : public UUserWidget
 {
-	GENERATED_BODY()
-public:
-	/** This function will be called when inventory changes */
-	UFUNCTION()
-	void OnInventoryChanged(const TArray<class UItemBase*>& Items);
+    GENERATED_BODY()
 
-protected:
-	// Bind this to your UMG HorizontalBox (named InventoryBox)
-	UPROPERTY(meta = (BindWidget))
-	UHorizontalBox* InventoryBox;
+public:
+    UPROPERTY(meta = (BindWidget))
+    UHorizontalBox* InventoryBox;
+
+    UFUNCTION()
+    void OnInventoryChanged(const TArray<FInventorySlot>& Items);
+
+    UPROPERTY()
+    UInventoryComponent* LinkedInventory;
 };

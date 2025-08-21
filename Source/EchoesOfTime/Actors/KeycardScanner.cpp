@@ -33,9 +33,8 @@ void AKeycardScanner::Interact_Implementation(AActor* Interactor)
     if (!Inventory)
         return;
 
-    // Check for a keycard
     bool bHasKeycard = false;
-    for (UItemBase* Item : Inventory->GetItems())
+    for (UItemBase* Item : Inventory->GetItemInstances())
     {
         if (Item && Item->ItemType == EItemType::Keycard)
         {

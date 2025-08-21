@@ -1,6 +1,7 @@
 #include "ItemPickup.h"
 #include "InventorySystem/InventoryComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Engine/Engine.h"
 
 AItemPickup::AItemPickup()
 {
@@ -34,19 +35,18 @@ void AItemPickup::InitFromItemData(UItemBase* InItemData)
     }
 }
 
-
 void AItemPickup::Interact_Implementation(AActor* Interactor)
 {
     if (!ItemData || !Interactor) return;
 
     UInventoryComponent* Inventory = Interactor->FindComponentByClass<UInventoryComponent>();
-    if (Inventory && Inventory->AddItem(ItemData))
+    if (Inventory && Inventory->AddItem(ItemData->GetClass()))
     {
         if (GEngine)
         {
             GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TEXT("ItemPickup: Item added to inventory!"));
         }
         UE_LOG(LogTemp, Warning, TEXT("ItemPickup: %s picked up %s"), *Interactor->GetName(), *ItemData->GetName());
-        Destroy(); // Only the server destroys the actor, replicates to all clients
+        Destroy();
     }
 }

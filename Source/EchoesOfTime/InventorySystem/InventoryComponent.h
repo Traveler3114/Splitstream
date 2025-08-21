@@ -2,14 +2,19 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "InventorySystem/Items/ItemBase.h"
 #include "InventoryComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInventoryChanged, const TArray<UItemBase*>&, Items);
+USTRUCT(BlueprintType)
+struct FInventorySlot
+{
+    GENERATED_BODY()
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TSubclassOf<UItemBase> ItemClass;
+};
 
-class UItemBase; // Forward declaration for your item class
-
-
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInventoryChanged, const TArray<FInventorySlot>&, Items);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class ECHOESOFTIME_API UInventoryComponent : public UActorComponent
@@ -18,49 +23,42 @@ class ECHOESOFTIME_API UInventoryComponent : public UActorComponent
 
 public:
     UInventoryComponent();
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
     UPROPERTY(BlueprintAssignable, Category = "Inventory")
     FOnInventoryChanged OnInventoryChanged;
 
-    UFUNCTION(BlueprintPure, Category = "Inventory")
-    const TArray<UItemBase*>& GetItems() const { return Slots; }
-    // Configurable number of slots
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
     int32 SlotCount = 9;
 
-    // Array of items in slots (nullptr for empty)
-    UPROPERTY(ReplicatedUsing = OnRep_Slots,VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
-    TArray<UItemBase*> Slots;
+    UPROPERTY(ReplicatedUsing = OnRep_Slots, VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
+    TArray<FInventorySlot> Slots;
 
-    // Active slot index
-    UPROPERTY(ReplicatedUsing = OnRep_ActiveSlotIndex,VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
+    UPROPERTY(ReplicatedUsing = OnRep_ActiveSlotIndex, VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
     int32 ActiveSlotIndex = 0;
 
     virtual void BeginPlay() override;
 
-    // Equip/activate a slot
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     void SetActiveSlot(int32 Index);
 
-    // Add item to first free slot
     UFUNCTION(BlueprintCallable, Category = "Inventory")
-    bool AddItem(UItemBase* Item);
+    bool AddItem(TSubclassOf<UItemBase> ItemClass);
 
-    // Remove item from a slot
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     void RemoveItem(int32 Index);
 
-    // Get item in active slot
     UFUNCTION(BlueprintPure, Category = "Inventory")
     UItemBase* GetActiveItem() const;
+
+    UFUNCTION(BlueprintPure, Category = "Inventory")
+    UItemBase* CreateItemInstance(const FInventorySlot& Slot) const;
 
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     void DropActiveItem();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
-	TSubclassOf<UItemBase> DefaultItemClass; // Class to spawn default item
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
+    TSubclassOf<UItemBase> DefaultItemClass;
 
     UFUNCTION()
     void OnRep_Slots();
@@ -75,5 +73,19 @@ public:
     void ServerDropActiveItem();
 
     UFUNCTION(Server, Reliable)
-    void ServerAddItem(UItemBase* Item);
+    void ServerAddItem(TSubclassOf<UItemBase> ItemClass);
+
+    UFUNCTION(BlueprintPure, Category = "Inventory")
+    TArray<UItemBase*> GetItemInstances() const
+    {
+        TArray<UItemBase*> Result;
+        for (const FInventorySlot& Slot : Slots)
+        {
+            if (Slot.ItemClass)
+            {
+                Result.Add(NewObject<UItemBase>(GetOwner(), Slot.ItemClass));
+            }
+        }
+        return Result;
+    }
 };
