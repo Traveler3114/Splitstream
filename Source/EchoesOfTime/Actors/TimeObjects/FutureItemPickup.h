@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "InventorySystem/Items/ItemPickup.h"
+#include "Actors/ItemPickup.h"
 #include "FutureItemPickup.generated.h"
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FFutureItemInvalidated, FGuid /*InstanceID*/);

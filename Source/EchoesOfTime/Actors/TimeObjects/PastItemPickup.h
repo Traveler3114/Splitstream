@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "InventorySystem/Items/ItemPickup.h"
+#include "Actors/ItemPickup.h"
 #include "PastItemPickup.generated.h"
 
 UCLASS()

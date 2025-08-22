@@ -1,7 +1,7 @@
 #include "CharacterOverlay.h"
 #include "Components/HorizontalBox.h"
 #include "Components/Image.h"
-#include "InventorySystem/Items/ItemBase.h"
+#include "InventorySystem/ItemBase.h"
 #include "InventorySystem/InventoryComponent.h"
 #include "Engine/Engine.h"
 

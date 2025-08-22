@@ -1,6 +1,6 @@
 #include "ItemBase.h"
 #include "GameplayTagContainer.h"
-#include "InventorySystem/Items/ItemPickup.h"
+#include "Actors/ItemPickup.h"
 #include "Actors/TimeObjects/PastItemPickup.h"
 #include "Actors/TimeObjects/FutureItemPickup.h"
 #include "Kismet/GameplayStatics.h"

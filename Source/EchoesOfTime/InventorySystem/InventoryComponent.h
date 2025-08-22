@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "InventorySystem/Items/ItemBase.h"
+#include "ItemBase.h"
 #include "InventoryComponent.generated.h"
 
 USTRUCT(BlueprintType)
