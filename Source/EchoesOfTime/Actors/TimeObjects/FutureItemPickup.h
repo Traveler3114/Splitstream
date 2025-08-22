@@ -15,6 +15,9 @@ public:
 
     virtual void BeginPlay() override;
 
+    // OVERRIDE!
+    virtual void Interact_Implementation(AActor* Interactor) override;
+
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "TimeLink")
     class APastItemPickup* LinkedPastItem = nullptr;
 

@@ -2,7 +2,6 @@
 #include "InventorySystem/InventoryComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/Engine.h"
-#include "Actors/TimeObjects/FutureItemPickup.h"
 
 AItemPickup::AItemPickup()
 {
@@ -42,12 +41,6 @@ void AItemPickup::Interact_Implementation(AActor* Interactor)
     UInventoryComponent* Inventory = Interactor->FindComponentByClass<UInventoryComponent>();
     if (Inventory)
     {
-        // Register for invalidation event if this is a Future pickup
-        if (AFutureItemPickup* FuturePickup = Cast<AFutureItemPickup>(this))
-        {
-            Inventory->RegisterFutureInstance(ItemData->ItemInstanceID);
-        }
-
         if (Inventory->AddItem(ItemData->GetClass(), ItemData->ItemInstanceID))
         {
             Destroy();
