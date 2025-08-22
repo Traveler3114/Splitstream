@@ -44,6 +44,11 @@ protected:
 
 	void ActivateFutureGAPastEcho();
 
+	void SelectInventorySlot(int32 SlotNumber);
+
+	UFUNCTION()
+	void HandleNumberKey(FKey PressedKey);
+
 	// Input actions
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputMappingContext* DefaultMappingContext;

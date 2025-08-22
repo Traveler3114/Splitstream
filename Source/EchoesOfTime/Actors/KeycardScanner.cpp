@@ -33,27 +33,21 @@ void AKeycardScanner::Interact_Implementation(AActor* Interactor)
     if (!Inventory)
         return;
 
-    bool bHasKeycard = false;
-    for (UItemBase* Item : Inventory->GetItemInstances())
+    UItemBase* ActiveItem = Inventory->GetActiveItem();
+    if (ActiveItem && ActiveItem->ItemType == EItemType::Keycard)
     {
-        if (Item && Item->ItemType == EItemType::Keycard)
-        {
-            bHasKeycard = true;
-            break;
-        }
-    }
+        // Use the keycard (trigger OnUsed logic)
+        ActiveItem->OnUsed(Interactor);
 
-    if (bHasKeycard)
-    {
         if (LinkedDoor->HasAuthority())
         {
             LinkedDoor->bIsOpen = true;
-            LinkedDoor->OnRep_IsOpen(); // Optional: immediately update on server
+            LinkedDoor->OnRep_IsOpen();
         }
         // Optional: feedback for success
     }
     else
     {
-        // Optional: feedback for failure
+        // Optional: feedback for failure (no keycard in hand)
     }
 }

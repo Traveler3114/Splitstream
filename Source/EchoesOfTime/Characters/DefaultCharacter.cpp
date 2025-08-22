@@ -116,8 +116,46 @@ void ADefaultCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EnhancedInputComponent->BindAction(PastEchoAction, ETriggerEvent::Completed, this, &ADefaultCharacter::ActivateFutureGAPastEcho);
 		EnhancedInputComponent->BindAction(DropItemAction, ETriggerEvent::Completed, this, &ADefaultCharacter::DropActiveItem);
 	}
+
+	// Bind number keys 1-9 to select inventory slots 0-8
+	PlayerInputComponent->BindKey(EKeys::One, IE_Pressed, this, &ADefaultCharacter::HandleNumberKey);
+	PlayerInputComponent->BindKey(EKeys::Two, IE_Pressed, this, &ADefaultCharacter::HandleNumberKey);
+	PlayerInputComponent->BindKey(EKeys::Three, IE_Pressed, this, &ADefaultCharacter::HandleNumberKey);
+	PlayerInputComponent->BindKey(EKeys::Four, IE_Pressed, this, &ADefaultCharacter::HandleNumberKey);
+	PlayerInputComponent->BindKey(EKeys::Five, IE_Pressed, this, &ADefaultCharacter::HandleNumberKey);
+	PlayerInputComponent->BindKey(EKeys::Six, IE_Pressed, this, &ADefaultCharacter::HandleNumberKey);
+	PlayerInputComponent->BindKey(EKeys::Seven, IE_Pressed, this, &ADefaultCharacter::HandleNumberKey);
+	PlayerInputComponent->BindKey(EKeys::Eight, IE_Pressed, this, &ADefaultCharacter::HandleNumberKey);
+	PlayerInputComponent->BindKey(EKeys::Nine, IE_Pressed, this, &ADefaultCharacter::HandleNumberKey);
 }
 
+void ADefaultCharacter::HandleNumberKey(FKey PressedKey)
+{
+	int32 SlotIndex = -1;
+	if (PressedKey == EKeys::One) SlotIndex = 0;
+	else if (PressedKey == EKeys::Two) SlotIndex = 1;
+	else if (PressedKey == EKeys::Three) SlotIndex = 2;
+	else if (PressedKey == EKeys::Four) SlotIndex = 3;
+	else if (PressedKey == EKeys::Five) SlotIndex = 4;
+	else if (PressedKey == EKeys::Six) SlotIndex = 5;
+	else if (PressedKey == EKeys::Seven) SlotIndex = 6;
+	else if (PressedKey == EKeys::Eight) SlotIndex = 7;
+	else if (PressedKey == EKeys::Nine) SlotIndex = 8;
+
+	if (SlotIndex != -1 && InventoryComponent)
+	{
+		InventoryComponent->ServerSetActiveSlot(SlotIndex);
+	}
+}
+
+void ADefaultCharacter::SelectInventorySlot(int32 SlotNumber)
+{
+	int32 SlotIndex = SlotNumber - 1; // Convert player-facing 1-9 to 0-8 index
+	if (InventoryComponent)
+	{
+		InventoryComponent->ServerSetActiveSlot(SlotIndex);
+	}
+}
 void ADefaultCharacter::DropActiveItem()
 {
 	if (!InventoryComponent) return;

@@ -49,6 +49,22 @@ void UInventoryComponent::SetActiveSlot(int32 Index)
     if (Index >= 0 && Index < Slots.Num())
     {
         ActiveSlotIndex = Index;
+
+        // DEBUG: Show the selected item on screen
+        if (GEngine && GetOwner() && GetOwner()->GetWorld())
+        {
+            FString ItemName = TEXT("Empty Slot");
+            if (Slots[Index].ItemClass)
+            {
+                ItemName = Slots[Index].ItemClass->GetName();
+            }
+            GEngine->AddOnScreenDebugMessage(
+                -1, // Key (lets multiple messages stack)
+                2.0f, // Duration in seconds
+                FColor::Yellow,
+                FString::Printf(TEXT("Selected Slot: %d | Item: %s"), Index + 1, *ItemName)
+            );
+        }
     }
 }
 
