@@ -16,8 +16,8 @@ public:
     class AFutureItemPickup* SpawnedFutureItem = nullptr;
 
     virtual void BeginPlay() override;
-    virtual void NotifyActorBeginOverlap(AActor* OtherActor) override; // Or override Interact, etc
-	virtual void InitFromItemData(UItemBase* InItemData) override;
+
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     // Call this to spawn the future item
     void SpawnLinkedFutureItem();
 };

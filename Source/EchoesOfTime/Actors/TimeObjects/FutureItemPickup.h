@@ -12,7 +12,6 @@ public:
     AFutureItemPickup();
 
     virtual void BeginPlay() override;
-    virtual void Tick(float DeltaSeconds) override; // <--- Add this
 
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "TimeLink")
     class APastItemPickup* LinkedPastItem = nullptr;

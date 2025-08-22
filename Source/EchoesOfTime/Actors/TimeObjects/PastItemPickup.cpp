@@ -42,12 +42,12 @@ void APastItemPickup::SpawnLinkedFutureItem()
     }
 }
 
-void APastItemPickup::NotifyActorBeginOverlap(AActor* OtherActor)
+
+void APastItemPickup::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-    Super::NotifyActorBeginOverlap(OtherActor);
     if (SpawnedFutureItem)
     {
         SpawnedFutureItem->OnPastItemPickedUp();
     }
-    SpawnedFutureItem = nullptr;
+    Super::EndPlay(EndPlayReason);
 }
