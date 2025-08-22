@@ -49,6 +49,10 @@ void UItemBase::OnDroppedWithTeam_Implementation(AActor* Instigator, FGameplayTa
             Pickup->ItemData = this;
             UGameplayStatics::FinishSpawningActor(Pickup, SpawnTransform);
         }
+        if (GEngine)
+        {
+            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("PastItemPickup spawned"));
+        }
     }
     else if (TeamTag == FutureTag)
     {
@@ -57,6 +61,10 @@ void UItemBase::OnDroppedWithTeam_Implementation(AActor* Instigator, FGameplayTa
         {
             Pickup->ItemData = this;
             UGameplayStatics::FinishSpawningActor(Pickup, SpawnTransform);
+        }
+        if (GEngine)
+        {
+            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("FutureItemPickup spawned"));
         }
     }
     else

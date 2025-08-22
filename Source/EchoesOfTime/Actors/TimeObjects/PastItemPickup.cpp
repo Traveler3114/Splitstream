@@ -13,15 +13,6 @@ void APastItemPickup::BeginPlay()
     {
         SpawnLinkedFutureItem();
     }
-    if (GEngine)
-    {
-        GEngine->AddOnScreenDebugMessage(
-            -1,
-            5.f,
-            FColor::Green,
-            TEXT("PastItemPickup")
-        );
-    }
 }
 
 

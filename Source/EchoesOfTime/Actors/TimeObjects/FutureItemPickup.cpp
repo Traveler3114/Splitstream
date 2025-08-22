@@ -9,10 +9,7 @@ AFutureItemPickup::AFutureItemPickup()
 void AFutureItemPickup::BeginPlay()
 {
     Super::BeginPlay();
-    if (GEngine)
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("FutureItemPickup"));
-    }
+
 }
 
 

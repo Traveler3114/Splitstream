@@ -47,7 +47,7 @@ public:
 	void SetAvatarTexture(UTexture2D* InTexture);
 
 	// == Team system ==
-	UPROPERTY(ReplicatedUsing = OnRep_TeamName) FString TeamName = "Past"; // Past/Future
+	UPROPERTY(ReplicatedUsing = OnRep_TeamName, EditAnywhere,BlueprintReadWrite, Category="Team") FString TeamName = "Past"; // Past/Future
 
 	UFUNCTION(Server, Reliable) void ServerSetTeam(const FString& NewTeam);
 	UFUNCTION(BlueprintCallable, Category = "Lobby|Team") void SetTeamLocal(const FString& NewTeam);
