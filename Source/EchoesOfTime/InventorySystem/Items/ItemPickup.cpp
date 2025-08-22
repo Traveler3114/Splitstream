@@ -10,7 +10,7 @@ AItemPickup::AItemPickup()
 
     MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComponent"));
     RootComponent = MeshComponent;
-    MeshComponent->SetSimulatePhysics(true);
+    //MeshComponent->SetSimulatePhysics(true);
     MeshComponent->SetIsReplicated(true);
     ItemData = nullptr;
 }
