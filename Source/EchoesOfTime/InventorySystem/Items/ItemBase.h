@@ -58,4 +58,7 @@ public:
     // Called when the item is dropped
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Item")
     void OnDropped(class AActor* Instigator);
+
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Item")
+    void OnDroppedWithTeam(AActor* Instigator, FGameplayTag TeamTag);
 };

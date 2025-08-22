@@ -1,34 +1,47 @@
 #include "PastItemPickup.h"
 #include "FutureItemPickup.h"
 #include "Engine/World.h"
+#include "Kismet/GameplayStatics.h"
 
 APastItemPickup::APastItemPickup() {}
 
 void APastItemPickup::BeginPlay()
 {
     Super::BeginPlay();
+
     if (HasAuthority())
     {
         SpawnLinkedFutureItem();
     }
+    if (GEngine)
+    {
+        GEngine->AddOnScreenDebugMessage(
+            -1,
+            5.f,
+            FColor::Green,
+            TEXT("PastItemPickup")
+        );
+    }
 }
+
 
 void APastItemPickup::SpawnLinkedFutureItem()
 {
-    FVector FutureLocation = GetActorLocation() + FVector(200, 0, 0); // Your offset here
+    FVector FutureLocation = GetActorLocation() + FVector(200, 0, 0);
     FRotator Rot = GetActorRotation();
+    FTransform FutureTransform = FTransform(Rot, FutureLocation);
 
-    AFutureItemPickup* Future = GetWorld()->SpawnActor<AFutureItemPickup>(AFutureItemPickup::StaticClass(), FutureLocation, Rot);
+    AFutureItemPickup* Future = GetWorld()->SpawnActorDeferred<AFutureItemPickup>(AFutureItemPickup::StaticClass(), FutureTransform);
     if (Future)
     {
         SpawnedFutureItem = Future;
         Future->LinkedPastItem = this;
-        // Optionally copy item data
-        Future->InitFromItemData(ItemData);
+        // Copy item data
+        Future->ItemData = ItemData;
+        UGameplayStatics::FinishSpawningActor(Future, FutureTransform);
     }
 }
 
-// If using Interact or OnPickedUp, destroy future when past is picked up:
 void APastItemPickup::NotifyActorBeginOverlap(AActor* OtherActor)
 {
     Super::NotifyActorBeginOverlap(OtherActor);

@@ -17,7 +17,7 @@ public:
 
     virtual void BeginPlay() override;
     virtual void NotifyActorBeginOverlap(AActor* OtherActor) override; // Or override Interact, etc
-
+	virtual void InitFromItemData(UItemBase* InItemData) override;
     // Call this to spawn the future item
     void SpawnLinkedFutureItem();
 };

@@ -28,7 +28,7 @@ public:
     virtual void BeginPlay() override;
 
     UFUNCTION(BlueprintCallable, Category = "Item")
-    void InitFromItemData(UItemBase* InItemData);
+    virtual void InitFromItemData(UItemBase* InItemData);
 
     virtual void Interact_Implementation(AActor* Interactor) override;
 };

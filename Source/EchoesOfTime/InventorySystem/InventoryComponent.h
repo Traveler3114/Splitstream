@@ -5,6 +5,7 @@
 #include "InventorySystem/Items/ItemBase.h"
 #include "InventoryComponent.generated.h"
 
+
 USTRUCT(BlueprintType)
 struct FInventorySlot
 {
@@ -88,4 +89,7 @@ public:
         }
         return Result;
     }
+
+    UFUNCTION(BlueprintPure, Category = "Inventory")
+    FGameplayTag GetTeamTag() const;
 };

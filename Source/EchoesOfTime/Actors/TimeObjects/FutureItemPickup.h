@@ -11,10 +11,11 @@ class ECHOESOFTIME_API AFutureItemPickup : public AItemPickup
 public:
     AFutureItemPickup();
 
-    // Reference back to past item
+    virtual void BeginPlay() override;
+    virtual void Tick(float DeltaSeconds) override; // <--- Add this
+
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "TimeLink")
     class APastItemPickup* LinkedPastItem = nullptr;
 
-    // Called by PastItem when picked up
     void OnPastItemPickedUp();
 };

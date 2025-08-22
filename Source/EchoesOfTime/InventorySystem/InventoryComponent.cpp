@@ -1,10 +1,38 @@
 #include "InventoryComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "InventorySystem/Items/ItemBase.h"
 #include "Engine/Engine.h"
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemInterface.h"
+#include "DefaultPlayerState.h"
+#include "GameplayTagContainer.h"
+
 
 UInventoryComponent::UInventoryComponent()
 {
     PrimaryComponentTick.bCanEverTick = false;
+}
+
+
+FGameplayTag UInventoryComponent::GetTeamTag() const
+{
+    APawn* Pawn = Cast<APawn>(GetOwner());
+    if (!Pawn) return FGameplayTag();
+    APlayerState* PS = Pawn->GetPlayerState();
+    if (!PS) return FGameplayTag();
+    UAbilitySystemComponent* ASC = nullptr;
+    if (IAbilitySystemInterface* IFace = Cast<IAbilitySystemInterface>(PS))
+        ASC = IFace->GetAbilitySystemComponent();
+    if (!ASC) return FGameplayTag();
+
+    // Check for Past or Future tag
+    static FGameplayTag PastTag = FGameplayTag::RequestGameplayTag(TEXT("Team.Past"));
+    static FGameplayTag FutureTag = FGameplayTag::RequestGameplayTag(TEXT("Team.Future"));
+    if (ASC->HasMatchingGameplayTag(PastTag))
+        return PastTag;
+    if (ASC->HasMatchingGameplayTag(FutureTag))
+        return FutureTag;
+    return FGameplayTag(); // None
 }
 
 void UInventoryComponent::BeginPlay()
@@ -68,11 +96,21 @@ UItemBase* UInventoryComponent::GetActiveItem() const
     return nullptr;
 }
 
+//void UInventoryComponent::DropActiveItem()
+//{
+//    UItemBase* ActiveItem = GetActiveItem();
+//    if (!ActiveItem) return;
+//    ActiveItem->OnDropped(GetOwner());
+//    RemoveItem(ActiveSlotIndex);
+//}
 void UInventoryComponent::DropActiveItem()
 {
     UItemBase* ActiveItem = GetActiveItem();
     if (!ActiveItem) return;
-    ActiveItem->OnDropped(GetOwner());
+
+    FGameplayTag TeamTag = GetTeamTag();
+    ActiveItem->OnDroppedWithTeam(GetOwner(), TeamTag); // Or pass just the tag if you want
+
     RemoveItem(ActiveSlotIndex);
 }
 
