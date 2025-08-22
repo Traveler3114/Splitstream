@@ -21,6 +21,9 @@ public:
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "TimeLink")
     class APastItemPickup* LinkedPastItem = nullptr;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ghost")
+    FVector FutureItemOffset = FVector(0.0f, -4320.0f, 0.0f);
+
     void OnPastItemPickedUp();
 
     static FFutureItemInvalidated OnFutureItemInvalidated;

@@ -12,6 +12,16 @@ AFutureItemPickup::AFutureItemPickup()
 void AFutureItemPickup::BeginPlay()
 {
     Super::BeginPlay();
+    if(LinkedPastItem)
+    {
+        // Offset the future item pickup location based on the past item pickup
+        FVector FutureLocation = LinkedPastItem->GetActorLocation() + FutureItemOffset;
+        SetActorLocation(FutureLocation);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("FutureItemPickup has no linked PastItem!"));
+	}
 }
 
 void AFutureItemPickup::Interact_Implementation(AActor* Interactor)
