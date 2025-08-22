@@ -5,7 +5,6 @@
 #include "InventorySystem/Items/ItemBase.h"
 #include "InventoryComponent.generated.h"
 
-
 USTRUCT(BlueprintType)
 struct FInventorySlot
 {
@@ -13,6 +12,9 @@ struct FInventorySlot
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TSubclassOf<UItemBase> ItemClass;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    FGuid ItemInstanceID;
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInventoryChanged, const TArray<FInventorySlot>&, Items);
@@ -44,7 +46,7 @@ public:
     void SetActiveSlot(int32 Index);
 
     UFUNCTION(BlueprintCallable, Category = "Inventory")
-    bool AddItem(TSubclassOf<UItemBase> ItemClass);
+    bool AddItem(TSubclassOf<UItemBase> ItemClass, FGuid ItemInstanceID);
 
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     void RemoveItem(int32 Index);
@@ -92,4 +94,16 @@ public:
 
     UFUNCTION(BlueprintPure, Category = "Inventory")
     FGameplayTag GetTeamTag() const;
+
+    // Register for future invalidation
+    void RegisterFutureInstance(FGuid ItemInstanceID);
+
+    // Remove by instance ID
+    void RemoveItemByInstanceID(FGuid ItemInstanceID);
+
+private:
+    UFUNCTION()
+    void HandleFutureItemInvalidated(FGuid InvalidID);
+
+    TSet<FGuid> RegisteredFutureInstances;
 };

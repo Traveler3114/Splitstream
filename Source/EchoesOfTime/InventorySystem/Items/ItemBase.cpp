@@ -15,11 +15,12 @@ void UItemBase::OnDropped_Implementation(AActor* Instigator)
     UWorld* World = Instigator->GetWorld();
     if (!World) return;
 
+    ItemInstanceID = FGuid::NewGuid();
+
     FVector SpawnLocation = Instigator->GetActorLocation() + Instigator->GetActorForwardVector() * 100.0f;
     FRotator SpawnRotation = FRotator::ZeroRotator;
     FTransform SpawnTransform = FTransform(SpawnRotation, SpawnLocation);
 
-    // Deferred spawn so ItemData is set before BeginPlay
     AItemPickup* Pickup = World->SpawnActorDeferred<AItemPickup>(AItemPickup::StaticClass(), SpawnTransform);
     if (Pickup)
     {
@@ -33,6 +34,8 @@ void UItemBase::OnDroppedWithTeam_Implementation(AActor* Instigator, FGameplayTa
     if (!Instigator) return;
     UWorld* World = Instigator->GetWorld();
     if (!World) return;
+
+    ItemInstanceID = FGuid::NewGuid();
 
     FVector SpawnLocation = Instigator->GetActorLocation() + Instigator->GetActorForwardVector() * 100.0f;
     FRotator SpawnRotation = FRotator::ZeroRotator;

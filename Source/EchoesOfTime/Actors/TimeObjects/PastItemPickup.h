@@ -11,13 +11,12 @@ class ECHOESOFTIME_API APastItemPickup : public AItemPickup
 public:
     APastItemPickup();
 
-    // Reference to spawned future item
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "TimeLink")
     class AFutureItemPickup* SpawnedFutureItem = nullptr;
 
     virtual void BeginPlay() override;
 
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-    // Call this to spawn the future item
+
     void SpawnLinkedFutureItem();
 };

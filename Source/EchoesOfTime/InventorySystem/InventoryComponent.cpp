@@ -6,13 +6,12 @@
 #include "AbilitySystemInterface.h"
 #include "DefaultPlayerState.h"
 #include "GameplayTagContainer.h"
-
+#include "Actors/TimeObjects/FutureItemPickup.h"
 
 UInventoryComponent::UInventoryComponent()
 {
     PrimaryComponentTick.bCanEverTick = false;
 }
-
 
 FGameplayTag UInventoryComponent::GetTeamTag() const
 {
@@ -25,7 +24,6 @@ FGameplayTag UInventoryComponent::GetTeamTag() const
         ASC = IFace->GetAbilitySystemComponent();
     if (!ASC) return FGameplayTag();
 
-    // Check for Past or Future tag
     static FGameplayTag PastTag = FGameplayTag::RequestGameplayTag(TEXT("Team.Past"));
     static FGameplayTag FutureTag = FGameplayTag::RequestGameplayTag(TEXT("Team.Future"));
     if (ASC->HasMatchingGameplayTag(PastTag))
@@ -42,7 +40,7 @@ void UInventoryComponent::BeginPlay()
 
     if (GetOwner()->HasAuthority() && DefaultItemClass)
     {
-        AddItem(DefaultItemClass);
+        AddItem(DefaultItemClass, FGuid::NewGuid());
     }
 }
 
@@ -54,15 +52,15 @@ void UInventoryComponent::SetActiveSlot(int32 Index)
     }
 }
 
-bool UInventoryComponent::AddItem(TSubclassOf<UItemBase> ItemClass)
+bool UInventoryComponent::AddItem(TSubclassOf<UItemBase> ItemClass, FGuid InstanceID)
 {
     for (int32 i = 0; i < Slots.Num(); ++i)
     {
         if (!Slots[i].ItemClass)
         {
             Slots[i].ItemClass = ItemClass;
+            Slots[i].ItemInstanceID = InstanceID;
             OnInventoryChanged.Broadcast(Slots);
-
             return true;
         }
     }
@@ -74,6 +72,7 @@ void UInventoryComponent::RemoveItem(int32 Index)
     if (Slots.IsValidIndex(Index))
     {
         Slots[Index].ItemClass = nullptr;
+        Slots[Index].ItemInstanceID.Invalidate();
         OnInventoryChanged.Broadcast(Slots);
     }
 }
@@ -82,7 +81,12 @@ UItemBase* UInventoryComponent::CreateItemInstance(const FInventorySlot& Slot) c
 {
     if (Slot.ItemClass)
     {
-        return NewObject<UItemBase>(GetOwner(), Slot.ItemClass);
+        UItemBase* Item = NewObject<UItemBase>(GetOwner(), Slot.ItemClass);
+        if (Item)
+        {
+            Item->ItemInstanceID = Slot.ItemInstanceID;
+        }
+        return Item;
     }
     return nullptr;
 }
@@ -96,20 +100,13 @@ UItemBase* UInventoryComponent::GetActiveItem() const
     return nullptr;
 }
 
-//void UInventoryComponent::DropActiveItem()
-//{
-//    UItemBase* ActiveItem = GetActiveItem();
-//    if (!ActiveItem) return;
-//    ActiveItem->OnDropped(GetOwner());
-//    RemoveItem(ActiveSlotIndex);
-//}
 void UInventoryComponent::DropActiveItem()
 {
     UItemBase* ActiveItem = GetActiveItem();
     if (!ActiveItem) return;
 
     FGameplayTag TeamTag = GetTeamTag();
-    ActiveItem->OnDroppedWithTeam(GetOwner(), TeamTag); // Or pass just the tag if you want
+    ActiveItem->OnDroppedWithTeam(GetOwner(), TeamTag);
 
     RemoveItem(ActiveSlotIndex);
 }
@@ -125,7 +122,6 @@ void UInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 void UInventoryComponent::OnRep_Slots()
 {
     OnInventoryChanged.Broadcast(Slots);
-
 }
 
 void UInventoryComponent::OnRep_ActiveSlotIndex()
@@ -145,5 +141,33 @@ void UInventoryComponent::ServerDropActiveItem_Implementation()
 
 void UInventoryComponent::ServerAddItem_Implementation(TSubclassOf<UItemBase> ItemClass)
 {
-    AddItem(ItemClass);
+    AddItem(ItemClass, FGuid::NewGuid());
+}
+
+// ---- FUTURE ITEM INVALIDATION ----
+
+void UInventoryComponent::RegisterFutureInstance(FGuid ItemInstanceID)
+{
+    if (!RegisteredFutureInstances.Contains(ItemInstanceID))
+    {
+        RegisteredFutureInstances.Add(ItemInstanceID);
+        AFutureItemPickup::OnFutureItemInvalidated.AddUObject(this, &UInventoryComponent::HandleFutureItemInvalidated);
+    }
+}
+
+void UInventoryComponent::RemoveItemByInstanceID(FGuid ItemInstanceID)
+{
+    for (int32 i = 0; i < Slots.Num(); ++i)
+    {
+        if (Slots[i].ItemInstanceID == ItemInstanceID)
+        {
+            RemoveItem(i);
+            break;
+        }
+    }
+}
+
+void UInventoryComponent::HandleFutureItemInvalidated(FGuid InvalidID)
+{
+    RemoveItemByInstanceID(InvalidID);
 }

@@ -15,7 +15,6 @@ void APastItemPickup::BeginPlay()
     }
 }
 
-
 void APastItemPickup::SpawnLinkedFutureItem()
 {
     FVector FutureLocation = GetActorLocation() + FVector(200, 0, 0);
@@ -27,12 +26,10 @@ void APastItemPickup::SpawnLinkedFutureItem()
     {
         SpawnedFutureItem = Future;
         Future->LinkedPastItem = this;
-        // Copy item data
         Future->ItemData = ItemData;
         UGameplayStatics::FinishSpawningActor(Future, FutureTransform);
     }
 }
-
 
 void APastItemPickup::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {

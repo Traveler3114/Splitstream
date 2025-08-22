@@ -2,6 +2,7 @@
 #include "InventorySystem/InventoryComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/Engine.h"
+#include "Actors/TimeObjects/FutureItemPickup.h"
 
 AItemPickup::AItemPickup()
 {
@@ -10,7 +11,6 @@ AItemPickup::AItemPickup()
 
     MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComponent"));
     RootComponent = MeshComponent;
-    //MeshComponent->SetSimulatePhysics(true);
     MeshComponent->SetIsReplicated(true);
     ItemData = nullptr;
 }
@@ -40,8 +40,17 @@ void AItemPickup::Interact_Implementation(AActor* Interactor)
     if (!ItemData || !Interactor) return;
 
     UInventoryComponent* Inventory = Interactor->FindComponentByClass<UInventoryComponent>();
-    if (Inventory && Inventory->AddItem(ItemData->GetClass()))
+    if (Inventory)
     {
-        Destroy();
+        // Register for invalidation event if this is a Future pickup
+        if (AFutureItemPickup* FuturePickup = Cast<AFutureItemPickup>(this))
+        {
+            Inventory->RegisterFutureInstance(ItemData->ItemInstanceID);
+        }
+
+        if (Inventory->AddItem(ItemData->GetClass(), ItemData->ItemInstanceID))
+        {
+            Destroy();
+        }
     }
 }

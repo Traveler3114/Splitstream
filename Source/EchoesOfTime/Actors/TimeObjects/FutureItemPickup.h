@@ -4,6 +4,8 @@
 #include "InventorySystem/Items/ItemPickup.h"
 #include "FutureItemPickup.generated.h"
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FFutureItemInvalidated, FGuid /*InstanceID*/);
+
 UCLASS()
 class ECHOESOFTIME_API AFutureItemPickup : public AItemPickup
 {
@@ -17,4 +19,8 @@ public:
     class APastItemPickup* LinkedPastItem = nullptr;
 
     void OnPastItemPickedUp();
+
+    static FFutureItemInvalidated OnFutureItemInvalidated;
+
+    void InvalidateFromTimeline();
 };
