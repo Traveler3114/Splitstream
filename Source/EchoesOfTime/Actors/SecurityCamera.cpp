@@ -136,7 +136,8 @@ void ASecurityCamera::Tick(float DeltaTime)
         // Apply rotation: initial yaw + pan offset
         FRotator NewRot = GetActorRotation();
         NewRot.Yaw = CurrentYaw + PanOffset;
-        SetActorRotation(NewRot);
+        //SetActorRotation(NewRot);
+		CameraMesh->SetWorldRotation(NewRot);
     }
 
     // --- Debug drawing of camera cone and trace ---
