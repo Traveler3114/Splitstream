@@ -1,5 +1,5 @@
-#include "Actors/TimeObjects/GhostCharacterActor.h"
 #include "GuardCharacter.h"
+#include "Actors/TimeObjects/GhostCharacterActor.h"
 #include "Actors/NavNode.h"
 #include "Engine/Engine.h"
 #include "Actors/SecurityCamera.h"
