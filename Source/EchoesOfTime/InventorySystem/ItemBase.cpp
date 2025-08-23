@@ -17,7 +17,32 @@ void UItemBase::OnDropped_Implementation(AActor* Instigator)
 
     ItemInstanceID = FGuid::NewGuid();
 
-    FVector SpawnLocation = Instigator->GetActorLocation() + Instigator->GetActorForwardVector() * 100.0f;
+    FVector Start = Instigator->GetActorLocation() + Instigator->GetActorForwardVector() * 100.0f;
+    FVector End = Start - FVector(0, 0, 1000.0f); // Trace 1000 units down
+
+    DrawDebugLine(
+        World,
+        Start,
+        End,
+        FColor::Green,
+        false,      // persistent lines
+        2.0f,       // lifetime in seconds
+        0,
+        2.0f        // thickness
+    );
+
+    FHitResult HitResult;
+    FCollisionQueryParams TraceParams(SCENE_QUERY_STAT(ItemDrop), true, Instigator);
+
+    bool bHit = World->LineTraceSingleByChannel(
+        HitResult,
+        Start,
+        End,
+        ECC_Visibility,
+        TraceParams
+    );
+
+    FVector SpawnLocation = bHit ? HitResult.ImpactPoint : Start;
     FRotator SpawnRotation = FRotator::ZeroRotator;
     FTransform SpawnTransform = FTransform(SpawnRotation, SpawnLocation);
 
@@ -37,7 +62,32 @@ void UItemBase::OnDroppedWithTeam_Implementation(AActor* Instigator, FGameplayTa
 
     ItemInstanceID = FGuid::NewGuid();
 
-    FVector SpawnLocation = Instigator->GetActorLocation() + Instigator->GetActorForwardVector() * 100.0f;
+    FVector Start = Instigator->GetActorLocation() + Instigator->GetActorForwardVector() * 100.0f;
+    FVector End = Start - FVector(0, 0, 1000.0f); // Trace 1000 units down
+
+    DrawDebugLine(
+        World,
+        Start,
+        End,
+        FColor::Green,
+        false,      // persistent lines
+        2.0f,       // lifetime in seconds
+        0,
+        2.0f        // thickness
+    );
+
+    FHitResult HitResult;
+    FCollisionQueryParams TraceParams(SCENE_QUERY_STAT(ItemDrop), true, Instigator);
+
+    bool bHit = World->LineTraceSingleByChannel(
+        HitResult,
+        Start,
+        End,
+        ECC_Visibility,
+        TraceParams
+    );
+
+    FVector SpawnLocation = bHit ? HitResult.ImpactPoint : Start;
     FRotator SpawnRotation = FRotator::ZeroRotator;
     FTransform SpawnTransform = FTransform(SpawnRotation, SpawnLocation);
 
@@ -52,10 +102,6 @@ void UItemBase::OnDroppedWithTeam_Implementation(AActor* Instigator, FGameplayTa
             Pickup->ItemData = this;
             UGameplayStatics::FinishSpawningActor(Pickup, SpawnTransform);
         }
-        if (GEngine)
-        {
-            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("PastItemPickup spawned"));
-        }
     }
     else if (TeamTag == FutureTag)
     {
@@ -64,10 +110,6 @@ void UItemBase::OnDroppedWithTeam_Implementation(AActor* Instigator, FGameplayTa
         {
             Pickup->ItemData = this;
             UGameplayStatics::FinishSpawningActor(Pickup, SpawnTransform);
-        }
-        if (GEngine)
-        {
-            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("FutureItemPickup spawned"));
         }
     }
     else
