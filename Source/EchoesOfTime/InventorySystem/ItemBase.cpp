@@ -4,6 +4,20 @@
 #include "Actors/TimeObjects/PastItemPickup.h"
 #include "Actors/TimeObjects/FutureItemPickup.h"
 #include "Kismet/GameplayStatics.h"
+#include "DrawDebugHelpers.h"
+#include "Camera/CameraComponent.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/PlayerController.h"
+
+namespace
+{
+    // Helper to determine if a surface is "floor-like" (not a wall or ceiling)
+    bool IsSurfaceFloorLike(const FVector& Normal, float MinUpDot = 0.7f)
+    {
+        // Dot with up vector (Z+). 1.0 = perfectly up, 0 = perpendicular, -1 = down.
+        return FVector::DotProduct(Normal, FVector::UpVector) >= MinUpDot;
+    }
+}
 
 void UItemBase::OnEquipped_Implementation(AActor* Instigator) {}
 void UItemBase::OnUsed_Implementation(AActor* Instigator) {}
@@ -17,32 +31,94 @@ void UItemBase::OnDropped_Implementation(AActor* Instigator)
 
     ItemInstanceID = FGuid::NewGuid();
 
-    FVector Start = Instigator->GetActorLocation() + Instigator->GetActorForwardVector() * 100.0f;
-    FVector End = Start - FVector(0, 0, 1000.0f); // Trace 1000 units down
+    FVector CameraLoc;
+    FRotator CameraRot;
 
-    DrawDebugLine(
-        World,
-        Start,
-        End,
-        FColor::Green,
-        false,      // persistent lines
-        2.0f,       // lifetime in seconds
-        0,
-        2.0f        // thickness
-    );
+    // Get camera location and rotation
+    if (ACharacter* Character = Cast<ACharacter>(Instigator))
+    {
+        if (AController* Controller = Character->GetController())
+        {
+            Controller->GetPlayerViewPoint(CameraLoc, CameraRot);
+        }
+        else if (UCameraComponent* Camera = Character->FindComponentByClass<UCameraComponent>())
+        {
+            CameraLoc = Camera->GetComponentLocation();
+            CameraRot = Camera->GetComponentRotation();
+        }
+        else
+        {
+            CameraLoc = Instigator->GetActorLocation();
+            CameraRot = Instigator->GetActorRotation();
+        }
+    }
+    else
+    {
+        CameraLoc = Instigator->GetActorLocation();
+        CameraRot = Instigator->GetActorRotation();
+    }
 
-    FHitResult HitResult;
+    // Configurable trace distance
+    float TraceDistance = 1000.0f;
+    FVector TraceEnd = CameraLoc + CameraRot.Vector() * TraceDistance;
+
+    // First trace: from camera forward
+    FHitResult ForwardHit;
     FCollisionQueryParams TraceParams(SCENE_QUERY_STAT(ItemDrop), true, Instigator);
 
-    bool bHit = World->LineTraceSingleByChannel(
-        HitResult,
-        Start,
-        End,
+    DrawDebugLine(World, CameraLoc, TraceEnd, FColor::Green, false, 2.0f, 0, 2.0f);
+
+    bool bForwardHit = World->LineTraceSingleByChannel(
+        ForwardHit,
+        CameraLoc,
+        TraceEnd,
         ECC_Visibility,
         TraceParams
     );
 
-    FVector SpawnLocation = bHit ? HitResult.ImpactPoint : Start;
+    FVector SpawnLocation = CameraLoc;
+    bool bValidDrop = false;
+
+    if (bForwardHit)
+    {
+        // Check if the surface is floor-like
+        if (IsSurfaceFloorLike(ForwardHit.ImpactNormal))
+        {
+            SpawnLocation = ForwardHit.ImpactPoint;
+            bValidDrop = true;
+        }
+        else
+        {
+            // If not, do a downward trace from the hit point
+            FVector DownTraceStart = ForwardHit.ImpactPoint + FVector(0, 0, 10.0f); // Slightly above
+            FVector DownTraceEnd = DownTraceStart - FVector(0, 0, 2000.0f);
+
+            DrawDebugLine(World, DownTraceStart, DownTraceEnd, FColor::Blue, false, 2.0f, 0, 2.0f);
+
+            FHitResult DownHit;
+            if (World->LineTraceSingleByChannel(
+                DownHit,
+                DownTraceStart,
+                DownTraceEnd,
+                ECC_Visibility,
+                TraceParams
+            ))
+            {
+                if (IsSurfaceFloorLike(DownHit.ImpactNormal))
+                {
+                    SpawnLocation = DownHit.ImpactPoint;
+                    bValidDrop = true;
+                }
+            }
+        }
+    }
+
+    if (!bValidDrop)
+    {
+        // Fallback: drop in front of player at camera height
+        SpawnLocation = CameraLoc + CameraRot.Vector() * 100.0f;
+    }
+
     FRotator SpawnRotation = FRotator::ZeroRotator;
     FTransform SpawnTransform = FTransform(SpawnRotation, SpawnLocation);
 
@@ -62,32 +138,89 @@ void UItemBase::OnDroppedWithTeam_Implementation(AActor* Instigator, FGameplayTa
 
     ItemInstanceID = FGuid::NewGuid();
 
-    FVector Start = Instigator->GetActorLocation() + Instigator->GetActorForwardVector() * 100.0f;
-    FVector End = Start - FVector(0, 0, 1000.0f); // Trace 1000 units down
+    FVector CameraLoc;
+    FRotator CameraRot;
 
-    DrawDebugLine(
-        World,
-        Start,
-        End,
-        FColor::Green,
-        false,      // persistent lines
-        2.0f,       // lifetime in seconds
-        0,
-        2.0f        // thickness
-    );
+    // Get camera location and rotation
+    if (ACharacter* Character = Cast<ACharacter>(Instigator))
+    {
+        if (AController* Controller = Character->GetController())
+        {
+            Controller->GetPlayerViewPoint(CameraLoc, CameraRot);
+        }
+        else if (UCameraComponent* Camera = Character->FindComponentByClass<UCameraComponent>())
+        {
+            CameraLoc = Camera->GetComponentLocation();
+            CameraRot = Camera->GetComponentRotation();
+        }
+        else
+        {
+            CameraLoc = Instigator->GetActorLocation();
+            CameraRot = Instigator->GetActorRotation();
+        }
+    }
+    else
+    {
+        CameraLoc = Instigator->GetActorLocation();
+        CameraRot = Instigator->GetActorRotation();
+    }
 
-    FHitResult HitResult;
+    float TraceDistance = 1000.0f;
+    FVector TraceEnd = CameraLoc + CameraRot.Vector() * TraceDistance;
+
+    FHitResult ForwardHit;
     FCollisionQueryParams TraceParams(SCENE_QUERY_STAT(ItemDrop), true, Instigator);
 
-    bool bHit = World->LineTraceSingleByChannel(
-        HitResult,
-        Start,
-        End,
+    DrawDebugLine(World, CameraLoc, TraceEnd, FColor::Green, false, 2.0f, 0, 2.0f);
+
+    bool bForwardHit = World->LineTraceSingleByChannel(
+        ForwardHit,
+        CameraLoc,
+        TraceEnd,
         ECC_Visibility,
         TraceParams
     );
 
-    FVector SpawnLocation = bHit ? HitResult.ImpactPoint : Start;
+    FVector SpawnLocation = CameraLoc;
+    bool bValidDrop = false;
+
+    if (bForwardHit)
+    {
+        if (IsSurfaceFloorLike(ForwardHit.ImpactNormal))
+        {
+            SpawnLocation = ForwardHit.ImpactPoint;
+            bValidDrop = true;
+        }
+        else
+        {
+            FVector DownTraceStart = ForwardHit.ImpactPoint + FVector(0, 0, 10.0f);
+            FVector DownTraceEnd = DownTraceStart - FVector(0, 0, 2000.0f);
+
+            DrawDebugLine(World, DownTraceStart, DownTraceEnd, FColor::Blue, false, 2.0f, 0, 2.0f);
+
+            FHitResult DownHit;
+            if (World->LineTraceSingleByChannel(
+                DownHit,
+                DownTraceStart,
+                DownTraceEnd,
+                ECC_Visibility,
+                TraceParams
+            ))
+            {
+                if (IsSurfaceFloorLike(DownHit.ImpactNormal))
+                {
+                    SpawnLocation = DownHit.ImpactPoint;
+                    bValidDrop = true;
+                }
+            }
+        }
+    }
+
+    if (!bValidDrop)
+    {
+        SpawnLocation = CameraLoc + CameraRot.Vector() * 100.0f;
+    }
+
     FRotator SpawnRotation = FRotator::ZeroRotator;
     FTransform SpawnTransform = FTransform(SpawnRotation, SpawnLocation);
 
