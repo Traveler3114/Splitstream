@@ -182,7 +182,7 @@ void ADefaultCharacter::DropActiveItem()
 	FVector DropLocation;
 	FRotator DropRotation = FRotator::ZeroRotator;
 
-	if (GetForwardTraceResult(1000.f, Hit, TraceEnd))
+	if (GetForwardTraceResult(300.f, Hit, TraceEnd))
 	{
 		DropLocation = Hit.bBlockingHit ? Hit.ImpactPoint : TraceEnd;
 	}

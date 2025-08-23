@@ -104,10 +104,6 @@ protected:
 
 	UFUNCTION()
 	void OnRep_Pitch();
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Trace")
-	float InteractionTraceDistance = 500.0f;
-
 public:
 	virtual void Tick(float DeltaTime) override;
 
