@@ -58,7 +58,7 @@ public:
     UItemBase* CreateItemInstance(const FInventorySlot& Slot) const;
 
     UFUNCTION(BlueprintCallable, Category = "Inventory")
-    void DropActiveItem();
+    void DropActiveItem(FVector DropLocation);
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
     TSubclassOf<UItemBase> DefaultItemClass;
@@ -73,7 +73,7 @@ public:
     void ServerSetActiveSlot(int32 Index);
 
     UFUNCTION(Server, Reliable)
-    void ServerDropActiveItem();
+    void ServerDropActiveItem(FVector DropLocation);
 
     UFUNCTION(Server, Reliable)
     void ServerAddItem(TSubclassOf<UItemBase> ItemClass);

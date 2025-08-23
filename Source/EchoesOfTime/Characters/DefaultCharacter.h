@@ -105,10 +105,15 @@ protected:
 	UFUNCTION()
 	void OnRep_Pitch();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Trace")
+	float InteractionTraceDistance = 500.0f;
+
 public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	bool GetForwardTraceResult(float TraceDistance,FHitResult& OutHit, FVector& OutTraceEnd) const;
 };

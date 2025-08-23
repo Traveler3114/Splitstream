@@ -47,8 +47,8 @@ public:
     void OnUsed(class AActor* Instigator);
 
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Item")
-    void OnDropped(class AActor* Instigator);
+    void OnDropped(class AActor* Instigator, FVector DropLocation);
 
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Item")
-    void OnDroppedWithTeam(AActor* Instigator, FGameplayTag TeamTag);
+    void OnDroppedWithTeam(AActor* Instigator, FGameplayTag TeamTag,FVector DropLocation);
 };

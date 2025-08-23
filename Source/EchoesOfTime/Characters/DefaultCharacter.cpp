@@ -51,6 +51,7 @@ void ADefaultCharacter::PostInitializeComponents()
 	Super::PostInitializeComponents();
 }
 
+
 void ADefaultCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -156,29 +157,54 @@ void ADefaultCharacter::SelectInventorySlot(int32 SlotNumber)
 		InventoryComponent->ServerSetActiveSlot(SlotIndex);
 	}
 }
+
+
+bool ADefaultCharacter::GetForwardTraceResult(float TraceDistance, FHitResult& OutHit, FVector& OutTraceEnd) const
+{
+	if (!CameraComponent) return false;
+
+	FVector Start = CameraComponent->GetComponentLocation();
+	FVector End = Start + CameraComponent->GetForwardVector() * TraceDistance;
+	OutTraceEnd = End;
+
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+
+	return GetWorld()->LineTraceSingleByChannel(OutHit, Start, End, ECC_Visibility, Params);
+}
+
 void ADefaultCharacter::DropActiveItem()
 {
 	if (!InventoryComponent) return;
 
-	InventoryComponent->ServerDropActiveItem();
+	FHitResult Hit;
+	FVector TraceEnd;
+	FVector DropLocation;
+	FRotator DropRotation = FRotator::ZeroRotator;
+
+	if (GetForwardTraceResult(1000.f, Hit, TraceEnd))
+	{
+		DropLocation = Hit.bBlockingHit ? Hit.ImpactPoint : TraceEnd;
+	}
+	else
+	{
+		DropLocation = TraceEnd;
+	}
+
+	InventoryComponent->ServerDropActiveItem(DropLocation);
 }
 
 void ADefaultCharacter::ServerHandleInteract_Implementation()
 {
 	FHitResult Hit;
-	FVector Start = CameraComponent->GetComponentLocation();
-	FVector End = Start + (CameraComponent->GetForwardVector() * 300.f);
-
-	FCollisionQueryParams Params;
-	Params.AddIgnoredActor(this);
-
-	if (GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, Params))
+	FVector TraceEnd;
+	if (GetForwardTraceResult(300.f, Hit, TraceEnd))
 	{
 		if (AActor* HitActor = Hit.GetActor())
 		{
 			if (HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
 			{
-				IInteractable::Execute_Interact(HitActor, this); // 'this' is the interactor
+				IInteractable::Execute_Interact(HitActor, this);
 			}
 		}
 	}

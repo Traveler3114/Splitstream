@@ -116,13 +116,13 @@ UItemBase* UInventoryComponent::GetActiveItem() const
     return nullptr;
 }
 
-void UInventoryComponent::DropActiveItem()
+void UInventoryComponent::DropActiveItem(FVector DropLocation)
 {
     UItemBase* ActiveItem = GetActiveItem();
     if (!ActiveItem) return;
 
     FGameplayTag TeamTag = GetTeamTag();
-    ActiveItem->OnDroppedWithTeam(GetOwner(), TeamTag);
+    ActiveItem->OnDroppedWithTeam(GetOwner(), TeamTag, DropLocation);
 
     RemoveItem(ActiveSlotIndex);
 }
@@ -150,9 +150,9 @@ void UInventoryComponent::ServerSetActiveSlot_Implementation(int32 Index)
     SetActiveSlot(Index);
 }
 
-void UInventoryComponent::ServerDropActiveItem_Implementation()
+void UInventoryComponent::ServerDropActiveItem_Implementation(FVector DropLocation)
 {
-    DropActiveItem();
+    DropActiveItem(DropLocation);
 }
 
 void UInventoryComponent::ServerAddItem_Implementation(TSubclassOf<UItemBase> ItemClass)
