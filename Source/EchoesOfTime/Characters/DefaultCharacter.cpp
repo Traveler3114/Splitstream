@@ -12,6 +12,8 @@
 #include "InputActionValue.h"
 #include "Net/UnrealNetwork.h"
 
+#include "LockPickingSystem/LockPickComponent.h"
+
 
 
 ADefaultCharacter::ADefaultCharacter()
@@ -205,6 +207,28 @@ void ADefaultCharacter::ServerHandleInteract_Implementation()
 			if (HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
 			{
 				IInteractable::Execute_Interact(HitActor, this);
+			}
+
+			if (ULockPickComponent* LockComp = HitActor->FindComponentByClass<ULockPickComponent>())
+			{
+				// Build event data
+				FGameplayEventData EventData;
+				EventData.Instigator = this; // the player
+				EventData.Target = HitActor; // the lock
+				EventData.OptionalObject = LockComp;
+				// ... set other fields as needed
+
+				// Fire event (usually via ASC on the player)
+				if (ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>())
+				{
+					if (UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent())
+					{
+						ASC->HandleGameplayEvent(
+							FGameplayTag::RequestGameplayTag(FName("Event.Ability.LockPick")),
+							&EventData
+						);
+					}
+				}
 			}
 		}
 	}
