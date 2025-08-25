@@ -42,7 +42,7 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "LockPick")
     TArray<bool> PinSetStates;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "LockPick")
+    UPROPERTY(ReplicatedUsing = OnRep_Unlocked)
     bool bUnlocked = false;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "LockPick")
@@ -77,6 +77,9 @@ public:
     // Actual RPC
     UFUNCTION(Server, Reliable)
     void ServerTrySetPin(float InputAngle);
+
+    UFUNCTION()
+    void OnRep_Unlocked();
 
 protected:
     virtual void BeginPlay() override;

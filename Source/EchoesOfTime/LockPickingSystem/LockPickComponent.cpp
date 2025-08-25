@@ -99,6 +99,7 @@ bool ULockPickComponent::AdvancePin()
             bUnlocked = true;
             bPickingInProgress = false;
             OnUnlock.Broadcast();
+            OnRep_Unlocked();
             return true;
         }
         return false;
@@ -113,6 +114,14 @@ float ULockPickComponent::NormalizeAngle(float Angle) const
     return A;
 }
 
+void ULockPickComponent::OnRep_Unlocked()
+{
+    if (bUnlocked)
+    {
+        OnUnlock.Broadcast();
+    }
+}
+
 void ULockPickComponent::ServerTrySetPin_Implementation(float InputAngle)
 {
     if (TrySetCurrentPin(InputAngle))
@@ -120,6 +129,7 @@ void ULockPickComponent::ServerTrySetPin_Implementation(float InputAngle)
         if (AdvancePin())
         {
             EndLockPicking();
+			OnUnlock.Broadcast();
             // (Optional: fire Blueprint event for unlock)
         }
     }
