@@ -9,9 +9,18 @@ APastDoor::APastDoor()
 void APastDoor::BeginPlay()
 {
     Super::BeginPlay();
-    if (LockPickComponent)
+    ULockPickComponent* RealLockPickComponent = FindComponentByClass<ULockPickComponent>();
+    if (RealLockPickComponent)
     {
-        LockPickComponent->OnUnlock.AddDynamic(this, &APastDoor::OnLockUnlocked);
+        RealLockPickComponent->OnUnlock.AddDynamic(this, &APastDoor::OnLockUnlocked);
+        if (HasAuthority()) {
+            UE_LOG(LogTemp, Warning, TEXT("SERVER: PastDoor::BeginPlay bound OnUnlock to %s [LockPickComp=%p] (Owner=%s)"),
+                *GetName(), RealLockPickComponent, RealLockPickComponent->GetOwner() ? *RealLockPickComponent->GetOwner()->GetName() : TEXT("None"));
+        }
+        else {
+            UE_LOG(LogTemp, Warning, TEXT("CLIENT: PastDoor::BeginPlay bound OnUnlock to %s [LockPickComp=%p] (Owner=%s)"),
+                *GetName(), RealLockPickComponent, RealLockPickComponent->GetOwner() ? *RealLockPickComponent->GetOwner()->GetName() : TEXT("None"));
+        }
     }
 }
 void APastDoor::Interact_Implementation(AActor* Interactor)
@@ -35,6 +44,8 @@ void APastDoor::Interact_Implementation(AActor* Interactor)
 void APastDoor::OnRep_IsOpen()
 {
     OnDoorStateChanged.Broadcast(bIsOpen);
+    if (GEngine)
+        GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Red, FString::Printf(TEXT("OnRep_IsOpen: bIsOpen=%d"), bIsOpen));
     if (bIsOpen)
         OpenDoor();
     else
@@ -44,11 +55,12 @@ void APastDoor::OnRep_IsOpen()
 // When lockpicking succeeds, call this!
 void APastDoor::OnLockUnlocked()
 {
+    UE_LOG(LogTemp, Warning, TEXT("%s: OnLockUnlocked called! HasAuthority: %d"), *GetName(), HasAuthority());
     if (!HasAuthority()) return; // Only the server should unlock/open the door!
-
+    UE_LOG(LogTemp, Warning, TEXT("%s: OnLockUnlocked called! HasAuthority: %d [This=%p]"), *GetName(), HasAuthority(), this);
     bIsLocked = false;
     bIsOpen = true;
-    OnRep_IsOpen(); // This will trigger OpenDoor on all clients via replication
+    OnRep_IsOpen();
 }
 
 void APastDoor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

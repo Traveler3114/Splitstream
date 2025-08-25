@@ -116,6 +116,8 @@ void ULockPickAbilityTask::OnConfirm()
 
 void ULockPickAbilityTask::ServerConfirmPin_Implementation(float Angle)
 {
+    if (GEngine)
+        GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Cyan, FString::Printf(TEXT("AbilityTask: ServerConfirmPin_Implementation(%.1f)"), Angle));
     if (!LockComp || !bIsLockPicking) return;
 
     bool bCorrect = LockComp->TrySetCurrentPin(Angle);
@@ -124,8 +126,9 @@ void ULockPickAbilityTask::ServerConfirmPin_Implementation(float Angle)
         bool bUnlocked = LockComp->AdvancePin();
         if (bUnlocked)
         {
+            if (GEngine)
+                GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Green, TEXT("AbilityTask: Lock was unlocked on server!"));
             LockComp->EndLockPicking();
-            // Optionally finish the ability/task here
         }
     }
 }
