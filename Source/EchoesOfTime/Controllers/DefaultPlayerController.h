@@ -13,6 +13,8 @@ public:
 
     virtual void BeginPlay() override;
 
+    UFUNCTION(Server, Reliable)
+    void ServerLockPickConfirm(AActor* DoorActor, float Angle);
 private:
     UPROPERTY()
     class ACharacterHUD* CharacterHUD;

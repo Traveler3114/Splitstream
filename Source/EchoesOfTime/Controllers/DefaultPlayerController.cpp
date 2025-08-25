@@ -20,3 +20,19 @@ void ADefaultPlayerController::BeginPlay()
     }
 }
 
+void ADefaultPlayerController::ServerLockPickConfirm_Implementation(AActor* DoorActor, float Angle)
+{
+    if (!DoorActor) return;
+    ULockPickComponent* LockComp = DoorActor->FindComponentByClass<ULockPickComponent>();
+    if (LockComp)
+    {
+        LockComp->TrySetCurrentPin(Angle);
+        // Optionally call AdvancePin(), etc, as per your lockpick logic
+        bool bUnlocked = LockComp->AdvancePin();
+        if (bUnlocked)
+        {
+            LockComp->EndLockPicking();
+        }
+    }
+}
+

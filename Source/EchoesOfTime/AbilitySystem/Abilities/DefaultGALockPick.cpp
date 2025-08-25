@@ -33,12 +33,13 @@ void UDefaultGALockPick::ActivateAbility(
     ActiveLockComp = nullptr;
     if (TriggerEventData && TriggerEventData->OptionalObject)
     {
-        // The event should send the door actor (not the component!)
+        // Always resolve the actor/component in *this* context!
         AActor* HitActor = const_cast<AActor*>(Cast<AActor>(TriggerEventData->OptionalObject));
         if (HitActor)
         {
-            // Always resolve the LockPickComponent from the actor in this context (on both client & server)
             ActiveLockComp = HitActor->FindComponentByClass<ULockPickComponent>();
+            if (GEngine)
+                GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Magenta, FString::Printf(TEXT("GALockPick: Resolved LockComp=%p (HasAuth=%d)"), ActiveLockComp, HitActor->HasAuthority()));
         }
     }
 
@@ -48,7 +49,7 @@ void UDefaultGALockPick::ActivateAbility(
         return;
     }
 
-    // Start the ability task (no longer needs a PlayerController)
+    // THIS WILL RUN ON BOTH CLIENT AND SERVER DUE TO GAS REPLICATION
     ActiveLockPickTask = ULockPickAbilityTask::StartLockPickTask(this, ActiveLockComp);
     ActiveLockPickTask->OnFinished.AddDynamic(this, &UDefaultGALockPick::OnLockPickTaskFinished);
     ActiveLockPickTask->ReadyForActivation();

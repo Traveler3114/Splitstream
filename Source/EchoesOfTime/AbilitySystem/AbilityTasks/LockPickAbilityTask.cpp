@@ -6,6 +6,7 @@
 #include "Engine/Engine.h"
 #include "InputCoreTypes.h"
 #include "DrawDebugHelpers.h"
+#include "Controllers/DefaultPlayerController.h"
 
 ULockPickAbilityTask* ULockPickAbilityTask::StartLockPickTask(UGameplayAbility* OwningAbility, ULockPickComponent* InLockComp)
 {
@@ -18,13 +19,21 @@ void ULockPickAbilityTask::Activate()
 {
     if (!LockComp)
     {
+        UE_LOG(LogTemp, Error, TEXT("LockPickAbilityTask::Activate: LockComp is null!"));
+        if (GEngine)
+            GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("LockPickTask: LockComp is NULL!"));
         FinishTask(false);
         return;
     }
 
+    UE_LOG(LogTemp, Warning, TEXT("LockPickAbilityTask::Activate [%s] [HasAuth=%d]"), *LockComp->GetName(), GetAvatarActor()->HasAuthority());
+    if (GEngine)
+        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Lockpick task started!"));
+
     // Only the server should reset and start lockpicking!
     if (GetAvatarActor()->HasAuthority())
     {
+        UE_LOG(LogTemp, Warning, TEXT("LockPickAbilityTask::Activate: Calling StartLockPicking on server!"));
         LockComp->StartLockPicking();
     }
 
@@ -35,13 +44,11 @@ void ULockPickAbilityTask::Activate()
     BindInput();
 
     bTickingTask = true; // Enable ticking
-
-    if (GEngine)
-        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Lockpick task started!"));
 }
 
 void ULockPickAbilityTask::OnDestroy(bool bInOwnerFinished)
 {
+    UE_LOG(LogTemp, Warning, TEXT("LockPickAbilityTask::OnDestroy"));
     UnbindInput();
     bTickingTask = false; // Disable ticking
     bIsLockPicking = false;
@@ -52,6 +59,7 @@ void ULockPickAbilityTask::TickTask(float DeltaTime)
 {
     if (!bIsLockPicking || !LockComp)
     {
+        UE_LOG(LogTemp, Warning, TEXT("LockPickAbilityTask::TickTask: bIsLockPicking=%d, LockComp=%p"), bIsLockPicking, LockComp);
         FinishTask(false);
         return;
     }
@@ -59,16 +67,20 @@ void ULockPickAbilityTask::TickTask(float DeltaTime)
     UpdateLockPickDebug();
 
     // Only care about server state!
+    //UE_LOG(LogTemp, Warning, TEXT("LockPickAbilityTask::TickTask: bUnlocked=%d bPickingInProgress=%d [LockComp=%p]"), LockComp->bUnlocked, LockComp->bPickingInProgress, LockComp);
+
     if (LockComp->bUnlocked)
     {
-        if (GEngine)
-            GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Lock opened!"));
+        //UE_LOG(LogTemp, Warning, TEXT("LockPickAbilityTask::TickTask: LOCK OPENED!"));
+        //if (GEngine)
+        //    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Lock opened!"));
         FinishTask(true);
     }
     else if (!LockComp->bPickingInProgress)
     {
-        if (GEngine)
-            GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Lockpick canceled!"));
+        //UE_LOG(LogTemp, Warning, TEXT("LockPickAbilityTask::TickTask: Lockpick canceled!"));
+        //if (GEngine)
+        //    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Lockpick canceled!"));
         FinishTask(false);
     }
 }
@@ -76,15 +88,16 @@ void ULockPickAbilityTask::TickTask(float DeltaTime)
 void ULockPickAbilityTask::BindInput()
 {
     APawn* Pawn = Cast<APawn>(GetAvatarActor());
-    if (!Pawn || !Pawn->InputComponent) return;
-    // Mouse X
+    if (!Pawn || !Pawn->InputComponent) {
+        UE_LOG(LogTemp, Error, TEXT("LockPickAbilityTask::BindInput: Pawn or InputComponent is null!"));
+        return;
+    }
     Pawn->InputComponent->BindAxisKey(EKeys::MouseX, this, &ULockPickAbilityTask::OnMouseX);
-    // Mouse Y
     Pawn->InputComponent->BindAxisKey(EKeys::MouseY, this, &ULockPickAbilityTask::OnMouseY);
-    // Confirm (Space)
     Pawn->InputComponent->BindKey(EKeys::SpaceBar, IE_Pressed, this, &ULockPickAbilityTask::OnConfirm);
-    // Cancel (Escape)
     Pawn->InputComponent->BindKey(EKeys::Escape, IE_Pressed, this, &ULockPickAbilityTask::OnCancel);
+
+    UE_LOG(LogTemp, Warning, TEXT("LockPickAbilityTask::BindInput: Bound input to pawn %s"), *Pawn->GetName());
 }
 
 void ULockPickAbilityTask::UnbindInput()
@@ -110,20 +123,42 @@ void ULockPickAbilityTask::OnMouseY(float Axis)
     if (LockPickDialAngle < 0) LockPickDialAngle += 360.f;
 }
 
+//void ULockPickAbilityTask::OnConfirm()
+//{
+//    UE_LOG(LogTemp, Warning, TEXT("LockPickAbilityTask::OnConfirm: Sending ServerConfirmPin with Angle=%.2f"), LockPickDialAngle);
+//    if (GEngine)
+//        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("LockPickTask: Confirm (%.2f)"), LockPickDialAngle));
+//    ServerConfirmPin(LockPickDialAngle);
+//}
+
 void ULockPickAbilityTask::OnConfirm()
 {
-    // Always send to server; only the server does lock logic!
-    ServerConfirmPin(LockPickDialAngle);
+    APawn* Pawn = Cast<APawn>(GetAvatarActor());
+    if (!Pawn) return;
+    APlayerController* PC = Cast<APlayerController>(Pawn->GetController());
+    if (!PC) return;
+
+    // If using a custom controller class, cast to ADefaultPlayerController!
+    ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(PC);
+    if (!MyPC || !LockComp) return;
+
+    MyPC->ServerLockPickConfirm(LockComp->GetOwner(), LockPickDialAngle);
 }
 
 void ULockPickAbilityTask::ServerConfirmPin_Implementation(float Angle)
 {
-    if (!LockComp || !bIsLockPicking) return;
+    UE_LOG(LogTemp, Error, TEXT("LockPickAbilityTask::ServerConfirmPin_Implementation: Angle=%.2f [HasAuth=%d] LockComp=%p"), Angle, GetAvatarActor()->HasAuthority(), LockComp);
+    if (!LockComp || !bIsLockPicking) {
+        UE_LOG(LogTemp, Error, TEXT("LockPickAbilityTask::ServerConfirmPin_Implementation: LockComp is null or not picking!"));
+        return;
+    }
 
     bool bCorrect = LockComp->TrySetCurrentPin(Angle);
+    UE_LOG(LogTemp, Warning, TEXT("LockPickAbilityTask::ServerConfirmPin_Implementation: TrySetCurrentPin returned %d"), bCorrect);
     if (bCorrect)
     {
         bool bUnlocked = LockComp->AdvancePin();
+        UE_LOG(LogTemp, Warning, TEXT("LockPickAbilityTask::ServerConfirmPin_Implementation: AdvancePin returned %d"), bUnlocked);
         if (bUnlocked)
         {
             LockComp->EndLockPicking();
@@ -133,6 +168,7 @@ void ULockPickAbilityTask::ServerConfirmPin_Implementation(float Angle)
 
 void ULockPickAbilityTask::OnCancel()
 {
+    UE_LOG(LogTemp, Warning, TEXT("LockPickAbilityTask::OnCancel"));
     if (!bIsLockPicking) return;
     bIsLockPicking = false;
 
@@ -147,8 +183,8 @@ void ULockPickAbilityTask::OnCancel()
 
 void ULockPickAbilityTask::FinishTask(bool bSuccess)
 {
+    UE_LOG(LogTemp, Warning, TEXT("LockPickAbilityTask::FinishTask: bSuccess=%d"), bSuccess);
     bIsLockPicking = false;
-    // Do NOT call EndLockPicking here unless on server, and even then, only if needed
     OnFinished.Broadcast(bSuccess);
     EndTask();
 }
@@ -185,6 +221,6 @@ void ULockPickAbilityTask::UpdateLockPickDebug()
     }
 
     float Rad = FMath::DegreesToRadians(LockPickDialAngle);
-    FVector End = Center + FVector(FMath::Cos(Rad), FMath::Sin(Rad), 0) * Radius;
-    DrawDebugLine(Pawn->GetWorld(), Center, End, FColor::Red, false, 0.01f, 0, 4);
+    FVector EndPt = Center + FVector(FMath::Cos(Rad), FMath::Sin(Rad), 0) * Radius;
+    DrawDebugLine(Pawn->GetWorld(), Center, EndPt, FColor::Red, false, 0.01f, 0, 4);
 }
