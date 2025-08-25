@@ -5,6 +5,9 @@
 #include "LockPickingSystem/LockPickComponent.h"
 #include "DefaultGALockPick.generated.h"
 
+// Forward declare the task
+class ULockPickAbilityTask;
+
 UCLASS()
 class ECHOESOFTIME_API UDefaultGALockPick : public UGameplayAbility
 {
@@ -23,4 +26,14 @@ public:
         const FGameplayAbilityActorInfo* ActorInfo,
         const FGameplayAbilityActivationInfo ActivationInfo,
         bool bReplicateEndAbility, bool bWasCancelled) override;
+
+    UFUNCTION()
+    void OnLockPickTaskFinished(bool bSuccess);
+
+protected:
+    UPROPERTY()
+    class ULockPickAbilityTask* ActiveLockPickTask = nullptr;
+
+    UPROPERTY()
+    class ULockPickComponent* ActiveLockComp = nullptr;
 };

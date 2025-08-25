@@ -1,8 +1,6 @@
 #include "DefaultGALockPick.h"
+#include "AbilitySystem/AbilityTasks/LockPickAbilityTask.h"
 #include "LockPickingSystem/LockPickComponent.h"
-#include "Controllers/DefaultPlayerController.h"
-#include "GameFramework/PlayerController.h"
-#include "Engine/World.h"
 #include "Engine/Engine.h"
 
 UDefaultGALockPick::UDefaultGALockPick()
@@ -31,25 +29,19 @@ void UDefaultGALockPick::ActivateAbility(
 {
     Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-    ULockPickComponent* LockComp = nullptr;
+    ActiveLockComp = nullptr;
     if (TriggerEventData && TriggerEventData->OptionalObject)
-        LockComp = const_cast<ULockPickComponent*>(Cast<ULockPickComponent>(TriggerEventData->OptionalObject));
-    if (!LockComp)
+        ActiveLockComp = const_cast<ULockPickComponent*>(Cast<ULockPickComponent>(TriggerEventData->OptionalObject));
+    if (!ActiveLockComp)
     {
         EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
         return;
     }
 
-    LockComp->StartLockPicking();
-
-    // Just call directly on the controller!
-    if (APlayerController* PC = Cast<APlayerController>(ActorInfo->PlayerController.Get()))
-    {
-        if (ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(PC))
-        {
-            MyPC->StartLockPickMinigame(LockComp);
-        }
-    }
+    // Start the ability task (no longer needs a PlayerController)
+    ActiveLockPickTask = ULockPickAbilityTask::StartLockPickTask(this, ActiveLockComp);
+    ActiveLockPickTask->OnFinished.AddDynamic(this, &UDefaultGALockPick::OnLockPickTaskFinished);
+    ActiveLockPickTask->ReadyForActivation();
 }
 
 void UDefaultGALockPick::EndAbility(
@@ -58,6 +50,15 @@ void UDefaultGALockPick::EndAbility(
     const FGameplayAbilityActivationInfo ActivationInfo,
     bool bReplicateEndAbility, bool bWasCancelled)
 {
-    // Optional: You could call EndLockPickMinigame here, but you probably want the controller to do it itself.
+    if (ActiveLockComp)
+    {
+        ActiveLockComp->EndLockPicking();
+        ActiveLockComp = nullptr;
+    }
     Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+}
+
+void UDefaultGALockPick::OnLockPickTaskFinished(bool bSuccess)
+{
+    EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, !bSuccess);
 }

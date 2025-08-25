@@ -196,14 +196,22 @@ void ADefaultCharacter::ServerHandleInteract_Implementation()
                 IInteractable::Execute_Interact(HitActor, this);
             }
 
-            // If lockpick component is present, activate lockpick ability
+            // If lockpick component is present, fire a GameplayEvent for GAS
             if (ULockPickComponent* LockComp = HitActor->FindComponentByClass<ULockPickComponent>())
             {
-                if (APlayerController* PC = Cast<APlayerController>(GetController()))
+                // Get the AbilitySystemComponent from your PlayerState (or wherever it lives)
+                if (ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>())
                 {
-                    if (ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(PC))
+                    if (UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent())
                     {
-                        MyPC->StartLockPickMinigame(LockComp);
+                        FGameplayEventData EventData;
+                        EventData.Instigator = this;
+                        EventData.OptionalObject = LockComp;
+
+                        ASC->HandleGameplayEvent(
+                            FGameplayTag::RequestGameplayTag(FName("Character.Ability.LockPick")),
+                            &EventData
+                        );
                     }
                 }
             }
@@ -233,6 +241,10 @@ void ADefaultCharacter::StopCrouching()
 
 void ADefaultCharacter::Move(const FInputActionValue& Value)
 {
+    UAbilitySystemComponent* ASC = GetPlayerState<ADefaultPlayerState>()->GetAbilitySystemComponent();
+    if (ASC && ASC->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(FName("Character.Status.LockPicking"))))
+        return;
+
     FVector2D MovementVector = Value.Get<FVector2D>();
 
     if (Controller != nullptr)
@@ -255,6 +267,10 @@ void ADefaultCharacter::Move(const FInputActionValue& Value)
 
 void ADefaultCharacter::Look(const FInputActionValue& Value)
 {
+
+    UAbilitySystemComponent* ASC = GetPlayerState<ADefaultPlayerState>()->GetAbilitySystemComponent();
+    if (ASC && ASC->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(FName("Character.Status.LockPicking"))))
+        return;
     FVector2D LookAxisVector = Value.Get<FVector2D>();
 
     if (Controller != nullptr)
