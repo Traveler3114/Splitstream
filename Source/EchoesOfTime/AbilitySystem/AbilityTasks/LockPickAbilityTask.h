@@ -41,4 +41,7 @@ protected:
     void UpdateLockPickDebug();
 
     void FinishTask(bool bSuccess);
+
+    UFUNCTION(Server, Reliable)
+    void ServerConfirmPin(float Angle);
 };

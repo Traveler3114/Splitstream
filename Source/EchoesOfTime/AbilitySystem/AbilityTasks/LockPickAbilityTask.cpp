@@ -107,8 +107,27 @@ void ULockPickAbilityTask::OnMouseY(float Axis)
 
 void ULockPickAbilityTask::OnConfirm()
 {
-    if (!bIsLockPicking || !LockComp) return;
-    LockComp->ServerTrySetPin(LockPickDialAngle);
+    if (!bIsLockPicking || !LockComp) {
+        UE_LOG(LogTemp, Warning, TEXT("[CLIENT] OnConfirm: not picking or no LockComp"));
+        return;
+    }
+        ServerConfirmPin(LockPickDialAngle);
+}
+
+void ULockPickAbilityTask::ServerConfirmPin_Implementation(float Angle)
+{
+    if (!LockComp || !bIsLockPicking) return;
+
+    bool bCorrect = LockComp->TrySetCurrentPin(Angle);
+    if (bCorrect)
+    {
+        bool bUnlocked = LockComp->AdvancePin();
+        if (bUnlocked)
+        {
+            LockComp->EndLockPicking();
+            // Optionally finish the ability/task here
+        }
+    }
 }
 
 void ULockPickAbilityTask::OnCancel()

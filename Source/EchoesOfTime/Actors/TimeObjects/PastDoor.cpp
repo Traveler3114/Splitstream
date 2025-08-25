@@ -44,9 +44,11 @@ void APastDoor::OnRep_IsOpen()
 // When lockpicking succeeds, call this!
 void APastDoor::OnLockUnlocked()
 {
+    if (!HasAuthority()) return; // Only the server should unlock/open the door!
+
     bIsLocked = false;
     bIsOpen = true;
-    OnRep_IsOpen();
+    OnRep_IsOpen(); // This will trigger OpenDoor on all clients via replication
 }
 
 void APastDoor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
