@@ -4,6 +4,7 @@
 #include "GameFramework/Character.h"
 #include "Interfaces/IInteractable.h"
 #include "InputActionValue.h"
+#include "LockPickingSystem/LockPickComponent.h"
 #include "DefaultCharacter.generated.h"
 
 class UCameraComponent;
@@ -14,102 +15,99 @@ struct FInputActionValue;
 UCLASS()
 class ECHOESOFTIME_API ADefaultCharacter : public ACharacter, public IInteractable
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	ADefaultCharacter();
-	virtual void PostInitializeComponents() override;
+    ADefaultCharacter();
+    virtual void PostInitializeComponents() override;
+    virtual void BeginPlay() override;
+    //virtual void Tick(float DeltaTime) override;
+    virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+    virtual void OnRep_PlayerState() override;
+    virtual void PossessedBy(AController* NewController) override;
+
+    // Input actions
+
 
 protected:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
-	class UInventoryComponent* InventoryComponent;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
+    class UInventoryComponent* InventoryComponent;
 
-	virtual void BeginPlay() override;
-	virtual void PossessedBy(AController* NewController) override;
-	virtual void OnRep_PlayerState() override; // Initialize ASC on clients
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
+    UCameraComponent* CameraComponent;
 
-	// Movement and looking functions
-	void Move(const FInputActionValue& Value);
-	void Look(const FInputActionValue& Value);
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    UInputMappingContext* DefaultMappingContext;
 
-	void StartCrouch();
-	void StopCrouching();
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    UInputAction* MoveAction;
 
-	// Sprint functions
-	void StartSprint();
-	void StopSprint();
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    UInputAction* LookAction;
 
-	UFUNCTION(Server, Reliable)
-	void ServerHandleInteract();
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    UInputAction* SprintAction;
 
-	void ActivateFutureGAPastEcho();
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    UInputAction* JumpAction;
 
-	void SelectInventorySlot(int32 SlotNumber);
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    UInputAction* CrouchAction;
 
-	UFUNCTION()
-	void HandleNumberKey(FKey PressedKey);
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    UInputAction* InteractAction;
 
-	// Input actions
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputMappingContext* DefaultMappingContext;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    UInputAction* PastEchoAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputAction* MoveAction;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    UInputAction* DropItemAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputAction* LookAction;
+    // Movement and looking functions
+    void Move(const FInputActionValue& Value);
+    void Look(const FInputActionValue& Value);
+    void StartCrouch();
+    void StopCrouching();
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputAction* SprintAction;
+    // Sprint functions
+    void StartSprint();
+    void StopSprint();
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputAction* JumpAction;
+    UFUNCTION(Server, Reliable)
+    void ServerHandleInteract();
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputAction* CrouchAction;
+    void ActivateFutureGAPastEcho();
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputAction* InteractAction;
+    void SelectInventorySlot(int32 SlotNumber);
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputAction* PastEchoAction;
+    UFUNCTION()
+    void HandleNumberKey(FKey PressedKey);
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputAction* DropItemAction;
+    void DropActiveItem();
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
-	UCameraComponent* CameraComponent;
+    // Server-side sprinting
+    UFUNCTION(Server, Reliable)
+    void ServerStartSprint();
+    UFUNCTION(Server, Reliable)
+    void ServerStopSprint();
 
+    // Replicated sprint state
+    UPROPERTY(ReplicatedUsing = OnRep_SprintState)
+    bool bIsSprinting;
 
-	void DropActiveItem();
+    UFUNCTION()
+    void OnRep_SprintState();
 
-	// Server-side sprinting
-	UFUNCTION(Server, Reliable)
-	void ServerStartSprint();
-	UFUNCTION(Server, Reliable)
-	void ServerStopSprint();
+    UFUNCTION(Server, Reliable)
+    void ServerCameraRotationUpdate(float NewPitch);
 
-	// Replicated sprint state
-	UPROPERTY(ReplicatedUsing = OnRep_SprintState)
-	bool bIsSprinting;
+    UPROPERTY(ReplicatedUsing = OnRep_Pitch)
+    float Pitch = 0.0f;
 
-	UFUNCTION()
-	void OnRep_SprintState();
+    UFUNCTION()
+    void OnRep_Pitch();
 
-	UFUNCTION(Server, Reliable)
-	void ServerCameraRotationUpdate(float NewPitch);
-
-	UPROPERTY(ReplicatedUsing = OnRep_Pitch)
-	float Pitch = 0.0f;
-
-	UFUNCTION()
-	void OnRep_Pitch();
 public:
-	virtual void Tick(float DeltaTime) override;
-
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-	bool GetForwardTraceResult(float TraceDistance,FHitResult& OutHit, FVector& OutTraceEnd) const;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+    bool GetForwardTraceResult(float TraceDistance, FHitResult& OutHit, FVector& OutTraceEnd) const;
 };
