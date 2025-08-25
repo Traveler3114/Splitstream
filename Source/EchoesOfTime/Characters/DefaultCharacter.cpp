@@ -229,6 +229,14 @@ void ADefaultCharacter::ActivateFutureGAPastEcho()
     }
 }
 
+void ADefaultCharacter::Jump()
+{
+    UAbilitySystemComponent* ASC = GetPlayerState<ADefaultPlayerState>()->GetAbilitySystemComponent();
+    if (ASC && ASC->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(FName("Character.Status.LockPicking"))))
+        return;
+    Super::Jump();
+}
+
 void ADefaultCharacter::StartCrouch()
 {
     Crouch();

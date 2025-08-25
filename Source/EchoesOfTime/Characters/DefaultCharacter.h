@@ -69,6 +69,8 @@ protected:
     void StartCrouch();
     void StopCrouching();
 
+	virtual void Jump() override;
+
     // Sprint functions
     void StartSprint();
     void StopSprint();
