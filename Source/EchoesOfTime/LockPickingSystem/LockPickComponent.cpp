@@ -98,6 +98,7 @@ bool ULockPickComponent::AdvancePin()
         {
             bUnlocked = true;
             bPickingInProgress = false;
+            OnUnlock.Broadcast();
             return true;
         }
         return false;

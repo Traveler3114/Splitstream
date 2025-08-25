@@ -4,6 +4,8 @@
 #include "Components/ActorComponent.h"
 #include "LockPickComponent.generated.h"
 
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLockUnlocked);
 // --- Pin data struct ---
 USTRUCT(BlueprintType)
 struct FLockPinData
@@ -26,6 +28,9 @@ class ECHOESOFTIME_API ULockPickComponent : public UActorComponent
 public:
     ULockPickComponent();
 
+
+    UPROPERTY(BlueprintAssignable, Category = "LockPick")
+    FOnLockUnlocked OnUnlock;
     // Pins: set up in BP/Editor (add as many as you like)
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LockPick")
     TArray<FLockPinData> Pins;
