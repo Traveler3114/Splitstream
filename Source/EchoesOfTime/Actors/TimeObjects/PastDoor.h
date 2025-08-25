@@ -24,7 +24,7 @@ public:
     void OnRep_IsOpen() override;
 
     // Only PastDoor has these:
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lock")
+    UPROPERTY(Replicated,EditAnywhere, BlueprintReadWrite, Category = "Lock")
     bool bIsLocked = true;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "LockPick")
