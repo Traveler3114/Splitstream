@@ -61,6 +61,7 @@ public:
     UFUNCTION(BlueprintCallable, Category = "LockPick")
     bool AdvancePin();
 
+
     UFUNCTION(BlueprintCallable, Category = "LockPick")
     void ResetLock();
 

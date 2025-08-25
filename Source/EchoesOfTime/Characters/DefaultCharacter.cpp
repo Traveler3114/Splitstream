@@ -206,7 +206,7 @@ void ADefaultCharacter::ServerHandleInteract_Implementation()
                     {
                         FGameplayEventData EventData;
                         EventData.Instigator = this;
-                        EventData.OptionalObject = LockComp;
+                        EventData.OptionalObject = HitActor;
 
                         ASC->HandleGameplayEvent(
                             FGameplayTag::RequestGameplayTag(FName("Character.Ability.LockPick")),

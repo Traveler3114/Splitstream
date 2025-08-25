@@ -21,6 +21,7 @@ UDefaultGALockPick::UDefaultGALockPick()
     AbilityTriggers.Add(TriggerData);
 }
 
+
 void UDefaultGALockPick::ActivateAbility(
     const FGameplayAbilitySpecHandle Handle,
     const FGameplayAbilityActorInfo* ActorInfo,
@@ -31,7 +32,16 @@ void UDefaultGALockPick::ActivateAbility(
 
     ActiveLockComp = nullptr;
     if (TriggerEventData && TriggerEventData->OptionalObject)
-        ActiveLockComp = const_cast<ULockPickComponent*>(Cast<ULockPickComponent>(TriggerEventData->OptionalObject));
+    {
+        // The event should send the door actor (not the component!)
+        AActor* HitActor = const_cast<AActor*>(Cast<AActor>(TriggerEventData->OptionalObject));
+        if (HitActor)
+        {
+            // Always resolve the LockPickComponent from the actor in this context (on both client & server)
+            ActiveLockComp = HitActor->FindComponentByClass<ULockPickComponent>();
+        }
+    }
+
     if (!ActiveLockComp)
     {
         EndAbility(Handle, ActorInfo, ActivationInfo, true, false);

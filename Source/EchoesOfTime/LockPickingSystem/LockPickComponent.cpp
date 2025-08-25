@@ -98,8 +98,6 @@ bool ULockPickComponent::AdvancePin()
         {
             bUnlocked = true;
             bPickingInProgress = false;
-            UE_LOG(LogTemp, Warning, TEXT("SERVER: LockPickComponent unlocked, broadcasting OnUnlock for %p (Owner=%s)"),
-                this, GetOwner() ? *GetOwner()->GetName() : TEXT("None"));
             OnUnlock.Broadcast();
             return true;
         }
@@ -117,14 +115,10 @@ float ULockPickComponent::NormalizeAngle(float Angle) const
 
 void ULockPickComponent::ServerTrySetPin_Implementation(float InputAngle)
 {
-    if (GEngine)
-        GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Cyan, FString::Printf(TEXT("ServerTrySetPin_Implementation called. Angle: %.1f"), InputAngle));
     if (TrySetCurrentPin(InputAngle))
     {
         if (AdvancePin())
         {
-            if (GEngine)
-                GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Yellow, TEXT("SERVER: Lock fully picked, calling EndLockPicking"));
             EndLockPicking();
             // (Optional: fire Blueprint event for unlock)
         }

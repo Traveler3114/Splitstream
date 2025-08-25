@@ -9,18 +9,15 @@ APastDoor::APastDoor()
 void APastDoor::BeginPlay()
 {
     Super::BeginPlay();
-    ULockPickComponent* RealLockPickComponent = FindComponentByClass<ULockPickComponent>();
-    if (RealLockPickComponent)
+
+    UE_LOG(LogTemp, Warning, TEXT("PastDoor::BeginPlay called on %s [HasAuthority=%d]"), *GetName(), HasAuthority());
+
+    ULockPickComponent* LockPickComp = FindComponentByClass<ULockPickComponent>();
+    if (LockPickComp)
     {
-        RealLockPickComponent->OnUnlock.AddDynamic(this, &APastDoor::OnLockUnlocked);
-        if (HasAuthority()) {
-            UE_LOG(LogTemp, Warning, TEXT("SERVER: PastDoor::BeginPlay bound OnUnlock to %s [LockPickComp=%p] (Owner=%s)"),
-                *GetName(), RealLockPickComponent, RealLockPickComponent->GetOwner() ? *RealLockPickComponent->GetOwner()->GetName() : TEXT("None"));
-        }
-        else {
-            UE_LOG(LogTemp, Warning, TEXT("CLIENT: PastDoor::BeginPlay bound OnUnlock to %s [LockPickComp=%p] (Owner=%s)"),
-                *GetName(), RealLockPickComponent, RealLockPickComponent->GetOwner() ? *RealLockPickComponent->GetOwner()->GetName() : TEXT("None"));
-        }
+        LockPickComp->OnUnlock.AddDynamic(this, &APastDoor::OnLockUnlocked);
+        UE_LOG(LogTemp, Warning, TEXT("%s: Bound OnUnlock to LockPickComp=%p (Owner=%s) [HasAuthority=%d]"),
+            *GetName(), LockPickComp, LockPickComp->GetOwner() ? *LockPickComp->GetOwner()->GetName() : TEXT("None"), HasAuthority());
     }
 }
 void APastDoor::Interact_Implementation(AActor* Interactor)

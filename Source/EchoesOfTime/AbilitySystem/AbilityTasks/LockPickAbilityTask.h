@@ -42,6 +42,7 @@ protected:
 
     void FinishTask(bool bSuccess);
 
+    // Only the server should ever try to set pins and advance lock state!
     UFUNCTION(Server, Reliable)
     void ServerConfirmPin(float Angle);
 };

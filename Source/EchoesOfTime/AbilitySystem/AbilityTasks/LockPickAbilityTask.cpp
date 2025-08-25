@@ -22,7 +22,11 @@ void ULockPickAbilityTask::Activate()
         return;
     }
 
-    LockComp->StartLockPicking();
+    // Only the server should reset and start lockpicking!
+    if (GetAvatarActor()->HasAuthority())
+    {
+        LockComp->StartLockPicking();
+    }
 
     LockPickInputVector = FVector2D::ZeroVector;
     LockPickDialAngle = 0.0f;
@@ -54,6 +58,7 @@ void ULockPickAbilityTask::TickTask(float DeltaTime)
 
     UpdateLockPickDebug();
 
+    // Only care about server state!
     if (LockComp->bUnlocked)
     {
         if (GEngine)
@@ -107,17 +112,12 @@ void ULockPickAbilityTask::OnMouseY(float Axis)
 
 void ULockPickAbilityTask::OnConfirm()
 {
-    if (!bIsLockPicking || !LockComp) {
-        UE_LOG(LogTemp, Warning, TEXT("[CLIENT] OnConfirm: not picking or no LockComp"));
-        return;
-    }
-        ServerConfirmPin(LockPickDialAngle);
+    // Always send to server; only the server does lock logic!
+    ServerConfirmPin(LockPickDialAngle);
 }
 
 void ULockPickAbilityTask::ServerConfirmPin_Implementation(float Angle)
 {
-    if (GEngine)
-        GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Cyan, FString::Printf(TEXT("AbilityTask: ServerConfirmPin_Implementation(%.1f)"), Angle));
     if (!LockComp || !bIsLockPicking) return;
 
     bool bCorrect = LockComp->TrySetCurrentPin(Angle);
@@ -126,8 +126,6 @@ void ULockPickAbilityTask::ServerConfirmPin_Implementation(float Angle)
         bool bUnlocked = LockComp->AdvancePin();
         if (bUnlocked)
         {
-            if (GEngine)
-                GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Green, TEXT("AbilityTask: Lock was unlocked on server!"));
             LockComp->EndLockPicking();
         }
     }
@@ -136,16 +134,21 @@ void ULockPickAbilityTask::ServerConfirmPin_Implementation(float Angle)
 void ULockPickAbilityTask::OnCancel()
 {
     if (!bIsLockPicking) return;
-    FinishTask(false);
+    bIsLockPicking = false;
+
+    // Only the server should end picking for everyone
+    if (GetAvatarActor()->HasAuthority())
+    {
+        if (LockComp) LockComp->EndLockPicking();
+    }
+    OnFinished.Broadcast(false);
+    EndTask();
 }
 
 void ULockPickAbilityTask::FinishTask(bool bSuccess)
 {
     bIsLockPicking = false;
-    if (LockComp)
-    {
-        LockComp->EndLockPicking();
-    }
+    // Do NOT call EndLockPicking here unless on server, and even then, only if needed
     OnFinished.Broadcast(bSuccess);
     EndTask();
 }
