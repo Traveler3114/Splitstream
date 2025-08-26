@@ -4,6 +4,7 @@
 #include "GameFramework/PlayerController.h"
 #include "Engine/Engine.h"
 #include "InputCoreTypes.h"
+#include "Widgets/HUD/LockPickWidget.h"
 #include "Controllers/DefaultPlayerController.h"
 
 ULockPickAbilityTask* ULockPickAbilityTask::StartLockPickTask(UGameplayAbility* OwningAbility, ULockPickComponent* InLockComp)
@@ -30,6 +31,19 @@ void ULockPickAbilityTask::Activate()
         LockComp->StartLockPicking();
     }
 
+    if (APlayerController* PC = Cast<APlayerController>(GetAvatarActor()->GetInstigatorController()))
+    {
+        if (LockPickWidgetClass && !LockPickWidget)
+        {
+            LockPickWidget = CreateWidget<ULockPickWidget>(PC, LockPickWidgetClass);
+            if (LockPickWidget)
+            {
+                LockPickWidget->InitializeLockPickWidget(LockComp);
+                LockPickWidget->AddToViewport();
+            }
+        }
+    }
+
     LockPickInputVector = FVector2D::ZeroVector;
     LockPickDialAngle = 0.0f;
     bIsLockPicking = true;
@@ -44,6 +58,11 @@ void ULockPickAbilityTask::OnDestroy(bool bInOwnerFinished)
     UnbindInput();
     bTickingTask = false;
     bIsLockPicking = false;
+    if (LockPickWidget)
+    {
+        LockPickWidget->RemoveFromParent();
+        LockPickWidget = nullptr;
+    }
     Super::OnDestroy(bInOwnerFinished);
 }
 
@@ -56,6 +75,13 @@ void ULockPickAbilityTask::TickTask(float DeltaTime)
     }
 
     UpdateLockPickDebug();
+
+    // --- ADD THIS BLOCK ---
+    if (LockPickWidget)
+    {
+        LockPickWidget->UpdatePins(LockPickDialAngle);
+    }
+    // ----------------------
 
     if (LockComp->bUnlocked)
     {

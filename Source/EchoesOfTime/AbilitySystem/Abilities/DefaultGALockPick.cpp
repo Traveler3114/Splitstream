@@ -1,6 +1,7 @@
 #include "DefaultGALockPick.h"
 #include "AbilitySystem/AbilityTasks/LockPickAbilityTask.h"
 #include "LockPickingSystem/LockPickComponent.h"
+#include "Widgets/HUD/LockPickWidget.h"
 #include "Engine/Engine.h"
 
 UDefaultGALockPick::UDefaultGALockPick()
@@ -49,6 +50,7 @@ void UDefaultGALockPick::ActivateAbility(
 
     // THIS WILL RUN ON BOTH CLIENT AND SERVER DUE TO GAS REPLICATION
     ActiveLockPickTask = ULockPickAbilityTask::StartLockPickTask(this, ActiveLockComp);
+	ActiveLockPickTask->LockPickWidgetClass = LockPickWidgetClass;
     ActiveLockPickTask->OnFinished.AddDynamic(this, &UDefaultGALockPick::OnLockPickTaskFinished);
     ActiveLockPickTask->ReadyForActivation();
 }

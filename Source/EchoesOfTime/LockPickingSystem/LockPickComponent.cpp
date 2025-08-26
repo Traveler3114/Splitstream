@@ -135,3 +135,17 @@ void ULockPickComponent::ServerTrySetPin_Implementation(float InputAngle)
         }
     }
 }
+
+// In LockPickComponent.cpp
+float ULockPickComponent::GetPinAngleProximity(int32 PinIndex, float InputAngle) const
+{
+    if (!Pins.IsValidIndex(PinIndex)) return 0.f;
+    float SweetSpot = NormalizeAngle(Pins[PinIndex].SweetSpotAngle);
+    float Tolerance = Pins[PinIndex].Tolerance;
+    float InputNorm = NormalizeAngle(InputAngle);
+
+    float Diff = FMath::Abs(SweetSpot - InputNorm);
+    if (Diff > 180.f) Diff = 360.f - Diff;
+
+    return 1.0f - FMath::Clamp(Diff / Tolerance, 0.f, 1.f); // 1 when on sweet spot, 0 when outside tolerance
+}

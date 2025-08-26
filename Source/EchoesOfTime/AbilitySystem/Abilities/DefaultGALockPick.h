@@ -5,6 +5,7 @@
 #include "LockPickingSystem/LockPickComponent.h"
 #include "DefaultGALockPick.generated.h"
 
+
 // Forward declare the task
 class ULockPickAbilityTask;
 
@@ -29,6 +30,9 @@ public:
 
     UFUNCTION()
     void OnLockPickTaskFinished(bool bSuccess);
+
+    UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "LockPick|UI")
+    TSubclassOf<class ULockPickWidget> LockPickWidgetClass;
 
 protected:
     UPROPERTY()

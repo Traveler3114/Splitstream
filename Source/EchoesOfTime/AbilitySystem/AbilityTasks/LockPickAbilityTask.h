@@ -5,6 +5,7 @@
 #include "LockPickAbilityTask.generated.h"
 
 class ULockPickComponent;
+class ULockPickWidget;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLockPickTaskResult, bool, bSuccess);
 
@@ -21,6 +22,13 @@ public:
     virtual void Activate() override;
     virtual void TickTask(float DeltaTime) override;
     virtual void OnDestroy(bool bInOwnerFinished) override;
+
+    UPROPERTY(EditAnywhere, Category = "LockPick|UI")
+    TSubclassOf<ULockPickWidget> LockPickWidgetClass;
+
+    // Runtime instance of the widget
+    UPROPERTY()
+    ULockPickWidget* LockPickWidget = nullptr;
 
 protected:
     UPROPERTY()

@@ -80,6 +80,12 @@ public:
     UFUNCTION()
     void OnRep_Unlocked();
 
+    UFUNCTION(BlueprintCallable, Category = "LockPick")
+    int32 GetActivePinIndex() const { return CurrentPinIndex; }
+
+    UFUNCTION(BlueprintCallable, Category = "LockPick")
+    float GetPinAngleProximity(int32 PinIndex, float InputAngle) const;
+
 protected:
     virtual void BeginPlay() override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
