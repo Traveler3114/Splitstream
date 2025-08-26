@@ -1,13 +1,11 @@
 #include "DefaultPlayerController.h"
-#include "Characters/DefaultCharacter.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "Engine/World.h"
-#include "Engine/Engine.h"
+#include "LockPickingSystem/LockPickComponent.h"
 #include "Widgets/HUD/CharacterHUD.h"
 
 ADefaultPlayerController::ADefaultPlayerController()
 {
     PrimaryActorTick.bCanEverTick = true;
+    CharacterHUD = nullptr;
 }
 
 void ADefaultPlayerController::BeginPlay()
@@ -16,7 +14,8 @@ void ADefaultPlayerController::BeginPlay()
     CharacterHUD = CharacterHUD == nullptr ? Cast<ACharacterHUD>(GetHUD()) : CharacterHUD;
     if (CharacterHUD)
     {
-        if (CharacterHUD->CharacterOverlay == nullptr) CharacterHUD->AddCharacterOverlay();
+        if (CharacterHUD->CharacterOverlay == nullptr)
+            CharacterHUD->AddCharacterOverlay();
     }
 }
 
@@ -26,13 +25,12 @@ void ADefaultPlayerController::ServerLockPickConfirm_Implementation(AActor* Door
     ULockPickComponent* LockComp = DoorActor->FindComponentByClass<ULockPickComponent>();
     if (LockComp)
     {
-        LockComp->TrySetCurrentPin(Angle);
-        // Optionally call AdvancePin(), etc, as per your lockpick logic
-        bool bUnlocked = LockComp->AdvancePin();
-        if (bUnlocked)
+        if (LockComp->TrySetCurrentPin(Angle))
         {
-            LockComp->EndLockPicking();
+            if (LockComp->AdvancePin())
+            {
+                LockComp->EndLockPicking();
+            }
         }
     }
 }
-

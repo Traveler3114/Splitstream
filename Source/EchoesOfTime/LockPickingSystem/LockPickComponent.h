@@ -4,9 +4,9 @@
 #include "Components/ActorComponent.h"
 #include "LockPickComponent.generated.h"
 
-
+// Delegate for when the lock is unlocked
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLockUnlocked);
-// --- Pin data struct ---
+
 USTRUCT(BlueprintType)
 struct FLockPinData
 {
@@ -19,7 +19,6 @@ struct FLockPinData
     float Tolerance = 10.f;
 };
 
-// --- LockPickComponent ---
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class ECHOESOFTIME_API ULockPickComponent : public UActorComponent
 {
@@ -28,14 +27,15 @@ class ECHOESOFTIME_API ULockPickComponent : public UActorComponent
 public:
     ULockPickComponent();
 
-
+    // --- Delegates ---
     UPROPERTY(BlueprintAssignable, Category = "LockPick")
     FOnLockUnlocked OnUnlock;
-    // Pins: set up in BP/Editor (add as many as you like)
+
+    // --- Configurable Pins (set in BP/Editor) ---
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LockPick")
     TArray<FLockPinData> Pins;
 
-    // Replicated state
+    // --- Replicated State ---
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "LockPick")
     int32 CurrentPinIndex = 0;
 
@@ -48,7 +48,7 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "LockPick")
     bool bPickingInProgress = false;
 
-    // Blueprint API
+    // --- Blueprint API ---
     UFUNCTION(BlueprintCallable, Category = "LockPick")
     int32 GetPinCount() const { return Pins.Num(); }
 
@@ -60,7 +60,6 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "LockPick")
     bool AdvancePin();
-
 
     UFUNCTION(BlueprintCallable, Category = "LockPick")
     void ResetLock();
@@ -74,7 +73,7 @@ public:
     UFUNCTION(BlueprintCallable, Category = "LockPick")
     void EndLockPicking();
 
-    // Actual RPC
+    // --- RPCs ---
     UFUNCTION(Server, Reliable)
     void ServerTrySetPin(float InputAngle);
 

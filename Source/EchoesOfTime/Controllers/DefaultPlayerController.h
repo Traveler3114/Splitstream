@@ -15,10 +15,8 @@ public:
 
     UFUNCTION(Server, Reliable)
     void ServerLockPickConfirm(AActor* DoorActor, float Angle);
+
 private:
     UPROPERTY()
     class ACharacterHUD* CharacterHUD;
-
-    UPROPERTY()
-    class UCharacterOverlay* CharacterOverlay;
 };

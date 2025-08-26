@@ -1,12 +1,12 @@
 #include "LockPickComponent.h"
 #include "Net/UnrealNetwork.h"
-#include "Engine/Engine.h"
 
 ULockPickComponent::ULockPickComponent()
 {
     PrimaryComponentTick.bCanEverTick = false;
     SetIsReplicatedByDefault(true);
 
+    // Default pins for demo/testing
     if (Pins.Num() == 0)
     {
         Pins.SetNum(3);
@@ -27,9 +27,6 @@ void ULockPickComponent::BeginPlay()
 {
     Super::BeginPlay();
     PinSetStates.Init(false, Pins.Num());
-    UE_LOG(LogTemp, Warning, TEXT("LockPickComponent::BeginPlay [%s] [Owner=%s] [HasAuth=%d]"), *GetName(), GetOwner() ? *GetOwner()->GetName() : TEXT("None"), GetOwner() ? GetOwner()->HasAuthority() : -1);
-    if (GEngine)
-        GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Cyan, FString::Printf(TEXT("LPC::BeginPlay [%s] Auth=%d"), *GetName(), GetOwner() ? GetOwner()->HasAuthority() : -1));
 }
 
 void ULockPickComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -43,7 +40,6 @@ void ULockPickComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 
 void ULockPickComponent::ResetLock()
 {
-    UE_LOG(LogTemp, Warning, TEXT("LockPickComponent::ResetLock [%s]"), *GetName());
     PinSetStates.Init(false, Pins.Num());
     CurrentPinIndex = 0;
     bUnlocked = false;
@@ -51,14 +47,12 @@ void ULockPickComponent::ResetLock()
 
 void ULockPickComponent::StartLockPicking()
 {
-    UE_LOG(LogTemp, Warning, TEXT("LockPickComponent::StartLockPicking [%s]"), *GetName());
     ResetLock();
     bPickingInProgress = true;
 }
 
 void ULockPickComponent::EndLockPicking()
 {
-    UE_LOG(LogTemp, Warning, TEXT("LockPickComponent::EndLockPicking [%s]"), *GetName());
     bPickingInProgress = false;
 }
 
@@ -77,7 +71,6 @@ bool ULockPickComponent::GetCurrentPinData(float& OutSweetSpotAngle, float& OutT
 
 bool ULockPickComponent::TrySetCurrentPin(float InputAngle)
 {
-    UE_LOG(LogTemp, Warning, TEXT("LPC::TrySetCurrentPin [%s] Angle=%.2f CurIdx=%d Progress=%d Unlocked=%d"), *GetName(), InputAngle, CurrentPinIndex, bPickingInProgress, bUnlocked);
     if (!bPickingInProgress || bUnlocked) return false;
     if (!Pins.IsValidIndex(CurrentPinIndex)) return false;
 
@@ -89,8 +82,6 @@ bool ULockPickComponent::TrySetCurrentPin(float InputAngle)
     if (Diff > 180.f) Diff = 360.f - Diff;
 
     bool bInTolerance = (Diff <= Tolerance);
-    UE_LOG(LogTemp, Warning, TEXT("LPC::TrySetCurrentPin Sweet=%.2f Tol=%.2f Input=%.2f Diff=%.2f InTol=%d"), SweetSpot, Tolerance, Input, Diff, bInTolerance);
-
     if (bInTolerance)
     {
         PinSetStates[CurrentPinIndex] = true;
@@ -101,7 +92,6 @@ bool ULockPickComponent::TrySetCurrentPin(float InputAngle)
 
 bool ULockPickComponent::AdvancePin()
 {
-    UE_LOG(LogTemp, Warning, TEXT("LPC::AdvancePin [%s] CurIdx=%d"), *GetName(), CurrentPinIndex);
     if (Pins.IsValidIndex(CurrentPinIndex))
     {
         PinSetStates[CurrentPinIndex] = true;
@@ -110,9 +100,6 @@ bool ULockPickComponent::AdvancePin()
         {
             bUnlocked = true;
             bPickingInProgress = false;
-            UE_LOG(LogTemp, Error, TEXT("LPC::AdvancePin UNLOCKED [%s]"), *GetName());
-            if (GEngine)
-                GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, FString::Printf(TEXT("LPC::AdvancePin UNLOCKED [%s]"), *GetName()));
             OnUnlock.Broadcast();
             OnRep_Unlocked();
             return true;
@@ -131,18 +118,14 @@ float ULockPickComponent::NormalizeAngle(float Angle) const
 
 void ULockPickComponent::OnRep_Unlocked()
 {
-    UE_LOG(LogTemp, Warning, TEXT("LPC::OnRep_Unlocked [%s] bUnlocked=%d [Owner=%s]"), *GetName(), bUnlocked, GetOwner() ? *GetOwner()->GetName() : TEXT("None"));
     if (bUnlocked)
     {
-        if (GEngine)
-            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("LPC::OnRep_Unlocked [%s]"), *GetName()));
         OnUnlock.Broadcast();
     }
 }
 
 void ULockPickComponent::ServerTrySetPin_Implementation(float InputAngle)
 {
-    UE_LOG(LogTemp, Warning, TEXT("LPC::ServerTrySetPin_Implementation [%s] Angle=%.2f [Owner=%s]"), *GetName(), InputAngle, GetOwner() ? *GetOwner()->GetName() : TEXT("None"));
     if (TrySetCurrentPin(InputAngle))
     {
         if (AdvancePin())
