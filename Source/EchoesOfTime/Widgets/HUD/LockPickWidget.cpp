@@ -10,6 +10,68 @@ void ULockPickWidget::NativeConstruct()
     // Pin images created dynamically in InitializeLockPickWidget
 }
 
+#include "Slate/SlateBrushAsset.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
+#include "Rendering/DrawElements.h"
+
+// ... existing code ...
+
+int32 ULockPickWidget::NativePaint(const FPaintArgs& Args, const FGeometry& Geometry, const FSlateRect& ClipRect, FSlateWindowElementList& OutDrawElements, int32 LayerId, const FWidgetStyle& InWidgetStyle, bool bParentEnabled) const
+{
+    LayerId = Super::NativePaint(Args, Geometry, ClipRect, OutDrawElements, LayerId, InWidgetStyle, bParentEnabled);
+
+    // Draw the lockpick dial
+    const FVector2D Center = Geometry.GetLocalSize() * 0.5f;
+    const float Radius = 180.f;
+    const int32 NumSegments = 64;
+    const FLinearColor CircleColor = FLinearColor::White;
+    const float Thickness = 2.f;
+
+    // Preallocate and fill the circle points
+    TArray<FVector2D> CirclePoints;
+    CirclePoints.Reserve(NumSegments + 1);
+    for (int32 i = 0; i < NumSegments; ++i)
+    {
+        float Angle = 2 * PI * i / NumSegments;
+        CirclePoints.Add(Center + FVector2D(FMath::Cos(Angle), FMath::Sin(Angle)) * Radius);
+    }
+    if (NumSegments > 0)
+    {
+        const FVector2D FirstPoint = CirclePoints[0];
+        CirclePoints.Add(FirstPoint);
+    }
+
+    FSlateDrawElement::MakeLines(
+        OutDrawElements,
+        LayerId++,
+        Geometry.ToPaintGeometry(),
+        CirclePoints,
+        ESlateDrawEffect::None,
+        CircleColor,
+        true,
+        Thickness
+    );
+
+    // Draw the angle indicator
+    float AngleRad = FMath::DegreesToRadians(LastInputAngle);
+    const float StartOffset = 80.f; // How far from the center to start
+    FVector2D Direction(FMath::Cos(AngleRad), FMath::Sin(AngleRad));
+    FVector2D IndicatorStart = Center + Direction * StartOffset;
+    FVector2D IndicatorEnd = Center + Direction * Radius;
+    FSlateDrawElement::MakeLines(
+        OutDrawElements,
+        LayerId++,
+        Geometry.ToPaintGeometry(),
+        { IndicatorStart, IndicatorEnd },
+        ESlateDrawEffect::None,
+        FLinearColor::Red,
+        true,
+        4.f
+    );
+
+    return LayerId;
+}
+
 void ULockPickWidget::InitializeLockPickWidget(ULockPickComponent* InLockComp)
 {
     LockComp = InLockComp;

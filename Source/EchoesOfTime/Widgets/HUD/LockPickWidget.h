@@ -21,6 +21,11 @@ public:
     UFUNCTION(BlueprintCallable, Category = "LockPick")
     void UpdatePins(float CurrentInputAngle);
 
+    virtual int32 NativePaint(const FPaintArgs& Args, 
+        const FGeometry& Geometry, 
+        const FSlateRect& ClipRect, 
+        FSlateWindowElementList& OutDrawElements, int32 LayerId, 
+        const FWidgetStyle& InWidgetStyle, bool bParentEnabled) const override;
 protected:
     virtual void NativeConstruct() override;
 

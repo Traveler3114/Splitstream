@@ -35,11 +35,14 @@ void ULockPickAbilityTask::Activate()
     {
         if (LockPickWidgetClass && !LockPickWidget)
         {
-            LockPickWidget = CreateWidget<ULockPickWidget>(PC, LockPickWidgetClass);
-            if (LockPickWidget)
+            if (IsLocallyControlled())
             {
-                LockPickWidget->InitializeLockPickWidget(LockComp);
-                LockPickWidget->AddToViewport();
+                LockPickWidget = CreateWidget<ULockPickWidget>(PC, LockPickWidgetClass);
+                if (LockPickWidget)
+                {
+                    LockPickWidget->InitializeLockPickWidget(LockComp);
+                    LockPickWidget->AddToViewport();
+                }
             }
         }
     }
