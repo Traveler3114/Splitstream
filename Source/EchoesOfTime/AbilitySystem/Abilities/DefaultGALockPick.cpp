@@ -38,8 +38,6 @@ void UDefaultGALockPick::ActivateAbility(
         if (HitActor)
         {
             ActiveLockComp = HitActor->FindComponentByClass<ULockPickComponent>();
-            if (GEngine)
-                GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Magenta, FString::Printf(TEXT("GALockPick: Resolved LockComp=%p (HasAuth=%d)"), ActiveLockComp, HitActor->HasAuthority()));
         }
     }
 

@@ -17,9 +17,6 @@ void ULockPickAbilityTask::Activate()
 {
     if (!LockComp)
     {
-        UE_LOG(LogTemp, Error, TEXT("LockPickAbilityTask::Activate: LockComp is null!"));
-        if (GEngine)
-            GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("LockPickTask: LockComp is NULL!"));
         FinishTask(false);
         return;
     }
