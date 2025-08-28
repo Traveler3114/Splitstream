@@ -21,7 +21,7 @@ ASecurityCamera::ASecurityCamera()
     CameraMesh->SetupAttachment(DefaultSceneRoot);
 
     SceneCapture = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("SceneCapture2D"));
-    SceneCapture->SetupAttachment(DefaultSceneRoot);
+    SceneCapture->SetupAttachment(CameraMesh);
 
     ArrowComp = CreateDefaultSubobject<UArrowComponent>(TEXT("ArrowComp"));
     ArrowComp->SetupAttachment(CameraMesh);
@@ -183,62 +183,5 @@ void ASecurityCamera::Tick(float DeltaTime)
         DrawDebugLine(GetWorld(), Start, RayDrawEnd, FColor::Yellow, false, 0.1f, 0, 2.0f);
         if (bRayHit)
             DrawDebugPoint(GetWorld(), RayHit.ImpactPoint, 16.0f, FColor::Red, false, 0.1f);
-    }
-}
-
-void ASecurityCamera::OnConstruction(const FTransform& Transform)
-{
-    Super::OnConstruction(Transform);
-
-    FlushPersistentDebugLines(GetWorld());
-
-    // Reset for editor preview
-    CurrentYaw = GetActorRotation().Yaw;
-    PanOffset = 0.0f;
-    bPanningRight = true;
-    PauseTimer = 0.0f;
-
-    if (bDrawDebug && ArrowComp && SceneCapture)
-    {
-        FVector Start = ArrowComp->GetComponentLocation();
-        FVector Forward = ArrowComp->GetForwardVector();
-        FCollisionQueryParams Params;
-        Params.AddIgnoredActor(this);
-
-        float HorizontalFOV = SceneCapture->FOVAngle;
-        float AspectRatio = 1.0f;
-        if (SceneCapture->TextureTarget)
-        {
-            AspectRatio = (float)SceneCapture->TextureTarget->SizeX / (float)SceneCapture->TextureTarget->SizeY;
-        }
-        float VerticalFOV = FMath::RadiansToDegrees(
-            2 * FMath::Atan(FMath::Tan(FMath::DegreesToRadians(HorizontalFOV) / 2) / AspectRatio)
-        );
-        ViewConeAngle = HorizontalFOV;
-
-        DrawDebugCone(
-            GetWorld(),
-            Start,
-            Forward,
-            DetectionDistance,
-            FMath::DegreesToRadians(VerticalFOV * 0.5f),
-            FMath::DegreesToRadians(HorizontalFOV * 0.5f),
-            32,
-            FColor::Green,
-            true,
-            0.0f,
-            0,
-            1.0f
-        );
-
-        FVector RayEnd = Start + Forward * DetectionDistance;
-        FHitResult RayHit;
-        bool bRayHit = GetWorld()->LineTraceSingleByChannel(
-            RayHit, Start, RayEnd, ECC_Visibility, Params
-        );
-        FVector RayDrawEnd = bRayHit ? RayHit.ImpactPoint : RayEnd;
-        DrawDebugLine(GetWorld(), Start, RayDrawEnd, FColor::Yellow, true, 0.0f, 0, 2.0f);
-        if (bRayHit)
-            DrawDebugPoint(GetWorld(), RayHit.ImpactPoint, 16.0f, FColor::Red, true, 0.0f);
     }
 }
