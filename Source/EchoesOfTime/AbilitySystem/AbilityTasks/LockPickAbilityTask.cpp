@@ -22,8 +22,6 @@ void ULockPickAbilityTask::Activate()
         return;
     }
 
-    if (GEngine)
-        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Lockpick task started!"));
 
     // Only the server should reset and start lockpicking!
     if (GetAvatarActor()->HasAuthority())

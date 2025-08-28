@@ -1,5 +1,6 @@
 #include "FutureGAPastEcho.h"
 #include "AbilitySystemComponent.h"
+#include "AbilitySystem/EOTGameplayTags.h"
 #include "GameplayTagContainer.h"
 
 UFutureGAPastEcho::UFutureGAPastEcho()
@@ -9,7 +10,7 @@ UFutureGAPastEcho::UFutureGAPastEcho()
 
 	// Optional: asset tag for discovery/debugging
 	FGameplayTagContainer Tags;
-	FGameplayTag MyTag = FGameplayTag::RequestGameplayTag(FName("Character.Ability.Future.PastEcho"));
+	FGameplayTag MyTag = TAG_Character_Ability_Future_PastEcho;
 	Tags.AddTag(MyTag);
 	SetAssetTags(Tags);
 
@@ -17,9 +18,9 @@ UFutureGAPastEcho::UFutureGAPastEcho()
 	//ActivationOwnedTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Character.Status.PastEcho")));
 
 	// Initialize toggle/cue tags
-	StatusTag = FGameplayTag::RequestGameplayTag(FName("Character.Status.PastEcho"));
-	CueActivatedTag = FGameplayTag::RequestGameplayTag(FName("GameplayCue.PastEcho.Activated"));
-	CueDeactivatedTag = FGameplayTag::RequestGameplayTag(FName("GameplayCue.PastEcho.Deactivated"));
+	StatusTag = TAG_Character_Status_PastEcho;
+	CueActivatedTag = TAG_GameplayCue_PastEcho_Activated;
+	CueDeactivatedTag = TAG_GameplayCue_PastEcho_Deactivated;
 }
 
 void UFutureGAPastEcho::ActivateAbility(

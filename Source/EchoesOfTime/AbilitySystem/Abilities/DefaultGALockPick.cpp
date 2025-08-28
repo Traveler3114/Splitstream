@@ -2,6 +2,7 @@
 #include "AbilitySystem/AbilityTasks/LockPickAbilityTask.h"
 #include "LockPickingSystem/LockPickComponent.h"
 #include "Widgets/HUD/LockPickWidget.h"
+#include "AbilitySystem/EOTGameplayTags.h"
 #include "Engine/Engine.h"
 
 UDefaultGALockPick::UDefaultGALockPick()
@@ -10,14 +11,14 @@ UDefaultGALockPick::UDefaultGALockPick()
     NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::ServerInitiated;
 
     FGameplayTagContainer Tags;
-    FGameplayTag MyTag = FGameplayTag::RequestGameplayTag(FName("Character.Ability.LockPick"));
+    FGameplayTag MyTag = TAG_Character_Ability_LockPick;
     Tags.AddTag(MyTag);
     SetAssetTags(Tags);
 
-    ActivationOwnedTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Character.Status.LockPicking")));
+    ActivationOwnedTags.AddTag(TAG_Character_Status_LockPicking);
 
     FAbilityTriggerData TriggerData;
-    TriggerData.TriggerTag = FGameplayTag::RequestGameplayTag(FName("Character.Ability.LockPick"));
+    TriggerData.TriggerTag = TAG_Character_Ability_LockPick;
     TriggerData.TriggerSource = EGameplayAbilityTriggerSource::GameplayEvent;
     AbilityTriggers.Add(TriggerData);
 }

@@ -1,0 +1,15 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "NativeGameplayTags.h"
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Ability_Future_PastEcho);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Ability_LockPick);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Status_PastEcho);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Status_LockPicking);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_PastEcho_Activated);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_PastEcho_Deactivated);
+
+

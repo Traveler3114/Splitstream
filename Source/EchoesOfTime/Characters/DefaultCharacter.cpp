@@ -12,10 +12,7 @@
 #include "InputActionValue.h"
 #include "Net/UnrealNetwork.h"
 #include "LockPickingSystem/LockPickComponent.h"
-#include "DrawDebugHelpers.h"
-#include "Kismet/GameplayStatics.h"
-#include "AbilitySystemBlueprintLibrary.h"
-#include "GameplayTagContainer.h"
+#include "AbilitySystem/EOTGameplayTags.h"
 
 #include "Controllers/DefaultPlayerController.h"
 
@@ -209,7 +206,7 @@ void ADefaultCharacter::ServerHandleInteract_Implementation()
                         EventData.OptionalObject = HitActor;
 
                         ASC->HandleGameplayEvent(
-                            FGameplayTag::RequestGameplayTag(FName("Character.Ability.LockPick")),
+                            TAG_Character_Ability_LockPick,
                             &EventData
                         );
                     }
@@ -224,7 +221,7 @@ void ADefaultCharacter::ActivateFutureGAPastEcho()
     ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
     if (PS && PS->GetAbilitySystemComponent())
     {
-        const FGameplayTag MyTag = FGameplayTag::RequestGameplayTag(FName("Character.Ability.Future.PastEcho"));
+        const FGameplayTag MyTag = TAG_Character_Ability_Future_PastEcho;
         PS->GetAbilitySystemComponent()->TryActivateAbilitiesByTag(FGameplayTagContainer(MyTag));
     }
 }
@@ -232,7 +229,7 @@ void ADefaultCharacter::ActivateFutureGAPastEcho()
 void ADefaultCharacter::Jump()
 {
     UAbilitySystemComponent* ASC = GetPlayerState<ADefaultPlayerState>()->GetAbilitySystemComponent();
-    if (ASC && ASC->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(FName("Character.Status.LockPicking"))))
+    if (ASC && ASC->HasMatchingGameplayTag(TAG_Character_Status_LockPicking))
         return;
     Super::Jump();
 }
@@ -250,7 +247,7 @@ void ADefaultCharacter::StopCrouching()
 void ADefaultCharacter::Move(const FInputActionValue& Value)
 {
     UAbilitySystemComponent* ASC = GetPlayerState<ADefaultPlayerState>()->GetAbilitySystemComponent();
-    if (ASC && ASC->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(FName("Character.Status.LockPicking"))))
+    if (ASC && ASC->HasMatchingGameplayTag(TAG_Character_Status_LockPicking))
         return;
 
     FVector2D MovementVector = Value.Get<FVector2D>();
@@ -277,7 +274,7 @@ void ADefaultCharacter::Look(const FInputActionValue& Value)
 {
 
     UAbilitySystemComponent* ASC = GetPlayerState<ADefaultPlayerState>()->GetAbilitySystemComponent();
-    if (ASC && ASC->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(FName("Character.Status.LockPicking"))))
+    if (ASC && ASC->HasMatchingGameplayTag(TAG_Character_Status_LockPicking))
         return;
     FVector2D LookAxisVector = Value.Get<FVector2D>();
 
