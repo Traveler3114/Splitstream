@@ -286,10 +286,10 @@ void ADefaultCharacter::Move(const FInputActionValue& Value)
         AddMovementInput(ForwardDirection, MovementVector.Y);
         AddMovementInput(RightDirection, MovementVector.X);
 
-        if (MovementVector.Y <= 0 || MovementVector.X != 0)
-        {
-            ServerStopSprint();
-        }
+        //if (MovementVector.Y <= 0 || MovementVector.X != 0)
+        //{
+        //    ServerStopSprint();
+        //}
     }
 }
 
