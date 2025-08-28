@@ -30,8 +30,6 @@ void UMainMenuWidget::OnCreateSessionClicked()
 			DGI->CreateSession();
         }
     }
-
-    UE_LOG(LogTemp, Error, TEXT("GameInstance is not UEchoesGameInstance. Set it in Project Settings -> Maps & Modes."));
 }
 
 void UMainMenuWidget::OnQuitClicked()
