@@ -162,26 +162,3 @@ A co-op multiplayer Unreal Engine 5 project featuring time-travel mechanics, tea
 
 ---
 
-## Known Issues & TODOs
-
-- **DefaultGameInstance** is a stub—expand with session logic if needed.
-- **FriendList/FriendWidget** features are incomplete.
-- Comment/documentation pass needed on most files.
-- Some "OnRep_" functions could be more granular for performance.
-- Need more unit tests and blueprint integration tests.
-
----
-
-## License
-
-[MIT](LICENSE) or custom license—add your chosen license file.
-
----
-
-## Acknowledgments
-
-- Unreal Engine community, Epic Games
-- GameplayAbilities plugin authors
-- [Your contributors here]
-
----
