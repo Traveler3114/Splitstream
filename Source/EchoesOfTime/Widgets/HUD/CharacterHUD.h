@@ -19,4 +19,6 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "UI")
     void AddCharacterOverlay();
+
+	void BindTags(APawn* Pawn);
 };

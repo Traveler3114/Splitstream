@@ -1,5 +1,6 @@
 #include "CharacterOverlay.h"
 #include "Components/HorizontalBox.h"
+#include "Components/TextBlock.h"
 #include "Components/Image.h"
 #include "InventorySystem/ItemBase.h"
 #include "InventorySystem/InventoryComponent.h"
@@ -20,5 +21,14 @@ void UCharacterOverlay::OnInventoryChanged(const TArray<FInventorySlot>& Items)
         ItemImage->SetBrushFromTexture(Item->ItemIcon);
 
         InventoryBox->AddChild(ItemImage);
+    }
+}
+
+void UCharacterOverlay::SetStatusText(const FString& NewStatus)
+{
+    if (status_txt)
+    {
+        status_txt->SetText(FText::FromString(NewStatus));
+		status_txt->SetColorAndOpacity(NewStatus.IsEmpty() ? FLinearColor::White : FLinearColor::Red);
     }
 }

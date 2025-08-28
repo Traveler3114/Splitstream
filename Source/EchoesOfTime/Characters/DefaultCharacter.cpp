@@ -12,6 +12,7 @@
 #include "InputActionValue.h"
 #include "Net/UnrealNetwork.h"
 #include "LockPickingSystem/LockPickComponent.h"
+#include "Widgets/HUD/CharacterHUD.h"
 #include "AbilitySystem/EOTGameplayTags.h"
 
 #include "Controllers/DefaultPlayerController.h"
@@ -86,12 +87,26 @@ void ADefaultCharacter::PossessedBy(AController* NewController)
     Super::PossessedBy(NewController);
     InitializeAbilitySystem();
     if (!HasAuthority()) return;
+    if (APlayerController* PC = Cast<APlayerController>(GetController()))
+    {
+        if (ACharacterHUD* HUD = Cast<ACharacterHUD>(PC->GetHUD()))
+        {
+            HUD->BindTags(this);
+        }
+    }
 }
 
 void ADefaultCharacter::OnRep_PlayerState()
 {
     Super::OnRep_PlayerState();
     InitializeAbilitySystem();
+    if (APlayerController* PC = Cast<APlayerController>(GetController()))
+    {
+        if (ACharacterHUD* HUD = Cast<ACharacterHUD>(PC->GetHUD()))
+        {
+            HUD->BindTags(this);
+        }
+    }
 }
 
 void ADefaultCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

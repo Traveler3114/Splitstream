@@ -6,6 +6,7 @@
 #include "CharacterOverlay.generated.h"
 
 class UHorizontalBox;
+class UTextBlock;
 
 UCLASS()
 class ECHOESOFTIME_API UCharacterOverlay : public UUserWidget
@@ -16,8 +17,14 @@ public:
     UPROPERTY(meta = (BindWidget))
     UHorizontalBox* InventoryBox;
 
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* status_txt;
+
     UFUNCTION()
     void OnInventoryChanged(const TArray<FInventorySlot>& Items);
+
+    UFUNCTION(BlueprintCallable)
+    void SetStatusText(const FString& NewStatus);
 
     UPROPERTY()
     UInventoryComponent* LinkedInventory;
