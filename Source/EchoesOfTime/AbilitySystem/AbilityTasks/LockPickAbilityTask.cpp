@@ -77,8 +77,6 @@ void ULockPickAbilityTask::TickTask(float DeltaTime)
         return;
     }
 
-    UpdateLockPickDebug();
-
     // --- ADD THIS BLOCK ---
     if (LockPickWidget)
     {
@@ -175,40 +173,4 @@ void ULockPickAbilityTask::FinishTask(bool bSuccess)
     bIsLockPicking = false;
     OnFinished.Broadcast(bSuccess);
     EndTask();
-}
-
-void ULockPickAbilityTask::UpdateLockPickDebug()
-{
-    APawn* Pawn = Cast<APawn>(GetAvatarActor());
-    if (!LockComp || !Pawn) return;
-
-    float SweetSpot = 0, Tolerance = 0;
-    int32 PinNum = LockComp->CurrentPinIndex + 1;
-    int32 PinCount = LockComp->GetPinCount();
-    bool bValid = LockComp->GetCurrentPinData(SweetSpot, Tolerance);
-
-    FString Info = FString::Printf(TEXT("Lockpick: Pin %d/%d | Sweet: %.1f | Tol: %.1f | Angle: %.1f"),
-        PinNum, PinCount, SweetSpot, Tolerance, LockPickDialAngle);
-    if (GEngine) GEngine->AddOnScreenDebugMessage(1, 0.01f, FColor::Yellow, Info);
-
-    FVector Center = Pawn->GetActorLocation() + FVector(0, 0, 100);
-    float Radius = 60.f;
-
-    DrawDebugCircle(Pawn->GetWorld(), Center, Radius, 32, FColor::White, false, 0.f, 0, 2.f, FVector(1, 0, 0), FVector(0, 1, 0), false);
-
-    if (bValid)
-    {
-        float Start = SweetSpot - Tolerance;
-        float End = SweetSpot + Tolerance;
-        for (float A = Start; A <= End; A += 4)
-        {
-            float Rad = FMath::DegreesToRadians(A);
-            FVector P = Center + FVector(FMath::Cos(Rad), FMath::Sin(Rad), 0) * Radius;
-            DrawDebugPoint(Pawn->GetWorld(), P, 10, FColor::Yellow, false, 0.01f);
-        }
-    }
-
-    float Rad = FMath::DegreesToRadians(LockPickDialAngle);
-    FVector EndPt = Center + FVector(FMath::Cos(Rad), FMath::Sin(Rad), 0) * Radius;
-    DrawDebugLine(Pawn->GetWorld(), Center, EndPt, FColor::Red, false, 0.01f, 0, 4);
 }

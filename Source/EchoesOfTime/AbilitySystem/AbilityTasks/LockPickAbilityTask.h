@@ -46,8 +46,6 @@ protected:
     void OnConfirm();
     void OnCancel();
 
-    void UpdateLockPickDebug();
-
     void FinishTask(bool bSuccess);
 
     UFUNCTION(Server, Reliable)
