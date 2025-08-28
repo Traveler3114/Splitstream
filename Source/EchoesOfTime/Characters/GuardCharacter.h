@@ -4,7 +4,9 @@
 #include "GameFramework/Character.h"
 #include "Interfaces/ICameraDetectable.h"
 #include "Interfaces/IGhostMirrorSource.h"
+
 #include "GuardCharacter.generated.h"
+
 
 class ANavNode;
 UCLASS()
@@ -53,4 +55,19 @@ public:
     // IGhostMirrorSource implementation
     virtual bool ShouldGhostBeVisible_Implementation() const override;
     virtual USkeletalMeshComponent* GetMirrorMesh_Implementation() const override;
+
+protected:
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
+    class UAIPerceptionComponent* AIPerceptionComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+    class UAISenseConfig_Sight* SightConfig;
+
+    UFUNCTION()
+    void OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors);
+
+    // In your GuardCharacter.h, inside the class definition:
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+    AActor* TargetActor = nullptr;
+
 };
