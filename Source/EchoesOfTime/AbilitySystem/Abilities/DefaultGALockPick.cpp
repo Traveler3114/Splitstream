@@ -16,6 +16,7 @@ UDefaultGALockPick::UDefaultGALockPick()
     SetAssetTags(Tags);
 
     ActivationOwnedTags.AddTag(TAG_Character_Status_LockPicking);
+    ActivationOwnedTags.AddTag(TAG_Character_Status_Illegal_Action);
 
     FAbilityTriggerData TriggerData;
     TriggerData.TriggerTag = TAG_Character_Ability_LockPick;

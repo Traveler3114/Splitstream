@@ -5,15 +5,17 @@
 #include "Interfaces/IInteractable.h"
 #include "InputActionValue.h"
 #include "LockPickingSystem/LockPickComponent.h"
+#include "AbilitySystemInterface.h"
 #include "DefaultCharacter.generated.h"
 
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
+class UAbilitySystemComponent;
 struct FInputActionValue;
 
 UCLASS()
-class ECHOESOFTIME_API ADefaultCharacter : public ACharacter, public IInteractable
+class ECHOESOFTIME_API ADefaultCharacter : public ACharacter, public IInteractable, public IAbilitySystemInterface
 {
     GENERATED_BODY()
 
@@ -26,10 +28,16 @@ public:
     virtual void OnRep_PlayerState() override;
     virtual void PossessedBy(AController* NewController) override;
 
+    void InitializeAbilitySystem();
+    virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+
     // Input actions
 
 
 protected:
+    UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="ASC")
+    UAbilitySystemComponent* AbilitySystemComponent;
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
     class UInventoryComponent* InventoryComponent;
 

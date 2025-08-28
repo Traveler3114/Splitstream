@@ -38,6 +38,26 @@ ADefaultCharacter::ADefaultCharacter()
     InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 }
 
+void ADefaultCharacter::InitializeAbilitySystem()
+{
+    ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
+    if (PS)
+    {
+        AbilitySystemComponent = PS->GetAbilitySystemComponent();
+
+        if (AbilitySystemComponent)
+        {
+            AbilitySystemComponent->InitAbilityActorInfo(PS, this);
+        }
+        PS->GiveAbilities();
+    }
+}
+
+UAbilitySystemComponent* ADefaultCharacter::GetAbilitySystemComponent() const
+{
+    return AbilitySystemComponent;
+}
+
 void ADefaultCharacter::PostInitializeComponents()
 {
     Super::PostInitializeComponents();
@@ -64,26 +84,14 @@ void ADefaultCharacter::BeginPlay()
 void ADefaultCharacter::PossessedBy(AController* NewController)
 {
     Super::PossessedBy(NewController);
-
+    InitializeAbilitySystem();
     if (!HasAuthority()) return;
-
-    ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
-    if (PS && PS->GetAbilitySystemComponent())
-    {
-        PS->GetAbilitySystemComponent()->InitAbilityActorInfo(PS, this);
-        PS->GiveAbilities();
-    }
 }
 
 void ADefaultCharacter::OnRep_PlayerState()
 {
     Super::OnRep_PlayerState();
-
-    ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
-    if (PS && PS->GetAbilitySystemComponent())
-    {
-        PS->GetAbilitySystemComponent()->InitAbilityActorInfo(PS, this);
-    }
+    InitializeAbilitySystem();
 }
 
 void ADefaultCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
