@@ -28,4 +28,7 @@ public:
 
     UPROPERTY()
     UInventoryComponent* LinkedInventory;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Status")
+	float TextureScale = 1.25f;
 };
