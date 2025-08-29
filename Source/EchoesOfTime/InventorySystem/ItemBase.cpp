@@ -19,7 +19,11 @@ void UItemBase::OnDropped_Implementation(AActor* Instigator, FVector DropLocatio
     UWorld* World = Instigator->GetWorld();
     if (!World) return;
 
-    ItemInstanceID = FGuid::NewGuid();
+    // Only assign new GUID if it doesn't already have one
+    if (!ItemInstanceID.IsValid())
+    {
+        ItemInstanceID = FGuid::NewGuid();
+    }
 
     FRotator SpawnRotation = FRotator::ZeroRotator;
     FTransform SpawnTransform = FTransform(SpawnRotation, DropLocation);
@@ -38,7 +42,11 @@ void UItemBase::OnDroppedWithTeam_Implementation(AActor* Instigator, FGameplayTa
     UWorld* World = Instigator->GetWorld();
     if (!World) return;
 
-    ItemInstanceID = FGuid::NewGuid();
+    // Only assign new GUID for brand new items
+    if (!ItemInstanceID.IsValid())
+    {
+        ItemInstanceID = FGuid::NewGuid();
+    }
 
     FRotator SpawnRotation = FRotator::ZeroRotator;
     FTransform SpawnTransform = FTransform(SpawnRotation, DropLocation);
@@ -61,6 +69,7 @@ void UItemBase::OnDroppedWithTeam_Implementation(AActor* Instigator, FGameplayTa
         if (Pickup)
         {
             Pickup->ItemData = this;
+            // LinkedPastItem will be restored automatically in BeginPlay of AFutureItemPickup
             UGameplayStatics::FinishSpawningActor(Pickup, SpawnTransform);
         }
     }

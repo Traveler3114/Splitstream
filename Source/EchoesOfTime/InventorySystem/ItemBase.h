@@ -40,6 +40,7 @@ public:
     UPROPERTY(BlueprintReadWrite, Category = "Item")
     FGuid ItemInstanceID;
 
+
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Item")
     void OnEquipped(class AActor* Instigator);
 

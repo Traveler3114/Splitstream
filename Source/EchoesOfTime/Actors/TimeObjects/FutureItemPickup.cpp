@@ -1,27 +1,34 @@
 #include "FutureItemPickup.h"
 #include "PastItemPickup.h"
 #include "InventorySystem/InventoryComponent.h"
+#include "Engine/World.h"
+#include "EngineUtils.h"
 #include "DrawDebugHelpers.h"
 
 FFutureItemInvalidated AFutureItemPickup::OnFutureItemInvalidated;
 
 AFutureItemPickup::AFutureItemPickup()
 {
+    // Bind invalidation delegate
+    OnFutureItemInvalidated.AddUObject(this, &AFutureItemPickup::HandleInvalidation);
 }
 
 void AFutureItemPickup::BeginPlay()
 {
     Super::BeginPlay();
-    if(LinkedPastItem)
+
+    // Restore LinkedPastItem if it's null
+    if (!LinkedPastItem && ItemData)
     {
-        // Offset the future item pickup location based on the past item pickup
-        FVector FutureLocation = LinkedPastItem->GetActorLocation() + FutureItemOffset;
-        SetActorLocation(FutureLocation);
+        for (TActorIterator<APastItemPickup> It(GetWorld()); It; ++It)
+        {
+            if (It->ItemData && It->ItemData->ItemInstanceID == ItemData->ItemInstanceID)
+            {
+                LinkedPastItem = *It;
+                break;
+            }
+        }
     }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("FutureItemPickup has no linked PastItem!"));
-	}
 }
 
 void AFutureItemPickup::Interact_Implementation(AActor* Interactor)
@@ -31,7 +38,6 @@ void AFutureItemPickup::Interact_Implementation(AActor* Interactor)
     UInventoryComponent* Inventory = Interactor->FindComponentByClass<UInventoryComponent>();
     if (Inventory)
     {
-        // Register for invalidation event here!
         Inventory->RegisterFutureInstance(ItemData->ItemInstanceID);
 
         if (Inventory->AddItem(ItemData->GetClass(), ItemData->ItemInstanceID))
@@ -41,16 +47,10 @@ void AFutureItemPickup::Interact_Implementation(AActor* Interactor)
     }
 }
 
-void AFutureItemPickup::OnPastItemPickedUp()
+void AFutureItemPickup::HandleInvalidation(FGuid InvalidatedID)
 {
-    InvalidateFromTimeline();
-}
-
-void AFutureItemPickup::InvalidateFromTimeline()
-{
-    if (ItemData)
+    if (ItemData && ItemData->ItemInstanceID == InvalidatedID)
     {
-        OnFutureItemInvalidated.Broadcast(ItemData->ItemInstanceID);
+        Destroy();
     }
-    Destroy();
 }

@@ -18,11 +18,10 @@ public:
     // OVERRIDE!
     virtual void Interact_Implementation(AActor* Interactor) override;
 
+    void HandleInvalidation(FGuid InvalidatedID);
+
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "TimeLink")
     class APastItemPickup* LinkedPastItem = nullptr;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ghost")
-    FVector FutureItemOffset = FVector(0.0f, -4320.0f, 0.0f);
 
     void OnPastItemPickedUp();
 

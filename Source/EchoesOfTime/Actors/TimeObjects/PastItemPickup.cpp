@@ -17,14 +17,15 @@ void APastItemPickup::BeginPlay()
 
 void APastItemPickup::SpawnLinkedFutureItem()
 {
-    FVector FutureLocation = GetActorLocation() + FVector(200, 0, 0);
+    if (!ItemData) return;
+
+    FVector FutureLocation = GetActorLocation() + FVector(0.0f, -4320.0f, 0.0f);
     FRotator Rot = GetActorRotation();
     FTransform FutureTransform = FTransform(Rot, FutureLocation);
 
     AFutureItemPickup* Future = GetWorld()->SpawnActorDeferred<AFutureItemPickup>(AFutureItemPickup::StaticClass(), FutureTransform);
     if (Future)
     {
-        SpawnedFutureItem = Future;
         Future->LinkedPastItem = this;
         Future->ItemData = ItemData;
         UGameplayStatics::FinishSpawningActor(Future, FutureTransform);
@@ -33,9 +34,10 @@ void APastItemPickup::SpawnLinkedFutureItem()
 
 void APastItemPickup::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-    if (SpawnedFutureItem)
+    if (ItemData)
     {
-        SpawnedFutureItem->OnPastItemPickedUp();
+        // Broadcast invalidation to any future item with the same ItemInstanceID
+        AFutureItemPickup::OnFutureItemInvalidated.Broadcast(ItemData->ItemInstanceID);
     }
     Super::EndPlay(EndPlayReason);
 }
