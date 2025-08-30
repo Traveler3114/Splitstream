@@ -38,9 +38,9 @@ void UInventoryComponent::BeginPlay()
     Super::BeginPlay();
     Slots.SetNum(SlotCount);
 
-    if (GetOwner()->HasAuthority() && DefaultItemClass)
+    if (GetOwner()->HasAuthority() && DefaultItemAsset)
     {
-        AddItem(DefaultItemClass, FGuid::NewGuid());
+        AddItem(DefaultItemAsset, FGuid::NewGuid());
     }
 }
 
@@ -50,17 +50,16 @@ void UInventoryComponent::SetActiveSlot(int32 Index)
     {
         ActiveSlotIndex = Index;
 
-        // DEBUG: Show the selected item on screen
         if (GEngine && GetOwner() && GetOwner()->GetWorld())
         {
             FString ItemName = TEXT("Empty Slot");
-            if (Slots[Index].ItemClass)
+            if (Slots[Index].ItemAsset)
             {
-                ItemName = Slots[Index].ItemClass->GetName();
+                ItemName = Slots[Index].ItemAsset->GetName();
             }
             GEngine->AddOnScreenDebugMessage(
-                -1, // Key (lets multiple messages stack)
-                2.0f, // Duration in seconds
+                -1,
+                2.0f,
                 FColor::Yellow,
                 FString::Printf(TEXT("Selected Slot: %d | Item: %s"), Index + 1, *ItemName)
             );
@@ -68,13 +67,13 @@ void UInventoryComponent::SetActiveSlot(int32 Index)
     }
 }
 
-bool UInventoryComponent::AddItem(TSubclassOf<UItemBase> ItemClass, FGuid InstanceID)
+bool UInventoryComponent::AddItem(UItemBase* ItemAsset, FGuid InstanceID)
 {
     for (int32 i = 0; i < Slots.Num(); ++i)
     {
-        if (!Slots[i].ItemClass)
+        if (!Slots[i].ItemAsset)
         {
-            Slots[i].ItemClass = ItemClass;
+            Slots[i].ItemAsset = ItemAsset;
             Slots[i].ItemInstanceID = InstanceID;
             OnInventoryChanged.Broadcast(Slots);
             return true;
@@ -87,43 +86,35 @@ void UInventoryComponent::RemoveItem(int32 Index)
 {
     if (Slots.IsValidIndex(Index))
     {
-        Slots[Index].ItemClass = nullptr;
+        Slots[Index].ItemAsset = nullptr;
         Slots[Index].ItemInstanceID.Invalidate();
         OnInventoryChanged.Broadcast(Slots);
     }
 }
 
-UItemBase* UInventoryComponent::CreateItemInstance(const FInventorySlot& Slot) const
+FInventorySlot UInventoryComponent::CreateSlot(UItemBase* ItemAsset, FGuid InstanceID) const
 {
-    if (Slot.ItemClass)
-    {
-        UItemBase* Item = NewObject<UItemBase>(GetOwner(), Slot.ItemClass);
-        if (Item)
-        {
-            Item->ItemInstanceID = Slot.ItemInstanceID;
-        }
-        return Item;
-    }
-    return nullptr;
+    FInventorySlot Slot;
+    Slot.ItemAsset = ItemAsset;
+    Slot.ItemInstanceID = InstanceID;
+    return Slot;
 }
 
-UItemBase* UInventoryComponent::GetActiveItem() const
+FInventorySlot UInventoryComponent::GetActiveItem() const
 {
     if (Slots.IsValidIndex(ActiveSlotIndex))
     {
-        return CreateItemInstance(Slots[ActiveSlotIndex]);
+        return Slots[ActiveSlotIndex];
     }
-    return nullptr;
+    return FInventorySlot();
 }
 
 void UInventoryComponent::DropActiveItem(FVector DropLocation)
 {
-    UItemBase* ActiveItem = GetActiveItem();
-    if (!ActiveItem) return;
-
+    FInventorySlot ActiveSlot = GetActiveItem();
+    if (!ActiveSlot.ItemAsset) return;
     FGameplayTag TeamTag = GetTeamTag();
-    ActiveItem->OnDroppedWithTeam(GetOwner(), TeamTag, DropLocation);
-
+    ActiveSlot.ItemAsset->OnDroppedWithTeam(GetOwner(), ActiveSlot.ItemInstanceID, TeamTag, DropLocation);
     RemoveItem(ActiveSlotIndex);
 }
 
@@ -155,9 +146,9 @@ void UInventoryComponent::ServerDropActiveItem_Implementation(FVector DropLocati
     DropActiveItem(DropLocation);
 }
 
-void UInventoryComponent::ServerAddItem_Implementation(TSubclassOf<UItemBase> ItemClass)
+void UInventoryComponent::ServerAddItem_Implementation(UItemBase* ItemAsset)
 {
-    AddItem(ItemClass, FGuid::NewGuid());
+    AddItem(ItemAsset, FGuid::NewGuid());
 }
 
 // ---- FUTURE ITEM INVALIDATION ----

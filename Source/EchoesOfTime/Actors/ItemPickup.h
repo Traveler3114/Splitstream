@@ -16,19 +16,31 @@ class ECHOESOFTIME_API AItemPickup : public AActor, public IInteractable
 public:
     AItemPickup();
 
+#if WITH_EDITOR
+    virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
+
     UPROPERTY(BlueprintAssignable, Category = "Item")
     FOnPickedUp OnPickedUp;
 
+    // Only need this one mesh component for both override and runtime
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-    UStaticMeshComponent* MeshComponent;
+    UStaticMeshComponent* OverrideMeshComp;
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Item")
     UItemBase* ItemData;
 
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Item")
+    FGuid ItemInstanceID;
+
     virtual void BeginPlay() override;
 
     UFUNCTION(BlueprintCallable, Category = "Item")
-    void InitFromItemData(UItemBase* InItemData);
+    void InitFromItemData(UItemBase* InItemData, FGuid InInstanceID);
 
     virtual void Interact_Implementation(AActor* Interactor) override;
+
+    // Call this after pickup to refresh mesh to ItemData mesh
+    UFUNCTION(BlueprintCallable, Category = "Item")
+    void RefreshMeshFromItemData();
 };

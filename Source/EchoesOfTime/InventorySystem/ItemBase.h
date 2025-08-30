@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/NoExportTypes.h"
+#include "Engine/DataAsset.h"
 #include "ItemBase.generated.h"
 
 UENUM(BlueprintType)
@@ -13,8 +13,8 @@ enum class EItemType : uint8
     Other       UMETA(DisplayName = "Other")
 };
 
-UCLASS(Blueprintable, Abstract)
-class ECHOESOFTIME_API UItemBase : public UObject
+UCLASS(BlueprintType)
+class ECHOESOFTIME_API UItemBase : public UDataAsset
 {
     GENERATED_BODY()
 public:
@@ -37,19 +37,16 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
     FVector PickupMeshScale = FVector(1.0f);
 
-    UPROPERTY(BlueprintReadWrite, Category = "Item")
-    FGuid ItemInstanceID;
-
-
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Item")
     void OnEquipped(class AActor* Instigator);
 
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Item")
     void OnUsed(class AActor* Instigator);
 
+    // InstanceID is passed in now:
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Item")
-    void OnDropped(class AActor* Instigator, FVector DropLocation);
+    void OnDropped(class AActor* Instigator, FGuid ItemInstanceID, FVector DropLocation);
 
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Item")
-    void OnDroppedWithTeam(AActor* Instigator, FGameplayTag TeamTag,FVector DropLocation);
+    void OnDroppedWithTeam(AActor* Instigator, FGuid ItemInstanceID, FGameplayTag TeamTag, FVector DropLocation);
 };

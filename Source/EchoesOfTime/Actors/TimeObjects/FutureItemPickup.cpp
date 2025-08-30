@@ -9,7 +9,6 @@ FFutureItemInvalidated AFutureItemPickup::OnFutureItemInvalidated;
 
 AFutureItemPickup::AFutureItemPickup()
 {
-    // Bind invalidation delegate
     OnFutureItemInvalidated.AddUObject(this, &AFutureItemPickup::HandleInvalidation);
 }
 
@@ -22,7 +21,7 @@ void AFutureItemPickup::BeginPlay()
     {
         for (TActorIterator<APastItemPickup> It(GetWorld()); It; ++It)
         {
-            if (It->ItemData && It->ItemData->ItemInstanceID == ItemData->ItemInstanceID)
+            if (It->ItemData == ItemData && It->ItemInstanceID == ItemInstanceID)
             {
                 LinkedPastItem = *It;
                 break;
@@ -38,9 +37,9 @@ void AFutureItemPickup::Interact_Implementation(AActor* Interactor)
     UInventoryComponent* Inventory = Interactor->FindComponentByClass<UInventoryComponent>();
     if (Inventory)
     {
-        Inventory->RegisterFutureInstance(ItemData->ItemInstanceID);
+        Inventory->RegisterFutureInstance(ItemInstanceID);
 
-        if (Inventory->AddItem(ItemData->GetClass(), ItemData->ItemInstanceID))
+        if (Inventory->AddItem(ItemData, ItemInstanceID))
         {
             Destroy();
         }
@@ -49,7 +48,7 @@ void AFutureItemPickup::Interact_Implementation(AActor* Interactor)
 
 void AFutureItemPickup::HandleInvalidation(FGuid InvalidatedID)
 {
-    if (ItemData && ItemData->ItemInstanceID == InvalidatedID)
+    if (ItemInstanceID == InvalidatedID)
     {
         Destroy();
     }

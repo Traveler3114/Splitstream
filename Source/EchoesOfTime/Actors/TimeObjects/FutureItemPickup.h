@@ -15,7 +15,6 @@ public:
 
     virtual void BeginPlay() override;
 
-    // OVERRIDE!
     virtual void Interact_Implementation(AActor* Interactor) override;
 
     void HandleInvalidation(FGuid InvalidatedID);

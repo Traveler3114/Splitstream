@@ -16,7 +16,8 @@ void UCharacterOverlay::OnInventoryChanged(const TArray<FInventorySlot>& Items)
 
     for (const FInventorySlot& SlotItem : Items)
     {
-        UItemBase* Item = LinkedInventory->CreateItemInstance(SlotItem);
+        // Use the asset pointer directly now
+        UItemBase* Item = SlotItem.ItemAsset;
         if (!Item || !Item->ItemIcon) continue;
 
         // Wrap the image in a SizeBox so we can control its size
@@ -31,7 +32,7 @@ void UCharacterOverlay::OnInventoryChanged(const TArray<FInventorySlot>& Items)
             Item->ItemIcon->GetSizeY()
         );
 
-        FVector2D FinalSize = TexSize*TextureScale;
+        FVector2D FinalSize = TexSize * TextureScale;
 
         // Apply size override
         SizeBox->SetWidthOverride(FinalSize.X);
@@ -50,15 +51,13 @@ void UCharacterOverlay::OnInventoryChanged(const TArray<FInventorySlot>& Items)
             MySlot->SetHorizontalAlignment(HAlign_Center);
         }
     }
-
 }
-
 
 void UCharacterOverlay::SetStatusText(const FString& NewStatus)
 {
     if (status_txt)
     {
         status_txt->SetText(FText::FromString(NewStatus));
-		status_txt->SetColorAndOpacity(NewStatus.IsEmpty() ? FLinearColor::White : FLinearColor::Red);
+        status_txt->SetColorAndOpacity(NewStatus.IsEmpty() ? FLinearColor::White : FLinearColor::Red);
     }
 }

@@ -11,7 +11,7 @@ struct FInventorySlot
     GENERATED_BODY()
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    TSubclassOf<UItemBase> ItemClass;
+    UItemBase* ItemAsset = nullptr; // Pointer to DataAsset
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FGuid ItemInstanceID;
@@ -46,22 +46,22 @@ public:
     void SetActiveSlot(int32 Index);
 
     UFUNCTION(BlueprintCallable, Category = "Inventory")
-    bool AddItem(TSubclassOf<UItemBase> ItemClass, FGuid ItemInstanceID);
+    bool AddItem(UItemBase* ItemAsset, FGuid ItemInstanceID);
 
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     void RemoveItem(int32 Index);
 
     UFUNCTION(BlueprintPure, Category = "Inventory")
-    UItemBase* GetActiveItem() const;
+    FInventorySlot GetActiveItem() const;
 
     UFUNCTION(BlueprintPure, Category = "Inventory")
-    UItemBase* CreateItemInstance(const FInventorySlot& Slot) const;
+    FInventorySlot CreateSlot(UItemBase* ItemAsset, FGuid InstanceID) const;
 
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     void DropActiveItem(FVector DropLocation);
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
-    TSubclassOf<UItemBase> DefaultItemClass;
+    UItemBase* DefaultItemAsset;
 
     UFUNCTION()
     void OnRep_Slots();
@@ -76,20 +76,12 @@ public:
     void ServerDropActiveItem(FVector DropLocation);
 
     UFUNCTION(Server, Reliable)
-    void ServerAddItem(TSubclassOf<UItemBase> ItemClass);
+    void ServerAddItem(UItemBase* ItemAsset);
 
     UFUNCTION(BlueprintPure, Category = "Inventory")
-    TArray<UItemBase*> GetItemInstances() const
+    TArray<FInventorySlot> GetSlots() const
     {
-        TArray<UItemBase*> Result;
-        for (const FInventorySlot& Slot : Slots)
-        {
-            if (Slot.ItemClass)
-            {
-                Result.Add(NewObject<UItemBase>(GetOwner(), Slot.ItemClass));
-            }
-        }
-        return Result;
+        return Slots;
     }
 
     UFUNCTION(BlueprintPure, Category = "Inventory")

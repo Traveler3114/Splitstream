@@ -33,7 +33,8 @@ void AKeycardScanner::Interact_Implementation(AActor* Interactor)
     if (!Inventory)
         return;
 
-    UItemBase* ActiveItem = Inventory->GetActiveItem();
+    FInventorySlot ActiveSlot = Inventory->GetActiveItem();
+    UItemBase* ActiveItem = ActiveSlot.ItemAsset;
     if (ActiveItem && ActiveItem->ItemType == EItemType::Keycard)
     {
         // Use the keycard (trigger OnUsed logic)

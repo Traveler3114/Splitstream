@@ -28,16 +28,16 @@ void APastItemPickup::SpawnLinkedFutureItem()
     {
         Future->LinkedPastItem = this;
         Future->ItemData = ItemData;
+        Future->ItemInstanceID = ItemInstanceID;
         UGameplayStatics::FinishSpawningActor(Future, FutureTransform);
     }
 }
 
 void APastItemPickup::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-    if (ItemData)
+    if (ItemInstanceID.IsValid())
     {
-        // Broadcast invalidation to any future item with the same ItemInstanceID
-        AFutureItemPickup::OnFutureItemInvalidated.Broadcast(ItemData->ItemInstanceID);
+        AFutureItemPickup::OnFutureItemInvalidated.Broadcast(ItemInstanceID);
     }
     Super::EndPlay(EndPlayReason);
 }
