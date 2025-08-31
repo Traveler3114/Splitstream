@@ -36,7 +36,6 @@ void ASecurityCamera::BeginPlay()
     PanOffset = 0.0f;
     bPanningRight = true;
     PauseTimer = 0.0f;
-    // Initialize previous detected set as empty
     LastDetectedActors.Empty();
 }
 
@@ -44,7 +43,7 @@ void ASecurityCamera::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    // --- Detection logic (server only, to avoid duplicate events) ---
+    // --- Detection logic (server only) ---
     if (HasAuthority())
     {
         TArray<AActor*> AllActors;
@@ -57,15 +56,13 @@ void ASecurityCamera::Tick(float DeltaTime)
             if (!Actor || !Actor->GetClass()->ImplementsInterface(UCameraDetectable::StaticClass()))
                 continue;
 
-            // Check distance
-            FVector ToTarget = Actor->GetActorLocation() - GetActorLocation();
+            FVector ToTarget = Actor->GetActorLocation() - (SceneCapture ? SceneCapture->GetComponentLocation() : GetActorLocation());
             float Distance = ToTarget.Size();
             if (Distance > DetectionDistance)
                 continue;
 
-            // Check view cone
             ToTarget.Normalize();
-            FVector CameraForward = ArrowComp ? ArrowComp->GetForwardVector() : GetActorForwardVector();
+            FVector CameraForward = SceneCapture ? SceneCapture->GetForwardVector() : GetActorForwardVector();
             float Dot = FVector::DotProduct(CameraForward, ToTarget);
             float CosHalfFOV = FMath::Cos(FMath::DegreesToRadians(ViewConeAngle * 0.5f));
             if (Dot >= CosHalfFOV)
@@ -129,20 +126,14 @@ void ASecurityCamera::Tick(float DeltaTime)
             }
         }
 
-        // Update mesh/capture rotation on the server too
         OnRep_PanOffset();
     }
 
-    // --- Always update mesh/capture rotation on clients if PanOffset changes (handled by OnRep_PanOffset) ---
-
     // --- Debug drawing of camera cone and trace (all instances) ---
-    if (bDrawDebug && ArrowComp && SceneCapture)
+    if (bDrawDebug && SceneCapture)
     {
-        FVector Start = ArrowComp->GetComponentLocation();
-        FVector Forward = ArrowComp->GetForwardVector();
-        FCollisionQueryParams Params;
-        Params.AddIgnoredActor(this);
-
+        FVector CamLoc = SceneCapture->GetComponentLocation();
+        FVector CamForward = SceneCapture->GetForwardVector();
         float HorizontalFOV = SceneCapture->FOVAngle;
         float AspectRatio = 1.0f;
         if (SceneCapture->TextureTarget)
@@ -154,8 +145,8 @@ void ASecurityCamera::Tick(float DeltaTime)
 
         DrawDebugCone(
             GetWorld(),
-            Start,
-            Forward,
+            CamLoc,
+            CamForward,
             DetectionDistance,
             FMath::DegreesToRadians(VerticalFOV * 0.5f),
             FMath::DegreesToRadians(HorizontalFOV * 0.5f),
@@ -167,13 +158,16 @@ void ASecurityCamera::Tick(float DeltaTime)
             1.0f
         );
 
-        FVector RayEnd = Start + Forward * DetectionDistance;
+        FVector RayEnd = CamLoc + CamForward * DetectionDistance;
         FHitResult RayHit;
+        FCollisionQueryParams Params;
+        Params.AddIgnoredActor(this);
+
         bool bRayHit = GetWorld()->LineTraceSingleByChannel(
-            RayHit, Start, RayEnd, ECC_Visibility, Params
+            RayHit, CamLoc, RayEnd, ECC_Visibility, Params
         );
         FVector RayDrawEnd = bRayHit ? RayHit.ImpactPoint : RayEnd;
-        DrawDebugLine(GetWorld(), Start, RayDrawEnd, FColor::Yellow, false, 0.1f, 0, 2.0f);
+        DrawDebugLine(GetWorld(), CamLoc, RayDrawEnd, FColor::Yellow, false, 0.1f, 0, 2.0f);
         if (bRayHit)
             DrawDebugPoint(GetWorld(), RayHit.ImpactPoint, 16.0f, FColor::Red, false, 0.1f);
     }
@@ -191,5 +185,6 @@ void ASecurityCamera::OnRep_PanOffset()
     FRotator NewRot = GetActorRotation();
     NewRot.Yaw = NewYaw;
     CameraMesh->SetWorldRotation(NewRot);
-    SceneCapture->SetWorldRotation(NewRot.Add(0.0f, 90.0f, 0.0f));
+    if (SceneCapture)
+        SceneCapture->SetWorldRotation(NewRot.Add(0.0f, 90.0f, 0.0f)); // if you have an offset, adjust here
 }
