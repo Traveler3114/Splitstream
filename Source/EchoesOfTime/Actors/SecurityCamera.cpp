@@ -7,9 +7,9 @@
 #include "Components/ArrowComponent.h"
 #include "DrawDebugHelpers.h"
 #include "Net/UnrealNetwork.h"
-
 #include "Interfaces/ICameraDetectable.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 ASecurityCamera::ASecurityCamera()
 {
@@ -43,24 +43,42 @@ void ASecurityCamera::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    // --- Detection logic (server only) ---
+    // --- Detection logic (server only, to avoid duplicate events) ---
     if (HasAuthority())
     {
-        TArray<AActor*> AllActors;
-        UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), AllActors);
+        FVector CamLoc = SceneCapture ? SceneCapture->GetComponentLocation() : GetActorLocation();
+
+        // Use Sphere Overlap for broad phase
+        TArray<AActor*> OverlappedActors;
+        // Adjust object types as needed (e.g., Pawn, WorldDynamic, etc.)
+        TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+        ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn));
+        ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldDynamic));
+
+        UKismetSystemLibrary::SphereOverlapActors(
+            GetWorld(),
+            CamLoc,
+            DetectionDistance,
+            ObjectTypes,
+            nullptr, // Or a specific class, e.g., AMyDetectable::StaticClass()
+            TArray<AActor*>{ this },
+            OverlappedActors
+        );
 
         TSet<AActor*> DetectedThisFrame;
 
-        for (AActor* Actor : AllActors)
+        for (AActor* Actor : OverlappedActors)
         {
             if (!Actor || !Actor->GetClass()->ImplementsInterface(UCameraDetectable::StaticClass()))
                 continue;
 
-            FVector ToTarget = Actor->GetActorLocation() - (SceneCapture ? SceneCapture->GetComponentLocation() : GetActorLocation());
+            // Check distance (redundant but safe)
+            FVector ToTarget = Actor->GetActorLocation() - CamLoc;
             float Distance = ToTarget.Size();
             if (Distance > DetectionDistance)
                 continue;
 
+            // Check view cone
             ToTarget.Normalize();
             FVector CameraForward = SceneCapture ? SceneCapture->GetForwardVector() : GetActorForwardVector();
             float Dot = FVector::DotProduct(CameraForward, ToTarget);
@@ -126,6 +144,7 @@ void ASecurityCamera::Tick(float DeltaTime)
             }
         }
 
+        // Update mesh/capture rotation on the server too
         OnRep_PanOffset();
     }
 
@@ -186,5 +205,5 @@ void ASecurityCamera::OnRep_PanOffset()
     NewRot.Yaw = NewYaw;
     CameraMesh->SetWorldRotation(NewRot);
     if (SceneCapture)
-        SceneCapture->SetWorldRotation(NewRot.Add(0.0f, 90.0f, 0.0f)); // if you have an offset, adjust here
+        SceneCapture->SetWorldRotation(NewRot.Add(0.0f, 90.0f, 0.0f)); // adjust if your camera mesh needs an offset
 }
