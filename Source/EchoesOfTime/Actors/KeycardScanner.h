@@ -3,6 +3,9 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Interfaces/IInteractable.h"
+
+class ADoorBase; // Forward declaration
+
 #include "KeycardScanner.generated.h"
 
 UCLASS()
