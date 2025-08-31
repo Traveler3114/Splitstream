@@ -8,7 +8,6 @@
 #include "DrawDebugHelpers.h"
 #include "Engine/Engine.h"
 
-
 AGhostCharacterActor::AGhostCharacterActor()
 {
     PrimaryActorTick.bCanEverTick = true;
@@ -46,6 +45,7 @@ void AGhostCharacterActor::Tick(float DeltaTime)
         30.0f, 12, FColor::Green, false, -1.0f, 0, 2.0f
     );
 
+    ACharacter* CharacterToMirror = Cast<ACharacter>(GetOwner());
     if (!CharacterToMirror || !GhostMesh)
     {
         return;
@@ -88,6 +88,7 @@ void AGhostCharacterActor::Tick(float DeltaTime)
 void AGhostCharacterActor::UpdateGhostVisibility()
 {
     bool bShouldShow = false;
+    ACharacter* CharacterToMirror = Cast<ACharacter>(GetOwner());
     if (CharacterToMirror && CharacterToMirror->GetClass()->ImplementsInterface(UGhostMirrorSource::StaticClass()))
     {
         bShouldShow = IGhostMirrorSource::Execute_ShouldGhostBeVisible(CharacterToMirror);
@@ -115,5 +116,5 @@ void AGhostCharacterActor::SetGhostRevealed_Implementation(bool bRevealed)
 void AGhostCharacterActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-    DOREPLIFETIME(AGhostCharacterActor, CharacterToMirror);
+    // REMOVED: DOREPLIFETIME(AGhostCharacterActor, CharacterToMirror);
 }

@@ -15,19 +15,7 @@ AFutureItemPickup::AFutureItemPickup()
 void AFutureItemPickup::BeginPlay()
 {
     Super::BeginPlay();
-
-    // Restore LinkedPastItem if it's null
-    if (!LinkedPastItem && ItemData)
-    {
-        for (TActorIterator<APastItemPickup> It(GetWorld()); It; ++It)
-        {
-            if (It->ItemData == ItemData && It->ItemInstanceID == ItemInstanceID)
-            {
-                LinkedPastItem = *It;
-                break;
-            }
-        }
-    }
+    // REMOVED: code that tries to find LinkedPastItem
 }
 
 void AFutureItemPickup::Interact_Implementation(AActor* Interactor)

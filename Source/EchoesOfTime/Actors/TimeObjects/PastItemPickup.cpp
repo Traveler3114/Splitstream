@@ -26,10 +26,13 @@ void APastItemPickup::SpawnLinkedFutureItem()
     AFutureItemPickup* Future = GetWorld()->SpawnActorDeferred<AFutureItemPickup>(AFutureItemPickup::StaticClass(), FutureTransform);
     if (Future)
     {
-        Future->LinkedPastItem = this;
+        // Only set data on the future item, no back-ref!
         Future->ItemData = ItemData;
         Future->ItemInstanceID = ItemInstanceID;
         UGameplayStatics::FinishSpawningActor(Future, FutureTransform);
+
+        // Store the reference in PastItemPickup
+        SpawnedFutureItem = Future;
     }
 }
 

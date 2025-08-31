@@ -53,10 +53,6 @@ void AGuardCharacter::BeginPlay()
             GetActorRotation(),
             Params);
 
-        if (SpawnedGhost)
-        {
-            SpawnedGhost->CharacterToMirror = this;
-        }
     }
 }
 

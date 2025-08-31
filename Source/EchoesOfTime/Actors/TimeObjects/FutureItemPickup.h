@@ -19,8 +19,7 @@ public:
 
     void HandleInvalidation(FGuid InvalidatedID);
 
-    UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "TimeLink")
-    class APastItemPickup* LinkedPastItem = nullptr;
+    // REMOVED: LinkedPastItem
 
     void OnPastItemPickedUp();
 

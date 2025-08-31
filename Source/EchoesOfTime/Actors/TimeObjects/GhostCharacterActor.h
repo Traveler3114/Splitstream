@@ -31,8 +31,7 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components")
     USkeletalMeshComponent* GhostMesh;
 
-    UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "GhostCharacter")
-    ACharacter* CharacterToMirror;
+    // REMOVED: CharacterToMirror
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ghost")
     UMaterialInterface* GhostMaterial = nullptr;
