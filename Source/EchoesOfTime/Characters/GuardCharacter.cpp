@@ -4,6 +4,7 @@
 #include "Engine/Engine.h"
 #include "Actors/SecurityCamera.h"
 #include "Characters/DefaultCharacter.h"
+#include "Actors/RefPointActor.h"
 
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/EOTGameplayTags.h"
