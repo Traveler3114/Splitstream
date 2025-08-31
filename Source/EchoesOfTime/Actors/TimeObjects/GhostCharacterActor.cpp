@@ -7,6 +7,7 @@
 #include "Interfaces/IGhostMirrorSource.h"
 #include "DrawDebugHelpers.h"
 #include "Engine/Engine.h"
+#include "Actors/RefPointActor.h"
 
 AGhostCharacterActor::AGhostCharacterActor()
 {
@@ -33,6 +34,8 @@ void AGhostCharacterActor::BeginPlay()
         GhostMesh->SetVisibility(false, true);
         GhostMesh->bOnlyOwnerSee = false;
     }
+    GhostOffset = ARefPointActor::GetOffsetBetweenFirstTwoRefPoints(GetWorld());
+	GhostOffset.Z -= 80.0f;
 }
 
 void AGhostCharacterActor::Tick(float DeltaTime)

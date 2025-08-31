@@ -2,24 +2,26 @@
 #include "FutureItemPickup.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
+#include "Actors/RefPointActor.h"
 
 APastItemPickup::APastItemPickup() {}
 
 void APastItemPickup::BeginPlay()
 {
     Super::BeginPlay();
-
+    FutureItemPickupOffset = ARefPointActor::GetOffsetBetweenFirstTwoRefPoints(GetWorld());
     if (HasAuthority())
     {
         SpawnLinkedFutureItem();
     }
+
 }
 
 void APastItemPickup::SpawnLinkedFutureItem()
 {
     if (!ItemData) return;
 
-    FVector FutureLocation = GetActorLocation() + FVector(0.0f, -4320.0f, 0.0f);
+    FVector FutureLocation = GetActorLocation() + FutureItemPickupOffset;
     FRotator Rot = GetActorRotation();
     FTransform FutureTransform = FTransform(Rot, FutureLocation);
 

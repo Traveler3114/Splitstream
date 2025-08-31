@@ -19,4 +19,7 @@ public:
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
     void SpawnLinkedFutureItem();
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ghost")
+    FVector FutureItemPickupOffset = FVector(0.0f, 0.0f, 0.0f);
 };
