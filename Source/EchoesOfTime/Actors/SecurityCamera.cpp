@@ -6,6 +6,7 @@
 #include "Components/SceneCaptureComponent2D.h"
 #include "Components/ArrowComponent.h"
 #include "DrawDebugHelpers.h"
+#include "Net/UnrealNetwork.h"
 
 #include "Interfaces/ICameraDetectable.h"
 #include "Kismet/GameplayStatics.h"
@@ -13,6 +14,7 @@
 ASecurityCamera::ASecurityCamera()
 {
     PrimaryActorTick.bCanEverTick = true;
+    bReplicates = true;
 
     DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
     RootComponent = DefaultSceneRoot;
@@ -42,71 +44,65 @@ void ASecurityCamera::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    // --- Detection logic for generic ICameraDetectable actors ---
-    TArray<AActor*> AllActors;
-    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), AllActors);
-
-    TSet<AActor*> DetectedThisFrame;
-
-    for (AActor* Actor : AllActors)
+    // --- Detection logic (server only, to avoid duplicate events) ---
+    if (HasAuthority())
     {
-        if (!Actor || !Actor->GetClass()->ImplementsInterface(UCameraDetectable::StaticClass()))
-            continue;
+        TArray<AActor*> AllActors;
+        UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), AllActors);
 
-        // Check distance
-        FVector ToTarget = Actor->GetActorLocation() - GetActorLocation();
-        float Distance = ToTarget.Size();
-        if (Distance > DetectionDistance)
-            continue;
+        TSet<AActor*> DetectedThisFrame;
 
-        // Check view cone
-        ToTarget.Normalize();
-        FVector CameraForward = ArrowComp ? ArrowComp->GetForwardVector() : GetActorForwardVector();
-        float Dot = FVector::DotProduct(CameraForward, ToTarget);
-        float CosHalfFOV = FMath::Cos(FMath::DegreesToRadians(ViewConeAngle * 0.5f));
-        if (Dot >= CosHalfFOV)
+        for (AActor* Actor : AllActors)
         {
-            // This actor is detected
-            DetectedThisFrame.Add(Actor);
-            // Fix: Iterate LastDetectedActors as TWeakObjectPtr
-            bool bWasDetected = false;
-            for (const TWeakObjectPtr<AActor>& WeakActor : LastDetectedActors)
+            if (!Actor || !Actor->GetClass()->ImplementsInterface(UCameraDetectable::StaticClass()))
+                continue;
+
+            // Check distance
+            FVector ToTarget = Actor->GetActorLocation() - GetActorLocation();
+            float Distance = ToTarget.Size();
+            if (Distance > DetectionDistance)
+                continue;
+
+            // Check view cone
+            ToTarget.Normalize();
+            FVector CameraForward = ArrowComp ? ArrowComp->GetForwardVector() : GetActorForwardVector();
+            float Dot = FVector::DotProduct(CameraForward, ToTarget);
+            float CosHalfFOV = FMath::Cos(FMath::DegreesToRadians(ViewConeAngle * 0.5f));
+            if (Dot >= CosHalfFOV)
             {
-                if (WeakActor.Get() == Actor)
+                DetectedThisFrame.Add(Actor);
+                bool bWasDetected = false;
+                for (const TWeakObjectPtr<AActor>& WeakActor : LastDetectedActors)
                 {
-                    bWasDetected = true;
-                    break;
+                    if (WeakActor.Get() == Actor)
+                    {
+                        bWasDetected = true;
+                        break;
+                    }
                 }
-            }
-            if (!bWasDetected)
-            {
-                // Newly detected
-                ICameraDetectable::Execute_OnDetectedByCamera(Actor, this);
+                if (!bWasDetected)
+                    ICameraDetectable::Execute_OnDetectedByCamera(Actor, this);
             }
         }
-    }
 
-    // Now process actors lost this frame
-    for (const TWeakObjectPtr<AActor>& WeakActor : LastDetectedActors)
-    {
-        AActor* Actor = WeakActor.Get();
-        if (!Actor)
-            continue;
-        if (!DetectedThisFrame.Contains(Actor))
+        // Handle lost actors
+        for (const TWeakObjectPtr<AActor>& WeakActor : LastDetectedActors)
         {
-            ICameraDetectable::Execute_OnLostByCamera(Actor, this);
+            AActor* Actor = WeakActor.Get();
+            if (!Actor)
+                continue;
+            if (!DetectedThisFrame.Contains(Actor))
+                ICameraDetectable::Execute_OnLostByCamera(Actor, this);
         }
+
+        // Store for next frame
+        LastDetectedActors.Empty();
+        for (AActor* Actor : DetectedThisFrame)
+            LastDetectedActors.Add(Actor);
     }
 
-    // Store for next frame
-    LastDetectedActors.Empty();
-    for (AActor* Actor : DetectedThisFrame)
-    {
-        LastDetectedActors.Add(Actor);
-    }
-
-    // --- Camera panning logic with pause at ends ---
-    if (PanSpeed > 0.0f)
+    // --- Camera panning logic (server only) ---
+    if (HasAuthority() && PanSpeed > 0.0f)
     {
         if (PauseTimer > 0.0f)
         {
@@ -133,15 +129,13 @@ void ASecurityCamera::Tick(float DeltaTime)
             }
         }
 
-        // Apply rotation: initial yaw + pan offset
-        FRotator NewRot = GetActorRotation();
-        NewRot.Yaw = CurrentYaw + PanOffset;
-        //SetActorRotation(NewRot);
-		CameraMesh->SetWorldRotation(NewRot);
-		SceneCapture->SetWorldRotation(NewRot.Add(0.0f, 90.0f, 0.0f));
+        // Update mesh/capture rotation on the server too
+        OnRep_PanOffset();
     }
 
-    // --- Debug drawing of camera cone and trace ---
+    // --- Always update mesh/capture rotation on clients if PanOffset changes (handled by OnRep_PanOffset) ---
+
+    // --- Debug drawing of camera cone and trace (all instances) ---
     if (bDrawDebug && ArrowComp && SceneCapture)
     {
         FVector Start = ArrowComp->GetComponentLocation();
@@ -152,9 +146,7 @@ void ASecurityCamera::Tick(float DeltaTime)
         float HorizontalFOV = SceneCapture->FOVAngle;
         float AspectRatio = 1.0f;
         if (SceneCapture->TextureTarget)
-        {
             AspectRatio = (float)SceneCapture->TextureTarget->SizeX / (float)SceneCapture->TextureTarget->SizeY;
-        }
         float VerticalFOV = FMath::RadiansToDegrees(
             2 * FMath::Atan(FMath::Tan(FMath::DegreesToRadians(HorizontalFOV) / 2) / AspectRatio)
         );
@@ -185,4 +177,19 @@ void ASecurityCamera::Tick(float DeltaTime)
         if (bRayHit)
             DrawDebugPoint(GetWorld(), RayHit.ImpactPoint, 16.0f, FColor::Red, false, 0.1f);
     }
+}
+
+void ASecurityCamera::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(ASecurityCamera, PanOffset);
+}
+
+void ASecurityCamera::OnRep_PanOffset()
+{
+    float NewYaw = CurrentYaw + PanOffset;
+    FRotator NewRot = GetActorRotation();
+    NewRot.Yaw = NewYaw;
+    CameraMesh->SetWorldRotation(NewRot);
+    SceneCapture->SetWorldRotation(NewRot.Add(0.0f, 90.0f, 0.0f));
 }

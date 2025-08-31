@@ -18,7 +18,10 @@ protected:
 public:
     virtual void Tick(float DeltaTime) override;
 
-    // Components
+    // Add this:
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+    // Components...
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Camera")
     USceneComponent* DefaultSceneRoot;
 
@@ -31,7 +34,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
     class UArrowComponent* ArrowComp;
 
-    // Detection parameters
+    // Detection parameters...
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection")
     float DetectionDistance = 2000.0f;
 
@@ -49,7 +52,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Pan")
     float MaxYaw = 45.0f;
 
-	//If PanSpeed = 0, camera will not pan
+    //If PanSpeed = 0, camera will not pan
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Pan")
     float PanSpeed = 30.0f; // degrees per second
 
@@ -60,7 +63,11 @@ private:
     float CurrentYaw = 0.0f;
     bool bPanningRight = true;
     float PauseTimer = 0.0f;
+    UPROPERTY(ReplicatedUsing = OnRep_PanOffset)
     float PanOffset = 0.0f;
+
+    UFUNCTION()
+    void OnRep_PanOffset();
 
     // Keep track of actors detected last frame for state transitions
     TSet<TWeakObjectPtr<AActor>> LastDetectedActors;

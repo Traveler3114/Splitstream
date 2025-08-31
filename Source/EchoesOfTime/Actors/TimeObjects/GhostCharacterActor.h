@@ -31,14 +31,13 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components")
     USkeletalMeshComponent* GhostMesh;
 
-    // REMOVED: CharacterToMirror
-
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ghost")
     UMaterialInterface* GhostMaterial = nullptr;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ghost")
     FVector GhostOffset = FVector(0.0f, 0.0f, -80.0f);
 
+    // Not replicated! Each client can toggle this locally via GameplayCue
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ghost")
     bool bIsPastEchoAbilityActive = false;
 

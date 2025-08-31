@@ -17,6 +17,7 @@ class ECHOESOFTIME_API AGuardCharacter : public ACharacter, public ICameraDetect
 public:
     AGuardCharacter();
     virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Idle")
     float BaseStayChance = 0.5f;
@@ -42,8 +43,11 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ghost")
     TSubclassOf<class AGhostCharacterActor> GhostClass;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ghost")
+    UPROPERTY(ReplicatedUsing = OnRep_IsInCameraView, EditAnywhere, BlueprintReadWrite, Category = "Ghost")
     bool bIsInCameraView = false;
+
+    UFUNCTION()
+    void OnRep_IsInCameraView();
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
     AActor* TargetActor = nullptr;

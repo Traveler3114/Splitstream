@@ -5,6 +5,7 @@
 #include "Actors/SecurityCamera.h"
 #include "Characters/DefaultCharacter.h"
 #include "Actors/RefPointActor.h"
+#include "Net/UnrealNetwork.h"
 
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/EOTGameplayTags.h"
@@ -59,7 +60,7 @@ void AGuardCharacter::BeginPlay()
         if (SpawnedGhost)
         {
             FVector Offset = ARefPointActor::GetOffsetBetweenFirstTwoRefPoints(GetWorld());
-            Offset.Z -= 80.0f; // if you want manual Z adjustment
+            Offset.Z -= 85.0f; // if you want manual Z adjustment
             SpawnedGhost->GhostOffset = Offset;
         }
     }
@@ -88,6 +89,14 @@ void AGuardCharacter::OnLostByCamera_Implementation(ASecurityCamera* Camera)
         {
             SpawnedGhost->UpdateGhostVisibility();
         }
+    }
+}
+
+void AGuardCharacter::OnRep_IsInCameraView()
+{
+    if (SpawnedGhost)
+    {
+        SpawnedGhost->UpdateGhostVisibility();
     }
 }
 
@@ -156,4 +165,11 @@ void AGuardCharacter::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
             }
         }
     }
+}
+
+void AGuardCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(AGuardCharacter, bIsInCameraView);
+    //DOREPLIFETIME(AGuardCharacter, TargetActor);
 }
