@@ -60,7 +60,7 @@ void AGuardCharacter::BeginPlay()
         if (SpawnedGhost)
         {
             FVector Offset = ARefPointActor::GetOffsetBetweenFirstTwoRefPoints(GetWorld());
-            Offset.Z -= 85.0f; // if you want manual Z adjustment
+            Offset.Z -= 90.0f; // if you want manual Z adjustment
             SpawnedGhost->GhostOffset = Offset;
         }
     }
