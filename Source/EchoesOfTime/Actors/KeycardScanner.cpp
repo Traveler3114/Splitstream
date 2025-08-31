@@ -1,33 +1,30 @@
 #include "KeycardScanner.h"
 #include "InventorySystem/InventoryComponent.h"
 #include "InventorySystem/ItemBase.h"
-#include "Actors/DoorBase.h"
 
 AKeycardScanner::AKeycardScanner()
 {
-    // Initialize components if needed
     DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
     RootComponent = DefaultSceneRoot;
 
     Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
     Mesh->SetupAttachment(DefaultSceneRoot);
 
-    LinkedDoor = nullptr;
+    LinkedActor = nullptr;
 }
 
 void AKeycardScanner::BeginPlay()
 {
     Super::BeginPlay();
 
-    if (LinkedDoor)
-    {
-        LinkedDoor->bRequiresKeycard = true;
-    }
+    // Optionally: you could do anything with the LinkedActor here if needed
+    // For example: set bRequiresKeycard, but that's usually done in the actor itself
 }
 
 void AKeycardScanner::Interact_Implementation(AActor* Interactor)
 {
-    if (!Interactor || !LinkedDoor) return;
+    if (!Interactor || !LinkedActor)
+        return;
 
     UInventoryComponent* Inventory = Interactor->FindComponentByClass<UInventoryComponent>();
     if (!Inventory)
@@ -40,10 +37,9 @@ void AKeycardScanner::Interact_Implementation(AActor* Interactor)
         // Use the keycard (trigger OnUsed logic)
         ActiveItem->OnUsed(Interactor);
 
-        if (LinkedDoor->HasAuthority())
+        if (LinkedActor->GetClass()->ImplementsInterface(UKeycardUnlockable::StaticClass()))
         {
-            LinkedDoor->bIsOpen = true;
-            LinkedDoor->OnRep_IsOpen();
+            IKeycardUnlockable::Execute_UnlockWithKeycard(LinkedActor, Interactor);
         }
         // Optional: feedback for success
     }

@@ -51,3 +51,17 @@ void ADoubleDoorBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(ADoubleDoorBase, bIsOpen);
 }
+
+void ADoubleDoorBase::UnlockWithKeycard_Implementation(AActor* Interactor)
+{
+    if (HasAuthority())
+    {
+        bIsOpen = true;
+        OnRep_IsOpen();
+    }
+}
+
+bool ADoubleDoorBase::RequiresKeycard_Implementation() const
+{
+    return bRequiresKeycard;
+}

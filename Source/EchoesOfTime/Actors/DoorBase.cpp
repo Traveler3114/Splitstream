@@ -8,14 +8,15 @@ ADoorBase::ADoorBase()
 
     SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
     RootComponent = SceneRoot;
-	SceneRoot->SetIsReplicated(true);
+    SceneRoot->SetIsReplicated(true);
 
     DoorMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DoorMesh"));
     DoorMesh->SetupAttachment(SceneRoot);
-	DoorMesh->SetIsReplicated(true);
+    DoorMesh->SetIsReplicated(true);
+
     DoorFrameMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DoorFrameMesh"));
     DoorFrameMesh->SetupAttachment(SceneRoot);
-	DoorFrameMesh->SetIsReplicated(true);
+    DoorFrameMesh->SetIsReplicated(true);
 }
 
 void ADoorBase::Interact_Implementation(AActor* Interactor)
@@ -49,4 +50,18 @@ void ADoorBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(ADoorBase, bIsOpen);
+}
+
+void ADoorBase::UnlockWithKeycard_Implementation(AActor* Interactor)
+{
+    if (HasAuthority())
+    {
+        bIsOpen = true;
+        OnRep_IsOpen();
+    }
+}
+
+bool ADoorBase::RequiresKeycard_Implementation() const
+{
+    return bRequiresKeycard;
 }

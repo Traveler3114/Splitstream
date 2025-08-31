@@ -3,9 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Interfaces/IInteractable.h"
-
-class ADoorBase; // Forward declaration
-
+#include "Interfaces/IKeycardUnlockable.h"
 #include "KeycardScanner.generated.h"
 
 UCLASS()
@@ -23,8 +21,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
     UStaticMeshComponent* Mesh;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door")
-    ADoorBase* LinkedDoor;
+    // The actor to unlock with a keycard
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Linked")
+    AActor* LinkedActor;
 
     // IInteractable
     virtual void Interact_Implementation(AActor* Interactor) override;

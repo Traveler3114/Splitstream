@@ -3,10 +3,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Interfaces/IInteractable.h"
+#include "Interfaces/IKeycardUnlockable.h"
 #include "DoorBase.generated.h"
 
 UCLASS(Abstract)
-class ECHOESOFTIME_API ADoorBase : public AActor, public IInteractable
+class ECHOESOFTIME_API ADoorBase : public AActor, public IInteractable, public IKeycardUnlockable
 {
     GENERATED_BODY()
 
@@ -35,12 +36,15 @@ public:
     UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Door")
     void CloseDoor();
 
-    // ...
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door")
     bool bRequiresKeycard = false; // If true, can't open directly by interact
 
     // IInteractable
     virtual void Interact_Implementation(AActor* Interactor) override;
+
+    // Keycard unlockable interface
+    virtual void UnlockWithKeycard_Implementation(AActor* Interactor) override;
+    virtual bool RequiresKeycard_Implementation() const override;
 
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
