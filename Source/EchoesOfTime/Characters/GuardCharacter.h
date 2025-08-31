@@ -45,6 +45,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ghost")
     bool bIsInCameraView = false;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+    AActor* TargetActor = nullptr;
+
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Ghost", meta = (AllowPrivateAccess = "true"))
     class AGhostCharacterActor* SpawnedGhost = nullptr;
 
@@ -67,7 +70,6 @@ protected:
     void OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors);
 
     // In your GuardCharacter.h, inside the class definition:
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
-    AActor* TargetActor = nullptr;
+
 
 };
