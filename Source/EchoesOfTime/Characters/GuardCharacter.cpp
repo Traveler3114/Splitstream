@@ -40,6 +40,7 @@ void AGuardCharacter::BeginPlay()
         AIPerceptionComponent->OnPerceptionUpdated.AddDynamic(this, &AGuardCharacter::OnPerceptionUpdated);
     }
     const bool bAuth = HasAuthority();
+    // GuardCharacter.cpp, in BeginPlay
     if (bAuth)
     {
         FActorSpawnParameters Params;
@@ -53,6 +54,13 @@ void AGuardCharacter::BeginPlay()
             GetActorRotation(),
             Params);
 
+        // Set GhostOffset immediately after spawning
+        if (SpawnedGhost)
+        {
+            FVector Offset = ARefPointActor::GetOffsetBetweenFirstTwoRefPoints(GetWorld());
+            Offset.Z -= 80.0f; // if you want manual Z adjustment
+            SpawnedGhost->GhostOffset = Offset;
+        }
     }
 }
 
