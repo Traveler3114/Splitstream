@@ -3,7 +3,6 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Interfaces/IInteractable.h"
-#include "Interfaces/IDoorInterface.h"
 #include "KeycardScanner.generated.h"
 
 UCLASS()
@@ -22,7 +21,7 @@ public:
     UStaticMeshComponent* Mesh;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door")
-    TScriptInterface<IDoorInterface> LinkedDoor;
+    ADoorBase* LinkedDoor;
 
     // IInteractable
     virtual void Interact_Implementation(AActor* Interactor) override;
