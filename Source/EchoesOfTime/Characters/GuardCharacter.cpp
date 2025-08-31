@@ -11,7 +11,6 @@
 #include "Perception/AISenseConfig_Sight.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 
-
 AGuardCharacter::AGuardCharacter()
 {
     PrimaryActorTick.bCanEverTick = true;
@@ -52,7 +51,6 @@ void AGuardCharacter::BeginPlay()
             GetActorLocation(),
             GetActorRotation(),
             Params);
-
     }
 }
 

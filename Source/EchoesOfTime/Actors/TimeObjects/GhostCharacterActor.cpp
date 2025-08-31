@@ -7,6 +7,7 @@
 #include "Interfaces/IGhostMirrorSource.h"
 #include "DrawDebugHelpers.h"
 #include "Engine/Engine.h"
+#include "GuardCharacter.h" // Add this for cast
 
 AGhostCharacterActor::AGhostCharacterActor()
 {
@@ -81,7 +82,15 @@ void AGhostCharacterActor::Tick(float DeltaTime)
         }
     }
 
-    SetActorLocation(CharacterToMirror->GetActorLocation() + GhostOffset);
+    // Get the GhostOffset from the owner (if available)
+    FVector OwnerGhostOffset = FVector::ZeroVector;
+    if (AGuardCharacter* Guard = Cast<AGuardCharacter>(CharacterToMirror))
+    {
+        OwnerGhostOffset = Guard->GetGhostOffset();
+    }
+    // (OPTIONAL: add more owner types that provide offset as needed)
+
+    SetActorLocation(CharacterToMirror->GetActorLocation() + OwnerGhostOffset);
     SetActorRotation(CharacterToMirror->GetActorRotation());
 }
 

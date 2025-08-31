@@ -7,8 +7,9 @@
 
 #include "GuardCharacter.generated.h"
 
-
 class ANavNode;
+
+// Add a simple interface for offset retrieval (optional, or just use AGuardCharacter)
 UCLASS()
 class ECHOESOFTIME_API AGuardCharacter : public ACharacter, public ICameraDetectable, public IGhostMirrorSource
 {
@@ -51,6 +52,13 @@ public:
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Ghost", meta = (AllowPrivateAccess = "true"))
     class AGhostCharacterActor* SpawnedGhost = nullptr;
 
+    // GHOST OFFSET IS NOW HERE:
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ghost")
+    FVector GhostOffset = FVector(0.0f, 0.0f, -80.0f);
+
+    UFUNCTION(BlueprintCallable, Category = "Ghost")
+    FVector GetGhostOffset() const { return GhostOffset; }
+
     // ICameraDetectable implementation
     virtual void OnDetectedByCamera_Implementation(class ASecurityCamera* Camera) override;
     virtual void OnLostByCamera_Implementation(class ASecurityCamera* Camera) override;
@@ -63,13 +71,10 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
     class UAIPerceptionComponent* AIPerceptionComponent;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
     class UAISenseConfig_Sight* SightConfig;
 
     UFUNCTION()
     void OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors);
-
-    // In your GuardCharacter.h, inside the class definition:
-
 
 };
