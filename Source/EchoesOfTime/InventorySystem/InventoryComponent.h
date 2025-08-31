@@ -26,6 +26,7 @@ class ECHOESOFTIME_API UInventoryComponent : public UActorComponent
 
 public:
     UInventoryComponent();
+    virtual void BeginDestroy() override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
     UPROPERTY(BlueprintAssignable, Category = "Inventory")

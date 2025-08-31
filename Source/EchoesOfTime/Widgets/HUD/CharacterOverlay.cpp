@@ -61,3 +61,12 @@ void UCharacterOverlay::SetStatusText(const FString& NewStatus)
         status_txt->SetColorAndOpacity(NewStatus.IsEmpty() ? FLinearColor::White : FLinearColor::Red);
     }
 }
+
+void UCharacterOverlay::NativeDestruct()
+{
+    if (LinkedInventory)
+    {
+        LinkedInventory->OnInventoryChanged.RemoveDynamic(this, &UCharacterOverlay::OnInventoryChanged);
+    }
+    Super::NativeDestruct();
+}

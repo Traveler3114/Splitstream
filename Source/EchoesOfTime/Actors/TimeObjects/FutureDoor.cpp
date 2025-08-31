@@ -56,3 +56,22 @@ void AFutureDoor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AFutureDoor, bIsOpen);
 }
+
+void AFutureDoor::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    APastDoor* BoundPastDoor = nullptr;
+    if (PastDoor.IsValid())
+    {
+        BoundPastDoor = PastDoor.Get();
+    }
+    else if (PastDoor.ToSoftObjectPath().IsValid())
+    {
+        BoundPastDoor = Cast<APastDoor>(PastDoor.LoadSynchronous());
+    }
+    if (BoundPastDoor)
+    {
+        BoundPastDoor->OnDoorStateChanged.RemoveDynamic(this, &AFutureDoor::HandlePastDoorStateChanged);
+    }
+
+    Super::EndPlay(EndPlayReason);
+}

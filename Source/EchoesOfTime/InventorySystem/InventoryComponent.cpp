@@ -17,19 +17,20 @@ FGameplayTag UInventoryComponent::GetTeamTag() const
 {
     APawn* Pawn = Cast<APawn>(GetOwner());
     if (!Pawn) return FGameplayTag();
-    APlayerState* PS = Pawn->GetPlayerState();
-    if (!PS) return FGameplayTag();
-    UAbilitySystemComponent* ASC = nullptr;
-    if (IAbilitySystemInterface* IFace = Cast<IAbilitySystemInterface>(PS))
-        ASC = IFace->GetAbilitySystemComponent();
-    if (!ASC) return FGameplayTag();
 
-    static FGameplayTag PastTag = FGameplayTag::RequestGameplayTag(TEXT("Team.Past"));
-    static FGameplayTag FutureTag = FGameplayTag::RequestGameplayTag(TEXT("Team.Future"));
-    if (ASC->HasMatchingGameplayTag(PastTag))
-        return PastTag;
-    if (ASC->HasMatchingGameplayTag(FutureTag))
-        return FutureTag;
+    ADefaultPlayerState* PS = Cast<ADefaultPlayerState>(Pawn->GetPlayerState());
+    if (!PS) return FGameplayTag();
+
+    FString TeamName = PS->GetTeamName();
+    if (TeamName == "Past")
+    {
+        return FGameplayTag::RequestGameplayTag(TEXT("Team.Past"));
+    }
+    else if (TeamName == "Future")
+    {
+        return FGameplayTag::RequestGameplayTag(TEXT("Team.Future"));
+    }
+
     return FGameplayTag(); // None
 }
 
@@ -177,4 +178,10 @@ void UInventoryComponent::RemoveItemByInstanceID(FGuid ItemInstanceID)
 void UInventoryComponent::HandleFutureItemInvalidated(FGuid InvalidID)
 {
     RemoveItemByInstanceID(InvalidID);
+}
+
+void UInventoryComponent::BeginDestroy()
+{
+    AFutureItemPickup::OnFutureItemInvalidated.RemoveAll(this);
+    Super::BeginDestroy();
 }

@@ -123,6 +123,7 @@ void ADefaultPlayerState::ApplyTeam(const FString& NewTeam)
 
 void ADefaultPlayerState::OnRep_TeamName()
 {
+	UpdateTeamGameplayTag(); // <--- Add this line!
 	OnTeamChanged.Broadcast(this);
 	OnPlayerMetaChanged.Broadcast(this);
 }

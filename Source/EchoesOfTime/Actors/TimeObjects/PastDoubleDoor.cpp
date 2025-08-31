@@ -53,3 +53,12 @@ void APastDoubleDoor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
     DOREPLIFETIME(APastDoubleDoor, bIsOpen);
     DOREPLIFETIME(APastDoubleDoor, bIsLocked);
 }
+
+void APastDoubleDoor::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    if (LockPickComponent)
+    {
+        LockPickComponent->OnUnlock.RemoveDynamic(this, &APastDoubleDoor::OnLockUnlocked);
+    }
+    Super::EndPlay(EndPlayReason);
+}

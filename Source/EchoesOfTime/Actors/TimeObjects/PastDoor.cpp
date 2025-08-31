@@ -58,3 +58,13 @@ void APastDoor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
     DOREPLIFETIME(APastDoor, bIsOpen);
     DOREPLIFETIME(APastDoor, bIsLocked);
 }
+
+
+void APastDoor::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    if (LockPickComponent)
+    {
+        LockPickComponent->OnUnlock.RemoveDynamic(this, &APastDoor::OnLockUnlocked);
+    }
+    Super::EndPlay(EndPlayReason);
+}

@@ -56,3 +56,22 @@ void AFutureDoubleDoor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AFutureDoubleDoor, bIsOpen);
 }
+
+void AFutureDoubleDoor::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    APastDoubleDoor* BoundPastDoubleDoor = nullptr;
+    if (PastDoubleDoor.IsValid())
+    {
+        BoundPastDoubleDoor = PastDoubleDoor.Get();
+    }
+    else if (PastDoubleDoor.ToSoftObjectPath().IsValid())
+    {
+        BoundPastDoubleDoor = Cast<APastDoubleDoor>(PastDoubleDoor.LoadSynchronous());
+    }
+    if (BoundPastDoubleDoor)
+    {
+        BoundPastDoubleDoor->OnDoubleDoorStateChanged.RemoveDynamic(this, &AFutureDoubleDoor::HandlePastDoubleDoorStateChanged);
+    }
+
+    Super::EndPlay(EndPlayReason);
+}

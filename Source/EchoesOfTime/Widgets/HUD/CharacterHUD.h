@@ -11,6 +11,8 @@ class ECHOESOFTIME_API ACharacterHUD : public AHUD
     GENERATED_BODY()
 
 public:
+    FDelegateHandle IllegalTagDelegateHandle;
+
     UPROPERTY(EditDefaultsOnly, Category = "UI")
     TSubclassOf<UCharacterOverlay> CharacterOverlayClass;
 
@@ -21,4 +23,6 @@ public:
     void AddCharacterOverlay();
 
 	void BindTags(APawn* Pawn);
+
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 };

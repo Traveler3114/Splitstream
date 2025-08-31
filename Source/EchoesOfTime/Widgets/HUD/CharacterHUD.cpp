@@ -42,20 +42,33 @@ void ACharacterHUD::BindTags(APawn* Pawn) {
     if (ASC)
     {
         FGameplayTag IllegalTag = TAG_Character_Status_Illegal;
-        ASC->RegisterGameplayTagEvent(IllegalTag, EGameplayTagEventType::NewOrRemoved)
-            .AddLambda([this](const FGameplayTag Tag, int32 NewCount)
-                {
-                    if (CharacterOverlay)
-                    {
-                        if (NewCount > 0)
-                        {
-                            CharacterOverlay->SetStatusText(TEXT("Illegal"));
-                        }
-                        else
-                        {
-                            CharacterOverlay->SetStatusText(TEXT(""));
-                        }
-                    }
+        IllegalTagDelegateHandle = ASC->RegisterGameplayTagEvent(IllegalTag, EGameplayTagEventType::NewOrRemoved)
+            .AddLambda([this](const FGameplayTag Tag, int32 NewCount) {
+            if (CharacterOverlay) {
+                if (NewCount > 0) {
+                    CharacterOverlay->SetStatusText(TEXT("Illegal"));
+                }
+                else {
+                    CharacterOverlay->SetStatusText(TEXT(""));
+                }
+            }
                 });
     }
+}
+
+void ACharacterHUD::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    APawn* Pawn = GetOwningPlayerController() ? GetOwningPlayerController()->GetPawn() : nullptr;
+    if (Pawn)
+    {
+        if (ADefaultPlayerState* PS = Pawn->GetPlayerState<ADefaultPlayerState>())
+        {
+            if (UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent())
+            {
+                ASC->RegisterGameplayTagEvent(TAG_Character_Status_Illegal, EGameplayTagEventType::NewOrRemoved)
+                    .Remove(IllegalTagDelegateHandle);
+            }
+        }
+    }
+    Super::EndPlay(EndPlayReason);
 }

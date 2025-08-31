@@ -14,6 +14,8 @@ class ECHOESOFTIME_API UCharacterOverlay : public UUserWidget
     GENERATED_BODY()
 
 public:
+	virtual void NativeDestruct() override;
+
     UPROPERTY(meta = (BindWidget))
     UHorizontalBox* InventoryBox;
 
