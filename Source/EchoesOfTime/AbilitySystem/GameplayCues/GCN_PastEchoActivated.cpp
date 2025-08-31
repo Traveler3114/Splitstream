@@ -29,7 +29,5 @@ bool UGCN_PastEchoActivated::OnExecute_Implementation(AActor* MyTarget, const FG
             ++SetCount;
         }
     }
-    UE_LOG(LogTemp, Warning, TEXT("GCN_PastEchoActivated: SetGhostRevealed called on %d ghosts."), SetCount);
-
     return SetCount > 0;
 }
