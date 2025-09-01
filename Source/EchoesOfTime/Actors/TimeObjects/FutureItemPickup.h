@@ -14,6 +14,7 @@ public:
     AFutureItemPickup();
 
     virtual void BeginPlay() override;
+    virtual bool IsNetRelevantFor(const AActor* RealViewer, const AActor* ViewTarget, const FVector& SrcLocation) const override;
 
     virtual void Interact_Implementation(AActor* Interactor) override;
 

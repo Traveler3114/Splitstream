@@ -3,6 +3,8 @@
 #include "InventorySystem/InventoryComponent.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
+#include "DefaultPlayerState.h"
+#include "GameFramework/PlayerController.h"
 #include "DrawDebugHelpers.h"
 
 FFutureItemInvalidated AFutureItemPickup::OnFutureItemInvalidated;
@@ -40,4 +42,19 @@ void AFutureItemPickup::HandleInvalidation(FGuid InvalidatedID)
     {
         Destroy();
     }
+}
+
+
+bool AFutureItemPickup::IsNetRelevantFor(const AActor* RealViewer, const AActor* ViewTarget, const FVector& SrcLocation) const
+{
+    // RealViewer is usually the PlayerController
+    const APlayerController* PC = Cast<APlayerController>(RealViewer);
+    if (!PC) return false;
+
+    const ADefaultPlayerState* PS = PC->GetPlayerState<ADefaultPlayerState>();
+    if (PS && PS->GetTeamName().Equals(TEXT("Future"), ESearchCase::IgnoreCase))
+    {
+        return true;
+    }
+    return false;
 }
