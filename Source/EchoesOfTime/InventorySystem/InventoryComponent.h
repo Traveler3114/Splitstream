@@ -61,9 +61,6 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     void DropActiveItem(FVector DropLocation);
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
-    UItemBase* DefaultItemAsset;
-
     UFUNCTION()
     void OnRep_Slots();
 
