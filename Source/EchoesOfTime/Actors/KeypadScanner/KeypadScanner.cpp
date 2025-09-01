@@ -39,9 +39,9 @@ void AKeypadScanner::SpawnKeypadButtons()
     const int Cols = 3;
     const float ButtonSpacing = 60.f;
 
-    FVector Scale = GetActorScale3D();
-    FVector StartLocation = GetActorLocation() + ButtonGridOffset * Scale;
-    float ScaledButtonSpacing = ButtonSpacing * Scale.X;
+    // Only use scale for layout, not for button actor scale
+    FVector Scale = FVector(1.0f, 1.0f, 1.0f);
+    FVector StartLocation = ButtonGridOffset; // local offset, no scaling
 
     FString ButtonLabels[Rows][Cols] = {
         {TEXT("1"), TEXT("2"), TEXT("3")},
@@ -54,19 +54,35 @@ void AKeypadScanner::SpawnKeypadButtons()
     {
         for (int col = 0; col < Cols; ++col)
         {
-            FVector Location = StartLocation + FVector(col * ScaledButtonSpacing, 0, -row * ScaledButtonSpacing);
+            FVector LocalOffset = StartLocation + FVector(col * ButtonSpacing, 0, -row * ButtonSpacing);
 
             FActorSpawnParameters SpawnParams;
             SpawnParams.Owner = this;
             SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-            AKeypadButton* NewButton = GetWorld()->SpawnActor<AKeypadButton>(KeypadButtonClass, Location, FRotator::ZeroRotator, SpawnParams);
+            // Spawn at origin, will set relative transform after attaching
+            AKeypadButton* NewButton = GetWorld()->SpawnActor<AKeypadButton>(
+                KeypadButtonClass,
+                FVector::ZeroVector,
+                FRotator::ZeroRotator,
+                SpawnParams
+            );
             if (NewButton && NewButton->NumberTextRenderComp)
             {
                 FString Symbol = ButtonLabels[row][col];
                 NewButton->NumberTextRenderComp->SetText(FText::FromString(Symbol));
                 NewButton->ButtonSymbol = Symbol;
-                NewButton->SetActorScale3D(Scale);
+
+                // Attach to scanner mesh so it inherits all transform (scale, rotation, location)
+                NewButton->AttachToComponent(
+                    KeypadScannerMesh,
+                    FAttachmentTransformRules::KeepRelativeTransform
+                );
+                // Set the relative transform for layout
+                NewButton->SetActorRelativeLocation(LocalOffset);
+                NewButton->SetActorRelativeRotation(FRotator::ZeroRotator);
+                // DO NOT set relative scale! Let it inherit parent's scale
+
                 NewButton->OnButtonPressed.AddDynamic(this, &AKeypadScanner::AppendCodeSymbol);
                 KeypadButtons.Add(NewButton);
             }
