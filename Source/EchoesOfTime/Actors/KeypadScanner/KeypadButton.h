@@ -1,37 +1,47 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Interfaces/IInteractable.h"
 #include "KeypadButton.generated.h"
 
+// DELEGATE DECLARATION
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnButtonPressed, const FString&, Symbol);
+
 UCLASS()
-class ECHOESOFTIME_API AKeypadButton : public AActor
+class ECHOESOFTIME_API AKeypadButton : public AActor, public IInteractable
 {
-	GENERATED_BODY()
-	
-public:	
-	// Sets default values for this actor's properties
-	AKeypadButton();
+    GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadwrite, Category = "KeypadButton")
-	USceneComponent* DefaultSceneRoot;
+public:
+    // Sets default values for this actor's properties
+    AKeypadButton();
 
-	// Static mesh child
-	UPROPERTY(EditAnywhere, BlueprintReadwrite, Category = "KeypadButton")
-	UStaticMeshComponent* KeypadButtonMesh;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KeypadButton")
+    USceneComponent* DefaultSceneRoot;
 
-	// Text render child
-	UPROPERTY(EditAnywhere, BlueprintReadwrite, Category = "KeypadButton")
-	UTextRenderComponent* NumberTextRenderComp;
+    // Static mesh child
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KeypadButton")
+    UStaticMeshComponent* KeypadButtonMesh;
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+    // Text render child
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KeypadButton")
+    class UTextRenderComponent* NumberTextRenderComp;
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+    // The symbol this button represents ("1", "2", ..., "*", "#")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KeypadButton")
+    FString ButtonSymbol;
 
+    // Delegate for press event
+    UPROPERTY(BlueprintAssignable, Category = "KeypadButton")
+    FOnButtonPressed OnButtonPressed;
+
+    // Called when the game starts or when spawned
+    virtual void BeginPlay() override;
+
+    // Interactable interface implementation
+    virtual void Interact_Implementation(AActor* Interactor) override;
+
+    // Called every frame
+    virtual void Tick(float DeltaTime) override;
 };
