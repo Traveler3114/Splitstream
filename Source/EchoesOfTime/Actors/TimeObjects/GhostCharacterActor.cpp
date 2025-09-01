@@ -5,6 +5,8 @@
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/Character.h"
 #include "Interfaces/IGhostMirrorSource.h"
+#include "GameFramework/PlayerController.h"
+#include "DefaultPlayerState.h"
 #include "DrawDebugHelpers.h"
 #include "Engine/Engine.h"
 #include "Actors/RefPointActor.h"
@@ -23,6 +25,23 @@ AGhostCharacterActor::AGhostCharacterActor()
     SetReplicateMovement(true);
 
     Tags.AddUnique(TEXT("Ghost"));
+}
+
+
+
+bool AGhostCharacterActor::IsNetRelevantFor(const AActor* RealViewer, const AActor* ViewTarget, const FVector& SrcLocation) const
+{
+    // RealViewer is usually a PlayerController
+    const APlayerController* PC = Cast<APlayerController>(RealViewer);
+    if (!PC)
+        return false;
+
+    const ADefaultPlayerState* PS = PC->GetPlayerState<ADefaultPlayerState>();
+    if (PS && PS->GetTeamName().Equals(TEXT("Future"), ESearchCase::IgnoreCase))
+    {
+        return true;
+    }
+    return false;
 }
 
 void AGhostCharacterActor::BeginPlay()

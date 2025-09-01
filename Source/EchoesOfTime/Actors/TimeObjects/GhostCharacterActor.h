@@ -12,11 +12,12 @@ class ECHOESOFTIME_API AGhostCharacterActor : public AActor, public IGhostReveal
 
 public:
     AGhostCharacterActor();
+    virtual bool IsNetRelevantFor(const AActor* RealViewer, const AActor* ViewTarget, const FVector& SrcLocation) const override;
 
-    // IGhostRevealable interface
     virtual void SetGhostRevealed_Implementation(bool bRevealed) override;
 
     void SetIsPastEchoAbilityActive(bool bActive);
+
 
 protected:
     virtual void BeginPlay() override;
@@ -43,4 +44,5 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "Ghost")
     void UpdateGhostVisibility();
+
 };
