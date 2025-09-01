@@ -67,23 +67,55 @@ void ASecurityCamera::Tick(float DeltaTime)
 
         TSet<AActor*> DetectedThisFrame;
 
+        // ... inside the for (AActor* Actor : OverlappedActors) loop ...
         for (AActor* Actor : OverlappedActors)
         {
             if (!Actor || !Actor->GetClass()->ImplementsInterface(UCameraDetectable::StaticClass()))
                 continue;
 
-            // Check distance (redundant but safe)
-            FVector ToTarget = Actor->GetActorLocation() - CamLoc;
-            float Distance = ToTarget.Size();
-            if (Distance > DetectionDistance)
-                continue;
+            // Use bounding box corners for detection instead of just actor location
+            UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(Actor->GetRootComponent());
+            TArray<FVector> TestPoints;
 
-            // Check view cone
-            ToTarget.Normalize();
-            FVector CameraForward = SceneCapture ? SceneCapture->GetForwardVector() : GetActorForwardVector();
-            float Dot = FVector::DotProduct(CameraForward, ToTarget);
-            float CosHalfFOV = FMath::Cos(FMath::DegreesToRadians(ViewConeAngle * 0.5f));
-            if (Dot >= CosHalfFOV)
+            if (PrimComp)
+            {
+                FBox Bounds = PrimComp->Bounds.GetBox();
+                // Get all 8 corners of the bounding box
+                TestPoints.Add(Bounds.Min);
+                TestPoints.Add(Bounds.Max);
+                TestPoints.Add(FVector(Bounds.Min.X, Bounds.Min.Y, Bounds.Max.Z));
+                TestPoints.Add(FVector(Bounds.Min.X, Bounds.Max.Y, Bounds.Min.Z));
+                TestPoints.Add(FVector(Bounds.Max.X, Bounds.Min.Y, Bounds.Min.Z));
+                TestPoints.Add(FVector(Bounds.Min.X, Bounds.Max.Y, Bounds.Max.Z));
+                TestPoints.Add(FVector(Bounds.Max.X, Bounds.Min.Y, Bounds.Max.Z));
+                TestPoints.Add(FVector(Bounds.Max.X, Bounds.Max.Y, Bounds.Min.Z));
+            }
+            else
+            {
+                // fallback: just use actor location
+                TestPoints.Add(Actor->GetActorLocation());
+            }
+
+            bool bAnyPointDetected = false;
+            for (const FVector& Point : TestPoints)
+            {
+                FVector ToTarget = Point - CamLoc;
+                float Distance = ToTarget.Size();
+                if (Distance > DetectionDistance)
+                    continue;
+
+                ToTarget.Normalize();
+                FVector CameraForward = SceneCapture ? SceneCapture->GetForwardVector() : GetActorForwardVector();
+                float Dot = FVector::DotProduct(CameraForward, ToTarget);
+                float CosHalfFOV = FMath::Cos(FMath::DegreesToRadians(ViewConeAngle * 0.5f));
+                if (Dot >= CosHalfFOV)
+                {
+                    bAnyPointDetected = true;
+                    break;
+                }
+            }
+
+            if (bAnyPointDetected)
             {
                 DetectedThisFrame.Add(Actor);
                 bool bWasDetected = false;
