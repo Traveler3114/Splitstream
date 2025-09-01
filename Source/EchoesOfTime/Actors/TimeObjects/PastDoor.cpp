@@ -5,7 +5,7 @@
 
 APastDoor::APastDoor()
 {
-    LockPickComponent = CreateDefaultSubobject<ULockPickComponent>(TEXT("LockPickComponent"));
+    //LockPickComponent = CreateDefaultSubobject<ULockPickComponent>(TEXT("LockPickComponent"));
 }
 
 void APastDoor::BeginPlay()

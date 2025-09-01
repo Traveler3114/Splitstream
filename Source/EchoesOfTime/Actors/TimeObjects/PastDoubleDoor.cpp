@@ -4,7 +4,7 @@
 
 APastDoubleDoor::APastDoubleDoor()
 {
-    LockPickComponent = CreateDefaultSubobject<ULockPickComponent>(TEXT("LockPickComponent"));
+    //LockPickComponent = CreateDefaultSubobject<ULockPickComponent>(TEXT("LockPickComponent"));
 }
 
 void APastDoubleDoor::BeginPlay()
