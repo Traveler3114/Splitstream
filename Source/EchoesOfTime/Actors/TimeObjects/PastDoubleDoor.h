@@ -26,7 +26,7 @@ public:
 
     // Only PastDoubleDoor has these:
     UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Lock")
-    bool bIsLocked = true;
+    bool bIsLocked = false;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "LockPick")
     class ULockPickComponent* LockPickComponent;
