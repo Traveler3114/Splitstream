@@ -38,6 +38,11 @@ void UInventoryComponent::BeginPlay()
 {
     Super::BeginPlay();
     Slots.SetNum(SlotCount);
+    if (GetOwner()->HasAuthority() && DefaultItemAsset)
+    {
+        AddItem(DefaultItemAsset, FGuid::NewGuid());
+    }
+
 }
 
 void UInventoryComponent::SetActiveSlot(int32 Index)

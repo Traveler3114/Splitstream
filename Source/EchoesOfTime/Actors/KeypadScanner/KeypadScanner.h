@@ -2,51 +2,65 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Interfaces/IInteractable.h"
+#include "Interfaces/IKeycardUnlockable.h"
 #include "KeypadScanner.generated.h"
 
 class AKeypadButton;
 
 UCLASS()
-class ECHOESOFTIME_API AKeypadScanner : public AActor
+class ECHOESOFTIME_API AKeypadScanner : public AActor, public IInteractable
 {
     GENERATED_BODY()
 
 public:
-    // Sets default values for this actor's properties
     AKeypadScanner();
+    virtual void BeginPlay() override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+    virtual void Tick(float DeltaTime) override;
 
+    // COMPONENTS
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KeypadScanner")
     USceneComponent* DefaultSceneRoot;
 
-    // Static mesh child
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KeypadScanner")
     UStaticMeshComponent* KeypadScannerMesh;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KeypadButton")
     class UTextRenderComponent* CodeTextRenderComp;
 
-    // Spawned keypad buttons
+    // BUTTONS
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "KeypadScanner")
     TArray<AKeypadButton*> KeypadButtons;
 
-    // Button class to spawn
     UPROPERTY(EditDefaultsOnly, Category = "KeypadScanner")
     TSubclassOf<AKeypadButton> KeypadButtonClass;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KeypadScanner")
     FVector ButtonGridOffset = FVector(-190.0f, -5.0f, 0.0f);
 
-    // Method to append code symbol, must be UFUNCTION() for delegate binding
+    // LINKED ACTOR (door, etc)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Linked")
+    AActor* LinkedActor;
+
+    // CODE DATA
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KeypadScanner")
+    FString CorrectCode = TEXT("1234");
+
+    // IInteractable
+    virtual void Interact_Implementation(AActor* Interactor) override;
+
+    // BUTTON HANDLER
     UFUNCTION()
     void AppendCodeSymbol(const FString& Symbol);
 
 protected:
-    // Called when the game starts or when spawned
-    virtual void BeginPlay() override;
-    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     void SpawnKeypadButtons();
 
-public:
-    // Called every frame
-    virtual void Tick(float DeltaTime) override;
+    // --- STATE ---
+    FString EnteredCode;
+    bool bCodeCorrect = false;
+    bool bUnlocked = false;
+
+    void TryUnlock(AActor* Interactor);
 };

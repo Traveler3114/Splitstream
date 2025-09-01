@@ -2,6 +2,9 @@
 #include "KeypadButton.h"
 #include "Components/TextRenderComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Interfaces/IKeycardUnlockable.h"
+#include "InventorySystem/InventoryComponent.h"
+#include "InventorySystem/ItemBase.h"
 
 AKeypadScanner::AKeypadScanner()
 {
@@ -15,6 +18,11 @@ AKeypadScanner::AKeypadScanner()
 
     CodeTextRenderComp = CreateDefaultSubobject<UTextRenderComponent>(TEXT("CodeTextRenderComp"));
     CodeTextRenderComp->SetupAttachment(KeypadScannerMesh);
+
+    LinkedActor = nullptr;
+    EnteredCode = "";
+    bCodeCorrect = false;
+    bUnlocked = false;
 }
 
 void AKeypadScanner::BeginPlay()
@@ -59,7 +67,6 @@ void AKeypadScanner::SpawnKeypadButtons()
                 NewButton->NumberTextRenderComp->SetText(FText::FromString(Symbol));
                 NewButton->ButtonSymbol = Symbol;
                 NewButton->SetActorScale3D(Scale);
-                // Delegate binding instead of parent reference:
                 NewButton->OnButtonPressed.AddDynamic(this, &AKeypadScanner::AppendCodeSymbol);
                 KeypadButtons.Add(NewButton);
             }
@@ -71,15 +78,75 @@ void AKeypadScanner::AppendCodeSymbol(const FString& Symbol)
 {
     if (!CodeTextRenderComp) return;
 
-    FString CurrentText = CodeTextRenderComp->Text.ToString();
-    CodeTextRenderComp->SetText(FText::FromString(CurrentText + Symbol));
+    // Handle clear (*) and submit (#)
+    if (Symbol == "*")
+    {
+        EnteredCode.Empty();
+        CodeTextRenderComp->SetText(FText::FromString(""));
+        bCodeCorrect = false;
+        return;
+    }
+
+    if (Symbol == "#")
+    {
+        if (EnteredCode == CorrectCode)
+        {
+            bCodeCorrect = true;
+            CodeTextRenderComp->SetText(FText::FromString("READY"));
+        }
+        else
+        {
+            bCodeCorrect = false;
+            CodeTextRenderComp->SetText(FText::FromString("WRONG"));
+            EnteredCode.Empty();
+        }
+        return;
+    }
+
+    // Append digit
+    EnteredCode += Symbol;
+    CodeTextRenderComp->SetText(FText::FromString(EnteredCode));
+}
+
+void AKeypadScanner::TryUnlock(AActor* Interactor)
+{
+    if (bUnlocked || !bCodeCorrect || !LinkedActor || !Interactor) return;
+
+    // Check for keycard in Interactor's inventory
+    UInventoryComponent* Inventory = Interactor->FindComponentByClass<UInventoryComponent>();
+    if (!Inventory) return;
+
+    FInventorySlot ActiveSlot = Inventory->GetActiveItem();
+    UItemBase* ActiveItem = ActiveSlot.ItemAsset;
+    if (ActiveItem && ActiveItem->ItemType == EItemType::Keycard)
+    {
+        // Use the keycard (trigger OnUsed logic)
+        ActiveItem->OnUsed(Interactor);
+        bUnlocked = true;
+
+        if (LinkedActor->GetClass()->ImplementsInterface(UKeycardUnlockable::StaticClass()))
+        {
+            IKeycardUnlockable::Execute_UnlockWithKeycard(LinkedActor, Interactor);
+        }
+        CodeTextRenderComp->SetText(FText::FromString("UNLOCKED"));
+    }
+    else
+    {
+        // Optional: feedback for no keycard
+        CodeTextRenderComp->SetText(FText::FromString("NEED CARD"));
+    }
+}
+
+void AKeypadScanner::Interact_Implementation(AActor* Interactor)
+{
+    // Called when the player "scans" their card on the scanner
+    TryUnlock(Interactor);
 }
 
 void AKeypadScanner::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 }
-
 
 void AKeypadScanner::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {

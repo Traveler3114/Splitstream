@@ -29,6 +29,9 @@ public:
     virtual void BeginDestroy() override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
+    UItemBase* DefaultItemAsset;
+
     UPROPERTY(BlueprintAssignable, Category = "Inventory")
     FOnInventoryChanged OnInventoryChanged;
 
