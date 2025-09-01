@@ -1,32 +1,20 @@
 #include "PastDoor.h"
-#include "LockPickingSystem/LockPickComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Engine/Engine.h" // For debug messages
 
 APastDoor::APastDoor()
 {
-    //LockPickComponent = CreateDefaultSubobject<ULockPickComponent>(TEXT("LockPickComponent"));
+    // No LockPickComponent logic here!
 }
 
 void APastDoor::BeginPlay()
 {
     Super::BeginPlay();
-
-    ULockPickComponent* LockPickComp = FindComponentByClass<ULockPickComponent>();
-    if (LockPickComp)
-    {
-        LockPickComp->OnUnlock.AddDynamic(this, &APastDoor::OnLockUnlocked);
-
-    }
+    // No LockPick logic here!
 }
 
 void APastDoor::Interact_Implementation(AActor* Interactor)
 {
-    if (bIsLocked)
-    {
-        return;
-    }
-
     Super::Interact_Implementation(Interactor);
 
     if (HasAuthority())
@@ -44,27 +32,11 @@ void APastDoor::OnRep_IsOpen()
         CloseDoor();
 }
 
-void APastDoor::OnLockUnlocked()
-{
-
-    bIsLocked = false;
-    bIsOpen = true;
-    OnRep_IsOpen();
-}
-
 void APastDoor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-    DOREPLIFETIME(APastDoor, bIsOpen);
-    DOREPLIFETIME(APastDoor, bIsLocked);
 }
-
-
 void APastDoor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-    if (LockPickComponent)
-    {
-        LockPickComponent->OnUnlock.RemoveDynamic(this, &APastDoor::OnLockUnlocked);
-    }
     Super::EndPlay(EndPlayReason);
 }

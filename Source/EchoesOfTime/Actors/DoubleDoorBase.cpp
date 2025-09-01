@@ -1,4 +1,5 @@
 #include "DoubleDoorBase.h"
+#include "LockPickingSystem/LockPickComponent.h"
 #include "Net/UnrealNetwork.h"
 
 ADoubleDoorBase::ADoubleDoorBase()
@@ -19,23 +20,52 @@ ADoubleDoorBase::ADoubleDoorBase()
     DoorLeftMesh->SetIsReplicated(true);
 }
 
+void ADoubleDoorBase::BeginPlay()
+{
+    Super::BeginPlay();
+
+    LockPickComponent = FindComponentByClass<ULockPickComponent>();
+    if (LockPickComponent)
+    {
+        LockPickComponent->OnUnlock.AddDynamic(this, &ADoubleDoorBase::OnLockUnlocked);
+    }
+}
+
+void ADoubleDoorBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    if (LockPickComponent)
+    {
+        LockPickComponent->OnUnlock.RemoveDynamic(this, &ADoubleDoorBase::OnLockUnlocked);
+    }
+    Super::EndPlay(EndPlayReason);
+}
+
 void ADoubleDoorBase::Interact_Implementation(AActor* Interactor)
 {
-    // If requires keycard, block direct opening by the player
+    if (bIsLocked && LockPickComponent)
+    {
+        // Optionally trigger lockpick UI here
+        return;
+    }
+
     if (bRequiresKeycard)
     {
-        // Optional: Play denial sound or feedback
+        // Optionally play denial feedback
         return;
     }
 
     if (HasAuthority())
     {
         bIsOpen = !bIsOpen;
-        if (bIsOpen)
-            OpenDoor();
-        else
-            CloseDoor();
+        OnRep_IsOpen();
     }
+}
+
+void ADoubleDoorBase::OnLockUnlocked()
+{
+    bIsLocked = false;
+    bIsOpen = true;
+    OnRep_IsOpen();
 }
 
 void ADoubleDoorBase::OnRep_IsOpen()
@@ -50,6 +80,7 @@ void ADoubleDoorBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(ADoubleDoorBase, bIsOpen);
+    DOREPLIFETIME(ADoubleDoorBase, bIsLocked);
 }
 
 void ADoubleDoorBase::UnlockWithKeycard_Implementation(AActor* Interactor)

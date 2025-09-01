@@ -23,9 +23,31 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
     UStaticMeshComponent* DoorFrameMesh;
 
-    // Replicated open state
     UPROPERTY(ReplicatedUsing = OnRep_IsOpen, EditAnywhere, BlueprintReadWrite, Category = "Door")
     bool bIsOpen = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door")
+    bool bRequiresKeycard = false;
+
+    UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Lock")
+    bool bIsLocked = false;
+
+    // Lockpick component pointer (not created in constructor, only picked up if present)
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "LockPick")
+    class ULockPickComponent* LockPickComponent = nullptr;
+
+    // IInteractable
+    virtual void Interact_Implementation(AActor* Interactor) override;
+
+    // Keycard unlockable interface
+    virtual void UnlockWithKeycard_Implementation(AActor* Interactor) override;
+    virtual bool RequiresKeycard_Implementation() const override;
+
+    virtual void BeginPlay() override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+    UFUNCTION()
+    virtual void OnLockUnlocked();
 
     UFUNCTION()
     virtual void OnRep_IsOpen();
@@ -35,16 +57,6 @@ public:
 
     UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Door")
     void CloseDoor();
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door")
-    bool bRequiresKeycard = false; // If true, can't open directly by interact
-
-    // IInteractable
-    virtual void Interact_Implementation(AActor* Interactor) override;
-
-    // Keycard unlockable interface
-    virtual void UnlockWithKeycard_Implementation(AActor* Interactor) override;
-    virtual bool RequiresKeycard_Implementation() const override;
 
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

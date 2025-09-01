@@ -23,14 +23,4 @@ public:
     FOnDoubleDoorStateChanged OnDoubleDoorStateChanged;
 
     void OnRep_IsOpen() override;
-
-    // Only PastDoubleDoor has these:
-    UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Lock")
-    bool bIsLocked = false;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "LockPick")
-    class ULockPickComponent* LockPickComponent;
-
-    UFUNCTION()
-    void OnLockUnlocked();
 };

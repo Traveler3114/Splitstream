@@ -16,21 +16,11 @@ public:
 
     virtual void Interact_Implementation(AActor* Interactor) override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	virtual void BeginPlay() override;
+    virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
     UPROPERTY(BlueprintAssignable, Category = "PastDoor")
     FOnDoorStateChanged OnDoorStateChanged;
 
     void OnRep_IsOpen() override;
-
-    // Only PastDoor has these:
-    UPROPERTY(Replicated,EditAnywhere, BlueprintReadWrite, Category = "Lock")
-    bool bIsLocked = false;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "LockPick")
-    class ULockPickComponent* LockPickComponent;
-
-    UFUNCTION()
-    void OnLockUnlocked();
 };
