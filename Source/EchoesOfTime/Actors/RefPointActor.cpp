@@ -9,5 +9,6 @@ FVector ARefPointActor::GetOffsetBetweenFirstTwoRefPoints(UObject* WorldContextO
     {
         return FVector::ZeroVector;
     }
-    return RefPoints[1]->GetActorLocation() - RefPoints[0]->GetActorLocation();
+    FVector Offset = RefPoints[1]->GetActorLocation() - RefPoints[0]->GetActorLocation();
+    return Offset.GetAbs()*( - 1.0f);
 }
