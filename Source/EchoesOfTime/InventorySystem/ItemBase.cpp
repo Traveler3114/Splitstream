@@ -36,7 +36,7 @@ void UItemBase::OnDroppedWithTeam_Implementation(AActor* Instigator, FGuid ItemI
     UWorld* World = Instigator->GetWorld();
     if (!World) return;
 
-    FRotator SpawnRotation = FRotator::ZeroRotator;
+    FRotator SpawnRotation = FRotator(90.0f,0.0f,0.0f);
     FTransform SpawnTransform = FTransform(SpawnRotation, DropLocation);
 
     static FGameplayTag PastTag = FGameplayTag::RequestGameplayTag(TEXT("Team.Past"));
