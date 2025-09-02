@@ -7,7 +7,8 @@
 UENUM(BlueprintType)
 enum class EItemType : uint8
 {
-    Keycard     UMETA(DisplayName = "Keycard"),
+    KeycardL1     UMETA(DisplayName = "KeycardL1"),
+    KeycardL2     UMETA(DisplayName = "KeycardL2"),
     MoneyStack  UMETA(DisplayName = "MoneyStack"),
     Tool        UMETA(DisplayName = "Tool"),
     Gadget      UMETA(DisplayName = "Gadget"),

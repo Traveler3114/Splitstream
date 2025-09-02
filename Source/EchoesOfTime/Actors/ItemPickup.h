@@ -24,7 +24,7 @@ public:
     FOnPickedUp OnPickedUp;
 
     // Only need this one mesh component for both override and runtime
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     UStaticMeshComponent* OverrideMeshComp;
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Item")

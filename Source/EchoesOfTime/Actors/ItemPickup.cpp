@@ -8,8 +8,11 @@ AItemPickup::AItemPickup()
     bReplicates = true;
     SetReplicateMovement(true);
 
+    USceneComponent* SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+    RootComponent = SceneRoot;
+
     OverrideMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("OverrideMeshComp"));
-    RootComponent = OverrideMeshComp;
+    OverrideMeshComp->SetupAttachment(SceneRoot);
     OverrideMeshComp->SetIsReplicated(true);
 
     ItemData = nullptr;
