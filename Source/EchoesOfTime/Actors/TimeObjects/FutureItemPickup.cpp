@@ -17,7 +17,6 @@ AFutureItemPickup::AFutureItemPickup()
 void AFutureItemPickup::BeginPlay()
 {
     Super::BeginPlay();
-    // REMOVED: code that tries to find LinkedPastItem
 }
 
 void AFutureItemPickup::Interact_Implementation(AActor* Interactor)

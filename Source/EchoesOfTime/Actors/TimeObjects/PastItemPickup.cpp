@@ -4,7 +4,9 @@
 #include "Kismet/GameplayStatics.h"
 #include "Actors/RefPointActor.h"
 
-APastItemPickup::APastItemPickup() {}
+APastItemPickup::APastItemPickup() 
+{
+}
 
 void APastItemPickup::BeginPlay()
 {
@@ -21,19 +23,24 @@ void APastItemPickup::SpawnLinkedFutureItem()
 {
     if (!ItemData) return;
 
-    FVector FutureLocation = GetActorLocation() + FutureItemPickupOffset;
-    FRotator Rot = GetActorRotation();
-    FTransform FutureTransform = FTransform(Rot, FutureLocation);
+    FVector DesiredLocation = GetActorLocation() + FutureItemPickupOffset;
+
+    // ... your line trace logic here if you use it ...
+    FVector FutureLocation = DesiredLocation; // or result of your trace
+
+    FRotator ActorRotation = GetActorRotation();
+    FRotator MeshRelativeRotation = OverrideMeshComp ? OverrideMeshComp->GetRelativeRotation() : FRotator::ZeroRotator;
+    FRotator CombinedRotation = (ActorRotation.Quaternion() * MeshRelativeRotation.Quaternion()).Rotator();
+
+
+    FTransform FutureTransform = FTransform(CombinedRotation, FutureLocation);
 
     AFutureItemPickup* Future = GetWorld()->SpawnActorDeferred<AFutureItemPickup>(AFutureItemPickup::StaticClass(), FutureTransform);
     if (Future)
     {
-        // Only set data on the future item, no back-ref!
         Future->ItemData = ItemData;
         Future->ItemInstanceID = ItemInstanceID;
         UGameplayStatics::FinishSpawningActor(Future, FutureTransform);
-
-        // Store the reference in PastItemPickup
         SpawnedFutureItem = Future;
     }
 }
