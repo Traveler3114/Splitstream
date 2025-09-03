@@ -18,7 +18,7 @@ void UItemBase::OnDropped_Implementation(AActor* Instigator, FGuid ItemInstanceI
     UWorld* World = Instigator->GetWorld();
     if (!World) return;
 
-    FRotator SpawnRotation = FRotator::ZeroRotator;
+    FRotator SpawnRotation = FRotator(90.0f,0.0f,0.0f);
     FTransform SpawnTransform = FTransform(SpawnRotation, DropLocation);
 
     AItemPickup* Pickup = World->SpawnActorDeferred<AItemPickup>(AItemPickup::StaticClass(), SpawnTransform);
