@@ -1,7 +1,6 @@
 #include "InventoryComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "ItemBase.h"
-#include "Engine/Engine.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemInterface.h"
 #include "DefaultPlayerState.h"
@@ -11,6 +10,7 @@
 UInventoryComponent::UInventoryComponent()
 {
     PrimaryComponentTick.bCanEverTick = false;
+    SetIsReplicated(true);
 }
 
 FGameplayTag UInventoryComponent::GetTeamTag() const
@@ -38,11 +38,11 @@ void UInventoryComponent::BeginPlay()
 {
     Super::BeginPlay();
     Slots.SetNum(SlotCount);
+
     if (GetOwner()->HasAuthority() && DefaultItemAsset)
     {
         AddItem(DefaultItemAsset, FGuid::NewGuid());
     }
-
 }
 
 void UInventoryComponent::SetActiveSlot(int32 Index)
@@ -50,21 +50,6 @@ void UInventoryComponent::SetActiveSlot(int32 Index)
     if (Index >= 0 && Index < Slots.Num())
     {
         ActiveSlotIndex = Index;
-
-        if (GEngine && GetOwner() && GetOwner()->GetWorld())
-        {
-            FString ItemName = TEXT("Empty Slot");
-            if (Slots[Index].ItemAsset)
-            {
-                ItemName = Slots[Index].ItemAsset->GetName();
-            }
-            GEngine->AddOnScreenDebugMessage(
-                -1,
-                2.0f,
-                FColor::Yellow,
-                FString::Printf(TEXT("Selected Slot: %d | Item: %s"), Index + 1, *ItemName)
-            );
-        }
     }
 }
 
