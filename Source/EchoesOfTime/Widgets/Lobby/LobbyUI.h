@@ -31,6 +31,7 @@ public:
 	UPROPERTY(meta = (BindWidget)) UButton* leave_btn;
 	UPROPERTY(meta = (BindWidget)) UButton* ready_btn;
 	UPROPERTY(meta = (BindWidget)) UButton* changeteam_btn;
+
 	UPROPERTY(meta = (BindWidget)) UTextBlock* team_txt;
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly) UTextBlock* ready_txt;
 

@@ -48,11 +48,12 @@ void ULobbyUI::OnChangeTeamButtonClicked()
 	}
 }
 
-void ULobbyUI::RefreshTeamLabel(const FString& Team)
+void ULobbyUI::RefreshTeamLabel(const FString& CurrentTeam)
 {
 	if (team_txt)
 	{
-		team_txt->SetText(FText::FromString(Team));
+		FString OppositeTeam = CurrentTeam == "Past" ? "Future" : "Past";
+		team_txt->SetText(FText::FromString(OppositeTeam));
 	}
 }
 
