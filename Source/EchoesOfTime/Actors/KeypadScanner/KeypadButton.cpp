@@ -32,3 +32,12 @@ void AKeypadButton::Interact_Implementation(AActor* Interactor)
 {
     OnButtonPressed.Broadcast(ButtonSymbol);
 }
+
+void AKeypadButton::SetHighlighted_Implementation(bool bHighlight)
+{
+    if (KeypadButtonMesh)
+    {
+        KeypadButtonMesh->SetRenderCustomDepth(bHighlight);
+        KeypadButtonMesh->CustomDepthStencilValue = bHighlight ? 1 : 0;
+	}
+}

@@ -39,6 +39,44 @@ ADefaultCharacter::ADefaultCharacter()
     InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 }
 
+void ADefaultCharacter::Tick(float DeltaTime)
+{
+    Super::Tick(DeltaTime);
+    UpdateInteractHighlight();
+}
+
+void ADefaultCharacter::UpdateInteractHighlight()
+{
+    FHitResult Hit;
+    FVector TraceEnd;
+    bool bHit = GetForwardTraceResult(300.f, Hit, TraceEnd);
+
+    AActor* HitActor = bHit ? Hit.GetActor() : nullptr;
+
+    if (HitActor && HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
+    {
+        if (HitActor != HighlightedActor)
+        {
+            // Remove highlight from previous
+            if (HighlightedActor)
+            {
+                IInteractable::Execute_SetHighlighted(HighlightedActor, false);
+            }
+            // Highlight new actor
+            IInteractable::Execute_SetHighlighted(HitActor, true);
+            HighlightedActor = HitActor;
+        }
+    }
+    else
+    {
+        if (HighlightedActor)
+        {
+            IInteractable::Execute_SetHighlighted(HighlightedActor, false);
+            HighlightedActor = nullptr;
+        }
+    }
+}
+
 void ADefaultCharacter::InitializeAbilitySystem()
 {
     ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();

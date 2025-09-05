@@ -18,4 +18,6 @@ public:
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interactable")
     void Interact(AActor* Interactor);
     // You do NOT need to add "=0" or implement this in the header.
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interactable")
+    void SetHighlighted(bool bHighlight);
 };

@@ -94,3 +94,13 @@ bool ADoorBase::RequiresKeycard_Implementation() const
 {
     return bRequiresKeycard;
 }
+
+
+void ADoorBase::SetHighlighted_Implementation(bool bHighlight)
+{
+    if (DoorMesh)
+    {
+        DoorMesh->SetRenderCustomDepth(bHighlight);
+        DoorMesh->CustomDepthStencilValue = bHighlight ? 1 : 0;
+    }
+}

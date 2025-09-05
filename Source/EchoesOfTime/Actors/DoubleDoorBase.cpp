@@ -96,3 +96,15 @@ bool ADoubleDoorBase::RequiresKeycard_Implementation() const
 {
     return bRequiresKeycard;
 }
+
+
+void ADoubleDoorBase::SetHighlighted_Implementation(bool bHighlight)
+{
+    if (DoorLeftMesh&&DoorRightMesh)
+    {
+        DoorLeftMesh->SetRenderCustomDepth(bHighlight);
+        DoorLeftMesh->CustomDepthStencilValue = bHighlight ? 1 : 0;
+        DoorRightMesh->SetRenderCustomDepth(bHighlight);
+        DoorRightMesh->CustomDepthStencilValue = bHighlight ? 1 : 0;
+    }
+}

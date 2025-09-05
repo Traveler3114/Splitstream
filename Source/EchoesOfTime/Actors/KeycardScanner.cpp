@@ -44,3 +44,12 @@ void AKeycardScanner::Interact_Implementation(AActor* Interactor)
         // Optional: feedback for failure (wrong/no keycard)
     }
 }
+
+void AKeycardScanner::SetHighlighted_Implementation(bool bHighlight)
+{
+    if (Mesh)
+    {
+        Mesh->SetRenderCustomDepth(bHighlight);
+        Mesh->CustomDepthStencilValue = bHighlight ? 1 : 0;
+    }
+}

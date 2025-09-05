@@ -68,6 +68,15 @@ void AItemPickup::Interact_Implementation(AActor* Interactor)
     }
 }
 
+void AItemPickup::SetHighlighted_Implementation(bool bHighlight)
+{
+    if (OverrideMeshComp)
+    {
+        OverrideMeshComp->SetRenderCustomDepth(bHighlight);
+        OverrideMeshComp->CustomDepthStencilValue = bHighlight ? 1 : 0;
+    }
+}
+
 #if WITH_EDITOR
 void AItemPickup::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {

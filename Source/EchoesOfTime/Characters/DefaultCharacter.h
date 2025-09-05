@@ -23,7 +23,7 @@ public:
     ADefaultCharacter();
     virtual void PostInitializeComponents() override;
     virtual void BeginPlay() override;
-    //virtual void Tick(float DeltaTime) override;
+    virtual void Tick(float DeltaTime) override;
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
     virtual void OnRep_PlayerState() override;
     virtual void PossessedBy(AController* NewController) override;
@@ -35,6 +35,11 @@ public:
 
 
 protected:
+    UPROPERTY()
+    AActor* HighlightedActor = nullptr;
+
+    void UpdateInteractHighlight();
+
     UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="ASC")
     UAbilitySystemComponent* AbilitySystemComponent;
 

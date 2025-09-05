@@ -171,3 +171,13 @@ void AKeypadScanner::EndPlay(const EEndPlayReason::Type EndPlayReason)
     }
     Super::EndPlay(EndPlayReason);
 }
+
+
+void AKeypadScanner::SetHighlighted_Implementation(bool bHighlight)
+{
+    if (KeypadScannerMesh)
+    {
+        KeypadScannerMesh->SetRenderCustomDepth(bHighlight);
+        KeypadScannerMesh->CustomDepthStencilValue = bHighlight ? 1 : 0;
+    }
+}

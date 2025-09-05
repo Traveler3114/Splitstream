@@ -31,4 +31,5 @@ public:
 
     // IInteractable
     virtual void Interact_Implementation(AActor* Interactor) override;
+	virtual void SetHighlighted_Implementation(bool bHighlight) override;
 };

@@ -39,6 +39,7 @@ public:
     void InitFromItemData(UItemBase* InItemData, FGuid InInstanceID);
 
     virtual void Interact_Implementation(AActor* Interactor) override;
+	virtual void SetHighlighted_Implementation(bool bHighlight) override;
 
     // Call this after pickup to refresh mesh to ItemData mesh
     UFUNCTION(BlueprintCallable, Category = "Item")
