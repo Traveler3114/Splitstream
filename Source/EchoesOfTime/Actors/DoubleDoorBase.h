@@ -32,8 +32,6 @@ public:
     UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Lock")
     bool bIsLocked = false;
 
-    // Lockpick component pointer (not created in constructor, only picked up if present)
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "LockPick")
     class ULockPickComponent* LockPickComponent = nullptr;
 
     virtual void Interact_Implementation(AActor* Interactor) override;
