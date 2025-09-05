@@ -14,10 +14,6 @@ ADoorBase::ADoorBase()
     DoorMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DoorMesh"));
     DoorMesh->SetupAttachment(SceneRoot);
     DoorMesh->SetIsReplicated(true);
-
-    DoorFrameMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DoorFrameMesh"));
-    DoorFrameMesh->SetupAttachment(SceneRoot);
-    DoorFrameMesh->SetIsReplicated(true);
 }
 
 void ADoorBase::BeginPlay()

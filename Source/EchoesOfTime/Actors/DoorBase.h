@@ -20,9 +20,6 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
     UStaticMeshComponent* DoorMesh;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
-    UStaticMeshComponent* DoorFrameMesh;
-
     UPROPERTY(ReplicatedUsing = OnRep_IsOpen, EditAnywhere, BlueprintReadWrite, Category = "Door")
     bool bIsOpen = false;
 
