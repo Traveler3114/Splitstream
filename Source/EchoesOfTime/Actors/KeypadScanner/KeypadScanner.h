@@ -4,6 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "Interfaces/IInteractable.h"
 #include "Interfaces/IKeycardUnlockable.h"
+#include "InventorySystem/ItemBase.h" // <-- Include for EItemType
 #include "KeypadScanner.generated.h"
 
 class AKeypadButton;
@@ -19,7 +20,6 @@ public:
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     virtual void Tick(float DeltaTime) override;
 
-    // COMPONENTS
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KeypadScanner")
     USceneComponent* DefaultSceneRoot;
 
@@ -29,7 +29,6 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KeypadButton")
     class UTextRenderComponent* CodeTextRenderComp;
 
-    // BUTTONS
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "KeypadScanner")
     TArray<AKeypadButton*> KeypadButtons;
 
@@ -39,25 +38,24 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KeypadScanner")
     FVector ButtonGridOffset = FVector(-190.0f, -5.0f, 0.0f);
 
-    // LINKED ACTOR (door, etc)
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Linked")
     AActor* LinkedActor;
 
-    // CODE DATA
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KeypadScanner")
     FString CorrectCode = TEXT("1234");
 
-    // IInteractable
+    // **NEW:** Keycard type required to unlock
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KeypadScanner")
+    EItemType RequiredKeycardType = EItemType::KeycardL2;
+
     virtual void Interact_Implementation(AActor* Interactor) override;
 
-    // BUTTON HANDLER
     UFUNCTION()
     void AppendCodeSymbol(const FString& Symbol);
 
 protected:
     void SpawnKeypadButtons();
 
-    // --- STATE ---
     FString EnteredCode;
     bool bCodeCorrect = false;
     bool bUnlocked = false;

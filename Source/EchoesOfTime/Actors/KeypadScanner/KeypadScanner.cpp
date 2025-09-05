@@ -4,7 +4,6 @@
 #include "Components/StaticMeshComponent.h"
 #include "Interfaces/IKeycardUnlockable.h"
 #include "InventorySystem/InventoryComponent.h"
-#include "InventorySystem/ItemBase.h"
 
 AKeypadScanner::AKeypadScanner()
 {
@@ -128,15 +127,13 @@ void AKeypadScanner::TryUnlock(AActor* Interactor)
 {
     if (bUnlocked || !bCodeCorrect || !LinkedActor || !Interactor) return;
 
-    // Check for keycard in Interactor's inventory
     UInventoryComponent* Inventory = Interactor->FindComponentByClass<UInventoryComponent>();
     if (!Inventory) return;
 
     FInventorySlot ActiveSlot = Inventory->GetActiveItem();
     UItemBase* ActiveItem = ActiveSlot.ItemAsset;
-    if (ActiveItem && ActiveItem->ItemType == EItemType::KeycardL2)
+    if (ActiveItem && ActiveItem->ItemType == RequiredKeycardType)
     {
-        // Use the keycard (trigger OnUsed logic)
         ActiveItem->OnUsed(Interactor);
         bUnlocked = true;
 
@@ -148,7 +145,6 @@ void AKeypadScanner::TryUnlock(AActor* Interactor)
     }
     else
     {
-        // Optional: feedback for no keycard
         CodeTextRenderComp->SetText(FText::FromString("NEED CARD"));
     }
 }

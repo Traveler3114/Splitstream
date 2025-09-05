@@ -11,14 +11,12 @@ AKeycardScanner::AKeycardScanner()
     Mesh->SetupAttachment(DefaultSceneRoot);
 
     LinkedActor = nullptr;
+    RequiredKeycardType = EItemType::KeycardL1; // Default
 }
 
 void AKeycardScanner::BeginPlay()
 {
     Super::BeginPlay();
-
-    // Optionally: you could do anything with the LinkedActor here if needed
-    // For example: set bRequiresKeycard, but that's usually done in the actor itself
 }
 
 void AKeycardScanner::Interact_Implementation(AActor* Interactor)
@@ -32,19 +30,17 @@ void AKeycardScanner::Interact_Implementation(AActor* Interactor)
 
     FInventorySlot ActiveSlot = Inventory->GetActiveItem();
     UItemBase* ActiveItem = ActiveSlot.ItemAsset;
-    if (ActiveItem && ActiveItem->ItemType == EItemType::KeycardL1)
+    if (ActiveItem && ActiveItem->ItemType == RequiredKeycardType)
     {
-        // Use the keycard (trigger OnUsed logic)
         ActiveItem->OnUsed(Interactor);
 
         if (LinkedActor->GetClass()->ImplementsInterface(UKeycardUnlockable::StaticClass()))
         {
             IKeycardUnlockable::Execute_UnlockWithKeycard(LinkedActor, Interactor);
         }
-        // Optional: feedback for success
     }
     else
     {
-        // Optional: feedback for failure (no keycard in hand)
+        // Optional: feedback for failure (wrong/no keycard)
     }
 }
