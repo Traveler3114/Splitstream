@@ -4,10 +4,14 @@
 #include "EOTGameplayTags.h"
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character, "Character");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Block_Movement, "Character.Status.Block.Movement");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Block_Look, "Character.Status.Block.Look");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Ability_Future_PastEcho, "Character.Ability.Future.PastEcho");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Ability_LockPick, "Character.Ability.LockPick");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Ability_Hack, "Character.Ability.Hack");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_PastEcho, "Character.Status.PastEcho");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_LockPicking, "Character.Status.LockPicking");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Hacking, "Character.Status.Hacking");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Illegal, "Character.Status.Illegal");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Illegal_Action, "Character.Status.Illegal.Action");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Illegal_Area, "Character.Status.Illegal.Area");

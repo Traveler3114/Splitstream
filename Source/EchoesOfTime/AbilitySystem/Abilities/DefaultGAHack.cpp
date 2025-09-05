@@ -1,33 +1,31 @@
-#include "DefaultGALockPick.h"
-#include "AbilitySystem/AbilityTasks/LockPickAbilityTask.h"
-#include "LockPickingSystem/LockPickComponent.h"
-#include "Widgets/HUD/LockPickWidget.h"
+#include "DefaultGAHack.h"
+#include "AbilitySystem/AbilityTasks/HackAbilityTask.h"
 #include "AbilitySystem/EOTGameplayTags.h"
-#include "Engine/Engine.h"
+#include "HackingSystem/HackComponent.h"
+#include "Widgets/HUD/HackWidget.h"
 
-UDefaultGALockPick::UDefaultGALockPick()
+UDefaultGAHack::UDefaultGAHack()
 {
     InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
     NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::ServerInitiated;
 
     FGameplayTagContainer Tags;
-    FGameplayTag MyTag = TAG_Character_Ability_LockPick;
+    FGameplayTag MyTag = TAG_Character_Ability_Hack;
     Tags.AddTag(MyTag);
     SetAssetTags(Tags);
 
-    ActivationOwnedTags.AddTag(TAG_Character_Status_LockPicking);
+    ActivationOwnedTags.AddTag(TAG_Character_Status_Hacking);
     ActivationOwnedTags.AddTag(TAG_Character_Status_Illegal_Action);
     ActivationOwnedTags.AddTag(TAG_Character_Status_Block_Movement);
     ActivationOwnedTags.AddTag(TAG_Character_Status_Block_Look);
 
     FAbilityTriggerData TriggerData;
-    TriggerData.TriggerTag = TAG_Character_Ability_LockPick;
+    TriggerData.TriggerTag = TAG_Character_Ability_Hack;
     TriggerData.TriggerSource = EGameplayAbilityTriggerSource::GameplayEvent;
     AbilityTriggers.Add(TriggerData);
 }
 
-
-void UDefaultGALockPick::ActivateAbility(
+void UDefaultGAHack::ActivateAbility(
     const FGameplayAbilitySpecHandle Handle,
     const FGameplayAbilityActorInfo* ActorInfo,
     const FGameplayAbilityActivationInfo ActivationInfo,
@@ -35,45 +33,43 @@ void UDefaultGALockPick::ActivateAbility(
 {
     Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-    ActiveLockComp = nullptr;
+    ActiveHackComp = nullptr;
     if (TriggerEventData && TriggerEventData->OptionalObject)
     {
-        // Always resolve the actor/component in *this* context!
-        AActor* HitActor = const_cast<AActor*>(Cast<AActor>(TriggerEventData->OptionalObject));
-        if (HitActor)
+        AActor* TargetActor = const_cast<AActor*>(Cast<AActor>(TriggerEventData->OptionalObject));
+        if (TargetActor)
         {
-            ActiveLockComp = HitActor->FindComponentByClass<ULockPickComponent>();
+            ActiveHackComp = TargetActor->FindComponentByClass<UHackComponent>();
         }
     }
 
-    if (!ActiveLockComp)
+    if (!ActiveHackComp)
     {
         EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
         return;
     }
 
-    // THIS WILL RUN ON BOTH CLIENT AND SERVER DUE TO GAS REPLICATION
-    ActiveLockPickTask = ULockPickAbilityTask::StartLockPickTask(this, ActiveLockComp);
-	ActiveLockPickTask->LockPickWidgetClass = LockPickWidgetClass;
-    ActiveLockPickTask->OnFinished.AddDynamic(this, &UDefaultGALockPick::OnLockPickTaskFinished);
-    ActiveLockPickTask->ReadyForActivation();
+    ActiveHackTask = UHackAbilityTask::StartHackTask(this, ActiveHackComp);
+    ActiveHackTask->HackWidgetClass = HackWidgetClass;
+    ActiveHackTask->OnFinished.AddDynamic(this, &UDefaultGAHack::OnHackTaskFinished);
+    ActiveHackTask->ReadyForActivation();
 }
 
-void UDefaultGALockPick::EndAbility(
+void UDefaultGAHack::EndAbility(
     const FGameplayAbilitySpecHandle Handle,
     const FGameplayAbilityActorInfo* ActorInfo,
     const FGameplayAbilityActivationInfo ActivationInfo,
     bool bReplicateEndAbility, bool bWasCancelled)
 {
-    if (ActiveLockComp)
+    if (ActiveHackComp)
     {
-        ActiveLockComp->EndLockPicking();
-        ActiveLockComp = nullptr;
+        ActiveHackComp->CancelHacking();
+        ActiveHackComp = nullptr;
     }
     Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
-void UDefaultGALockPick::OnLockPickTaskFinished(bool bSuccess)
+void UDefaultGAHack::OnHackTaskFinished(bool bSuccess)
 {
     EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, !bSuccess);
 }

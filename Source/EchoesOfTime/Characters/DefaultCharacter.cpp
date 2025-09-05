@@ -12,6 +12,7 @@
 #include "InputActionValue.h"
 #include "Net/UnrealNetwork.h"
 #include "LockPickingSystem/LockPickComponent.h"
+#include "HackingSystem/HackComponent.h"
 #include "Widgets/HUD/CharacterHUD.h"
 #include "AbilitySystem/EOTGameplayTags.h"
 
@@ -273,6 +274,24 @@ void ADefaultCharacter::ServerHandleInteract_Implementation()
                     }
                 }
             }
+
+            if (UHackComponent* HackComp = HitActor->FindComponentByClass<UHackComponent>())
+            {
+                if (ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>())
+                {
+                    if (UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent())
+                    {
+                        FGameplayEventData EventData;
+                        EventData.Instigator = this;
+                        EventData.OptionalObject = HitActor;
+
+                        ASC->HandleGameplayEvent(
+                            TAG_Character_Ability_Hack, // Use your hacking ability tag here
+                            &EventData
+                        );
+                    }
+                }
+            }
         }
     }
 }
@@ -312,7 +331,7 @@ void ADefaultCharacter::Move(const FInputActionValue& Value)
     ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
     if (!PS) return;
     UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
-    if (ASC && ASC->HasMatchingGameplayTag(TAG_Character_Status_LockPicking))
+    if (ASC && ASC->HasMatchingGameplayTag(TAG_Character_Status_Block_Movement))
         return;
 
     if (!Controller) return;
@@ -333,7 +352,7 @@ void ADefaultCharacter::Look(const FInputActionValue& Value)
 {
 
     UAbilitySystemComponent* ASC = GetPlayerState<ADefaultPlayerState>()->GetAbilitySystemComponent();
-    if (ASC && ASC->HasMatchingGameplayTag(TAG_Character_Status_LockPicking))
+    if (ASC && ASC->HasMatchingGameplayTag(TAG_Character_Status_Block_Look))
         return;
     FVector2D LookAxisVector = Value.Get<FVector2D>();
 
