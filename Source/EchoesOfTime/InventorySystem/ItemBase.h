@@ -39,6 +39,9 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
     FVector PickupMeshScale = FVector(1.0f);
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
+	FRotator PickupMeshRotation = FRotator(0.0f);
+
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Item")
     void OnEquipped(class AActor* Instigator);
 

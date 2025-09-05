@@ -18,7 +18,7 @@ void UItemBase::OnDropped_Implementation(AActor* Instigator, FGuid ItemInstanceI
     UWorld* World = Instigator->GetWorld();
     if (!World) return;
 
-    FRotator SpawnRotation = FRotator(90.0f,0.0f,0.0f);
+    FRotator SpawnRotation = PickupMeshRotation;
     FTransform SpawnTransform = FTransform(SpawnRotation, DropLocation);
 
     AItemPickup* Pickup = World->SpawnActorDeferred<AItemPickup>(AItemPickup::StaticClass(), SpawnTransform);
@@ -36,7 +36,7 @@ void UItemBase::OnDroppedWithTeam_Implementation(AActor* Instigator, FGuid ItemI
     UWorld* World = Instigator->GetWorld();
     if (!World) return;
 
-    FRotator SpawnRotation = FRotator(90.0f,0.0f,0.0f);
+    FRotator SpawnRotation = PickupMeshRotation;
     FTransform SpawnTransform = FTransform(SpawnRotation, DropLocation);
 
     static FGameplayTag PastTag = FGameplayTag::RequestGameplayTag(TEXT("Team.Past"));
