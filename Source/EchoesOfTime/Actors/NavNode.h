@@ -5,6 +5,7 @@
 #include "NavNode.generated.h"
 
 class USceneComponent;
+class UArrowComponent;
 
 UCLASS(BlueprintType, Blueprintable)
 class ECHOESOFTIME_API ANavNode : public AActor
@@ -19,6 +20,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "NavNode")
 	TObjectPtr<USceneComponent> Root;
 	// Make this editable per-instance in the level Details panel
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "NavNode")
+	TObjectPtr<UArrowComponent> ArrowComp; // Add this property
+
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "NavNode", meta = (AllowPrivateAccess = "true"))
 	TArray<TObjectPtr<ANavNode>> NeighbourNodes;
 

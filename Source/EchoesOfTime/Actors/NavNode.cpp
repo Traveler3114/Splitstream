@@ -1,5 +1,6 @@
 #include "NavNode.h"
 #include "Components/SceneComponent.h"
+#include "Components/ArrowComponent.h"
 
 ANavNode::ANavNode()
 {
@@ -7,6 +8,9 @@ ANavNode::ANavNode()
 
 	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	SetRootComponent(Root);
+
+	ArrowComp = CreateDefaultSubobject<UArrowComponent>(TEXT("ArrowComp"));
+	ArrowComp->SetupAttachment(Root);
 }
 
 ANavNode* ANavNode::GetRandomNextNode(const ANavNode* Previous) const

@@ -50,9 +50,22 @@ void UInventoryComponent::SetActiveSlot(int32 Index)
     if (Index >= 0 && Index < Slots.Num())
     {
         ActiveSlotIndex = Index;
+
+        // --- Show debug message when active item is set ---
+        UItemBase* Item = Slots[Index].ItemAsset;
+        FString ItemName = Item ? Item->ItemName.ToString() : TEXT("None");
+        FString DebugMsg = FString::Printf(TEXT("Active Inventory Slot: %d | Item: %s"), Index, *ItemName);
+        if (GEngine)
+        {
+            GEngine->AddOnScreenDebugMessage(
+                /* Key */ -1,
+                /* Time To Display */ 2.0f,
+                /* Color */ FColor::Yellow,
+                DebugMsg
+            );
+        }
     }
 }
-
 bool UInventoryComponent::AddItem(UItemBase* ItemAsset, FGuid InstanceID)
 {
     for (int32 i = 0; i < Slots.Num(); ++i)
