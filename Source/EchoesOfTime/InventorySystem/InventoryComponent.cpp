@@ -9,8 +9,8 @@
 
 UInventoryComponent::UInventoryComponent()
 {
+    SetIsReplicatedByDefault(true);
     PrimaryComponentTick.bCanEverTick = false;
-    SetIsReplicated(true);
 }
 
 FGameplayTag UInventoryComponent::GetTeamTag() const

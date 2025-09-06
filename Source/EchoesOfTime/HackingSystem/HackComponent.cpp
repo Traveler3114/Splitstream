@@ -3,7 +3,7 @@
 
 UHackComponent::UHackComponent()
 {
-    SetIsReplicated(true);
+    SetIsReplicatedByDefault(true);
     PrimaryComponentTick.bCanEverTick = true;
     bHackingInProgress = false;
     bHacked = false;
