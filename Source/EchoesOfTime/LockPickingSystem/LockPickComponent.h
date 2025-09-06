@@ -19,7 +19,7 @@ struct FLockPinData
     float Tolerance = 10.f;
 };
 
-UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
+UCLASS(Blueprintable, ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class ECHOESOFTIME_API ULockPickComponent : public UActorComponent
 {
     GENERATED_BODY()
