@@ -1,7 +1,9 @@
 #include "HackComponent.h"
+#include "Net/UnrealNetwork.h"
 
 UHackComponent::UHackComponent()
 {
+    SetIsReplicated(true);
     PrimaryComponentTick.bCanEverTick = true;
     bHackingInProgress = false;
     bHacked = false;
@@ -14,14 +16,14 @@ void UHackComponent::BeginPlay()
     Super::BeginPlay();
 }
 
-void UHackComponent::StartHacking(float Duration)
+void UHackComponent::StartHacking()
 {
     if (bHackingInProgress || bHacked) return;
     bHackingInProgress = true;
-    HackDuration = Duration;
     HackElapsed = 0.f;
     SetComponentTickEnabled(true);
 }
+
 
 void UHackComponent::CancelHacking()
 {
@@ -49,4 +51,20 @@ void UHackComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
             OnHackComplete.Broadcast();
         }
     }
+}
+
+void UHackComponent::OnRep_Hacked()
+{
+    if (bHacked)
+    {
+        OnHackComplete.Broadcast();
+    }
+}
+
+void UHackComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(UHackComponent, bHacked);
+    DOREPLIFETIME(UHackComponent, bHackingInProgress);
+    // Replicate other relevant properties if needed
 }

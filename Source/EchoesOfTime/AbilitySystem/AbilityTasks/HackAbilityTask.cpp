@@ -21,9 +21,10 @@ void UHackAbilityTask::Activate()
         return;
     }
 
+    // Ensure hack is started on server, even if called from client.
     if (GetAvatarActor()->HasAuthority())
     {
-        HackComp->StartHacking(HackComp->HackDuration);
+        HackComp->StartHacking();
     }
 
     if (APlayerController* PC = Cast<APlayerController>(GetAvatarActor()->GetInstigatorController()))

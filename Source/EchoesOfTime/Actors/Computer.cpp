@@ -3,7 +3,8 @@
 #include "Computer.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/SceneComponent.h"
-#include "HackingSystem/HackComponent.h" // <-- include your hack component header
+#include "HackingSystem/HackComponent.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 AComputer::AComputer()
@@ -48,10 +49,13 @@ void AComputer::SetHighlighted_Implementation(bool bHighlight)
 void AComputer::OnHackComplete()
 {
     // Display the code on screen for the player
-    if (GEngine)
+    if (HasAuthority()) 
     {
-        FString RevealMsg = FString::Printf(TEXT("Hacked! Keypad Code: %s"), *StoredCode);
-        GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Green, RevealMsg);
+        if (GEngine)
+        {
+            FString RevealMsg = FString::Printf(TEXT("Hacked! Keypad Code: %s"), *StoredCode);
+            GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Green, RevealMsg);
+        }
     }
 }
 
@@ -60,4 +64,15 @@ void AComputer::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
+}
+
+void AComputer::OnRep_StoredCode()
+{
+    // Optionally show the code to clients, e.g. if you want to display it in UI/widgets
+}
+
+void AComputer::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(AComputer, StoredCode);
 }

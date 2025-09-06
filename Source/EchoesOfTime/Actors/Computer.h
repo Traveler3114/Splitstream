@@ -18,6 +18,9 @@ class ECHOESOFTIME_API AComputer : public AActor, public IInteractable
 public:
     // Sets default values for this actor's properties
     AComputer();
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Computer")
     class USceneComponent* DefaultSceneRoot;
 
@@ -26,8 +29,11 @@ public:
 
     UHackComponent* HackComponent = nullptr;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Hack")
+    UPROPERTY(ReplicatedUsing = OnRep_StoredCode, VisibleAnywhere, BlueprintReadOnly, Category = "Hack")
     FString StoredCode;
+
+    UFUNCTION()
+    void OnRep_StoredCode();
 
     // Setter
     UFUNCTION(BlueprintCallable, Category = "Hack")

@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-
 #include "HackComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHackComplete);
@@ -14,6 +13,7 @@ class ECHOESOFTIME_API UHackComponent : public UActorComponent
 
 public:
     UHackComponent();
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
     UPROPERTY(BlueprintAssignable, Category = "Hacking")
     FOnHackComplete OnHackComplete;
@@ -21,14 +21,18 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hacking")
     float HackDuration = 10.f; // seconds
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Hacking")
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "Hacking")
     bool bHackingInProgress = false;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Hacking")
+    UPROPERTY(ReplicatedUsing = OnRep_Hacked, VisibleAnywhere, BlueprintReadOnly, Category = "Hacking")
     bool bHacked = false;
 
+    UFUNCTION()
+    void OnRep_Hacked();
+
     UFUNCTION(BlueprintCallable, Category = "Hacking")
-    void StartHacking(float Duration);
+    void StartHacking();
+
 
     UFUNCTION(BlueprintCallable, Category = "Hacking")
     void CancelHacking();
