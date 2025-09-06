@@ -47,6 +47,7 @@ void ULockPickComponent::ResetLock()
 
 void ULockPickComponent::StartLockPicking()
 {
+    if (bPickingInProgress || bUnlocked) return;
     ResetLock();
     bPickingInProgress = true;
 }

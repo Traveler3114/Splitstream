@@ -39,10 +39,19 @@ void AComputer::Interact_Implementation(AActor* Interactor)
 
 void AComputer::SetHighlighted_Implementation(bool bHighlight)
 {
-    if (ComputerMesh)
+    if (ComputerMesh && HackComponent)
     {
-        ComputerMesh->SetRenderCustomDepth(bHighlight);
-        ComputerMesh->CustomDepthStencilValue = bHighlight ? 1 : 0;
+        // If hacked, always disable highlighting
+        if (HackComponent->bHacked)
+        {
+            ComputerMesh->SetRenderCustomDepth(false);
+            ComputerMesh->CustomDepthStencilValue = 0;
+        }
+        else
+        {
+            ComputerMesh->SetRenderCustomDepth(bHighlight);
+            ComputerMesh->CustomDepthStencilValue = bHighlight ? 1 : 0;
+        }
     }
 }
 
