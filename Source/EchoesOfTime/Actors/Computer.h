@@ -26,6 +26,20 @@ public:
 
     UHackComponent* HackComponent = nullptr;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Hack")
+    FString StoredCode;
+
+    // Setter
+    UFUNCTION(BlueprintCallable, Category = "Hack")
+    void SetStoredCode(const FString& Code) { StoredCode = Code; }
+
+    // You can add a function to reveal the code when hacked
+    UFUNCTION(BlueprintCallable, Category = "Hack")
+    FString RevealStoredCode() const { return StoredCode; }
+
+    UFUNCTION()
+    void OnHackComplete();
+
 protected:
     // Called when the game starts or when spawned
     virtual void BeginPlay() override;

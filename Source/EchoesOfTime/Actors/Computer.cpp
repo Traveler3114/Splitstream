@@ -24,6 +24,10 @@ void AComputer::BeginPlay()
 
     // Find and cache optional hack component
     HackComponent = FindComponentByClass<UHackComponent>();
+    if (HackComponent)
+    {
+        HackComponent->OnHackComplete.AddDynamic(this, &AComputer::OnHackComplete);
+    }
 }
 
 void AComputer::Interact_Implementation(AActor* Interactor)
@@ -38,6 +42,16 @@ void AComputer::SetHighlighted_Implementation(bool bHighlight)
     {
         ComputerMesh->SetRenderCustomDepth(bHighlight);
         ComputerMesh->CustomDepthStencilValue = bHighlight ? 1 : 0;
+    }
+}
+
+void AComputer::OnHackComplete()
+{
+    // Display the code on screen for the player
+    if (GEngine)
+    {
+        FString RevealMsg = FString::Printf(TEXT("Hacked! Keypad Code: %s"), *StoredCode);
+        GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Green, RevealMsg);
     }
 }
 

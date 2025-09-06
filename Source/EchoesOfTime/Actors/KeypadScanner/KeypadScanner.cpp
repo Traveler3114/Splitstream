@@ -4,6 +4,8 @@
 #include "Components/StaticMeshComponent.h"
 #include "Interfaces/IKeycardUnlockable.h"
 #include "InventorySystem/InventoryComponent.h"
+#include "Actors/Computer.h"
+#include "Kismet/GameplayStatics.h"
 
 AKeypadScanner::AKeypadScanner()
 {
@@ -27,6 +29,32 @@ AKeypadScanner::AKeypadScanner()
 void AKeypadScanner::BeginPlay()
 {
     Super::BeginPlay();
+
+    const int CodeLength = 4;
+    FString Digits = "0123456789";
+    FString NewCode;
+    for (int i = 0; i < CodeLength; ++i)
+    {
+        int32 Index = FMath::RandRange(0, Digits.Len() - 1);
+        NewCode += Digits.Mid(Index, 1);
+    }
+    CorrectCode = NewCode;
+
+    // 2. Find all computers in the level
+    TArray<AActor*> FoundComputers;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AComputer::StaticClass(), FoundComputers);
+
+    // 3. Choose one at random and store the code
+    if (FoundComputers.Num() > 0)
+    {
+        int32 RandomIndex = FMath::RandRange(0, FoundComputers.Num() - 1);
+        AComputer* TargetComputer = Cast<AComputer>(FoundComputers[RandomIndex]);
+        if (TargetComputer)
+        {
+            TargetComputer->SetStoredCode(CorrectCode);
+        }
+    }
+
     SpawnKeypadButtons();
 }
 
