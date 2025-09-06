@@ -61,11 +61,11 @@ void AGhostCharacterActor::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    DrawDebugSphere(
-        GetWorld(),
-        GetActorLocation(),
-        30.0f, 12, FColor::Green, false, -1.0f, 0, 2.0f
-    );
+    //DrawDebugSphere(
+    //    GetWorld(),
+    //    GetActorLocation(),
+    //    30.0f, 12, FColor::Green, false, -1.0f, 0, 2.0f
+    //);
 
     // Always update mesh/pose/material on ALL instances, not just server!
     ACharacter* CharacterToMirror = Cast<ACharacter>(GetOwner());

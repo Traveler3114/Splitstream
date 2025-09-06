@@ -181,47 +181,47 @@ void ASecurityCamera::Tick(float DeltaTime)
     }
 
     // --- Debug drawing of camera cone and trace (all instances) ---
-    if (bDrawDebug && SceneCapture)
-    {
-        FVector CamLoc = SceneCapture->GetComponentLocation();
-        FVector CamForward = SceneCapture->GetForwardVector();
-        float HorizontalFOV = SceneCapture->FOVAngle;
-        float AspectRatio = 1.0f;
-        if (SceneCapture->TextureTarget)
-            AspectRatio = (float)SceneCapture->TextureTarget->SizeX / (float)SceneCapture->TextureTarget->SizeY;
-        float VerticalFOV = FMath::RadiansToDegrees(
-            2 * FMath::Atan(FMath::Tan(FMath::DegreesToRadians(HorizontalFOV) / 2) / AspectRatio)
-        );
-        ViewConeAngle = HorizontalFOV;
+    //if (bDrawDebug && SceneCapture)
+    //{
+    //    FVector CamLoc = SceneCapture->GetComponentLocation();
+    //    FVector CamForward = SceneCapture->GetForwardVector();
+    //    float HorizontalFOV = SceneCapture->FOVAngle;
+    //    float AspectRatio = 1.0f;
+    //    if (SceneCapture->TextureTarget)
+    //        AspectRatio = (float)SceneCapture->TextureTarget->SizeX / (float)SceneCapture->TextureTarget->SizeY;
+    //    float VerticalFOV = FMath::RadiansToDegrees(
+    //        2 * FMath::Atan(FMath::Tan(FMath::DegreesToRadians(HorizontalFOV) / 2) / AspectRatio)
+    //    );
+    //    ViewConeAngle = HorizontalFOV;
 
-        DrawDebugCone(
-            GetWorld(),
-            CamLoc,
-            CamForward,
-            DetectionDistance,
-            FMath::DegreesToRadians(VerticalFOV * 0.5f),
-            FMath::DegreesToRadians(HorizontalFOV * 0.5f),
-            32,
-            FColor::Green,
-            false,
-            0.1f,
-            0,
-            1.0f
-        );
+    //    DrawDebugCone(
+    //        GetWorld(),
+    //        CamLoc,
+    //        CamForward,
+    //        DetectionDistance,
+    //        FMath::DegreesToRadians(VerticalFOV * 0.5f),
+    //        FMath::DegreesToRadians(HorizontalFOV * 0.5f),
+    //        32,
+    //        FColor::Green,
+    //        false,
+    //        0.1f,
+    //        0,
+    //        1.0f
+    //    );
 
-        FVector RayEnd = CamLoc + CamForward * DetectionDistance;
-        FHitResult RayHit;
-        FCollisionQueryParams Params;
-        Params.AddIgnoredActor(this);
+    //    FVector RayEnd = CamLoc + CamForward * DetectionDistance;
+    //    FHitResult RayHit;
+    //    FCollisionQueryParams Params;
+    //    Params.AddIgnoredActor(this);
 
-        bool bRayHit = GetWorld()->LineTraceSingleByChannel(
-            RayHit, CamLoc, RayEnd, ECC_Visibility, Params
-        );
-        FVector RayDrawEnd = bRayHit ? RayHit.ImpactPoint : RayEnd;
-        DrawDebugLine(GetWorld(), CamLoc, RayDrawEnd, FColor::Yellow, false, 0.1f, 0, 2.0f);
-        if (bRayHit)
-            DrawDebugPoint(GetWorld(), RayHit.ImpactPoint, 16.0f, FColor::Red, false, 0.1f);
-    }
+    //    bool bRayHit = GetWorld()->LineTraceSingleByChannel(
+    //        RayHit, CamLoc, RayEnd, ECC_Visibility, Params
+    //    );
+    //    FVector RayDrawEnd = bRayHit ? RayHit.ImpactPoint : RayEnd;
+    //    DrawDebugLine(GetWorld(), CamLoc, RayDrawEnd, FColor::Yellow, false, 0.1f, 0, 2.0f);
+    //    if (bRayHit)
+    //        DrawDebugPoint(GetWorld(), RayHit.ImpactPoint, 16.0f, FColor::Red, false, 0.1f);
+    //}
 }
 
 void ASecurityCamera::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
