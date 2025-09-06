@@ -17,7 +17,6 @@ A co-op multiplayer Unreal Engine 5 project featuring time-travel mechanics, tea
     - [Time Objects (Past/Future)](#time-objects-pastfuture)
     - [Ghost/Echo System](#ghostecho-system)
 - [Extending & Contribution](#extending--contribution)
-- [Known Issues & TODOs](#known-issues--todos)
 - [License](#license)
 
 ---
