@@ -5,6 +5,7 @@
 #include "NativeGameplayTags.h"
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Status_Block);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Status_Block_Movement);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Status_Block_Look);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Ability_Future_PastEcho);

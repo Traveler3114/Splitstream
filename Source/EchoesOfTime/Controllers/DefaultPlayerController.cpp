@@ -24,7 +24,6 @@ void ADefaultPlayerController::BeginPlay()
 void ADefaultPlayerController::SetupInputComponent()
 {
     Super::SetupInputComponent();
-    InputComponent->BindKey(EKeys::Q, IE_Pressed, this, &ADefaultPlayerController::TogglePauseMenu);
     InputComponent->BindKey(EKeys::Escape, IE_Pressed, this, &ADefaultPlayerController::TogglePauseMenu);
 }
 

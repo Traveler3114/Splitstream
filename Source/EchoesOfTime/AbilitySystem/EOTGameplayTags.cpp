@@ -4,6 +4,7 @@
 #include "EOTGameplayTags.h"
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character, "Character");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Block, "Character.Status.Block");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Block_Movement, "Character.Status.Block.Movement");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Block_Look, "Character.Status.Block.Look");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Ability_Future_PastEcho, "Character.Ability.Future.PastEcho");
