@@ -2,9 +2,8 @@
 #include "HackingSystem/HackComponent.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
-#include "Engine/Engine.h"
-#include "InputCoreTypes.h"
 #include "Widgets/HUD/HackWidget.h"
+#include "Controllers/DefaultPlayerController.h"
 
 UHackAbilityTask* UHackAbilityTask::StartHackTask(UGameplayAbility* OwningAbility, UHackComponent* InHackComp)
 {
@@ -21,7 +20,6 @@ void UHackAbilityTask::Activate()
         return;
     }
 
-    // Ensure hack is started on server, even if called from client.
     if (GetAvatarActor()->HasAuthority())
     {
         HackComp->StartHacking();
@@ -41,6 +39,10 @@ void UHackAbilityTask::Activate()
                 }
             }
         }
+        if (ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(PC))
+        {
+            MyPC->UnbindPauseMenuEsc();
+        }
     }
 
     bIsHacking = true;
@@ -53,6 +55,15 @@ void UHackAbilityTask::OnDestroy(bool bInOwnerFinished)
     UnbindInput();
     bTickingTask = false;
     bIsHacking = false;
+
+    if (APlayerController* PC = Cast<APlayerController>(GetAvatarActor()->GetInstigatorController()))
+    {
+        if (ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(PC))
+        {
+            MyPC->BindPauseMenuEsc();
+        }
+    }
+
     if (HackWidget)
     {
         HackWidget->RemoveFromParent();
@@ -95,7 +106,7 @@ void UHackAbilityTask::BindInput()
 
 void UHackAbilityTask::UnbindInput()
 {
-    // Unreal InputComponent handles cleanup, explicit unbinding is not needed.
+    // Unreal InputComponent handles cleanup; explicit unbinding is not needed.
 }
 
 void UHackAbilityTask::OnCancel()

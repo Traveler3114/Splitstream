@@ -26,7 +26,6 @@ public:
     UPROPERTY(EditAnywhere, Category = "LockPick|UI")
     TSubclassOf<ULockPickWidget> LockPickWidgetClass;
 
-    // Runtime instance of the widget
     UPROPERTY()
     ULockPickWidget* LockPickWidget = nullptr;
 

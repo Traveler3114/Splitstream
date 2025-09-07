@@ -17,6 +17,9 @@ public:
     virtual void SetupInputComponent() override;
     void TogglePauseMenu();
 
+    void BindPauseMenuEsc();
+    void UnbindPauseMenuEsc();
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
     TSubclassOf<UPauseMenuWidget> PauseMenuWidgetClass;
 
@@ -32,7 +35,6 @@ private:
     UPROPERTY()
     UPauseMenuWidget* PauseMenuWidget;
 
-    /** Handler for pause menu resume */
     UFUNCTION()
     void HandlePauseMenuResumed();
 };

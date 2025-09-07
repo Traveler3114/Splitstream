@@ -2,8 +2,6 @@
 #include "LockPickingSystem/LockPickComponent.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
-#include "Engine/Engine.h"
-#include "InputCoreTypes.h"
 #include "Widgets/HUD/LockPickWidget.h"
 #include "Controllers/DefaultPlayerController.h"
 
@@ -22,8 +20,6 @@ void ULockPickAbilityTask::Activate()
         return;
     }
 
-
-    // Only the server should reset and start lockpicking!
     if (GetAvatarActor()->HasAuthority())
     {
         LockComp->StartLockPicking();
@@ -43,6 +39,10 @@ void ULockPickAbilityTask::Activate()
                 }
             }
         }
+        if (ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(PC))
+        {
+            MyPC->UnbindPauseMenuEsc();
+        }
     }
 
     LockPickInputVector = FVector2D::ZeroVector;
@@ -59,6 +59,15 @@ void ULockPickAbilityTask::OnDestroy(bool bInOwnerFinished)
     UnbindInput();
     bTickingTask = false;
     bIsLockPicking = false;
+
+    if (APlayerController* PC = Cast<APlayerController>(GetAvatarActor()->GetInstigatorController()))
+    {
+        if (ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(PC))
+        {
+            MyPC->BindPauseMenuEsc();
+        }
+    }
+
     if (LockPickWidget)
     {
         LockPickWidget->RemoveFromParent();
@@ -75,12 +84,10 @@ void ULockPickAbilityTask::TickTask(float DeltaTime)
         return;
     }
 
-    // --- ADD THIS BLOCK ---
     if (LockPickWidget)
     {
         LockPickWidget->UpdatePins(LockPickDialAngle);
     }
-    // ----------------------
 
     if (LockComp->bUnlocked)
     {
@@ -139,7 +146,6 @@ void ULockPickAbilityTask::OnConfirm()
 
 void ULockPickAbilityTask::ServerConfirmPin_Implementation(float Angle)
 {
-    // Not used in current architecture, but left for possible future direct server RPCs
     if (!LockComp || !bIsLockPicking) return;
     bool bCorrect = LockComp->TrySetCurrentPin(Angle);
     if (bCorrect)
@@ -157,7 +163,6 @@ void ULockPickAbilityTask::OnCancel()
     if (!bIsLockPicking) return;
     bIsLockPicking = false;
 
-    // Only the server should end picking for everyone
     if (GetAvatarActor()->HasAuthority())
     {
         if (LockComp) LockComp->EndLockPicking();

@@ -2,6 +2,7 @@
 #include "LockPickingSystem/LockPickComponent.h"
 #include "Widgets/HUD/CharacterHUD.h"
 #include "Widgets/PauseMenuWidget.h"
+#include "Engine/Engine.h"
 
 ADefaultPlayerController::ADefaultPlayerController()
 {
@@ -24,7 +25,30 @@ void ADefaultPlayerController::BeginPlay()
 void ADefaultPlayerController::SetupInputComponent()
 {
     Super::SetupInputComponent();
-    InputComponent->BindKey(EKeys::Escape, IE_Pressed, this, &ADefaultPlayerController::TogglePauseMenu);
+    BindPauseMenuEsc();
+}
+
+void ADefaultPlayerController::BindPauseMenuEsc()
+{
+    if (InputComponent)
+    {
+        InputComponent->BindKey(EKeys::Escape, IE_Pressed, this, &ADefaultPlayerController::TogglePauseMenu);
+    }
+}
+
+void ADefaultPlayerController::UnbindPauseMenuEsc()
+{
+    if (InputComponent)
+    {
+        for (int32 i = InputComponent->KeyBindings.Num() - 1; i >= 0; --i)
+        {
+            const FInputKeyBinding& KeyBinding = InputComponent->KeyBindings[i];
+            if (KeyBinding.Chord.Key == EKeys::Escape && KeyBinding.KeyEvent == IE_Pressed)
+            {
+                InputComponent->KeyBindings.RemoveAt(i);
+            }
+        }
+    }
 }
 
 void ADefaultPlayerController::TogglePauseMenu()
@@ -34,7 +58,6 @@ void ADefaultPlayerController::TogglePauseMenu()
         if (!PauseMenuWidget && PauseMenuWidgetClass)
         {
             PauseMenuWidget = CreateWidget<UPauseMenuWidget>(this, PauseMenuWidgetClass);
-            // Bind delegate
             PauseMenuWidget->OnPauseMenuResumed.AddDynamic(this, &ADefaultPlayerController::HandlePauseMenuResumed);
         }
         if (PauseMenuWidget && !PauseMenuWidget->IsInViewport())
