@@ -5,18 +5,7 @@ ULockPickComponent::ULockPickComponent()
 {
     PrimaryComponentTick.bCanEverTick = false;
     SetIsReplicatedByDefault(true);
-
-    // Default pins for demo/testing
-    if (Pins.Num() == 0)
-    {
-        Pins.SetNum(3);
-        Pins[0].SweetSpotAngle = 30.f;
-        Pins[1].SweetSpotAngle = 120.f;
-        Pins[2].SweetSpotAngle = 270.f;
-        Pins[0].Tolerance = 10.f;
-        Pins[1].Tolerance = 10.f;
-        Pins[2].Tolerance = 10.f;
-    }
+    GeneratePins();
     PinSetStates.Init(false, Pins.Num());
     CurrentPinIndex = 0;
     bUnlocked = false;
@@ -26,7 +15,52 @@ ULockPickComponent::ULockPickComponent()
 void ULockPickComponent::BeginPlay()
 {
     Super::BeginPlay();
+    GeneratePins();
     PinSetStates.Init(false, Pins.Num());
+}
+
+void ULockPickComponent::OnComponentCreated()
+{
+    Super::OnComponentCreated();
+    GeneratePins();
+    PinSetStates.Init(false, Pins.Num());
+}
+
+#if WITH_EDITOR
+void ULockPickComponent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+    Super::PostEditChangeProperty(PropertyChangedEvent);
+    GeneratePins();
+    PinSetStates.Init(false, Pins.Num());
+}
+#endif
+
+void ULockPickComponent::GeneratePins()
+{
+    Pins.Empty();
+    int32 NumPins = FMath::Clamp(PinCount, 1, 5);
+
+    float Tolerance = 10.f;
+    switch (LockDifficulty)
+    {
+        case ELockDifficulty::Easy:   Tolerance = 10.f; break;
+        case ELockDifficulty::Medium: Tolerance = 5.f; break;
+        case ELockDifficulty::Hard:   Tolerance = 2.f;  break;
+        default:                      Tolerance = 10.f; break;
+    }
+
+    for (int32 i = 0; i < NumPins; ++i)
+    {
+        float Angle = 360.f * i / NumPins;
+        FLockPinData Pin;
+        Pin.SweetSpotAngle = Angle;
+        Pin.Tolerance = Tolerance;
+        Pins.Add(Pin);
+    }
+    PinSetStates.Init(false, Pins.Num());
+    CurrentPinIndex = 0;
+    bUnlocked = false;
+    bPickingInProgress = false;
 }
 
 void ULockPickComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -137,7 +171,6 @@ void ULockPickComponent::ServerTrySetPin_Implementation(float InputAngle)
     }
 }
 
-// In LockPickComponent.cpp
 float ULockPickComponent::GetPinAngleProximity(int32 PinIndex, float InputAngle) const
 {
     if (!Pins.IsValidIndex(PinIndex)) return 0.f;

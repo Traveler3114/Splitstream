@@ -33,6 +33,23 @@ protected:
     UPROPERTY(meta = (BindWidget))
     UTextBlock* ResolutionValueText;
 
+    // --- Window Mode ---
+    UPROPERTY(meta = (BindWidget))
+    UButton* WindowModeLeftButton;
+
+    UPROPERTY(meta = (BindWidget))
+    UButton* WindowModeRightButton;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* WindowModeValueText;
+
+    // --- Render Scale ---
+    UPROPERTY(meta = (BindWidget))
+    USlider* RenderScaleSlider;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* RenderScaleValueText;
+
     UPROPERTY(meta = (BindWidget))
     UButton* ShadowsLeftButton;
 
@@ -69,17 +86,15 @@ protected:
     UPROPERTY(meta = (BindWidget))
     UTextBlock* PPValueText;
 
-    // --- Render Scale ---
-    UPROPERTY(meta = (BindWidget))
-    USlider* RenderScaleSlider;
-
-    UPROPERTY(meta = (BindWidget))
-    UTextBlock* RenderScaleValueText;
-
     // Option data
     int32 ResolutionIndex;
     TArray<FIntPoint> ResolutionOptions;
     TArray<FString> ResolutionLabels;
+
+    // --- Window Mode ---
+    int32 WindowModeIndex;
+    TArray<EWindowMode::Type> WindowModeOptions;
+    TArray<FString> WindowModeLabels;
 
     // --- Render Scale ---
     float RenderScale; // 0.25f - 1.0f
@@ -110,6 +125,13 @@ protected:
 
     UFUNCTION()
     void OnResolutionRight();
+
+    // --- Window Mode ---
+    UFUNCTION()
+    void OnWindowModeLeft();
+
+    UFUNCTION()
+    void OnWindowModeRight();
 
     UFUNCTION()
     void OnRenderScaleChanged(float Value);

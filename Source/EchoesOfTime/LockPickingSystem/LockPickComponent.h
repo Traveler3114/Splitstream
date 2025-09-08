@@ -7,6 +7,14 @@
 // Delegate for when the lock is unlocked
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLockUnlocked);
 
+UENUM(BlueprintType)
+enum class ELockDifficulty : uint8
+{
+    Easy UMETA(DisplayName = "Easy"),
+    Medium UMETA(DisplayName = "Medium"),
+    Hard UMETA(DisplayName = "Hard")
+};
+
 USTRUCT(BlueprintType)
 struct FLockPinData
 {
@@ -27,12 +35,19 @@ class ECHOESOFTIME_API ULockPickComponent : public UActorComponent
 public:
     ULockPickComponent();
 
+    // --- Editor Setup ---
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LockPick|Setup", meta = (ClampMin = "1", ClampMax = "5"))
+    int32 PinCount = 3;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LockPick|Setup")
+    ELockDifficulty LockDifficulty = ELockDifficulty::Medium;
+
     // --- Delegates ---
     UPROPERTY(BlueprintAssignable, Category = "LockPick")
     FOnLockUnlocked OnUnlock;
 
-    // --- Configurable Pins (set in BP/Editor) ---
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LockPick")
+    // --- Pins (auto-generated, not editable) ---
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "LockPick")
     TArray<FLockPinData> Pins;
 
     // --- Replicated State ---
@@ -88,7 +103,13 @@ public:
 
 protected:
     virtual void BeginPlay() override;
+    virtual void OnComponentCreated() override;
+#if WITH_EDITOR
+    virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+    void GeneratePins();
 
     float NormalizeAngle(float Angle) const;
 };

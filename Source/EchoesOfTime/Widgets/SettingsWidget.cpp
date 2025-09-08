@@ -3,6 +3,7 @@
 #include "Components/TextBlock.h"
 #include "Components/Slider.h"
 #include "GameFramework/GameUserSettings.h"
+#include "Misc/EnumRange.h"
 
 void USettingsWidget::NativeConstruct()
 {
@@ -12,6 +13,11 @@ void USettingsWidget::NativeConstruct()
     ResolutionOptions = { FIntPoint(1280,720), FIntPoint(1920,1080), FIntPoint(2560,1440), FIntPoint(3840,2160) };
     ResolutionLabels = { TEXT("1280x720"), TEXT("1920x1080"), TEXT("2560x1440"), TEXT("3840x2160") };
     ResolutionIndex = 1; // 1920x1080 default
+
+    // --- Window Mode ---
+    WindowModeOptions = { EWindowMode::Fullscreen, EWindowMode::WindowedFullscreen, EWindowMode::Windowed };
+    WindowModeLabels = { TEXT("Fullscreen"), TEXT("Borderless"), TEXT("Windowed") };
+    WindowModeIndex = 0; // Fullscreen default
 
     // --- Render Scale ---
     RenderScaleMin = 0.25f;
@@ -47,7 +53,15 @@ void USettingsWidget::NativeConstruct()
         ResolutionRightButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnResolutionRight);
         ResolutionRightButton->OnClicked.AddDynamic(this, &USettingsWidget::OnResolutionRight);
     }
-
+    // --- Window Mode ---
+    if (WindowModeLeftButton) {
+        WindowModeLeftButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnWindowModeLeft);
+        WindowModeLeftButton->OnClicked.AddDynamic(this, &USettingsWidget::OnWindowModeLeft);
+    }
+    if (WindowModeRightButton) {
+        WindowModeRightButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnWindowModeRight);
+        WindowModeRightButton->OnClicked.AddDynamic(this, &USettingsWidget::OnWindowModeRight);
+    }
     // --- Render Scale Slider ---
     if (RenderScaleSlider)
     {
@@ -100,6 +114,10 @@ void USettingsWidget::UpdateTexts()
     if (ResolutionValueText)
         ResolutionValueText->SetText(FText::FromString(ResolutionLabels[ResolutionIndex]));
 
+    // Window Mode
+    if (WindowModeValueText)
+        WindowModeValueText->SetText(FText::FromString(WindowModeLabels[WindowModeIndex]));
+
     // Render scale as percent
     if (RenderScaleValueText)
     {
@@ -117,8 +135,30 @@ void USettingsWidget::UpdateTexts()
         PPValueText->SetText(FText::FromString(PPOptions[PPIndex]));
 }
 
-void USettingsWidget::OnResolutionLeft() { ResolutionIndex = (ResolutionIndex - 1 + ResolutionOptions.Num()) % ResolutionOptions.Num(); UpdateTexts(); }
-void USettingsWidget::OnResolutionRight() { ResolutionIndex = (ResolutionIndex + 1) % ResolutionOptions.Num(); UpdateTexts(); }
+void USettingsWidget::OnResolutionLeft()
+{
+    ResolutionIndex = (ResolutionIndex - 1 + ResolutionOptions.Num()) % ResolutionOptions.Num();
+    UpdateTexts();
+}
+
+void USettingsWidget::OnResolutionRight()
+{
+    ResolutionIndex = (ResolutionIndex + 1) % ResolutionOptions.Num();
+    UpdateTexts();
+}
+
+// --- Window Mode ---
+void USettingsWidget::OnWindowModeLeft()
+{
+    WindowModeIndex = (WindowModeIndex - 1 + WindowModeOptions.Num()) % WindowModeOptions.Num();
+    UpdateTexts();
+}
+
+void USettingsWidget::OnWindowModeRight()
+{
+    WindowModeIndex = (WindowModeIndex + 1) % WindowModeOptions.Num();
+    UpdateTexts();
+}
 
 // --- Render Scale ---
 void USettingsWidget::OnRenderScaleChanged(float Value)
@@ -153,6 +193,9 @@ void USettingsWidget::ApplySettings()
 
     // Resolution
     Settings->SetScreenResolution(ResolutionOptions[ResolutionIndex]);
+
+    // Window Mode
+    Settings->SetFullscreenMode(WindowModeOptions[WindowModeIndex]);
 
     // Render Scale (0.25f-1.0f)
     Settings->SetResolutionScaleNormalized(RenderScale);
