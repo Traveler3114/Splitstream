@@ -18,7 +18,6 @@ public:
 
     void SetIsPastEchoAbilityActive(bool bActive);
 
-
 protected:
     virtual void BeginPlay() override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -45,4 +44,14 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Ghost")
     void UpdateGhostVisibility();
 
+    // --- Client-side smoothing ---
+    UPROPERTY(ReplicatedUsing = OnRep_GhostTargetLocation)
+    FVector GhostTargetLocation;
+    UPROPERTY(ReplicatedUsing = OnRep_GhostTargetRotation)
+    FRotator GhostTargetRotation;
+
+    UFUNCTION()
+    void OnRep_GhostTargetLocation();
+    UFUNCTION()
+    void OnRep_GhostTargetRotation();
 };

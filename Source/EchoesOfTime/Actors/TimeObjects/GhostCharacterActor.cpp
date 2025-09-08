@@ -22,16 +22,13 @@ AGhostCharacterActor::AGhostCharacterActor()
     GhostMesh->SetupAttachment(RootComponent);
 
     bReplicates = true;
-    SetReplicateMovement(true);
+    SetReplicateMovement(false); // We manually replicate target location/rotation
 
     Tags.AddUnique(TEXT("Ghost"));
 }
 
-
-
 bool AGhostCharacterActor::IsNetRelevantFor(const AActor* RealViewer, const AActor* ViewTarget, const FVector& SrcLocation) const
 {
-    // RealViewer is usually a PlayerController
     const APlayerController* PC = Cast<APlayerController>(RealViewer);
     if (!PC)
         return false;
@@ -60,12 +57,6 @@ void AGhostCharacterActor::BeginPlay()
 void AGhostCharacterActor::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
-
-    //DrawDebugSphere(
-    //    GetWorld(),
-    //    GetActorLocation(),
-    //    30.0f, 12, FColor::Green, false, -1.0f, 0, 2.0f
-    //);
 
     // Always update mesh/pose/material on ALL instances, not just server!
     ACharacter* CharacterToMirror = Cast<ACharacter>(GetOwner());
@@ -102,10 +93,32 @@ void AGhostCharacterActor::Tick(float DeltaTime)
 
     if (HasAuthority())
     {
-        SetActorLocation(CharacterToMirror->GetActorLocation() + GhostOffset);
-        SetActorRotation(CharacterToMirror->GetActorRotation());
+        GhostTargetLocation = CharacterToMirror->GetActorLocation() + GhostOffset;
+        GhostTargetRotation = CharacterToMirror->GetActorRotation();
     }
-    // Do NOT set location/rotation on clients!
+
+    // Smoothly interpolate toward replicated target
+    float InterpSpeed = 5.f;
+    SetActorLocation(FMath::VInterpTo(GetActorLocation(), GhostTargetLocation, DeltaTime, InterpSpeed));
+    SetActorRotation(FMath::RInterpTo(GetActorRotation(), GhostTargetRotation, DeltaTime, InterpSpeed));
+}
+
+void AGhostCharacterActor::OnRep_GhostTargetLocation()
+{
+    // Snap instantly if very far away
+    if (FVector::Dist(GetActorLocation(), GhostTargetLocation) > 500.f)
+    {
+        SetActorLocation(GhostTargetLocation);
+    }
+}
+
+void AGhostCharacterActor::OnRep_GhostTargetRotation()
+{
+    // Snap instantly if very far away in rotation
+    if (FMath::Abs((GetActorRotation() - GhostTargetRotation).GetNormalized().Yaw) > 45.f)
+    {
+        SetActorRotation(GhostTargetRotation);
+    }
 }
 
 void AGhostCharacterActor::UpdateGhostVisibility()
@@ -128,7 +141,6 @@ void AGhostCharacterActor::UpdateGhostVisibility()
         GhostMesh->SetVisibility(bShouldShow, true);
         GhostMesh->SetHiddenInGame(false); // Always unhide for debug
     }
-
 }
 
 void AGhostCharacterActor::SetIsPastEchoAbilityActive(bool bActive)
@@ -137,7 +149,6 @@ void AGhostCharacterActor::SetIsPastEchoAbilityActive(bool bActive)
     UpdateGhostVisibility();
 }
 
-// IGhostRevealable implementation
 void AGhostCharacterActor::SetGhostRevealed_Implementation(bool bRevealed)
 {
     SetIsPastEchoAbilityActive(bRevealed);
@@ -146,5 +157,8 @@ void AGhostCharacterActor::SetGhostRevealed_Implementation(bool bRevealed)
 void AGhostCharacterActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    DOREPLIFETIME(AGhostCharacterActor, GhostTargetLocation);
+    DOREPLIFETIME(AGhostCharacterActor, GhostTargetRotation);
     // No need to replicate bIsPastEchoAbilityActive!
 }

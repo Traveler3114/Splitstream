@@ -6,6 +6,7 @@
 
 class UTextBlock;
 class UButton;
+class USlider;
 
 UCLASS()
 class ECHOESOFTIME_API USettingsWidget : public UUserWidget
@@ -68,10 +69,22 @@ protected:
     UPROPERTY(meta = (BindWidget))
     UTextBlock* PPValueText;
 
+    // --- Render Scale ---
+    UPROPERTY(meta = (BindWidget))
+    USlider* RenderScaleSlider;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* RenderScaleValueText;
+
     // Option data
     int32 ResolutionIndex;
     TArray<FIntPoint> ResolutionOptions;
     TArray<FString> ResolutionLabels;
+
+    // --- Render Scale ---
+    float RenderScale; // 0.25f - 1.0f
+    float RenderScaleMin;
+    float RenderScaleMax;
 
     int32 ShadowsIndex;
     TArray<FString> ShadowsOptions;
@@ -97,6 +110,9 @@ protected:
 
     UFUNCTION()
     void OnResolutionRight();
+
+    UFUNCTION()
+    void OnRenderScaleChanged(float Value);
 
     UFUNCTION()
     void OnShadowsLeft();

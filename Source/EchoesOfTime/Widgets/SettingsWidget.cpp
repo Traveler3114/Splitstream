@@ -1,6 +1,7 @@
 #include "SettingsWidget.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
+#include "Components/Slider.h"
 #include "GameFramework/GameUserSettings.h"
 
 void USettingsWidget::NativeConstruct()
@@ -11,6 +12,11 @@ void USettingsWidget::NativeConstruct()
     ResolutionOptions = { FIntPoint(1280,720), FIntPoint(1920,1080), FIntPoint(2560,1440), FIntPoint(3840,2160) };
     ResolutionLabels = { TEXT("1280x720"), TEXT("1920x1080"), TEXT("2560x1440"), TEXT("3840x2160") };
     ResolutionIndex = 1; // 1920x1080 default
+
+    // --- Render Scale ---
+    RenderScaleMin = 0.25f;
+    RenderScaleMax = 1.0f;
+    RenderScale = 1.0f; // Default 100%
 
     ShadowsOptions = { TEXT("Low"), TEXT("Medium"), TEXT("High"), TEXT("Epic") };
     ShadowsIndex = 2;
@@ -41,6 +47,18 @@ void USettingsWidget::NativeConstruct()
         ResolutionRightButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnResolutionRight);
         ResolutionRightButton->OnClicked.AddDynamic(this, &USettingsWidget::OnResolutionRight);
     }
+
+    // --- Render Scale Slider ---
+    if (RenderScaleSlider)
+    {
+        RenderScaleSlider->SetMinValue(RenderScaleMin);
+        RenderScaleSlider->SetMaxValue(RenderScaleMax);
+        RenderScaleSlider->SetValue(RenderScale);
+
+        RenderScaleSlider->OnValueChanged.RemoveDynamic(this, &USettingsWidget::OnRenderScaleChanged);
+        RenderScaleSlider->OnValueChanged.AddDynamic(this, &USettingsWidget::OnRenderScaleChanged);
+    }
+
     if (ShadowsLeftButton) {
         ShadowsLeftButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnShadowsLeft);
         ShadowsLeftButton->OnClicked.AddDynamic(this, &USettingsWidget::OnShadowsLeft);
@@ -74,7 +92,6 @@ void USettingsWidget::NativeConstruct()
         PPRightButton->OnClicked.AddDynamic(this, &USettingsWidget::OnPPRight);
     }
 
-
     UpdateTexts();
 }
 
@@ -82,6 +99,14 @@ void USettingsWidget::UpdateTexts()
 {
     if (ResolutionValueText)
         ResolutionValueText->SetText(FText::FromString(ResolutionLabels[ResolutionIndex]));
+
+    // Render scale as percent
+    if (RenderScaleValueText)
+    {
+        int32 Percent = FMath::RoundToInt(RenderScale * 100.0f);
+        RenderScaleValueText->SetText(FText::FromString(FString::Printf(TEXT("%d%%"), Percent)));
+    }
+
     if (ShadowsValueText)
         ShadowsValueText->SetText(FText::FromString(ShadowsOptions[ShadowsIndex]));
     if (TexturesValueText)
@@ -94,6 +119,14 @@ void USettingsWidget::UpdateTexts()
 
 void USettingsWidget::OnResolutionLeft() { ResolutionIndex = (ResolutionIndex - 1 + ResolutionOptions.Num()) % ResolutionOptions.Num(); UpdateTexts(); }
 void USettingsWidget::OnResolutionRight() { ResolutionIndex = (ResolutionIndex + 1) % ResolutionOptions.Num(); UpdateTexts(); }
+
+// --- Render Scale ---
+void USettingsWidget::OnRenderScaleChanged(float Value)
+{
+    RenderScale = Value;
+    UpdateTexts();
+}
+
 void USettingsWidget::OnShadowsLeft() { ShadowsIndex = (ShadowsIndex - 1 + ShadowsOptions.Num()) % ShadowsOptions.Num(); UpdateTexts(); }
 void USettingsWidget::OnShadowsRight() { ShadowsIndex = (ShadowsIndex + 1) % ShadowsOptions.Num(); UpdateTexts(); }
 void USettingsWidget::OnTexturesLeft() { TexturesIndex = (TexturesIndex - 1 + TexturesOptions.Num()) % TexturesOptions.Num(); UpdateTexts(); }
@@ -120,6 +153,9 @@ void USettingsWidget::ApplySettings()
 
     // Resolution
     Settings->SetScreenResolution(ResolutionOptions[ResolutionIndex]);
+
+    // Render Scale (0.25f-1.0f)
+    Settings->SetResolutionScaleNormalized(RenderScale);
 
     // Quality settings (0-3)
     Settings->SetShadowQuality(ShadowsIndex);
