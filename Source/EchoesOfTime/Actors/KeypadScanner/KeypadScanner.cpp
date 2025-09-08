@@ -5,6 +5,7 @@
 #include "Interfaces/IKeycardUnlockable.h"
 #include "InventorySystem/InventoryComponent.h"
 #include "Actors/Computer.h"
+#include "Actors/ArchiveComputer.h"
 #include "Kismet/GameplayStatics.h"
 
 AKeypadScanner::AKeypadScanner()
@@ -30,22 +31,38 @@ void AKeypadScanner::BeginPlay()
 {
     Super::BeginPlay();
 
-    const int CodeLength = 4;
-    FString Digits = "0123456789";
-    FString NewCode;
-    for (int i = 0; i < CodeLength; ++i)
+    // Only generate code automatically if not already set by ProceduralLevelManager
+    if (CorrectCode.IsEmpty() || CorrectCode == TEXT("1234"))
     {
-        int32 Index = FMath::RandRange(0, Digits.Len() - 1);
-        NewCode += Digits.Mid(Index, 1);
+        const int CodeLength = 4;
+        FString Digits = "0123456789";
+        FString NewCode;
+        for (int i = 0; i < CodeLength; ++i)
+        {
+            int32 Index = FMath::RandRange(0, Digits.Len() - 1);
+            NewCode += Digits.Mid(Index, 1);
+        }
+        CorrectCode = NewCode;
     }
-    CorrectCode = NewCode;
 
-    // 2. Find all computers in the level
+    // Find computers to store the code, prioritizing ArchiveComputers
+    TArray<AActor*> FoundArchiveComputers;
     TArray<AActor*> FoundComputers;
+    
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AArchiveComputer::StaticClass(), FoundArchiveComputers);
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), AComputer::StaticClass(), FoundComputers);
 
-    // 3. Choose one at random and store the code
-    if (FoundComputers.Num() > 0)
+    // Try Archive computers first, then regular computers
+    if (FoundArchiveComputers.Num() > 0)
+    {
+        int32 RandomIndex = FMath::RandRange(0, FoundArchiveComputers.Num() - 1);
+        AArchiveComputer* TargetArchiveComputer = Cast<AArchiveComputer>(FoundArchiveComputers[RandomIndex]);
+        if (TargetArchiveComputer)
+        {
+            TargetArchiveComputer->SetStoredCode(CorrectCode);
+        }
+    }
+    else if (FoundComputers.Num() > 0)
     {
         int32 RandomIndex = FMath::RandRange(0, FoundComputers.Num() - 1);
         AComputer* TargetComputer = Cast<AComputer>(FoundComputers[RandomIndex]);
