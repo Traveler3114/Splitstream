@@ -1,0 +1,67 @@
+// Archive System Testing Blueprint Integration
+// This file documents how to integrate and test the new Archive System
+
+/*
+INTEGRATION STEPS:
+
+1. Add AProceduralLevelManager to your level:
+   - Place one AProceduralLevelManager actor in your level
+   - It will automatically generate codes and distribute them to computers
+   - Configure NumberOfCodesToGenerate (default: 3) and CodeLength (default: 4)
+
+2. Replace regular computers with AArchiveComputers where needed:
+   - AArchiveComputer extends AComputer with archive functionality
+   - Set the ArchiveWidgetClass to your Blueprint widget based on UArchiveCalendarWidget
+   - Archive computers will be hackable and show calendar interface once hacked
+
+3. Existing AKeypadScanner actors will work automatically:
+   - They will get codes from the ProceduralLevelManager
+   - If no manager is present, they fall back to original random generation
+
+4. Testing:
+   - Place an AArchiveSystemTester actor in your level to run automated tests
+   - Tests will run 2 seconds after BeginPlay and show results on screen
+
+USAGE EXAMPLE:
+
+1. Player finds a keypad scanner
+2. Player needs to find the correct code by hacking computers
+3. AProceduralLevelManager has distributed a code to one of the computers
+4. Player hacks an AArchiveComputer 
+5. Archive computer unlocks and shows calendar interface
+6. Calendar shows historical entries and procedural clues
+7. Player can find codes and clues in the calendar entries
+8. Player returns to keypad with correct code to unlock doors/systems
+
+WIDGET BLUEPRINT SETUP:
+
+Create a Blueprint widget based on UArchiveCalendarWidget with these components:
+- TitleText (UTextBlock)
+- MonthYearText (UTextBlock)  
+- CalendarGrid (UUniformGridPanel)
+- EntryScrollBox (UScrollBox)
+- SelectedDateText (UTextBlock)
+- EntryContentText (UTextBlock)
+- PrevMonthButton (UButton)
+- NextMonthButton (UButton)
+- CloseButton (UButton)
+
+The C++ code will bind to these components automatically via meta = (BindWidget).
+
+CUSTOMIZATION:
+
+1. Modify ClueTemplates in AProceduralLevelManager to change clue formats
+2. Add more archive entries in AArchiveComputer::InitializeArchiveData()
+3. Customize access levels and unlock conditions in AArchiveComputer
+4. Style the calendar widget in Blueprint to match your game's theme
+
+DEBUGGING:
+
+Enable logging category LogTemp to see detailed system operation:
+- Code generation and distribution
+- Archive interface operations
+- Widget creation and interaction
+- Test results from AArchiveSystemTester
+*/
+
+// This is a documentation file - no actual code compilation needed
