@@ -5,6 +5,7 @@
 #include "Interfaces/IKeycardUnlockable.h"
 #include "InventorySystem/InventoryComponent.h"
 #include "Actors/Computer.h"
+#include "Actors/ProceduralLevelManager.h"
 #include "Kismet/GameplayStatics.h"
 
 AKeypadScanner::AKeypadScanner()
@@ -30,30 +31,42 @@ void AKeypadScanner::BeginPlay()
 {
     Super::BeginPlay();
 
-    const int CodeLength = 4;
-    FString Digits = "0123456789";
-    FString NewCode;
-    for (int i = 0; i < CodeLength; ++i)
+    // Get the procedural level manager to assign a code
+    // The ProceduralLevelManager will handle code generation and assignment
+    // This keypad will get its code from the manager during the manager's BeginPlay
+    
+    // Note: The ProceduralLevelManager will set our CorrectCode during its initialization
+    // If no manager is found, fall back to the old random generation
+    AProceduralLevelManager* Manager = AProceduralLevelManager::GetInstance(GetWorld());
+    
+    if (!Manager)
     {
-        int32 Index = FMath::RandRange(0, Digits.Len() - 1);
-        NewCode += Digits.Mid(Index, 1);
-    }
-    CorrectCode = NewCode;
-
-    // 2. Find all computers in the level
-    TArray<AActor*> FoundComputers;
-    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AComputer::StaticClass(), FoundComputers);
-
-    // 3. Choose one at random and store the code
-    if (FoundComputers.Num() > 0)
-    {
-        int32 RandomIndex = FMath::RandRange(0, FoundComputers.Num() - 1);
-        AComputer* TargetComputer = Cast<AComputer>(FoundComputers[RandomIndex]);
-        if (TargetComputer)
+        // Fallback: Generate random code if no procedural manager exists
+        const int CodeLength = 4;
+        FString Digits = "0123456789";
+        FString NewCode;
+        for (int i = 0; i < CodeLength; ++i)
         {
-            TargetComputer->SetStoredCode(CorrectCode);
+            int32 Index = FMath::RandRange(0, Digits.Len() - 1);
+            NewCode += Digits.Mid(Index, 1);
+        }
+        CorrectCode = NewCode;
+
+        // Find all computers in the level and assign code to one randomly
+        TArray<AActor*> FoundComputers;
+        UGameplayStatics::GetAllActorsOfClass(GetWorld(), AComputer::StaticClass(), FoundComputers);
+
+        if (FoundComputers.Num() > 0)
+        {
+            int32 RandomIndex = FMath::RandRange(0, FoundComputers.Num() - 1);
+            AComputer* TargetComputer = Cast<AComputer>(FoundComputers[RandomIndex]);
+            if (TargetComputer)
+            {
+                TargetComputer->SetStoredCode(CorrectCode);
+            }
         }
     }
+    // If manager exists, it will set our CorrectCode during its BeginPlay
 
     SpawnKeypadButtons();
 }
