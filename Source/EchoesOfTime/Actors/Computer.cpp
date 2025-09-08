@@ -9,7 +9,7 @@
 // Sets default values
 AComputer::AComputer()
 {
-    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bCanEverTick = false;
 
     DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
     RootComponent = DefaultSceneRoot;
@@ -66,13 +66,6 @@ void AComputer::OnHackComplete()
             GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Green, RevealMsg);
         }
     }
-}
-
-// Called every frame
-void AComputer::Tick(float DeltaTime)
-{
-    Super::Tick(DeltaTime);
-
 }
 
 void AComputer::OnRep_StoredCode()

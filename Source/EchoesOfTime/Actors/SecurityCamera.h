@@ -14,14 +14,33 @@ public:
 
 protected:
     virtual void BeginPlay() override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+    // Timer handles
+    FTimerHandle DetectionTimerHandle;
+    FTimerHandle PanTimerHandle;
+    FTimerHandle DebugDrawTimerHandle;
+
+    // Timer intervals (can be tweaked)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Optimization")
+    float DetectionInterval = 0.2f; // seconds
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Optimization")
+    float PanInterval = 0.02f; // seconds
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Optimization")
+    float DebugDrawInterval = 0.1f; // seconds
+
+    // Timer callbacks
+    void DetectionUpdate();
+    void PanUpdate();
+    //void DebugDrawUpdate();
 
 public:
-    virtual void Tick(float DeltaTime) override;
-
-    // Add this:
+    // Replication
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-    // Components...
+    // Components
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Camera")
     USceneComponent* DefaultSceneRoot;
 
@@ -34,7 +53,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
     class UArrowComponent* ArrowComp;
 
-    // Detection parameters...
+    // Detection parameters
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection")
     float DetectionDistance = 2000.0f;
 
@@ -42,17 +61,17 @@ public:
     float ViewConeAngle = 90.0f; // degrees (full angle)
 
     // Debug: draw vision cone and trace
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection|Debug")
-    bool bDrawDebug = true;
+    //UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection|Debug")
+    //bool bDrawDebug = false;
 
-    // --- New: Camera rotation (pan) settings ---
+    // Camera rotation (pan) settings
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Pan")
     float MinYaw = -45.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Pan")
     float MaxYaw = 45.0f;
 
-    //If PanSpeed = 0, camera will not pan
+    // If PanSpeed = 0, camera will not pan
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Pan")
     float PanSpeed = 30.0f; // degrees per second
 

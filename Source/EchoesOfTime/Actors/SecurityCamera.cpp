@@ -13,7 +13,7 @@
 
 ASecurityCamera::ASecurityCamera()
 {
-    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bCanEverTick = false; // No Tick!
     bReplicates = true;
 
     DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
@@ -37,192 +37,214 @@ void ASecurityCamera::BeginPlay()
     bPanningRight = true;
     PauseTimer = 0.0f;
     LastDetectedActors.Empty();
-}
 
-void ASecurityCamera::Tick(float DeltaTime)
-{
-    Super::Tick(DeltaTime);
+    // Detection timer
+    GetWorldTimerManager().SetTimer(DetectionTimerHandle, this, &ASecurityCamera::DetectionUpdate, DetectionInterval, true);
 
-    // --- Detection logic (server only, to avoid duplicate events) ---
-    if (HasAuthority())
+    // Pan timer
+    if (PanSpeed > 0.0f)
     {
-        FVector CamLoc = SceneCapture ? SceneCapture->GetComponentLocation() : GetActorLocation();
-
-        // Use Sphere Overlap for broad phase
-        TArray<AActor*> OverlappedActors;
-        // Adjust object types as needed (e.g., Pawn, WorldDynamic, etc.)
-        TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
-        ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn));
-        ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldDynamic));
-
-        UKismetSystemLibrary::SphereOverlapActors(
-            GetWorld(),
-            CamLoc,
-            DetectionDistance,
-            ObjectTypes,
-            nullptr, // Or a specific class, e.g., AMyDetectable::StaticClass()
-            TArray<AActor*>{ this },
-            OverlappedActors
-        );
-
-        TSet<AActor*> DetectedThisFrame;
-
-        // ... inside the for (AActor* Actor : OverlappedActors) loop ...
-        for (AActor* Actor : OverlappedActors)
-        {
-            if (!Actor || !Actor->GetClass()->ImplementsInterface(UCameraDetectable::StaticClass()))
-                continue;
-
-            // Use bounding box corners for detection instead of just actor location
-            UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(Actor->GetRootComponent());
-            TArray<FVector> TestPoints;
-
-            if (PrimComp)
-            {
-                FBox Bounds = PrimComp->Bounds.GetBox();
-                // Get all 8 corners of the bounding box
-                TestPoints.Add(Bounds.Min);
-                TestPoints.Add(Bounds.Max);
-                TestPoints.Add(FVector(Bounds.Min.X, Bounds.Min.Y, Bounds.Max.Z));
-                TestPoints.Add(FVector(Bounds.Min.X, Bounds.Max.Y, Bounds.Min.Z));
-                TestPoints.Add(FVector(Bounds.Max.X, Bounds.Min.Y, Bounds.Min.Z));
-                TestPoints.Add(FVector(Bounds.Min.X, Bounds.Max.Y, Bounds.Max.Z));
-                TestPoints.Add(FVector(Bounds.Max.X, Bounds.Min.Y, Bounds.Max.Z));
-                TestPoints.Add(FVector(Bounds.Max.X, Bounds.Max.Y, Bounds.Min.Z));
-            }
-            else
-            {
-                // fallback: just use actor location
-                TestPoints.Add(Actor->GetActorLocation());
-            }
-
-            bool bAnyPointDetected = false;
-            for (const FVector& Point : TestPoints)
-            {
-                FVector ToTarget = Point - CamLoc;
-                float Distance = ToTarget.Size();
-                if (Distance > DetectionDistance)
-                    continue;
-
-                ToTarget.Normalize();
-                FVector CameraForward = SceneCapture ? SceneCapture->GetForwardVector() : GetActorForwardVector();
-                float Dot = FVector::DotProduct(CameraForward, ToTarget);
-                float CosHalfFOV = FMath::Cos(FMath::DegreesToRadians(ViewConeAngle * 0.5f));
-                if (Dot >= CosHalfFOV)
-                {
-                    bAnyPointDetected = true;
-                    break;
-                }
-            }
-
-            if (bAnyPointDetected)
-            {
-                DetectedThisFrame.Add(Actor);
-                bool bWasDetected = false;
-                for (const TWeakObjectPtr<AActor>& WeakActor : LastDetectedActors)
-                {
-                    if (WeakActor.Get() == Actor)
-                    {
-                        bWasDetected = true;
-                        break;
-                    }
-                }
-                if (!bWasDetected)
-                    ICameraDetectable::Execute_OnDetectedByCamera(Actor, this);
-            }
-        }
-
-        // Handle lost actors
-        for (const TWeakObjectPtr<AActor>& WeakActor : LastDetectedActors)
-        {
-            AActor* Actor = WeakActor.Get();
-            if (!Actor)
-                continue;
-            if (!DetectedThisFrame.Contains(Actor))
-                ICameraDetectable::Execute_OnLostByCamera(Actor, this);
-        }
-
-        // Store for next frame
-        LastDetectedActors.Empty();
-        for (AActor* Actor : DetectedThisFrame)
-            LastDetectedActors.Add(Actor);
+        GetWorldTimerManager().SetTimer(PanTimerHandle, this, &ASecurityCamera::PanUpdate, PanInterval, true);
     }
 
-    // --- Camera panning logic (server only) ---
-    if (HasAuthority() && PanSpeed > 0.0f)
+    // Debug draw timer (optional)
+    //if (bDrawDebug)
+    //{
+    //    GetWorldTimerManager().SetTimer(DebugDrawTimerHandle, this, &ASecurityCamera::DebugDrawUpdate, DebugDrawInterval, true);
+    //}
+}
+
+void ASecurityCamera::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    // Clean up timers
+    GetWorldTimerManager().ClearTimer(DetectionTimerHandle);
+    GetWorldTimerManager().ClearTimer(PanTimerHandle);
+    GetWorldTimerManager().ClearTimer(DebugDrawTimerHandle);
+
+    Super::EndPlay(EndPlayReason);
+}
+
+void ASecurityCamera::DetectionUpdate()
+{
+    if (!HasAuthority())
+        return;
+
+    FVector CamLoc = SceneCapture ? SceneCapture->GetComponentLocation() : GetActorLocation();
+
+    // Use Sphere Overlap for broad phase
+    TArray<AActor*> OverlappedActors;
+    TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+    ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn));
+    ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldDynamic));
+
+    UKismetSystemLibrary::SphereOverlapActors(
+        GetWorld(),
+        CamLoc,
+        DetectionDistance,
+        ObjectTypes,
+        nullptr,
+        TArray<AActor*>{ this },
+        OverlappedActors
+    );
+
+    TSet<AActor*> DetectedThisFrame;
+
+    for (AActor* Actor : OverlappedActors)
     {
-        if (PauseTimer > 0.0f)
+        if (!Actor || !Actor->GetClass()->ImplementsInterface(UCameraDetectable::StaticClass()))
+            continue;
+
+        UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(Actor->GetRootComponent());
+        TArray<FVector> TestPoints;
+
+        if (PrimComp)
         {
-            PauseTimer -= DeltaTime;
-            if (PauseTimer < 0.0f)
-                PauseTimer = 0.0f;
+            FBox Bounds = PrimComp->Bounds.GetBox();
+            TestPoints.Add(Bounds.Min);
+            TestPoints.Add(Bounds.Max);
+            TestPoints.Add(FVector(Bounds.Min.X, Bounds.Min.Y, Bounds.Max.Z));
+            TestPoints.Add(FVector(Bounds.Min.X, Bounds.Max.Y, Bounds.Min.Z));
+            TestPoints.Add(FVector(Bounds.Max.X, Bounds.Min.Y, Bounds.Min.Z));
+            TestPoints.Add(FVector(Bounds.Min.X, Bounds.Max.Y, Bounds.Max.Z));
+            TestPoints.Add(FVector(Bounds.Max.X, Bounds.Min.Y, Bounds.Max.Z));
+            TestPoints.Add(FVector(Bounds.Max.X, Bounds.Max.Y, Bounds.Min.Z));
         }
         else
         {
-            float DeltaYaw = PanSpeed * DeltaTime * (bPanningRight ? 1.0f : -1.0f);
-            PanOffset += DeltaYaw;
+            TestPoints.Add(Actor->GetActorLocation());
+        }
 
-            if (PanOffset > MaxYaw)
+        bool bAnyPointDetected = false;
+        for (const FVector& Point : TestPoints)
+        {
+            FVector ToTarget = Point - CamLoc;
+            float Distance = ToTarget.Size();
+            if (Distance > DetectionDistance)
+                continue;
+
+            ToTarget.Normalize();
+            FVector CameraForward = SceneCapture ? SceneCapture->GetForwardVector() : GetActorForwardVector();
+            float Dot = FVector::DotProduct(CameraForward, ToTarget);
+            float CosHalfFOV = FMath::Cos(FMath::DegreesToRadians(ViewConeAngle * 0.5f));
+            if (Dot >= CosHalfFOV)
             {
-                PanOffset = MaxYaw;
-                bPanningRight = false;
-                PauseTimer = PauseAtLimit;
-            }
-            else if (PanOffset < MinYaw)
-            {
-                PanOffset = MinYaw;
-                bPanningRight = true;
-                PauseTimer = PauseAtLimit;
+                bAnyPointDetected = true;
+                break;
             }
         }
 
-        // Update mesh/capture rotation on the server too
-        OnRep_PanOffset();
+        if (bAnyPointDetected)
+        {
+            DetectedThisFrame.Add(Actor);
+            bool bWasDetected = false;
+            for (const TWeakObjectPtr<AActor>& WeakActor : LastDetectedActors)
+            {
+                if (WeakActor.Get() == Actor)
+                {
+                    bWasDetected = true;
+                    break;
+                }
+            }
+            if (!bWasDetected)
+                ICameraDetectable::Execute_OnDetectedByCamera(Actor, this);
+        }
     }
 
-    // --- Debug drawing of camera cone and trace (all instances) ---
-    //if (bDrawDebug && SceneCapture)
-    //{
-    //    FVector CamLoc = SceneCapture->GetComponentLocation();
-    //    FVector CamForward = SceneCapture->GetForwardVector();
-    //    float HorizontalFOV = SceneCapture->FOVAngle;
-    //    float AspectRatio = 1.0f;
-    //    if (SceneCapture->TextureTarget)
-    //        AspectRatio = (float)SceneCapture->TextureTarget->SizeX / (float)SceneCapture->TextureTarget->SizeY;
-    //    float VerticalFOV = FMath::RadiansToDegrees(
-    //        2 * FMath::Atan(FMath::Tan(FMath::DegreesToRadians(HorizontalFOV) / 2) / AspectRatio)
-    //    );
-    //    ViewConeAngle = HorizontalFOV;
+    // Handle lost actors
+    for (const TWeakObjectPtr<AActor>& WeakActor : LastDetectedActors)
+    {
+        AActor* Actor = WeakActor.Get();
+        if (!Actor)
+            continue;
+        if (!DetectedThisFrame.Contains(Actor))
+            ICameraDetectable::Execute_OnLostByCamera(Actor, this);
+    }
 
-    //    DrawDebugCone(
-    //        GetWorld(),
-    //        CamLoc,
-    //        CamForward,
-    //        DetectionDistance,
-    //        FMath::DegreesToRadians(VerticalFOV * 0.5f),
-    //        FMath::DegreesToRadians(HorizontalFOV * 0.5f),
-    //        32,
-    //        FColor::Green,
-    //        false,
-    //        0.1f,
-    //        0,
-    //        1.0f
-    //    );
-
-    //    FVector RayEnd = CamLoc + CamForward * DetectionDistance;
-    //    FHitResult RayHit;
-    //    FCollisionQueryParams Params;
-    //    Params.AddIgnoredActor(this);
-
-    //    bool bRayHit = GetWorld()->LineTraceSingleByChannel(
-    //        RayHit, CamLoc, RayEnd, ECC_Visibility, Params
-    //    );
-    //    FVector RayDrawEnd = bRayHit ? RayHit.ImpactPoint : RayEnd;
-    //    DrawDebugLine(GetWorld(), CamLoc, RayDrawEnd, FColor::Yellow, false, 0.1f, 0, 2.0f);
-    //    if (bRayHit)
-    //        DrawDebugPoint(GetWorld(), RayHit.ImpactPoint, 16.0f, FColor::Red, false, 0.1f);
-    //}
+    // Store for next frame
+    LastDetectedActors.Empty();
+    for (AActor* Actor : DetectedThisFrame)
+        LastDetectedActors.Add(Actor);
 }
+
+void ASecurityCamera::PanUpdate()
+{
+    if (!HasAuthority() || PanSpeed <= 0.0f)
+        return;
+
+    float DeltaTime = PanInterval;
+
+    if (PauseTimer > 0.0f)
+    {
+        PauseTimer -= DeltaTime;
+        if (PauseTimer < 0.0f)
+            PauseTimer = 0.0f;
+    }
+    else
+    {
+        float DeltaYaw = PanSpeed * DeltaTime * (bPanningRight ? 1.0f : -1.0f);
+        PanOffset += DeltaYaw;
+
+        if (PanOffset > MaxYaw)
+        {
+            PanOffset = MaxYaw;
+            bPanningRight = false;
+            PauseTimer = PauseAtLimit;
+        }
+        else if (PanOffset < MinYaw)
+        {
+            PanOffset = MinYaw;
+            bPanningRight = true;
+            PauseTimer = PauseAtLimit;
+        }
+    }
+
+    OnRep_PanOffset();
+}
+
+//void ASecurityCamera::DebugDrawUpdate()
+//{
+//    if (!(bDrawDebug && SceneCapture))
+//        return;
+//
+//    FVector CamLoc = SceneCapture->GetComponentLocation();
+//    FVector CamForward = SceneCapture->GetForwardVector();
+//    float HorizontalFOV = SceneCapture->FOVAngle;
+//    float AspectRatio = 1.0f;
+//    if (SceneCapture->TextureTarget)
+//        AspectRatio = (float)SceneCapture->TextureTarget->SizeX / (float)SceneCapture->TextureTarget->SizeY;
+//    float VerticalFOV = FMath::RadiansToDegrees(
+//        2 * FMath::Atan(FMath::Tan(FMath::DegreesToRadians(HorizontalFOV) / 2) / AspectRatio)
+//    );
+//    ViewConeAngle = HorizontalFOV;
+//
+//    DrawDebugCone(
+//        GetWorld(),
+//        CamLoc,
+//        CamForward,
+//        DetectionDistance,
+//        FMath::DegreesToRadians(VerticalFOV * 0.5f),
+//        FMath::DegreesToRadians(HorizontalFOV * 0.5f),
+//        32,
+//        FColor::Green,
+//        false,
+//        DebugDrawInterval,
+//        0,
+//        1.0f
+//    );
+//
+//    FVector RayEnd = CamLoc + CamForward * DetectionDistance;
+//    FHitResult RayHit;
+//    FCollisionQueryParams Params;
+//    Params.AddIgnoredActor(this);
+//
+//    bool bRayHit = GetWorld()->LineTraceSingleByChannel(
+//        RayHit, CamLoc, RayEnd, ECC_Visibility, Params
+//    );
+//    FVector RayDrawEnd = bRayHit ? RayHit.ImpactPoint : RayEnd;
+//    DrawDebugLine(GetWorld(), CamLoc, RayDrawEnd, FColor::Yellow, false, DebugDrawInterval, 0, 2.0f);
+//    if (bRayHit)
+//        DrawDebugPoint(GetWorld(), RayHit.ImpactPoint, 16.0f, FColor::Red, false, DebugDrawInterval);
+//}
 
 void ASecurityCamera::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
