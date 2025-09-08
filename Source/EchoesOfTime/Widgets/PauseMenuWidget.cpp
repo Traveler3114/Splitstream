@@ -8,14 +8,20 @@ void UPauseMenuWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    if (resume_btn)
+    if (resume_btn) {
+        resume_btn->OnClicked.RemoveDynamic(this, &UPauseMenuWidget::OnResumeClicked);
         resume_btn->OnClicked.AddDynamic(this, &UPauseMenuWidget::OnResumeClicked);
+    }
 
-    if (settings_btn)
+    if (settings_btn) {
+        settings_btn->OnClicked.RemoveDynamic(this, &UPauseMenuWidget::OnSettingsClicked);
         settings_btn->OnClicked.AddDynamic(this, &UPauseMenuWidget::OnSettingsClicked);
+    }
 
-    if (quit_btn)
+    if (quit_btn) {
+        quit_btn->OnClicked.RemoveDynamic(this, &UPauseMenuWidget::OnQuitClicked);
         quit_btn->OnClicked.AddDynamic(this, &UPauseMenuWidget::OnQuitClicked);
+    }
 
     // Hide settings widget initially (if it exists in the widget tree)
     if (SettingsWidget)

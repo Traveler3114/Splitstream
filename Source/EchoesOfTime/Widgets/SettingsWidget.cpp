@@ -25,35 +25,55 @@ void USettingsWidget::NativeConstruct()
     PPIndex = 2;
 
     // ----- Bind buttons -----
-    if (ApplyButton)
+    if (ApplyButton) {
+        ApplyButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnApplyClicked);
         ApplyButton->OnClicked.AddDynamic(this, &USettingsWidget::OnApplyClicked);
-    if (BackButton)
+    }
+    if (BackButton) {
+        BackButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnBackClicked);
         BackButton->OnClicked.AddDynamic(this, &USettingsWidget::OnBackClicked);
-
-    if (ResolutionLeftButton)
+    }
+    if (ResolutionLeftButton) {
+        ResolutionLeftButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnResolutionLeft);
         ResolutionLeftButton->OnClicked.AddDynamic(this, &USettingsWidget::OnResolutionLeft);
-    if (ResolutionRightButton)
+    }
+    if (ResolutionRightButton) {
+        ResolutionRightButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnResolutionRight);
         ResolutionRightButton->OnClicked.AddDynamic(this, &USettingsWidget::OnResolutionRight);
-
-    if (ShadowsLeftButton)
+    }
+    if (ShadowsLeftButton) {
+        ShadowsLeftButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnShadowsLeft);
         ShadowsLeftButton->OnClicked.AddDynamic(this, &USettingsWidget::OnShadowsLeft);
-    if (ShadowsRightButton)
+    }
+    if (ShadowsRightButton) {
+        ShadowsRightButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnShadowsRight);
         ShadowsRightButton->OnClicked.AddDynamic(this, &USettingsWidget::OnShadowsRight);
-
-    if (TexturesLeftButton)
+    }
+    if (TexturesLeftButton) {
+        TexturesLeftButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnTexturesLeft);
         TexturesLeftButton->OnClicked.AddDynamic(this, &USettingsWidget::OnTexturesLeft);
-    if (TexturesRightButton)
+    }
+    if (TexturesRightButton) {
+        TexturesRightButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnTexturesRight);
         TexturesRightButton->OnClicked.AddDynamic(this, &USettingsWidget::OnTexturesRight);
-
-    if (AALeftButton)
+    }
+    if (AALeftButton) {
+        AALeftButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnAALeft);
         AALeftButton->OnClicked.AddDynamic(this, &USettingsWidget::OnAALeft);
-    if (AARightButton)
+    }
+    if (AARightButton) {
+        AARightButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnAARight);
         AARightButton->OnClicked.AddDynamic(this, &USettingsWidget::OnAARight);
-
-    if (PPLeftButton)
+    }
+    if (PPLeftButton) {
+        PPLeftButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnPPLeft);
         PPLeftButton->OnClicked.AddDynamic(this, &USettingsWidget::OnPPLeft);
-    if (PPRightButton)
+    }
+    if (PPRightButton) {
+        PPRightButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnPPRight);
         PPRightButton->OnClicked.AddDynamic(this, &USettingsWidget::OnPPRight);
+    }
+
 
     UpdateTexts();
 }
