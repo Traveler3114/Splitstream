@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -7,8 +5,8 @@
 #include "Interfaces/IInteractable.h"
 #include "Computer.generated.h"
 
-// Forward declaration
 class UHackComponent;
+class UTextRenderComponent;
 
 UCLASS()
 class ECHOESOFTIME_API AComputer : public AActor, public IInteractable
@@ -16,16 +14,17 @@ class ECHOESOFTIME_API AComputer : public AActor, public IInteractable
     GENERATED_BODY()
 
 public:
-    // Sets default values for this actor's properties
     AComputer();
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Computer")
     class USceneComponent* DefaultSceneRoot;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Computer")
     class UStaticMeshComponent* ComputerMesh;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Computer")
+    class UTextRenderComponent* NameText; // <--- ADD THIS
 
     UHackComponent* HackComponent = nullptr;
 
@@ -35,21 +34,27 @@ public:
     UFUNCTION()
     void OnRep_StoredCode();
 
-    // Setter
     UFUNCTION(BlueprintCallable, Category = "Hack")
     void SetStoredCode(const FString& Code) { StoredCode = Code; }
 
-    // You can add a function to reveal the code when hacked
     UFUNCTION(BlueprintCallable, Category = "Hack")
     FString RevealStoredCode() const { return StoredCode; }
 
     UFUNCTION()
     void OnHackComplete();
 
+    // --- NEW CODE: Unique Staff Name ---
+    UPROPERTY(ReplicatedUsing = OnRep_StaffName, VisibleAnywhere, BlueprintReadOnly, Category = "Staff")
+    FString StaffName;
+
+    UFUNCTION()
+    void OnRep_StaffName();
+
+    UFUNCTION(BlueprintCallable, Category = "Staff")
+    void SetStaffName(const FString& Name);
+
 protected:
-    // Called when the game starts or when spawned
     virtual void BeginPlay() override;
     virtual void Interact_Implementation(AActor* Interactor) override;
     virtual void SetHighlighted_Implementation(bool bHighlight) override;
-
 };

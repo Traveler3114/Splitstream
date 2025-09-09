@@ -4,7 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "Interfaces/IInteractable.h"
 #include "Interfaces/IKeycardUnlockable.h"
-#include "InventorySystem/ItemBase.h" // <-- Include for EItemType
+#include "InventorySystem/ItemBase.h"
 #include "KeypadScanner.generated.h"
 
 class AKeypadButton;
@@ -44,15 +44,21 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KeypadScanner")
     FString CorrectCode = TEXT("1234");
 
-    // **NEW:** Keycard type required to unlock
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KeypadScanner")
     EItemType RequiredKeycardType = EItemType::KeycardL2;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KeypadScanner")
+    bool bStoreCodeOnComputer = true;
+
     virtual void Interact_Implementation(AActor* Interactor) override;
-	virtual void SetHighlighted_Implementation(bool bHighlight) override;
+    virtual void SetHighlighted_Implementation(bool bHighlight) override;
 
     UFUNCTION()
     void AppendCodeSymbol(const FString& Symbol);
+
+    // --- NEW CODE: External code setter ---
+    UFUNCTION(BlueprintCallable, Category = "KeypadScanner")
+    void SetCorrectCode(const FString& Code) { CorrectCode = Code; }
 
 protected:
     void SpawnKeypadButtons();

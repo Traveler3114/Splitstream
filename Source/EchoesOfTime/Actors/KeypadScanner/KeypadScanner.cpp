@@ -5,7 +5,6 @@
 #include "Interfaces/IKeycardUnlockable.h"
 #include "InventorySystem/InventoryComponent.h"
 #include "Actors/Computer.h"
-#include "Kismet/GameplayStatics.h"
 
 AKeypadScanner::AKeypadScanner()
 {
@@ -29,32 +28,7 @@ AKeypadScanner::AKeypadScanner()
 void AKeypadScanner::BeginPlay()
 {
     Super::BeginPlay();
-
-    const int CodeLength = 4;
-    FString Digits = "0123456789";
-    FString NewCode;
-    for (int i = 0; i < CodeLength; ++i)
-    {
-        int32 Index = FMath::RandRange(0, Digits.Len() - 1);
-        NewCode += Digits.Mid(Index, 1);
-    }
-    CorrectCode = NewCode;
-
-    // 2. Find all computers in the level
-    TArray<AActor*> FoundComputers;
-    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AComputer::StaticClass(), FoundComputers);
-
-    // 3. Choose one at random and store the code
-    if (FoundComputers.Num() > 0)
-    {
-        int32 RandomIndex = FMath::RandRange(0, FoundComputers.Num() - 1);
-        AComputer* TargetComputer = Cast<AComputer>(FoundComputers[RandomIndex]);
-        if (TargetComputer)
-        {
-            TargetComputer->SetStoredCode(CorrectCode);
-        }
-    }
-
+    // --- REMOVED: Random code generation and computer code assignment ---
     SpawnKeypadButtons();
 }
 
@@ -65,10 +39,7 @@ void AKeypadScanner::SpawnKeypadButtons()
     const int Rows = 4;
     const int Cols = 3;
     const float ButtonSpacing = 60.f;
-
-    // Only use scale for layout, not for button actor scale
-    FVector Scale = FVector(1.0f, 1.0f, 1.0f);
-    FVector StartLocation = ButtonGridOffset; // local offset, no scaling
+    FVector StartLocation = ButtonGridOffset;
 
     FString ButtonLabels[Rows][Cols] = {
         {TEXT("1"), TEXT("2"), TEXT("3")},
@@ -87,7 +58,6 @@ void AKeypadScanner::SpawnKeypadButtons()
             SpawnParams.Owner = this;
             SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-            // Spawn at origin, will set relative transform after attaching
             AKeypadButton* NewButton = GetWorld()->SpawnActor<AKeypadButton>(
                 KeypadButtonClass,
                 FVector::ZeroVector,
@@ -100,15 +70,12 @@ void AKeypadScanner::SpawnKeypadButtons()
                 NewButton->NumberTextRenderComp->SetText(FText::FromString(Symbol));
                 NewButton->ButtonSymbol = Symbol;
 
-                // Attach to scanner mesh so it inherits all transform (scale, rotation, location)
                 NewButton->AttachToComponent(
                     KeypadScannerMesh,
                     FAttachmentTransformRules::KeepRelativeTransform
                 );
-                // Set the relative transform for layout
                 NewButton->SetActorRelativeLocation(LocalOffset);
                 NewButton->SetActorRelativeRotation(FRotator::ZeroRotator);
-                // DO NOT set relative scale! Let it inherit parent's scale
 
                 NewButton->OnButtonPressed.AddDynamic(this, &AKeypadScanner::AppendCodeSymbol);
                 KeypadButtons.Add(NewButton);
@@ -121,7 +88,6 @@ void AKeypadScanner::AppendCodeSymbol(const FString& Symbol)
 {
     if (!CodeTextRenderComp) return;
 
-    // Handle clear (*) and submit (#)
     if (Symbol == "*")
     {
         EnteredCode.Empty();
@@ -146,7 +112,6 @@ void AKeypadScanner::AppendCodeSymbol(const FString& Symbol)
         return;
     }
 
-    // Append digit
     EnteredCode += Symbol;
     CodeTextRenderComp->SetText(FText::FromString(EnteredCode));
 }
@@ -179,7 +144,6 @@ void AKeypadScanner::TryUnlock(AActor* Interactor)
 
 void AKeypadScanner::Interact_Implementation(AActor* Interactor)
 {
-    // Called when the player "scans" their card on the scanner
     TryUnlock(Interactor);
 }
 
@@ -199,7 +163,6 @@ void AKeypadScanner::EndPlay(const EEndPlayReason::Type EndPlayReason)
     }
     Super::EndPlay(EndPlayReason);
 }
-
 
 void AKeypadScanner::SetHighlighted_Implementation(bool bHighlight)
 {

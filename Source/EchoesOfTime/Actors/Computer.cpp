@@ -1,10 +1,10 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "Computer.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/SceneComponent.h"
+#include "Components/TextRenderComponent.h"
 #include "HackingSystem/HackComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "Engine/Engine.h"
 
 // Sets default values
 AComputer::AComputer()
@@ -16,19 +16,41 @@ AComputer::AComputer()
 
     ComputerMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ComputerMesh"));
     ComputerMesh->SetupAttachment(DefaultSceneRoot);
+
+    NameText = CreateDefaultSubobject<UTextRenderComponent>(TEXT("NameText"));
+    NameText->SetupAttachment(DefaultSceneRoot);
+
+    // Set default properties for the name label
+    NameText->SetHorizontalAlignment(EHTA_Center);
+    NameText->SetWorldSize(32.f);
+    NameText->SetTextRenderColor(FColor::Cyan);
+    NameText->SetRelativeLocation(FVector(0, 0, 100)); // Offset above computer, tweak as needed
 }
 
-// Called when the game starts or when spawned
 void AComputer::BeginPlay()
 {
     Super::BeginPlay();
 
-    // Find and cache optional hack component
+    // Set initial text for staff name
+    if (NameText) NameText->SetText(FText::FromString(StaffName));
+
     HackComponent = FindComponentByClass<UHackComponent>();
     if (HackComponent)
     {
         HackComponent->OnHackComplete.AddDynamic(this, &AComputer::OnHackComplete);
     }
+}
+
+void AComputer::OnRep_StaffName()
+{
+    // Update the text in game when StaffName changes (networked)
+    if (NameText) NameText->SetText(FText::FromString(StaffName));
+}
+
+void AComputer::SetStaffName(const FString& Name)
+{
+    StaffName = Name;
+    if (NameText) NameText->SetText(FText::FromString(Name));
 }
 
 void AComputer::Interact_Implementation(AActor* Interactor)
@@ -41,7 +63,6 @@ void AComputer::SetHighlighted_Implementation(bool bHighlight)
 {
     if (ComputerMesh && HackComponent)
     {
-        // If hacked, always disable highlighting
         if (HackComponent->bHacked)
         {
             ComputerMesh->SetRenderCustomDepth(false);
@@ -58,7 +79,7 @@ void AComputer::SetHighlighted_Implementation(bool bHighlight)
 void AComputer::OnHackComplete()
 {
     // Display the code on screen for the player
-    if (HasAuthority()) 
+    if (HasAuthority())
     {
         if (GEngine)
         {
@@ -77,4 +98,5 @@ void AComputer::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AComputer, StoredCode);
+    DOREPLIFETIME(AComputer, StaffName);
 }
