@@ -350,10 +350,13 @@ void ADefaultCharacter::Move(const FInputActionValue& Value)
 
 void ADefaultCharacter::Look(const FInputActionValue& Value)
 {
+    ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
+    if (!PS) return; // Fix: Guard against null PlayerState
 
-    UAbilitySystemComponent* ASC = GetPlayerState<ADefaultPlayerState>()->GetAbilitySystemComponent();
+    UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
     if (ASC && ASC->HasMatchingGameplayTag(TAG_Character_Status_Block_Look))
         return;
+
     FVector2D LookAxisVector = Value.Get<FVector2D>();
 
     if (Controller != nullptr)

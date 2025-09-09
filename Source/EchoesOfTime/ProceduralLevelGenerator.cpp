@@ -92,14 +92,13 @@ void AProceduralLevelGenerator::BeginPlay()
     }
 
     //Test for debug showing the date on screen
-    if (GEngine)
-    {
-        FString DateMsg = FString::Printf(TEXT("Puzzle Date: %d-%02d-%02d"), RandomDate.Year, RandomDate.Month, RandomDate.Day);
-        GEngine->AddOnScreenDebugMessage(12345, 999999.f, FColor::Yellow, DateMsg);
-    }
+    //if (GEngine)
+    //{
+    //    FString DateMsg = FString::Printf(TEXT("Puzzle Date: %d-%02d-%02d"), RandomDate.Year, RandomDate.Month, RandomDate.Day);
+    //    GEngine->AddOnScreenDebugMessage(12345, 999999.f, FColor::Yellow, DateMsg);
+    //}
 }
 
-// ... rest of your file unchanged ...
 
 FString AProceduralLevelGenerator::GenerateRandomCode(int Length)
 {

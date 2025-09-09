@@ -2,6 +2,7 @@
 #include "LockPickingSystem/LockPickComponent.h"
 #include "Widgets/HUD/CharacterHUD.h"
 #include "Widgets/PauseMenuWidget.h"
+#include "Widgets/CalendarWidget.h"
 #include "Engine/Engine.h"
 
 ADefaultPlayerController::ADefaultPlayerController()
@@ -112,6 +113,23 @@ void ADefaultPlayerController::ServerLockPickConfirm_Implementation(AActor* Door
             {
                 LockComp->EndLockPicking();
             }
+        }
+    }
+}
+
+
+void ADefaultPlayerController::ClientShowCalendarWidget_Implementation(int32 Year, int32 Month, int32 Day, const FString& StaffName)
+{
+    if (CalendarWidgetClass)
+    {
+        UCalendarWidget* Widget = CreateWidget<UCalendarWidget>(this, CalendarWidgetClass);
+        if (Widget)
+        {
+            Widget->TargetYear = Year;
+            Widget->TargetMonth = Month;
+            Widget->TargetDay = Day;
+            Widget->TargetStaffName = StaffName;
+            Widget->AddToViewport();
         }
     }
 }

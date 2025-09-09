@@ -3,6 +3,9 @@
 #include "Widgets/CalendarWidget.h"
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
+#include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
+#include "Controllers/DefaultPlayerController.h"
 
 AArchiveComputer::AArchiveComputer()
 {
@@ -26,18 +29,25 @@ void AArchiveComputer::BeginPlay()
 
 void AArchiveComputer::Interact_Implementation(AActor* Interactor)
 {
-    if (CalendarWidgetClass && GeneratorRef)
-    {
-        CalendarWidgetInstance = CreateWidget<UCalendarWidget>(UGameplayStatics::GetPlayerController(GetWorld(), 0), CalendarWidgetClass);
-        if (CalendarWidgetInstance)
-        {
-            // Pass target date and staff name from generator to widget
-            CalendarWidgetInstance->TargetYear = GeneratorRef->RandomDate.Year;
-            CalendarWidgetInstance->TargetMonth = GeneratorRef->RandomDate.Month;
-            CalendarWidgetInstance->TargetDay = GeneratorRef->RandomDate.Day;
-            CalendarWidgetInstance->TargetStaffName = GeneratorRef->CodeComputerStaffName;
+    APawn* Pawn = Cast<APawn>(Interactor);
+    if (!Pawn) return;
 
-            CalendarWidgetInstance->AddToViewport();
+    APlayerController* PC = Cast<APlayerController>(Pawn->GetController());
+    if (!PC) return;
+
+    if (GeneratorRef)
+    {
+        // Call the client RPC to show the widget ONLY for the owning client
+        // Cast to your custom controller if needed
+        ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(PC);
+        if (MyPC)
+        {
+            MyPC->ClientShowCalendarWidget(
+                GeneratorRef->RandomDate.Year,
+                GeneratorRef->RandomDate.Month,
+                GeneratorRef->RandomDate.Day,
+                GeneratorRef->CodeComputerStaffName
+            );
         }
     }
 }

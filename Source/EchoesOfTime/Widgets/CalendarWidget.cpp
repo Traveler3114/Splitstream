@@ -158,6 +158,7 @@ void UCalendarWidget::ShowResult()
         NotFound->SetText(FText::FromString(TEXT("No record found for this date.")));
         CalendarPanel->AddChildToUniformGrid(NotFound, 0, 0);
     }
+    SetKeyboardFocus();
 }
 
 void UCalendarWidget::GoBack()
