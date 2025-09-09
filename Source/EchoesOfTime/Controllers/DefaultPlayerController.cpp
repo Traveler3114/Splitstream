@@ -2,7 +2,7 @@
 #include "LockPickingSystem/LockPickComponent.h"
 #include "Widgets/HUD/CharacterHUD.h"
 #include "Widgets/PauseMenuWidget.h"
-#include "Widgets/CalendarWidget.h"
+#include "Widgets/Calendar/CalendarWidget.h"
 #include "Engine/Engine.h"
 
 ADefaultPlayerController::ADefaultPlayerController()

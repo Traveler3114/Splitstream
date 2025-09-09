@@ -27,11 +27,6 @@ public:
     virtual void Interact_Implementation(AActor* Interactor) override;
 	virtual void SetHighlighted_Implementation(bool bHighlight) override;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Archive")
-    TSubclassOf<UCalendarWidget> CalendarWidgetClass;
-
-    UPROPERTY(BlueprintReadWrite)
-    UCalendarWidget* CalendarWidgetInstance;
 
     UPROPERTY(BlueprintReadOnly)
     AProceduralLevelGenerator* GeneratorRef;
