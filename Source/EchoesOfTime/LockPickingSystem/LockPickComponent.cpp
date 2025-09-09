@@ -43,15 +43,27 @@ void ULockPickComponent::GeneratePins()
     float Tolerance = 10.f;
     switch (LockDifficulty)
     {
-        case ELockDifficulty::Easy:   Tolerance = 10.f; break;
-        case ELockDifficulty::Medium: Tolerance = 5.f; break;
-        case ELockDifficulty::Hard:   Tolerance = 2.f;  break;
-        default:                      Tolerance = 10.f; break;
+    case ELockDifficulty::Easy:   Tolerance = 10.f; break;
+    case ELockDifficulty::Medium: Tolerance = 5.f; break;
+    case ELockDifficulty::Hard:   Tolerance = 2.f;  break;
+    default:                      Tolerance = 10.f; break;
     }
+
+    // SEEDING: Use something unique for each lock!
+    int32 Seed = 0;
+    if (AActor* Owner = GetOwner())
+    {
+        Seed = FCrc::StrCrc32(*Owner->GetName()); // Unique per actor name
+    }
+    else
+    {
+        Seed = FMath::Rand(); // Fallback if no owner
+    }
+    FRandomStream Stream(Seed);
 
     for (int32 i = 0; i < NumPins; ++i)
     {
-        float Angle = 360.f * i / NumPins;
+        float Angle = Stream.FRandRange(0.f, 360.f); // Now actually random per lock!
         FLockPinData Pin;
         Pin.SweetSpotAngle = Angle;
         Pin.Tolerance = Tolerance;

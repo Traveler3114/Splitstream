@@ -8,6 +8,7 @@
 class UCalendarWidget;
 class AProceduralLevelGenerator;
 class AComputer;
+class ACivilianCharacter;
 
 UCLASS()
 class ECHOESOFTIME_API AArchiveComputer : public AActor, public IInteractable
@@ -26,6 +27,10 @@ public:
     // Store computers with non-empty code
     UPROPERTY(BlueprintReadOnly)
     TArray<AComputer*> CodeComputers;
+
+    // Map for fast lookup: Computer -> Civilian
+    UPROPERTY()
+    TMap<AComputer*, ACivilianCharacter*> ComputerToCivilianMap;
 
     virtual void Interact_Implementation(AActor* Interactor) override;
     virtual void SetHighlighted_Implementation(bool bHighlight) override;

@@ -38,6 +38,17 @@ void AArchiveComputer::BeginPlay()
             CodeComputers.Add(Computer);
         }
     }
+
+    // Build map: Computer -> Civilian (for O(1) lookup)
+    ComputerToCivilianMap.Empty();
+    for (TActorIterator<ACivilianCharacter> CivItr(GetWorld()); CivItr; ++CivItr)
+    {
+        ACivilianCharacter* Civ = *CivItr;
+        if (Civ && Civ->AssignedComputer)
+        {
+            ComputerToCivilianMap.Add(Civ->AssignedComputer, Civ);
+        }
+    }
 }
 
 void AArchiveComputer::Interact_Implementation(AActor* Interactor)
@@ -67,16 +78,7 @@ void AArchiveComputer::Interact_Implementation(AActor* Interactor)
             {
                 FString Name = Comp->StaffName;
                 UTexture2D* Portrait = nullptr;
-                ACivilianCharacter* FoundCiv = nullptr;
-                for (TActorIterator<ACivilianCharacter> CivItr(GetWorld()); CivItr; ++CivItr)
-                {
-                    if (CivItr->AssignedComputer == Comp)
-                    {
-                        FoundCiv = *CivItr;
-                        break;
-                    }
-                }
-                if (FoundCiv)
+                if (ACivilianCharacter* FoundCiv = ComputerToCivilianMap.FindRef(Comp))
                 {
                     Name = FoundCiv->CivilianName;
                     Portrait = FoundCiv->PortraitTexture;

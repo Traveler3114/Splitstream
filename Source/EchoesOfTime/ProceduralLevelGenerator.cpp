@@ -116,10 +116,8 @@ void AProceduralLevelGenerator::BeginPlay()
             {
                 int32 RandIndex = FMath::RandRange(0, FoundComputers.Num() - 1);
                 AComputer* Computer = Cast<AComputer>(FoundComputers[RandIndex]);
-                if (Computer)
-                {
-                    Computer->StoredCode = ThisKeypadCode;
-                    Computer->SetupComputer(Computer->StaffName, Computer->StoredCode);
+                if (HasAuthority()) {
+                    Computer->SetupComputer(Computer->StaffName, ThisKeypadCode);
                 }
             }
         }
