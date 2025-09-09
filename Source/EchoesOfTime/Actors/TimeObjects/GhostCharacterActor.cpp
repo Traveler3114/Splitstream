@@ -9,7 +9,6 @@
 #include "DefaultPlayerState.h"
 #include "DrawDebugHelpers.h"
 #include "Engine/Engine.h"
-#include "Actors/RefPointActor.h"
 
 AGhostCharacterActor::AGhostCharacterActor()
 {

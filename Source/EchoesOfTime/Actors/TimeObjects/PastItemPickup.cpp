@@ -2,7 +2,7 @@
 #include "FutureItemPickup.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
-#include "Actors/RefPointActor.h"
+#include "Actors/PointActors/RefPointActor.h"
 
 APastItemPickup::APastItemPickup() 
 {

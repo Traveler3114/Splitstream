@@ -39,7 +39,7 @@ public:
     void ServerLockPickConfirm(AActor* DoorActor, float Angle);
 
     UFUNCTION(Client, Reliable)
-    void ClientShowCalendarWidget(int32 Year, int32 Month, int32 Day, const FString& StaffName);
+    void ClientShowCalendarWidget(int32 Year, int32 Month, int32 Day, const TArray<FString>& StaffNames);
 
 private:
     UPROPERTY()

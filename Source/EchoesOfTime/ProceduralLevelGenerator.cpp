@@ -1,8 +1,8 @@
 #include "ProceduralLevelGenerator.h"
-#include "Actors/Computer.h"
+#include "Actors/Computers/Computer.h"
 #include "Actors/KeypadScanner/KeypadScanner.h"
 #include "Actors/NewspaperActor.h"
-#include "Actors/RandomPointActor.h"
+#include "Actors/PointActors/RandomPointActor.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
@@ -16,40 +16,23 @@ void AProceduralLevelGenerator::BeginPlay()
 {
     Super::BeginPlay();
 
+    // Find all computers and assign staff names/codes
     TArray<AActor*> FoundComputers;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), AComputer::StaticClass(), FoundComputers);
 
     TArray<FString> StaffNames = GenerateShuffledStaffNames(FoundComputers.Num());
-
     for (int32 i = 0; i < FoundComputers.Num(); ++i)
     {
         AComputer* Computer = Cast<AComputer>(FoundComputers[i]);
         if (Computer)
         {
-            Computer->SetStaffName(StaffNames[i]);
-            Computer->SetStoredCode(""); // Default to empty code
+            Computer->SetupComputer(StaffNames[i], TEXT(""));
         }
     }
-
-    KeypadCode = GenerateRandomCode(4);
-
-    CodeComputerRef = nullptr;
-    CodeComputerStaffName = "";
-    if (FoundComputers.Num() > 0)
-    {
-        int32 RandomIndex = FMath::RandRange(0, FoundComputers.Num() - 1);
-        AComputer* CodeComputer = Cast<AComputer>(FoundComputers[RandomIndex]);
-        if (CodeComputer)
-        {
-            CodeComputer->SetStoredCode(KeypadCode);
-            CodeComputerRef = CodeComputer;
-            CodeComputerStaffName = CodeComputer->StaffName;
-        }
-    }
-
+    // Setup keypads and optionally computers
+    //Setup keypads and optionally computers
     TArray<AActor*> FoundKeypads;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), AKeypadScanner::StaticClass(), FoundKeypads);
-
     for (int32 i = 0; i < FoundKeypads.Num(); ++i)
     {
         AKeypadScanner* Keypad = Cast<AKeypadScanner>(FoundKeypads[i]);
@@ -58,21 +41,23 @@ void AProceduralLevelGenerator::BeginPlay()
             FString ThisKeypadCode = GenerateRandomCode(4);
             Keypad->SetCorrectCode(ThisKeypadCode);
 
-            // Only store code on computer if bStoreCodeOnComputer is true
-            if (Keypad->bStoreCodeOnComputer && FoundComputers.Num() > i)
+            // Only store code on ONE random computer
+            if (Keypad->bStoreCodeOnComputer && FoundComputers.Num() > 0)
             {
-                AComputer* Computer = Cast<AComputer>(FoundComputers[i]);
+                int32 RandIndex = FMath::RandRange(0, FoundComputers.Num() - 1);
+                AComputer* Computer = Cast<AComputer>(FoundComputers[RandIndex]);
                 if (Computer)
                 {
-                    Computer->SetStoredCode(ThisKeypadCode);
+                    Computer->StoredCode = ThisKeypadCode;
                 }
             }
         }
     }
 
+    // Generate and assign puzzle date
     RandomDate = GenerateRandomDate();
 
-    // Spawn newspaper at a random RandomPointActor
+    // Spawn newspaper at a random location
     TArray<AActor*> NewspaperPoints;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), ARandomPointActor::StaticClass(), NewspaperPoints);
 
@@ -90,17 +75,9 @@ void AProceduralLevelGenerator::BeginPlay()
             Newspaper->SetDateText(DateStr);
         }
     }
-
-    //Test for debug showing the date on screen
-    //if (GEngine)
-    //{
-    //    FString DateMsg = FString::Printf(TEXT("Puzzle Date: %d-%02d-%02d"), RandomDate.Year, RandomDate.Month, RandomDate.Day);
-    //    GEngine->AddOnScreenDebugMessage(12345, 999999.f, FColor::Yellow, DateMsg);
-    //}
 }
 
-
-FString AProceduralLevelGenerator::GenerateRandomCode(int Length)
+FString AProceduralLevelGenerator::GenerateRandomCode(int Length) const
 {
     FString Digits = "0123456789";
     FString Code;
@@ -112,7 +89,7 @@ FString AProceduralLevelGenerator::GenerateRandomCode(int Length)
     return Code;
 }
 
-TArray<FString> AProceduralLevelGenerator::GenerateShuffledStaffNames(int NumComputers)
+TArray<FString> AProceduralLevelGenerator::GenerateShuffledStaffNames(int NumComputers) const
 {
     TArray<FString> Names;
     for (int32 i = 1; i <= NumComputers; ++i)
@@ -127,7 +104,7 @@ TArray<FString> AProceduralLevelGenerator::GenerateShuffledStaffNames(int NumCom
     return Names;
 }
 
-FRandomDate AProceduralLevelGenerator::GenerateRandomDate()
+FRandomDate AProceduralLevelGenerator::GenerateRandomDate() const
 {
     FRandomDate Date;
     Date.Year = FMath::RandRange(1990, 2025);
@@ -150,7 +127,4 @@ void AProceduralLevelGenerator::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AProceduralLevelGenerator, RandomDate);
-    DOREPLIFETIME(AProceduralLevelGenerator, CodeComputerRef);
-    DOREPLIFETIME(AProceduralLevelGenerator, CodeComputerStaffName);
-    DOREPLIFETIME(AProceduralLevelGenerator, KeypadCode);
 }

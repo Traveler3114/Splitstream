@@ -144,11 +144,15 @@ void UCalendarWidget::ShowResult()
     {
         if (CalendarResultWidgetClass)
         {
-            UCalendarResultWidget* ResultWidget = CreateWidget<UCalendarResultWidget>(GetWorld(), CalendarResultWidgetClass);
-            if (ResultWidget)
+            int32 Row = 0;
+            for (const FString& StaffName : StaffNames)
             {
-                ResultWidget->SetupResult(TargetStaffName, ComputerTexture);
-                CalendarPanel->AddChildToUniformGrid(ResultWidget, 0, 0);
+                UCalendarResultWidget* ResultWidget = CreateWidget<UCalendarResultWidget>(GetWorld(), CalendarResultWidgetClass);
+                if (ResultWidget)
+                {
+                    ResultWidget->SetupResult(StaffName, ComputerTexture);
+                    CalendarPanel->AddChildToUniformGrid(ResultWidget, 0, Row++);
+                }
             }
         }
     }

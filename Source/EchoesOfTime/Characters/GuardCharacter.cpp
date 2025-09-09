@@ -1,10 +1,10 @@
 #include "GuardCharacter.h"
 #include "Actors/TimeObjects/GhostCharacterActor.h"
-#include "Actors/NavNode.h"
+#include "Actors/PointActors/NavNode.h"
 #include "Engine/Engine.h"
 #include "Actors/SecurityCamera.h"
 #include "Characters/DefaultCharacter.h"
-#include "Actors/RefPointActor.h"
+#include "Actors/PointActors/RefPointActor.h"
 #include "Net/UnrealNetwork.h"
 
 #include "AbilitySystemComponent.h"

@@ -4,7 +4,6 @@
 #include "Components/StaticMeshComponent.h"
 #include "Interfaces/IKeycardUnlockable.h"
 #include "InventorySystem/InventoryComponent.h"
-#include "Actors/Computer.h"
 
 AKeypadScanner::AKeypadScanner()
 {

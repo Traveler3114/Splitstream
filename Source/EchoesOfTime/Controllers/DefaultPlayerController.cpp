@@ -118,7 +118,7 @@ void ADefaultPlayerController::ServerLockPickConfirm_Implementation(AActor* Door
 }
 
 
-void ADefaultPlayerController::ClientShowCalendarWidget_Implementation(int32 Year, int32 Month, int32 Day, const FString& StaffName)
+void ADefaultPlayerController::ClientShowCalendarWidget_Implementation(int32 Year, int32 Month, int32 Day, const TArray<FString>& StaffNames)
 {
     if (CalendarWidgetClass)
     {
@@ -128,7 +128,7 @@ void ADefaultPlayerController::ClientShowCalendarWidget_Implementation(int32 Yea
             Widget->TargetYear = Year;
             Widget->TargetMonth = Month;
             Widget->TargetDay = Day;
-            Widget->TargetStaffName = StaffName;
+            Widget->StaffNames = StaffNames; // New: pass array
             Widget->AddToViewport();
         }
     }

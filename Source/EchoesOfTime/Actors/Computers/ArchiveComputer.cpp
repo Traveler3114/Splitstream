@@ -1,10 +1,10 @@
 #include "ArchiveComputer.h"
 #include "ProceduralLevelGenerator.h"
-#include "Blueprint/UserWidget.h"
+#include "Computer.h"
 #include "Kismet/GameplayStatics.h"
+#include "Controllers/DefaultPlayerController.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
-#include "Controllers/DefaultPlayerController.h"
 
 AArchiveComputer::AArchiveComputer()
 {
@@ -24,6 +24,20 @@ void AArchiveComputer::BeginPlay()
     GeneratorRef = Cast<AProceduralLevelGenerator>(
         UGameplayStatics::GetActorOfClass(GetWorld(), AProceduralLevelGenerator::StaticClass())
     );
+
+    // Find all computers with a non-empty code
+    TArray<AActor*> FoundComputers;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AComputer::StaticClass(), FoundComputers);
+
+    CodeComputers.Empty();
+    for (AActor* Actor : FoundComputers)
+    {
+        AComputer* Computer = Cast<AComputer>(Actor);
+        if (Computer && !Computer->StoredCode.IsEmpty())
+        {
+            CodeComputers.Add(Computer);
+        }
+    }
 }
 
 void AArchiveComputer::Interact_Implementation(AActor* Interactor)
@@ -34,18 +48,20 @@ void AArchiveComputer::Interact_Implementation(AActor* Interactor)
     APlayerController* PC = Cast<APlayerController>(Pawn->GetController());
     if (!PC) return;
 
-    if (GeneratorRef)
+    if (GeneratorRef && CodeComputers.Num() > 0)
     {
-        // Call the client RPC to show the widget ONLY for the owning client
-        // Cast to your custom controller if needed
         ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(PC);
         if (MyPC)
         {
+            TArray<FString> StaffNames;
+            for (AComputer* Comp : CodeComputers)
+                StaffNames.Add(Comp->StaffName);
+
             MyPC->ClientShowCalendarWidget(
                 GeneratorRef->RandomDate.Year,
                 GeneratorRef->RandomDate.Month,
                 GeneratorRef->RandomDate.Day,
-                GeneratorRef->CodeComputerStaffName
+                StaffNames
             );
         }
     }

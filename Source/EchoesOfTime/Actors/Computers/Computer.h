@@ -18,43 +18,37 @@ public:
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Computer")
-    class USceneComponent* DefaultSceneRoot;
+    USceneComponent* DefaultSceneRoot;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Computer")
-    class UStaticMeshComponent* ComputerMesh;
+    UStaticMeshComponent* ComputerMesh;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Computer")
-    class UTextRenderComponent* NameText; // <--- ADD THIS
-
-    UHackComponent* HackComponent = nullptr;
+    UTextRenderComponent* NameText;
 
     UPROPERTY(ReplicatedUsing = OnRep_StoredCode, VisibleAnywhere, BlueprintReadOnly, Category = "Hack")
     FString StoredCode;
 
+    UPROPERTY(ReplicatedUsing = OnRep_StaffName, VisibleAnywhere, BlueprintReadOnly, Category = "Staff")
+    FString StaffName;
+
+    UFUNCTION(BlueprintCallable, Category = "Setup")
+    void SetupComputer(const FString& NewStaffName, const FString& NewStoredCode);
+
     UFUNCTION()
     void OnRep_StoredCode();
-
-    UFUNCTION(BlueprintCallable, Category = "Hack")
-    void SetStoredCode(const FString& Code) { StoredCode = Code; }
-
-    UFUNCTION(BlueprintCallable, Category = "Hack")
-    FString RevealStoredCode() const { return StoredCode; }
 
     UFUNCTION()
     void OnHackComplete();
 
-    // --- NEW CODE: Unique Staff Name ---
-    UPROPERTY(ReplicatedUsing = OnRep_StaffName, VisibleAnywhere, BlueprintReadOnly, Category = "Staff")
-    FString StaffName;
-
     UFUNCTION()
     void OnRep_StaffName();
-
-    UFUNCTION(BlueprintCallable, Category = "Staff")
-    void SetStaffName(const FString& Name);
 
 protected:
     virtual void BeginPlay() override;
     virtual void Interact_Implementation(AActor* Interactor) override;
     virtual void SetHighlighted_Implementation(bool bHighlight) override;
+
+    UPROPERTY()
+    UHackComponent* HackComponent = nullptr;
 };

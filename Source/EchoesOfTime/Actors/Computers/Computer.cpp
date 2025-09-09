@@ -6,7 +6,6 @@
 #include "Net/UnrealNetwork.h"
 #include "Engine/Engine.h"
 
-// Sets default values
 AComputer::AComputer()
 {
     PrimaryActorTick.bCanEverTick = false;
@@ -20,18 +19,16 @@ AComputer::AComputer()
     NameText = CreateDefaultSubobject<UTextRenderComponent>(TEXT("NameText"));
     NameText->SetupAttachment(DefaultSceneRoot);
 
-    // Set default properties for the name label
     NameText->SetHorizontalAlignment(EHTA_Center);
     NameText->SetWorldSize(32.f);
     NameText->SetTextRenderColor(FColor::Cyan);
-    NameText->SetRelativeLocation(FVector(0, 0, 100)); // Offset above computer, tweak as needed
+    NameText->SetRelativeLocation(FVector(0, 0, 100));
 }
 
 void AComputer::BeginPlay()
 {
     Super::BeginPlay();
 
-    // Set initial text for staff name
     if (NameText) NameText->SetText(FText::FromString(StaffName));
 
     HackComponent = FindComponentByClass<UHackComponent>();
@@ -43,20 +40,19 @@ void AComputer::BeginPlay()
 
 void AComputer::OnRep_StaffName()
 {
-    // Update the text in game when StaffName changes (networked)
     if (NameText) NameText->SetText(FText::FromString(StaffName));
 }
 
-void AComputer::SetStaffName(const FString& Name)
+void AComputer::SetupComputer(const FString& NewStaffName, const FString& NewStoredCode)
 {
-    StaffName = Name;
-    if (NameText) NameText->SetText(FText::FromString(Name));
+    StaffName = NewStaffName;
+    StoredCode = NewStoredCode;
+    if (NameText) NameText->SetText(FText::FromString(StaffName));
 }
 
 void AComputer::Interact_Implementation(AActor* Interactor)
 {
-    // You can use HackComp here to trigger hacking if present
-    // if (HackComp) { ... }
+    // Optionally trigger hacking logic here
 }
 
 void AComputer::SetHighlighted_Implementation(bool bHighlight)
@@ -78,20 +74,16 @@ void AComputer::SetHighlighted_Implementation(bool bHighlight)
 
 void AComputer::OnHackComplete()
 {
-    // Display the code on screen for the player
-    if (HasAuthority())
+    if (HasAuthority() && GEngine)
     {
-        if (GEngine)
-        {
-            FString RevealMsg = FString::Printf(TEXT("Hacked! Keypad Code: %s"), *StoredCode);
-            GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Green, RevealMsg);
-        }
+        FString RevealMsg = FString::Printf(TEXT("Hacked! Keypad Code: %s"), *StoredCode);
+        GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Green, RevealMsg);
     }
 }
 
 void AComputer::OnRep_StoredCode()
 {
-    // Optionally show the code to clients, e.g. if you want to display it in UI/widgets
+    // Optionally display code in UI/widgets
 }
 
 void AComputer::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

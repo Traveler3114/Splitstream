@@ -31,20 +31,11 @@ public:
     UPROPERTY(Replicated, BlueprintReadOnly)
     FRandomDate RandomDate;
 
-    UPROPERTY(Replicated, BlueprintReadOnly)
-    AActor* CodeComputerRef;
-
-    UPROPERTY(Replicated, BlueprintReadOnly)
-    FString CodeComputerStaffName;
-
-    UPROPERTY(Replicated, BlueprintReadOnly)
-    FString KeypadCode;
-
 protected:
     virtual void BeginPlay() override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-    FString GenerateRandomCode(int Length = 4);
-    TArray<FString> GenerateShuffledStaffNames(int NumComputers);
-    FRandomDate GenerateRandomDate();
+    FString GenerateRandomCode(int Length = 4) const;
+    TArray<FString> GenerateShuffledStaffNames(int NumComputers) const;
+    FRandomDate GenerateRandomDate() const;
 };

@@ -41,8 +41,10 @@ public:
     int32 TargetMonth = 1;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Calendar")
     int32 TargetDay = 1;
+
+    // Array of staff names to show multiple computers
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Calendar")
-    FString TargetStaffName;
+    TArray<FString> StaffNames;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Calendar")
     UTexture2D* ComputerTexture; // assign in BP or code
