@@ -13,7 +13,6 @@ void UCalendarWidget::NativeConstruct()
     SetIsFocusable(true);
     ShowYearButtons();
 
-    // Set input focus for key events
     if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
     {
         UWidgetBlueprintLibrary::SetInputMode_UIOnlyEx(PC, this, EMouseLockMode::DoNotLock);
@@ -145,12 +144,12 @@ void UCalendarWidget::ShowResult()
         if (CalendarResultWidgetClass)
         {
             int32 Row = 0;
-            for (const FString& StaffName : StaffNames)
+            for (int32 i = 0; i < CivilianNames.Num(); ++i)
             {
                 UCalendarResultWidget* ResultWidget = CreateWidget<UCalendarResultWidget>(GetWorld(), CalendarResultWidgetClass);
                 if (ResultWidget)
                 {
-                    ResultWidget->SetupResult(StaffName, ComputerTexture);
+                    ResultWidget->SetupResult(CivilianNames[i], CivilianPortraits.IsValidIndex(i) ? CivilianPortraits[i] : nullptr);
                     CalendarPanel->AddChildToUniformGrid(ResultWidget, 0, Row++);
                 }
             }

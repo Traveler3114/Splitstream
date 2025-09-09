@@ -42,12 +42,13 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Calendar")
     int32 TargetDay = 1;
 
-    // Array of staff names to show multiple computers
+    // Array of staff/civilian names to show multiple computers
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Calendar")
-    TArray<FString> StaffNames;
+    TArray<FString> CivilianNames;
 
+    // Array of portraits for each civilian
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Calendar")
-    UTexture2D* ComputerTexture; // assign in BP or code
+    TArray<UTexture2D*> CivilianPortraits;
 
 private:
     int32 SelectedYear = 0;

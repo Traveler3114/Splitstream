@@ -1,10 +1,12 @@
 #include "ArchiveComputer.h"
 #include "ProceduralLevelGenerator.h"
 #include "Computer.h"
+#include "Characters/CivilianCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "Controllers/DefaultPlayerController.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
+#include "EngineUtils.h" // for TActorIterator
 
 AArchiveComputer::AArchiveComputer()
 {
@@ -25,15 +27,13 @@ void AArchiveComputer::BeginPlay()
         UGameplayStatics::GetActorOfClass(GetWorld(), AProceduralLevelGenerator::StaticClass())
     );
 
-    // Find all computers with a non-empty code
+    // Cache all computer actors once
     TArray<AActor*> FoundComputers;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), AComputer::StaticClass(), FoundComputers);
-
     CodeComputers.Empty();
     for (AActor* Actor : FoundComputers)
     {
-        AComputer* Computer = Cast<AComputer>(Actor);
-        if (Computer && !Computer->StoredCode.IsEmpty())
+        if (AComputer* Computer = Cast<AComputer>(Actor))
         {
             CodeComputers.Add(Computer);
         }
@@ -42,26 +42,54 @@ void AArchiveComputer::BeginPlay()
 
 void AArchiveComputer::Interact_Implementation(AActor* Interactor)
 {
+    // Filter for computers with a non-empty code
+    TArray<AComputer*> ComputersWithCodes;
+    for (AComputer* Computer : CodeComputers)
+    {
+        if (Computer && !Computer->StoredCode.IsEmpty())
+        {
+            ComputersWithCodes.Add(Computer);
+        }
+    }
+
     APawn* Pawn = Cast<APawn>(Interactor);
     if (!Pawn) return;
-
     APlayerController* PC = Cast<APlayerController>(Pawn->GetController());
     if (!PC) return;
 
-    if (GeneratorRef && CodeComputers.Num() > 0)
+    if (GeneratorRef && ComputersWithCodes.Num() > 0)
     {
-        ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(PC);
-        if (MyPC)
+        if (ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(PC))
         {
-            TArray<FString> StaffNames;
-            for (AComputer* Comp : CodeComputers)
-                StaffNames.Add(Comp->StaffName);
-
+            TArray<FString> CivilianNames;
+            TArray<UTexture2D*> CivilianPortraits;
+            for (AComputer* Comp : ComputersWithCodes)
+            {
+                FString Name = Comp->StaffName;
+                UTexture2D* Portrait = nullptr;
+                ACivilianCharacter* FoundCiv = nullptr;
+                for (TActorIterator<ACivilianCharacter> CivItr(GetWorld()); CivItr; ++CivItr)
+                {
+                    if (CivItr->AssignedComputer == Comp)
+                    {
+                        FoundCiv = *CivItr;
+                        break;
+                    }
+                }
+                if (FoundCiv)
+                {
+                    Name = FoundCiv->CivilianName;
+                    Portrait = FoundCiv->PortraitTexture;
+                }
+                CivilianNames.Add(Name);
+                CivilianPortraits.Add(Portrait);
+            }
             MyPC->ClientShowCalendarWidget(
                 GeneratorRef->RandomDate.Year,
                 GeneratorRef->RandomDate.Month,
                 GeneratorRef->RandomDate.Day,
-                StaffNames
+                CivilianNames,
+                CivilianPortraits
             );
         }
     }

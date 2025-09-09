@@ -3,6 +3,8 @@
 #include "Actors/KeypadScanner/KeypadScanner.h"
 #include "Actors/NewspaperActor.h"
 #include "Actors/PointActors/RandomPointActor.h"
+#include "Actors/PointActors/CivilianSpawnPoint.h"
+#include "Characters/CivilianCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
@@ -16,21 +18,89 @@ void AProceduralLevelGenerator::BeginPlay()
 {
     Super::BeginPlay();
 
-    // Find all computers and assign staff names/codes
+    //---- CIVILIAN SPAWN AND NAME GENERATION ----
+    TArray<AActor*> SpawnPoints;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACivilianSpawnPoint::StaticClass(), SpawnPoints);
+
+    // Name banks
+    TArray<FString> FirstNames = {
+        TEXT("John"), TEXT("Laura"), TEXT("Michael"), TEXT("Sarah"), TEXT("David"),
+        TEXT("Emily"), TEXT("James"), TEXT("Olivia"), TEXT("Daniel"), TEXT("Sophia"),
+        TEXT("Chris"), TEXT("Jessica"), TEXT("Ethan"), TEXT("Anna"), TEXT("Ryan"),
+        TEXT("Megan"), TEXT("Luke"), TEXT("Chloe"), TEXT("Nathan"), TEXT("Grace")
+    };
+    TArray<FString> Surnames = {
+        TEXT("Smith"), TEXT("Morgan"), TEXT("Davis"), TEXT("Lee"), TEXT("Clark"),
+        TEXT("Turner"), TEXT("Harris"), TEXT("Bennett"), TEXT("Evans"), TEXT("Carter"),
+        TEXT("Adams"), TEXT("Wright"), TEXT("Green"), TEXT("Hill"), TEXT("Cook"),
+        TEXT("Lewis"), TEXT("Roberts"), TEXT("Walker"), TEXT("Young"), TEXT("King")
+    };
+
+    TArray<ACivilianCharacter*> SpawnedCivilians;
+    TSet<FString> UsedNames;
+
+    for (int32 i = 0; i < SpawnPoints.Num(); ++i)
+    {
+        ACivilianSpawnPoint* SpawnPoint = Cast<ACivilianSpawnPoint>(SpawnPoints[i]);
+        if (SpawnPoint)
+        {
+            FActorSpawnParameters Params;
+            Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+            ACivilianCharacter* Civilian = GetWorld()->SpawnActor<ACivilianCharacter>(
+                CivilianBPClass,
+                SpawnPoint->GetActorLocation(),
+                SpawnPoint->GetActorRotation(),
+                Params
+            );
+
+            if (Civilian)
+            {
+                // Generate a unique name
+                FString Name;
+                do {
+                    int32 FirstIdx = FMath::RandRange(0, FirstNames.Num() - 1);
+                    int32 LastIdx = FMath::RandRange(0, Surnames.Num() - 1);
+                    Name = FirstNames[FirstIdx] + TEXT(" ") + Surnames[LastIdx];
+                } while (UsedNames.Contains(Name));
+                UsedNames.Add(Name);
+
+                Civilian->CivilianName = Name;
+                SpawnedCivilians.Add(Civilian);
+            }
+        }
+    }
+
+    //---- COMPUTER SETUP ----
     TArray<AActor*> FoundComputers;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), AComputer::StaticClass(), FoundComputers);
 
-    TArray<FString> StaffNames = GenerateShuffledStaffNames(FoundComputers.Num());
+    // Assign computer staff names from civilian names if possible
+    TArray<FString> StaffNames;
+    for (ACivilianCharacter* Civ : SpawnedCivilians)
+    {
+        StaffNames.Add(Civ->CivilianName);
+    }
+    // If more computers than civilians, add generic names
+    for (int32 i = StaffNames.Num(); i < FoundComputers.Num(); ++i)
+    {
+        StaffNames.Add(FString::Printf(TEXT("Staff%02d"), i + 1));
+    }
+    // Shuffle names for randomness
+    for (int32 i = 0; i < StaffNames.Num(); ++i)
+    {
+        int32 SwapIdx = FMath::RandRange(0, StaffNames.Num() - 1);
+        StaffNames.Swap(i, SwapIdx);
+    }
     for (int32 i = 0; i < FoundComputers.Num(); ++i)
     {
         AComputer* Computer = Cast<AComputer>(FoundComputers[i]);
         if (Computer)
         {
-            Computer->SetupComputer(StaffNames[i], TEXT(""));
+            Computer->SetupComputer(StaffNames[i], Computer->StoredCode);
         }
     }
-    // Setup keypads and optionally computers
-    //Setup keypads and optionally computers
+
+    //---- KEYPAD SETUP ----
     TArray<AActor*> FoundKeypads;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), AKeypadScanner::StaticClass(), FoundKeypads);
     for (int32 i = 0; i < FoundKeypads.Num(); ++i)
@@ -49,15 +119,16 @@ void AProceduralLevelGenerator::BeginPlay()
                 if (Computer)
                 {
                     Computer->StoredCode = ThisKeypadCode;
+                    Computer->SetupComputer(Computer->StaffName, Computer->StoredCode);
                 }
             }
         }
     }
 
-    // Generate and assign puzzle date
+    //---- RANDOM DATE FOR PUZZLE ----
     RandomDate = GenerateRandomDate();
 
-    // Spawn newspaper at a random location
+    //---- NEWSPAPER SPAWN ----
     TArray<AActor*> NewspaperPoints;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), ARandomPointActor::StaticClass(), NewspaperPoints);
 
@@ -75,6 +146,29 @@ void AProceduralLevelGenerator::BeginPlay()
             Newspaper->SetDateText(DateStr);
         }
     }
+
+    int32 PairCount = FMath::Min(SpawnedCivilians.Num(), FoundComputers.Num());
+
+    for (int32 i = 0; i < PairCount; ++i)
+    {
+        AComputer* Computer = Cast<AComputer>(FoundComputers[i]);
+        ACivilianCharacter* Civilian = SpawnedCivilians[i];
+        if (Computer && Civilian)
+        {
+            Computer->SetupComputer(Civilian->CivilianName, Computer->StoredCode);
+            Civilian->AssignedComputer = Computer;
+        }
+    }
+
+    // If there are more computers than civilians, assign the remaining computers generic names
+    for (int32 i = PairCount; i < FoundComputers.Num(); ++i)
+    {
+        AComputer* Computer = Cast<AComputer>(FoundComputers[i]);
+        if (Computer)
+        {
+            Computer->SetupComputer(FString::Printf(TEXT("Staff%02d"), i + 1), Computer->StoredCode);
+        }
+    }
 }
 
 FString AProceduralLevelGenerator::GenerateRandomCode(int Length) const
@@ -87,21 +181,6 @@ FString AProceduralLevelGenerator::GenerateRandomCode(int Length) const
         Code += Digits.Mid(Index, 1);
     }
     return Code;
-}
-
-TArray<FString> AProceduralLevelGenerator::GenerateShuffledStaffNames(int NumComputers) const
-{
-    TArray<FString> Names;
-    for (int32 i = 1; i <= NumComputers; ++i)
-    {
-        Names.Add(FString::Printf(TEXT("Staff%02d"), i));
-    }
-    for (int32 i = 0; i < Names.Num(); ++i)
-    {
-        int32 SwapIdx = FMath::RandRange(0, Names.Num() - 1);
-        Names.Swap(i, SwapIdx);
-    }
-    return Names;
 }
 
 FRandomDate AProceduralLevelGenerator::GenerateRandomDate() const

@@ -31,11 +31,13 @@ public:
     UPROPERTY(Replicated, BlueprintReadOnly)
     FRandomDate RandomDate;
 
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Civilian")
+    TSubclassOf<class ACivilianCharacter> CivilianBPClass;
 protected:
     virtual void BeginPlay() override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
     FString GenerateRandomCode(int Length = 4) const;
-    TArray<FString> GenerateShuffledStaffNames(int NumComputers) const;
     FRandomDate GenerateRandomDate() const;
 };
