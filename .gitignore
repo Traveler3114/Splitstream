@@ -15,3 +15,5 @@ Build
 *.xcworkspace
 Echoes of Time.docx
 Content/Maps/PolygonBank/FuturePolygonBank_BuiltData.uasset
+Content/Maps/PolygonBank/PastPolygonBank_BuiltData.uasset
+Content/Maps/PolygonBank/PersistentPolygonBank_BuiltData.uasset
