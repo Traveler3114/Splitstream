@@ -16,7 +16,7 @@
 
 AGuardCharacter::AGuardCharacter()
 {
-    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bCanEverTick = false;
 
     AIPerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerceptionComponent"));
     SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
