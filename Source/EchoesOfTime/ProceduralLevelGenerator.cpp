@@ -155,7 +155,7 @@ void AProceduralLevelGenerator::HandlePastSpawns()
         FRotator SpawnRotation = PastRandomPoints[SpawnIndex]->GetActorRotation();
 
         FActorSpawnParameters SpawnParams;
-        ANewspaperActor* Newspaper = GetWorld()->SpawnActor<ANewspaperActor>(ANewspaperActor::StaticClass(), SpawnLocation, SpawnRotation, SpawnParams);
+        ANewspaperActor* Newspaper = GetWorld()->SpawnActor<ANewspaperActor>(NewspaperBPClass, SpawnLocation, SpawnRotation, SpawnParams);
         if (Newspaper)
         {
             Newspaper->TimelineEra = ETimelineEra::Past;

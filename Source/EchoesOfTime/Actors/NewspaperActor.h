@@ -16,6 +16,12 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     class UTextRenderComponent* DateText;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    class UStaticMeshComponent* NewspaperMesh;
+
+    UPROPERTY(VisibleAnywhere)
+    class USceneComponent* DefaultSceneRoot;
+
     UFUNCTION(BlueprintCallable)
     void SetDateText(const FString& DateStr);
 

@@ -35,6 +35,9 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Civilian")
     TSubclassOf<class ACivilianCharacter> CivilianBPClass;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Newspaper")
+    TSubclassOf<class ANewspaperActor> NewspaperBPClass;
 protected:
     virtual void BeginPlay() override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

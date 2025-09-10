@@ -1,16 +1,23 @@
 #include "NewspaperActor.h"
 #include "Components/TextRenderComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Components/SceneComponent.h"
 
 ANewspaperActor::ANewspaperActor()
 {
     PrimaryActorTick.bCanEverTick = false;
 
+    // Create DefaultSceneRoot
+    DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
+    RootComponent = DefaultSceneRoot;
+
+    // Create NewspaperMesh and attach to root
+    NewspaperMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("NewspaperMesh"));
+    NewspaperMesh->SetupAttachment(DefaultSceneRoot);
+
+    // Create DateText and attach to mesh
     DateText = CreateDefaultSubobject<UTextRenderComponent>(TEXT("DateText"));
-    RootComponent = DateText;
-    DateText->SetWorldSize(40.f);
-    DateText->SetHorizontalAlignment(EHTA_Center);
-    DateText->SetTextRenderColor(FColor::White);
-    DateText->SetRelativeLocation(FVector(0,0,0)); // adjust as needed
+    DateText->SetupAttachment(NewspaperMesh);
 }
 
 void ANewspaperActor::BeginPlay()
