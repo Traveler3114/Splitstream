@@ -4,6 +4,7 @@
 
 AKeycardScanner::AKeycardScanner()
 {
+    PrimaryActorTick.bCanEverTick = true;
     DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
     RootComponent = DefaultSceneRoot;
 
