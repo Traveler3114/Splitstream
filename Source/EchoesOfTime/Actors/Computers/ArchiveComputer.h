@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Interfaces/IInteractable.h"
+#include "TimelineEra.h"
 #include "ArchiveComputer.generated.h"
 
 class UCalendarWidget;
@@ -17,6 +18,9 @@ class ECHOESOFTIME_API AArchiveComputer : public AActor, public IInteractable
 public:
     AArchiveComputer();
     virtual void BeginPlay() override;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
+    ETimelineEra TimelineEra = ETimelineEra::Past;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Computer")
     USceneComponent* DefaultSceneRoot;

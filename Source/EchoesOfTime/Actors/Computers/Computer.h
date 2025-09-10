@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Interfaces/IInteractable.h"
+#include "TimelineEra.h"
 #include "Computer.generated.h"
 
 class UHackComponent;
@@ -16,6 +17,9 @@ class ECHOESOFTIME_API AComputer : public AActor, public IInteractable
 public:
     AComputer();
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
+    ETimelineEra TimelineEra = ETimelineEra::Past;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Computer")
     USceneComponent* DefaultSceneRoot;

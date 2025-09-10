@@ -27,6 +27,7 @@ class ECHOESOFTIME_API AProceduralLevelGenerator : public AActor
     GENERATED_BODY()
 public:
     AProceduralLevelGenerator();
+	void HandlePastSpawns();
 
     UPROPERTY(Replicated, BlueprintReadOnly)
     FRandomDate RandomDate;

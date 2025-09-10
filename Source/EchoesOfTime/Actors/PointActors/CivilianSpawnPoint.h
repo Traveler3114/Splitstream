@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "TimelineEra.h"
 #include "CivilianSpawnPoint.generated.h"
 
 UCLASS()
@@ -11,4 +12,7 @@ class ECHOESOFTIME_API ACivilianSpawnPoint : public AActor
 
 public:
     ACivilianSpawnPoint();
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
+    ETimelineEra TimelineEra = ETimelineEra::Past;
 };

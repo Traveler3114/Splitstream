@@ -5,6 +5,7 @@
 #include "Interfaces/IInteractable.h"
 #include "Interfaces/IKeycardUnlockable.h"
 #include "InventorySystem/ItemBase.h"
+#include "TimelineEra.h"
 #include "KeypadScanner.generated.h"
 
 class AKeypadButton;
@@ -59,6 +60,9 @@ public:
     // --- NEW CODE: External code setter ---
     UFUNCTION(BlueprintCallable, Category = "KeypadScanner")
     void SetCorrectCode(const FString& Code) { CorrectCode = Code; }
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
+    ETimelineEra TimelineEra = ETimelineEra::Past;
 
 protected:
     void SpawnKeypadButtons();

@@ -1,12 +1,13 @@
 #include "ProceduralLevelGenerator.h"
+#include "Actors/PointActors/CivilianSpawnPoint.h"
+#include "Characters/CivilianCharacter.h"
 #include "Actors/Computers/Computer.h"
 #include "Actors/KeypadScanner/KeypadScanner.h"
 #include "Actors/NewspaperActor.h"
 #include "Actors/PointActors/RandomPointActor.h"
-#include "Actors/PointActors/CivilianSpawnPoint.h"
-#include "Characters/CivilianCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
+#include "TimelineEra.h"
 
 AProceduralLevelGenerator::AProceduralLevelGenerator()
 {
@@ -18,11 +19,19 @@ void AProceduralLevelGenerator::BeginPlay()
 {
     Super::BeginPlay();
 
-    //---- CIVILIAN SPAWN AND NAME GENERATION ----
+    HandlePastSpawns();
+    // Optionally: HandleFutureSpawns();
+}
+
+void AProceduralLevelGenerator::HandlePastSpawns()
+{
+    // ---- CIVILIAN SPAWN ----
     TArray<AActor*> SpawnPoints;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACivilianSpawnPoint::StaticClass(), SpawnPoints);
 
-    // Name banks
+    TArray<ACivilianCharacter*> SpawnedCivilians;
+    TSet<FString> UsedNames;
+
     TArray<FString> FirstNames = {
         TEXT("John"), TEXT("Laura"), TEXT("Michael"), TEXT("Sarah"), TEXT("David"),
         TEXT("Emily"), TEXT("James"), TEXT("Olivia"), TEXT("Daniel"), TEXT("Sophia"),
@@ -36,13 +45,10 @@ void AProceduralLevelGenerator::BeginPlay()
         TEXT("Lewis"), TEXT("Roberts"), TEXT("Walker"), TEXT("Young"), TEXT("King")
     };
 
-    TArray<ACivilianCharacter*> SpawnedCivilians;
-    TSet<FString> UsedNames;
-
-    for (int32 i = 0; i < SpawnPoints.Num(); ++i)
+    for (AActor* Actor : SpawnPoints)
     {
-        ACivilianSpawnPoint* SpawnPoint = Cast<ACivilianSpawnPoint>(SpawnPoints[i]);
-        if (SpawnPoint)
+        ACivilianSpawnPoint* SpawnPoint = Cast<ACivilianSpawnPoint>(Actor);
+        if (SpawnPoint && SpawnPoint->TimelineEra == ETimelineEra::Past)
         {
             FActorSpawnParameters Params;
             Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -55,6 +61,7 @@ void AProceduralLevelGenerator::BeginPlay()
 
             if (Civilian)
             {
+                Civilian->TimelineEra = ETimelineEra::Past;
                 // Generate a unique name
                 FString Name;
                 do {
@@ -70,9 +77,19 @@ void AProceduralLevelGenerator::BeginPlay()
         }
     }
 
-    //---- COMPUTER SETUP ----
+    // ---- COMPUTER SETUP ----
     TArray<AActor*> FoundComputers;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), AComputer::StaticClass(), FoundComputers);
+
+    TArray<AComputer*> PastComputers;
+    for (AActor* Actor : FoundComputers)
+    {
+        AComputer* Computer = Cast<AComputer>(Actor);
+        if (Computer && Computer->TimelineEra == ETimelineEra::Past)
+        {
+            PastComputers.Add(Computer);
+        }
+    }
 
     // Assign computer staff names from civilian names if possible
     TArray<FString> StaffNames;
@@ -80,92 +97,83 @@ void AProceduralLevelGenerator::BeginPlay()
     {
         StaffNames.Add(Civ->CivilianName);
     }
-    // If more computers than civilians, add generic names
-    for (int32 i = StaffNames.Num(); i < FoundComputers.Num(); ++i)
+    for (int32 i = StaffNames.Num(); i < PastComputers.Num(); ++i)
     {
         StaffNames.Add(FString::Printf(TEXT("Staff%02d"), i + 1));
     }
-    // Shuffle names for randomness
     for (int32 i = 0; i < StaffNames.Num(); ++i)
     {
         int32 SwapIdx = FMath::RandRange(0, StaffNames.Num() - 1);
         StaffNames.Swap(i, SwapIdx);
     }
-    for (int32 i = 0; i < FoundComputers.Num(); ++i)
+    for (int32 i = 0; i < PastComputers.Num(); ++i)
     {
-        AComputer* Computer = Cast<AComputer>(FoundComputers[i]);
-        if (Computer)
-        {
-            Computer->SetupComputer(StaffNames[i], Computer->StoredCode);
-        }
+        PastComputers[i]->SetupComputer(StaffNames[i], PastComputers[i]->StoredCode);
     }
 
-    //---- KEYPAD SETUP ----
+    // ---- KEYPAD SETUP ----
     TArray<AActor*> FoundKeypads;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), AKeypadScanner::StaticClass(), FoundKeypads);
-    for (int32 i = 0; i < FoundKeypads.Num(); ++i)
+
+    for (AActor* Actor : FoundKeypads)
     {
-        AKeypadScanner* Keypad = Cast<AKeypadScanner>(FoundKeypads[i]);
-        if (Keypad)
+        AKeypadScanner* Keypad = Cast<AKeypadScanner>(Actor);
+        if (Keypad && Keypad->TimelineEra == ETimelineEra::Past)
         {
-            FString ThisKeypadCode = GenerateRandomCode(4);
+            FString ThisKeypadCode = GenerateRandomCode(4); // Generates random code
             Keypad->SetCorrectCode(ThisKeypadCode);
 
-            // Only store code on ONE random computer
-            if (Keypad->bStoreCodeOnComputer && FoundComputers.Num() > 0)
+            // Only store code on ONE random past computer
+            if (Keypad->bStoreCodeOnComputer && PastComputers.Num() > 0)
             {
-                int32 RandIndex = FMath::RandRange(0, FoundComputers.Num() - 1);
-                AComputer* Computer = Cast<AComputer>(FoundComputers[RandIndex]);
+                int32 RandIndex = FMath::RandRange(0, PastComputers.Num() - 1);
                 if (HasAuthority()) {
-                    Computer->SetupComputer(Computer->StaffName, ThisKeypadCode);
+                    PastComputers[RandIndex]->SetupComputer(PastComputers[RandIndex]->StaffName, ThisKeypadCode);
                 }
             }
         }
     }
 
-    //---- RANDOM DATE FOR PUZZLE ----
-    RandomDate = GenerateRandomDate();
+    // ---- RANDOM DATE FOR PUZZLE ----
+    RandomDate = GenerateRandomDate(); // Generates random date
 
-    //---- NEWSPAPER SPAWN ----
+    // ---- NEWSPAPER SPAWN ----
     TArray<AActor*> NewspaperPoints;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), ARandomPointActor::StaticClass(), NewspaperPoints);
 
-    if (NewspaperPoints.Num() > 0)
+    TArray<ARandomPointActor*> PastRandomPoints;
+    for (AActor* Actor : NewspaperPoints) {
+        ARandomPointActor* Point = Cast<ARandomPointActor>(Actor);
+        if (Point && Point->TimelineEra == ETimelineEra::Past) {
+            PastRandomPoints.Add(Point);
+        }
+    }
+    if (PastRandomPoints.Num() > 0)
     {
-        int32 SpawnIndex = FMath::RandRange(0, NewspaperPoints.Num() - 1);
-        FVector SpawnLocation = NewspaperPoints[SpawnIndex]->GetActorLocation();
-        FRotator SpawnRotation = NewspaperPoints[SpawnIndex]->GetActorRotation();
+        int32 SpawnIndex = FMath::RandRange(0, PastRandomPoints.Num() - 1);
+        FVector SpawnLocation = PastRandomPoints[SpawnIndex]->GetActorLocation();
+        FRotator SpawnRotation = PastRandomPoints[SpawnIndex]->GetActorRotation();
 
         FActorSpawnParameters SpawnParams;
         ANewspaperActor* Newspaper = GetWorld()->SpawnActor<ANewspaperActor>(ANewspaperActor::StaticClass(), SpawnLocation, SpawnRotation, SpawnParams);
         if (Newspaper)
         {
+            Newspaper->TimelineEra = ETimelineEra::Past;
             FString DateStr = FString::Printf(TEXT("%d-%02d-%02d"), RandomDate.Year, RandomDate.Month, RandomDate.Day);
             Newspaper->SetDateText(DateStr);
         }
     }
 
-    int32 PairCount = FMath::Min(SpawnedCivilians.Num(), FoundComputers.Num());
-
+    // ---- PAIR CIVILIANS TO COMPUTERS (Past only) ----
+    int32 PairCount = FMath::Min(SpawnedCivilians.Num(), PastComputers.Num());
     for (int32 i = 0; i < PairCount; ++i)
     {
-        AComputer* Computer = Cast<AComputer>(FoundComputers[i]);
-        ACivilianCharacter* Civilian = SpawnedCivilians[i];
-        if (Computer && Civilian)
-        {
-            Computer->SetupComputer(Civilian->CivilianName, Computer->StoredCode);
-            Civilian->AssignedComputer = Computer;
-        }
+        PastComputers[i]->SetupComputer(SpawnedCivilians[i]->CivilianName, PastComputers[i]->StoredCode);
+        SpawnedCivilians[i]->AssignedComputer = PastComputers[i];
     }
-
-    // If there are more computers than civilians, assign the remaining computers generic names
-    for (int32 i = PairCount; i < FoundComputers.Num(); ++i)
+    for (int32 i = PairCount; i < PastComputers.Num(); ++i)
     {
-        AComputer* Computer = Cast<AComputer>(FoundComputers[i]);
-        if (Computer)
-        {
-            Computer->SetupComputer(FString::Printf(TEXT("Staff%02d"), i + 1), Computer->StoredCode);
-        }
+        PastComputers[i]->SetupComputer(FString::Printf(TEXT("Staff%02d"), i + 1), PastComputers[i]->StoredCode);
     }
 }
 

@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "TimelineEra.h"
 #include "SecurityCamera.generated.h"
 
 UCLASS()

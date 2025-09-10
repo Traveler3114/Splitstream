@@ -8,6 +8,24 @@
 #include "GameFramework/PlayerController.h"
 #include "EngineUtils.h" // for TActorIterator
 
+// Helper function: filter actors by TimelineEra
+template <typename T>
+void GetActorsByTimelineEra(UWorld* World, ETimelineEra TimelineEra, TArray<T*>& OutActors)
+{
+    OutActors.Empty();
+    TArray<AActor*> AllActors;
+    UGameplayStatics::GetAllActorsOfClass(World, T::StaticClass(), AllActors);
+
+    for (AActor* Actor : AllActors)
+    {
+        T* TypedActor = Cast<T>(Actor);
+        if (TypedActor && TypedActor->TimelineEra == TimelineEra)
+        {
+            OutActors.Add(TypedActor);
+        }
+    }
+}
+
 AArchiveComputer::AArchiveComputer()
 {
     PrimaryActorTick.bCanEverTick = false;
@@ -27,24 +45,16 @@ void AArchiveComputer::BeginPlay()
         UGameplayStatics::GetActorOfClass(GetWorld(), AProceduralLevelGenerator::StaticClass())
     );
 
-    // Cache all computer actors once
-    TArray<AActor*> FoundComputers;
-    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AComputer::StaticClass(), FoundComputers);
+    // Cache all PAST computer actors once
     CodeComputers.Empty();
-    for (AActor* Actor : FoundComputers)
-    {
-        if (AComputer* Computer = Cast<AComputer>(Actor))
-        {
-            CodeComputers.Add(Computer);
-        }
-    }
+    GetActorsByTimelineEra<AComputer>(GetWorld(), ETimelineEra::Past, CodeComputers);
 
-    // Build map: Computer -> Civilian (for O(1) lookup)
+    // Build map: Computer -> Civilian (for O(1) lookup), only for Past
     ComputerToCivilianMap.Empty();
     for (TActorIterator<ACivilianCharacter> CivItr(GetWorld()); CivItr; ++CivItr)
     {
         ACivilianCharacter* Civ = *CivItr;
-        if (Civ && Civ->AssignedComputer)
+        if (Civ && Civ->AssignedComputer && Civ->AssignedComputer->TimelineEra == ETimelineEra::Past)
         {
             ComputerToCivilianMap.Add(Civ->AssignedComputer, Civ);
         }

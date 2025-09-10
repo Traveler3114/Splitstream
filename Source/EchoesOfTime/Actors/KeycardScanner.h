@@ -5,6 +5,7 @@
 #include "Interfaces/IInteractable.h"
 #include "Interfaces/IKeycardUnlockable.h"
 #include "InventorySystem/ItemBase.h" // <-- Include for EItemType
+#include "TimelineEra.h"
 #include "KeycardScanner.generated.h"
 
 UCLASS()
@@ -28,6 +29,9 @@ public:
     // **NEW:** Keycard type required to unlock
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Keycard")
     EItemType RequiredKeycardType = EItemType::KeycardL1;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
+    ETimelineEra TimelineEra = ETimelineEra::Past;
 
     // IInteractable
     virtual void Interact_Implementation(AActor* Interactor) override;

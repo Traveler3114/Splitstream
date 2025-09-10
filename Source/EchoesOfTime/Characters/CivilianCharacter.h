@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "TimelineEra.h"
 #include "CivilianCharacter.generated.h"
 
 UCLASS()
@@ -20,4 +21,7 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Civilian")
     class AComputer* AssignedComputer = nullptr;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
+    ETimelineEra TimelineEra = ETimelineEra::Past;
 };
