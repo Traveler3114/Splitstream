@@ -20,6 +20,8 @@ public class EchoesOfTime : ModuleRules
 			"GameplayStateTreeModule",
 			"Niagara",
 			"UMG",
+			"RHI",
+			"RenderCore",
             "GameplayAbilities",
 			"GameplayTags",
 			"GameplayTasks"

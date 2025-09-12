@@ -12,17 +12,15 @@ void USettingsWidget::NativeConstruct()
     // ----- Options -----
     ResolutionOptions = { FIntPoint(1280,720), FIntPoint(1920,1080), FIntPoint(2560,1440), FIntPoint(3840,2160) };
     ResolutionLabels = { TEXT("1280x720"), TEXT("1920x1080"), TEXT("2560x1440"), TEXT("3840x2160") };
-    ResolutionIndex = 1; // 1920x1080 default
+    ResolutionIndex = 1; // Default
 
-    // --- Window Mode ---
     WindowModeOptions = { EWindowMode::Fullscreen, EWindowMode::WindowedFullscreen, EWindowMode::Windowed };
     WindowModeLabels = { TEXT("Fullscreen"), TEXT("Borderless"), TEXT("Windowed") };
-    WindowModeIndex = 0; // Fullscreen default
+    WindowModeIndex = 0;
 
-    // --- Render Scale ---
     RenderScaleMin = 0.25f;
     RenderScaleMax = 1.0f;
-    RenderScale = 1.0f; // Default 100%
+    RenderScale = 1.0f;
 
     ShadowsOptions = { TEXT("Low"), TEXT("Medium"), TEXT("High"), TEXT("Epic") };
     ShadowsIndex = 2;
@@ -35,6 +33,36 @@ void USettingsWidget::NativeConstruct()
 
     PPOptions = { TEXT("Low"), TEXT("Medium"), TEXT("High"), TEXT("Epic") };
     PPIndex = 2;
+
+    // ---- Load settings from last session ----
+    UGameUserSettings* Settings = GEngine->GetGameUserSettings();
+    if (Settings)
+    {
+        Settings->LoadSettings(false);
+
+        // Resolution
+        FIntPoint CurrentRes = Settings->GetScreenResolution();
+        for (int32 i = 0; i < ResolutionOptions.Num(); ++i)
+        {
+            if (ResolutionOptions[i] == CurrentRes)
+            {
+                ResolutionIndex = i;
+                break;
+            }
+        }
+
+        // Window Mode
+        WindowModeIndex = WindowModeOptions.IndexOfByKey(Settings->GetFullscreenMode());
+
+        // Render Scale
+        RenderScale = Settings->GetResolutionScaleNormalized();
+
+        // Quality settings
+        ShadowsIndex  = FMath::Clamp(Settings->GetShadowQuality(), 0, ShadowsOptions.Num() - 1);
+        TexturesIndex = FMath::Clamp(Settings->GetTextureQuality(), 0, TexturesOptions.Num() - 1);
+        AAIndex       = FMath::Clamp(Settings->GetAntiAliasingQuality(), 0, AAOptions.Num() - 1);
+        PPIndex       = FMath::Clamp(Settings->GetPostProcessingQuality(), 0, PPOptions.Num() - 1);
+    }
 
     // ----- Bind buttons -----
     if (ApplyButton) {
@@ -53,7 +81,6 @@ void USettingsWidget::NativeConstruct()
         ResolutionRightButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnResolutionRight);
         ResolutionRightButton->OnClicked.AddDynamic(this, &USettingsWidget::OnResolutionRight);
     }
-    // --- Window Mode ---
     if (WindowModeLeftButton) {
         WindowModeLeftButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnWindowModeLeft);
         WindowModeLeftButton->OnClicked.AddDynamic(this, &USettingsWidget::OnWindowModeLeft);
@@ -62,7 +89,6 @@ void USettingsWidget::NativeConstruct()
         WindowModeRightButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnWindowModeRight);
         WindowModeRightButton->OnClicked.AddDynamic(this, &USettingsWidget::OnWindowModeRight);
     }
-    // --- Render Scale Slider ---
     if (RenderScaleSlider)
     {
         RenderScaleSlider->SetMinValue(RenderScaleMin);
@@ -72,7 +98,6 @@ void USettingsWidget::NativeConstruct()
         RenderScaleSlider->OnValueChanged.RemoveDynamic(this, &USettingsWidget::OnRenderScaleChanged);
         RenderScaleSlider->OnValueChanged.AddDynamic(this, &USettingsWidget::OnRenderScaleChanged);
     }
-
     if (ShadowsLeftButton) {
         ShadowsLeftButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnShadowsLeft);
         ShadowsLeftButton->OnClicked.AddDynamic(this, &USettingsWidget::OnShadowsLeft);
