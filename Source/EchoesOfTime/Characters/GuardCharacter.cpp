@@ -143,10 +143,6 @@ void AGuardCharacter::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
                                 {
                                     TargetActor = Player;
                                 }
-                                else if (TargetActor == Player)
-                                {
-                                    TargetActor = nullptr;
-                                }
                             });
 
                     // Immediately check current tag state
