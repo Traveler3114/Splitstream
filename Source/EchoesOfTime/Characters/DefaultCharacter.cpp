@@ -308,8 +308,10 @@ void ADefaultCharacter::ActivateFutureGAPastEcho()
 
 void ADefaultCharacter::Jump()
 {
-    UAbilitySystemComponent* ASC = GetPlayerState<ADefaultPlayerState>()->GetAbilitySystemComponent();
-    if (ASC && ASC->HasMatchingGameplayTag(TAG_Character_Status_LockPicking))
+    ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
+    if (!PS) return;
+    UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
+    if (ASC && ASC->HasMatchingGameplayTag(TAG_Character_Status_Block_Movement))
         return;
     Super::Jump();
 }
