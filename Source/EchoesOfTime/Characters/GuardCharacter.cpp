@@ -156,13 +156,6 @@ void AGuardCharacter::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
                     }
                 }
             }
-            else
-            {
-                if (TargetActor == Player)
-                {
-                    TargetActor = nullptr;
-                }
-            }
         }
     }
 }
