@@ -42,7 +42,8 @@ public:
     void ClientShowCalendarWidget(int32 Year, int32 Month, int32 Day, const TArray<FString>& CivilianNames, const TArray<UTexture2D*>& CivilianPortraits);
 
     UFUNCTION(Client, Reliable)
-    void ClientUpdateDetectionWidgets(float Progress, bool bIsLocked = false, float AngleDegrees = 0.0f);
+    void ClientUpdateDetectionWidgetForGuard(AActor* Guard, float Progress, bool bIsLocked = false, float AngleDegrees = 0.0f);
+
 private:
     UPROPERTY()
     class ACharacterHUD* CharacterHUD;

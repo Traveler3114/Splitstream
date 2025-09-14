@@ -136,10 +136,10 @@ void ADefaultPlayerController::ClientShowCalendarWidget_Implementation(int32 Yea
 }
 
 
-void ADefaultPlayerController::ClientUpdateDetectionWidgets_Implementation(float Progress, bool bIsLocked, float AngleDegrees)
+void ADefaultPlayerController::ClientUpdateDetectionWidgetForGuard_Implementation(AActor* Guard, float Progress, bool bIsLocked, float AngleDegrees)
 {
     if (CharacterHUD && CharacterHUD->CharacterOverlay)
     {
-        CharacterHUD->CharacterOverlay->UpdateDetectionWidgets(Progress, bIsLocked, AngleDegrees);
+        CharacterHUD->CharacterOverlay->UpdateDetectionWidgetForGuard(Guard, Progress, bIsLocked, AngleDegrees);
     }
 }

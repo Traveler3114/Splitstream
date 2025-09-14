@@ -67,22 +67,26 @@ void UCharacterOverlay::NativeDestruct()
     Super::NativeDestruct();
 }
 
-void UCharacterOverlay::UpdateDetectionWidgets(float Progress, bool bIsLocked, float AngleDegrees)
+void UCharacterOverlay::UpdateDetectionWidgetForGuard(AActor* Guard, float Progress, bool bIsLocked, float AngleDegrees)
 {
-    if (!DetectionWidgetInstance && DetectionWidgetClass && CanvasPanel && (Progress > 0.0f || bIsLocked))
+    if (!Guard) return;
+
+    UDetectionWidget*& WidgetInstance = GuardDetectionWidgets.FindOrAdd(Guard);
+
+    if (!WidgetInstance && DetectionWidgetClass && CanvasPanel && (Progress > 0.0f || bIsLocked))
     {
-        DetectionWidgetInstance = CreateWidget<UDetectionWidget>(GetWorld(), DetectionWidgetClass);
-        if (DetectionWidgetInstance)
+        WidgetInstance = CreateWidget<UDetectionWidget>(GetWorld(), DetectionWidgetClass);
+        if (WidgetInstance)
         {
-            CanvasPanel->AddChild(DetectionWidgetInstance);
+            CanvasPanel->AddChild(WidgetInstance);
         }
     }
 
-    if (DetectionWidgetInstance)
+    if (WidgetInstance)
     {
-        DetectionWidgetInstance->SetDetectionProgress(Progress, bIsLocked);
+        WidgetInstance->SetDetectionProgress(Progress, bIsLocked);
 
-        UCanvasPanelSlot* CanvasSlot = Cast<UCanvasPanelSlot>(DetectionWidgetInstance->Slot);
+        UCanvasPanelSlot* CanvasSlot = Cast<UCanvasPanelSlot>(WidgetInstance->Slot);
         if (CanvasSlot && CanvasPanel)
         {
             FVector2D CanvasSize = CanvasPanel->GetCachedGeometry().GetLocalSize();
@@ -91,7 +95,6 @@ void UCharacterOverlay::UpdateDetectionWidgets(float Progress, bool bIsLocked, f
             float MyPadding = 32.0f;
             float Radius = (FMath::Min(CanvasSize.X, CanvasSize.Y) * 0.4f) - MyPadding;
 
-            // FIX: invert angle for correct left/right mapping
             float AngleRad = FMath::DegreesToRadians(-AngleDegrees + 90.0f);
 
             float WidgetX = Center.X + FMath::Cos(AngleRad) * Radius;
@@ -100,13 +103,14 @@ void UCharacterOverlay::UpdateDetectionWidgets(float Progress, bool bIsLocked, f
             CanvasSlot->SetPosition(FVector2D(WidgetX, WidgetY));
             CanvasSlot->SetAlignment(FVector2D(0.5f, 0.5f));
 
-            DetectionWidgetInstance->SetDetectionBarAngle(AngleDegrees);
+            WidgetInstance->SetDetectionBarAngle(AngleDegrees);
         }
 
+        // Remove widget if progress is zero OR chase is started (locked/full)
         if ((Progress <= 0.0f && !bIsLocked) || bIsLocked)
         {
-            DetectionWidgetInstance->RemoveFromParent();
-            DetectionWidgetInstance = nullptr;
+            WidgetInstance->RemoveFromParent();
+            GuardDetectionWidgets.Remove(Guard);
         }
     }
 }

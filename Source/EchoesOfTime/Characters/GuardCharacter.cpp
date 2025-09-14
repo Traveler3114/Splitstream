@@ -222,7 +222,7 @@ void AGuardCharacter::OnTimelineFloatUpdate(float Value)
                 AngleDeg *= Sign;
 
                 // Now pass angle to widget via controller
-                PC->ClientUpdateDetectionWidgets(Value, false, AngleDeg);
+                PC->ClientUpdateDetectionWidgetForGuard(this, Value, false, AngleDeg);
             }
         }
     }
@@ -247,7 +247,21 @@ void AGuardCharacter::OnTimelineFinished()
             ADefaultPlayerController* PC = Cast<ADefaultPlayerController>(DetectedPlayer->GetController());
             if (PC)
             {
-                PC->ClientUpdateDetectionWidgets(1.0f, /*bIsLocked=*/true);
+                // Calculate current angle
+                FVector PlayerLoc = DetectedPlayer->GetActorLocation();
+                FVector GuardLoc = GetActorLocation();
+                FRotator CameraRot = PC->PlayerCameraManager->GetCameraRotation();
+                FVector CameraForward = CameraRot.Vector();
+                FVector CameraRight = FRotationMatrix(CameraRot).GetUnitAxis(EAxis::Y);
+                FVector ToGuard = GuardLoc - PlayerLoc;
+                FVector FlatForward = CameraForward; FlatForward.Z = 0; FlatForward.Normalize();
+                FVector FlatToGuard = ToGuard; FlatToGuard.Z = 0; FlatToGuard.Normalize();
+                float AngleRad = FMath::Acos(FVector::DotProduct(FlatForward, FlatToGuard));
+                float AngleDeg = FMath::RadiansToDegrees(AngleRad);
+                float Sign = FVector::DotProduct(CameraRight, FlatToGuard) > 0 ? 1.0f : -1.0f;
+                AngleDeg *= Sign;
+
+                PC->ClientUpdateDetectionWidgetForGuard(this, 1.0f, true, AngleDeg);
             }
         }
     }
@@ -262,7 +276,21 @@ void AGuardCharacter::OnTimelineFinished()
                 ADefaultPlayerController* PC = Cast<ADefaultPlayerController>(DetectedPlayer->GetController());
                 if (PC)
                 {
-                    PC->ClientUpdateDetectionWidgets(0.0f, false);
+                    // Calculate current angle
+                    FVector PlayerLoc = DetectedPlayer->GetActorLocation();
+                    FVector GuardLoc = GetActorLocation();
+                    FRotator CameraRot = PC->PlayerCameraManager->GetCameraRotation();
+                    FVector CameraForward = CameraRot.Vector();
+                    FVector CameraRight = FRotationMatrix(CameraRot).GetUnitAxis(EAxis::Y);
+                    FVector ToGuard = GuardLoc - PlayerLoc;
+                    FVector FlatForward = CameraForward; FlatForward.Z = 0; FlatForward.Normalize();
+                    FVector FlatToGuard = ToGuard; FlatToGuard.Z = 0; FlatToGuard.Normalize();
+                    float AngleRad = FMath::Acos(FVector::DotProduct(FlatForward, FlatToGuard));
+                    float AngleDeg = FMath::RadiansToDegrees(AngleRad);
+                    float Sign = FVector::DotProduct(CameraRight, FlatToGuard) > 0 ? 1.0f : -1.0f;
+                    AngleDeg *= Sign;
+
+                    PC->ClientUpdateDetectionWidgetForGuard(this, 0.0f, false, AngleDeg);
                 }
             }
         }
