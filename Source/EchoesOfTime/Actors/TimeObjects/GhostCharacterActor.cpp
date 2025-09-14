@@ -78,7 +78,10 @@ void AGhostCharacterActor::Tick(float DeltaTime)
         {
             GhostMesh->SetSkeletalMeshAsset(SourceMesh->GetSkeletalMeshAsset());
         }
+        SourceMesh->RefreshBoneTransforms();
+        SourceMesh->UpdateComponentToWorld();
         GhostMesh->SetLeaderPoseComponent(SourceMesh, true, true);
+
     }
 
     if (GhostMaterial && GhostMesh->GetMaterial(0) != GhostMaterial)
