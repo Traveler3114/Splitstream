@@ -5,8 +5,11 @@
 #include "InventorySystem/ItemBase.h"
 #include "InventorySystem/InventoryComponent.h"
 #include "Components/HorizontalBoxSlot.h"
+#include "Components/CanvasPanel.h"
+#include "Components/CanvasPanelSlot.h"
 #include "Components/SizeBox.h"
 #include "Engine/Engine.h"
+#include "Widgets/DetectionWidget.h"
 
 void UCharacterOverlay::OnInventoryChanged(const TArray<FInventorySlot>& Items)
 {
@@ -16,17 +19,14 @@ void UCharacterOverlay::OnInventoryChanged(const TArray<FInventorySlot>& Items)
 
     for (const FInventorySlot& SlotItem : Items)
     {
-        // Use the asset pointer directly now
         UItemBase* Item = SlotItem.ItemAsset;
         if (!Item || !Item->ItemIcon) continue;
 
-        // Wrap the image in a SizeBox so we can control its size
         USizeBox* SizeBox = NewObject<USizeBox>(InventoryBox);
 
         UImage* ItemImage = NewObject<UImage>(SizeBox);
         ItemImage->SetBrushFromTexture(Item->ItemIcon);
 
-        // Get texture size
         FVector2D TexSize = FVector2D(
             Item->ItemIcon->GetSizeX(),
             Item->ItemIcon->GetSizeY()
@@ -34,18 +34,14 @@ void UCharacterOverlay::OnInventoryChanged(const TArray<FInventorySlot>& Items)
 
         FVector2D FinalSize = TexSize * TextureScale;
 
-        // Apply size override
         SizeBox->SetWidthOverride(FinalSize.X);
         SizeBox->SetHeightOverride(FinalSize.Y);
 
-        // Add the image to the SizeBox
         SizeBox->AddChild(ItemImage);
 
-        // Finally add the SizeBox to the inventory container
         UHorizontalBoxSlot* MySlot = Cast<UHorizontalBoxSlot>(InventoryBox->AddChild(SizeBox));
         if (MySlot)
         {
-            // Use Auto size so it respects the box size
             MySlot->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
             MySlot->SetVerticalAlignment(VAlign_Center);
             MySlot->SetHorizontalAlignment(HAlign_Center);
@@ -69,4 +65,48 @@ void UCharacterOverlay::NativeDestruct()
         LinkedInventory->OnInventoryChanged.RemoveDynamic(this, &UCharacterOverlay::OnInventoryChanged);
     }
     Super::NativeDestruct();
+}
+
+void UCharacterOverlay::UpdateDetectionWidgets(float Progress, bool bIsLocked, float AngleDegrees)
+{
+    if (!DetectionWidgetInstance && DetectionWidgetClass && CanvasPanel && (Progress > 0.0f || bIsLocked))
+    {
+        DetectionWidgetInstance = CreateWidget<UDetectionWidget>(GetWorld(), DetectionWidgetClass);
+        if (DetectionWidgetInstance)
+        {
+            CanvasPanel->AddChild(DetectionWidgetInstance);
+        }
+    }
+
+    if (DetectionWidgetInstance)
+    {
+        DetectionWidgetInstance->SetDetectionProgress(Progress, bIsLocked);
+
+        UCanvasPanelSlot* CanvasSlot = Cast<UCanvasPanelSlot>(DetectionWidgetInstance->Slot);
+        if (CanvasSlot && CanvasPanel)
+        {
+            FVector2D CanvasSize = CanvasPanel->GetCachedGeometry().GetLocalSize();
+            FVector2D Center = CanvasSize * 0.5f;
+
+            float MyPadding = 32.0f;
+            float Radius = (FMath::Min(CanvasSize.X, CanvasSize.Y) * 0.4f) - MyPadding;
+
+            float AngleRad = FMath::DegreesToRadians(AngleDegrees);
+
+            float WidgetX = Center.X + FMath::Cos(AngleRad) * Radius;
+            float WidgetY = Center.Y - FMath::Sin(AngleRad) * Radius;
+
+            CanvasSlot->SetPosition(FVector2D(WidgetX, WidgetY));
+            CanvasSlot->SetAlignment(FVector2D(0.5f, 0.5f));
+
+            // The magic formula: flip angle and add 90 so up means outward
+            DetectionWidgetInstance->SetDetectionBarAngle(-AngleDegrees + 90.f);
+        }
+
+        if ((Progress <= 0.0f && !bIsLocked) || bIsLocked)
+        {
+            DetectionWidgetInstance->RemoveFromParent();
+            DetectionWidgetInstance = nullptr;
+        }
+    }
 }

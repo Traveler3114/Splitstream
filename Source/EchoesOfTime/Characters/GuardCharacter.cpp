@@ -6,17 +6,18 @@
 #include "Characters/DefaultCharacter.h"
 #include "Actors/PointActors/RefPointActor.h"
 #include "Net/UnrealNetwork.h"
-
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/EOTGameplayTags.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
-
+#include "Components/TimelineComponent.h"
+#include "Curves/CurveFloat.h"
+#include "Controllers/DefaultPlayerController.h"
 
 AGuardCharacter::AGuardCharacter()
 {
-    PrimaryActorTick.bCanEverTick = false;
+    PrimaryActorTick.bCanEverTick = true;
 
     AIPerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerceptionComponent"));
     SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
@@ -31,6 +32,8 @@ AGuardCharacter::AGuardCharacter()
 
     AIPerceptionComponent->ConfigureSense(*SightConfig);
     AIPerceptionComponent->SetDominantSense(SightConfig->GetSenseImplementation());
+
+    GuardTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("GuardTimeline"));
 }
 
 void AGuardCharacter::BeginPlay()
@@ -42,7 +45,6 @@ void AGuardCharacter::BeginPlay()
         AIPerceptionComponent->OnPerceptionUpdated.AddDynamic(this, &AGuardCharacter::OnPerceptionUpdated);
     }
     const bool bAuth = HasAuthority();
-    // GuardCharacter.cpp, in BeginPlay
     if (bAuth)
     {
         FActorSpawnParameters Params;
@@ -56,13 +58,26 @@ void AGuardCharacter::BeginPlay()
             GetActorRotation(),
             Params);
 
-        // Set GhostOffset immediately after spawning
         if (SpawnedGhost)
         {
             FVector Offset = ARefPointActor::GetOffsetBetweenFirstTwoRefPoints(GetWorld());
-            Offset.Z -= 90.0f; // if you want manual Z adjustment
+            Offset.Z -= 90.0f;
             SpawnedGhost->GhostOffset = Offset;
         }
+    }
+
+    // Timeline setup
+    if (GuardCurve)
+    {
+        FOnTimelineFloat ProgressFunction;
+        ProgressFunction.BindUFunction(this, FName("OnTimelineFloatUpdate"));
+        GuardTimeline->AddInterpFloat(GuardCurve, ProgressFunction);
+
+        FOnTimelineEvent FinishedFunction;
+        FinishedFunction.BindUFunction(this, FName("OnTimelineFinished"));
+        GuardTimeline->SetTimelineFinishedFunc(FinishedFunction);
+
+        GuardTimeline->SetLooping(false); // Do not loop, handle manually
     }
 }
 
@@ -141,18 +156,118 @@ void AGuardCharacter::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
                             {
                                 if (NewCount > 0)
                                 {
-                                    TargetActor = Player;
+                                    DetectedActor = Player;
+                                    // Only show detection/progress if NOT chasing
+                                    if (GuardTimeline && TargetActor == nullptr)
+                                    {
+                                        GuardTimeline->Play();
+                                    }
+                                }
+                                else
+                                {
+                                    // Reverse detection: only reverse if timeline is not at the beginning
+                                    if (GuardTimeline && TargetActor == nullptr)
+                                    {
+                                        GuardTimeline->Reverse();
+                                    }
                                 }
                             });
 
                     // Immediately check current tag state
                     if (ASC->HasMatchingGameplayTag(IllegalTag))
                     {
-                        TargetActor = Player;
+                        DetectedActor = Player;
+                        if (GuardTimeline && TargetActor == nullptr)
+                        {
+                            GuardTimeline->Play();
+                        }
                     }
                 }
             }
         }
+    }
+}
+
+void AGuardCharacter::OnTimelineFloatUpdate(float Value)
+{
+    if (DetectedActor)
+    {
+        ADefaultCharacter* DetectedPlayer = Cast<ADefaultCharacter>(DetectedActor);
+        if (DetectedPlayer)
+        {
+            ADefaultPlayerController* PC = Cast<ADefaultPlayerController>(DetectedPlayer->GetController());
+            if (PC)
+            {
+                // Calculate angle to guard
+                FVector PlayerLoc = DetectedPlayer->GetActorLocation();
+                FVector GuardLoc = GetActorLocation();
+
+                // Get player camera forward and right vectors
+                FRotator CameraRot = PC->PlayerCameraManager->GetCameraRotation();
+                FVector CameraForward = CameraRot.Vector();
+                FVector CameraRight = FRotationMatrix(CameraRot).GetUnitAxis(EAxis::Y);
+
+                FVector ToGuard = GuardLoc - PlayerLoc;
+
+                // Project ToGuard and CameraForward to XY plane (ignore Z)
+                FVector FlatForward = CameraForward; FlatForward.Z = 0; FlatForward.Normalize();
+                FVector FlatToGuard = ToGuard; FlatToGuard.Z = 0; FlatToGuard.Normalize();
+
+                // Calculate angle in degrees between forward and direction to guard
+                float AngleRad = FMath::Acos(FVector::DotProduct(FlatForward, FlatToGuard));
+                float AngleDeg = FMath::RadiansToDegrees(AngleRad);
+
+                // Determine sign: left/right
+                float Sign = FVector::DotProduct(CameraRight, FlatToGuard) > 0 ? 1.0f : -1.0f;
+                AngleDeg *= Sign;
+
+                // Now pass angle to widget via controller
+                PC->ClientUpdateDetectionWidgets(Value, false, AngleDeg);
+            }
+        }
+    }
+}
+
+void AGuardCharacter::OnTimelineFinished()
+{
+    // Timeline finished = fully detected OR fully undetected (if reversed)
+    if (GuardTimeline->GetPlaybackPosition() >= GuardTimeline->GetTimelineLength())
+    {
+        // Detection complete, start chase if not already
+        if (DetectedActor && TargetActor == nullptr)
+        {
+            TargetActor = DetectedActor;
+            // Start chase logic here!
+        }
+
+        // UI update: Progress bar full/locked
+        ADefaultCharacter* DetectedPlayer = Cast<ADefaultCharacter>(DetectedActor);
+        if (DetectedPlayer)
+        {
+            ADefaultPlayerController* PC = Cast<ADefaultPlayerController>(DetectedPlayer->GetController());
+            if (PC)
+            {
+                PC->ClientUpdateDetectionWidgets(1.0f, /*bIsLocked=*/true);
+            }
+        }
+    }
+    else if (GuardTimeline->GetPlaybackPosition() <= 0.0f)
+    {
+        // Timeline reversed to start, detection bar should disappear
+        if (DetectedActor)
+        {
+            ADefaultCharacter* DetectedPlayer = Cast<ADefaultCharacter>(DetectedActor);
+            if (DetectedPlayer)
+            {
+                ADefaultPlayerController* PC = Cast<ADefaultPlayerController>(DetectedPlayer->GetController());
+                if (PC)
+                {
+                    PC->ClientUpdateDetectionWidgets(0.0f, false);
+                }
+            }
+        }
+        // Stop the timeline completely, ready for next detection
+        GuardTimeline->Stop();
     }
 }
 

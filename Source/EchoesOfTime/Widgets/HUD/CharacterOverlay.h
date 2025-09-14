@@ -6,6 +6,7 @@
 #include "CharacterOverlay.generated.h"
 
 class UHorizontalBox;
+class UCanvasPanel;
 class UTextBlock;
 
 UCLASS()
@@ -14,10 +15,13 @@ class ECHOESOFTIME_API UCharacterOverlay : public UUserWidget
     GENERATED_BODY()
 
 public:
-	virtual void NativeDestruct() override;
+    virtual void NativeDestruct() override;
 
     UPROPERTY(meta = (BindWidget))
     UHorizontalBox* InventoryBox;
+
+    UPROPERTY(meta = (BindWidget))
+    UCanvasPanel* CanvasPanel;
 
     UPROPERTY(meta = (BindWidget))
     UTextBlock* status_txt;
@@ -31,6 +35,15 @@ public:
     UPROPERTY()
     UInventoryComponent* LinkedInventory;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Status")
-	float TextureScale = 1.25f;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TSubclassOf<class UDetectionWidget> DetectionWidgetClass;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Status")
+    float TextureScale = 1.25f;
+
+    UPROPERTY()
+    UDetectionWidget* DetectionWidgetInstance;
+
+    UFUNCTION(BlueprintCallable)
+    void UpdateDetectionWidgets(float Progress, bool bIsLocked, float AngleDegrees = 0.0f);
 };

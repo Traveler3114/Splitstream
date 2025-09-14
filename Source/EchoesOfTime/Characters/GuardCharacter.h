@@ -4,11 +4,13 @@
 #include "GameFramework/Character.h"
 #include "Interfaces/ICameraDetectable.h"
 #include "Interfaces/IGhostMirrorSource.h"
+#include "Components/TimelineComponent.h"
+#include "Curves/CurveFloat.h"
 
 #include "GuardCharacter.generated.h"
 
-
 class ANavNode;
+
 UCLASS()
 class ECHOESOFTIME_API AGuardCharacter : public ACharacter, public ICameraDetectable, public IGhostMirrorSource
 {
@@ -17,7 +19,7 @@ class ECHOESOFTIME_API AGuardCharacter : public ACharacter, public ICameraDetect
 public:
     AGuardCharacter();
     virtual void BeginPlay() override;
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Idle")
     float BaseStayChance = 0.5f;
@@ -52,8 +54,23 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
     AActor* TargetActor = nullptr;
 
+	AActor* DetectedActor = nullptr;
+
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Ghost", meta = (AllowPrivateAccess = "true"))
     class AGhostCharacterActor* SpawnedGhost = nullptr;
+
+    // Timeline
+    UPROPERTY()
+    UTimelineComponent* GuardTimeline;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Timeline")
+    UCurveFloat* GuardCurve;
+
+    UFUNCTION()
+    void OnTimelineFloatUpdate(float Value);
+
+    UFUNCTION()
+    void OnTimelineFinished();
 
     // ICameraDetectable implementation
     virtual void OnDetectedByCamera_Implementation(class ASecurityCamera* Camera) override;
@@ -67,13 +84,9 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
     class UAIPerceptionComponent* AIPerceptionComponent;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
     class UAISenseConfig_Sight* SightConfig;
 
     UFUNCTION()
     void OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors);
-
-    // In your GuardCharacter.h, inside the class definition:
-
-
 };
