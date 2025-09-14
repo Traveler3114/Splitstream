@@ -91,7 +91,8 @@ void UCharacterOverlay::UpdateDetectionWidgets(float Progress, bool bIsLocked, f
             float MyPadding = 32.0f;
             float Radius = (FMath::Min(CanvasSize.X, CanvasSize.Y) * 0.4f) - MyPadding;
 
-            float AngleRad = FMath::DegreesToRadians(AngleDegrees);
+            // FIX: invert angle for correct left/right mapping
+            float AngleRad = FMath::DegreesToRadians(-AngleDegrees + 90.0f);
 
             float WidgetX = Center.X + FMath::Cos(AngleRad) * Radius;
             float WidgetY = Center.Y - FMath::Sin(AngleRad) * Radius;
@@ -99,8 +100,7 @@ void UCharacterOverlay::UpdateDetectionWidgets(float Progress, bool bIsLocked, f
             CanvasSlot->SetPosition(FVector2D(WidgetX, WidgetY));
             CanvasSlot->SetAlignment(FVector2D(0.5f, 0.5f));
 
-            // The magic formula: flip angle and add 90 so up means outward
-            DetectionWidgetInstance->SetDetectionBarAngle(-AngleDegrees + 90.f);
+            DetectionWidgetInstance->SetDetectionBarAngle(AngleDegrees);
         }
 
         if ((Progress <= 0.0f && !bIsLocked) || bIsLocked)
