@@ -20,8 +20,11 @@ void ULockPickAbilityTask::Activate()
         return;
     }
 
+    UE_LOG(LogTemp, Warning, TEXT("LockPickAbilityTask Activate. Authority: %d"), GetAvatarActor()->HasAuthority());
+
     if (GetAvatarActor()->HasAuthority())
     {
+        UE_LOG(LogTemp, Warning, TEXT("Calling StartLockPicking on server!"));
         LockComp->StartLockPicking();
     }
 
