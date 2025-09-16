@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "InventorySystem/InventoryComponent.h"
 #include "CharacterOverlay.generated.h"
 
 class UHorizontalBox;
@@ -33,7 +32,7 @@ public:
     void SetStatusText(const FString& NewStatus);
 
     UPROPERTY()
-    UInventoryComponent* LinkedInventory;
+    class UInventoryComponent* LinkedInventory;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TSubclassOf<class UDetectionWidget> DetectionWidgetClass;

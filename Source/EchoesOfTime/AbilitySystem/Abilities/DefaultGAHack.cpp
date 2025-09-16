@@ -1,7 +1,7 @@
 #include "DefaultGAHack.h"
 #include "AbilitySystem/AbilityTasks/HackAbilityTask.h"
 #include "AbilitySystem/EOTGameplayTags.h"
-#include "HackingSystem/HackComponent.h"
+#include "ActorComponents/HackComponent.h"
 #include "Widgets/HUD/HackWidget.h"
 
 UDefaultGAHack::UDefaultGAHack()

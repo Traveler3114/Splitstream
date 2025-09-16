@@ -1,5 +1,5 @@
 #include "HackWidget.h"
-#include "HackingSystem/HackComponent.h"
+#include "ActorComponents/HackComponent.h"
 #include "Rendering/DrawElements.h"
 
 void UHackWidget::NativeConstruct()

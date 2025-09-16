@@ -1,5 +1,5 @@
 #include "DoubleDoorBase.h"
-#include "LockPickingSystem/LockPickComponent.h"
+#include "ActorComponents/LockPickComponent.h"
 #include "Net/UnrealNetwork.h"
 
 ADoubleDoorBase::ADoubleDoorBase()

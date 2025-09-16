@@ -1,8 +1,11 @@
 #include "LockPickWidget.h"
-#include "LockPickingSystem/LockPickComponent.h"
+#include "ActorComponents/LockPickComponent.h"
 #include "Components/HorizontalBoxSlot.h"
 #include "Components/Image.h"
 #include "Engine/Texture2D.h"
+#include "Slate/SlateBrushAsset.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
+#include "Rendering/DrawElements.h"
 
 void ULockPickWidget::NativeConstruct()
 {
@@ -10,11 +13,8 @@ void ULockPickWidget::NativeConstruct()
     // Pin images created dynamically in InitializeLockPickWidget
 }
 
-#include "Slate/SlateBrushAsset.h"
-#include "Blueprint/WidgetLayoutLibrary.h"
-#include "Rendering/DrawElements.h"
 
-// ... existing code ...
+
 
 int32 ULockPickWidget::NativePaint(const FPaintArgs& Args, const FGeometry& Geometry, const FSlateRect& ClipRect, FSlateWindowElementList& OutDrawElements, int32 LayerId, const FWidgetStyle& InWidgetStyle, bool bParentEnabled) const
 {

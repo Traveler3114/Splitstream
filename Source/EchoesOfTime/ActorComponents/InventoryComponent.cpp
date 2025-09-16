@@ -1,6 +1,6 @@
 #include "InventoryComponent.h"
 #include "Net/UnrealNetwork.h"
-#include "ItemBase.h"
+#include "DataAssets/ItemBase.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemInterface.h"
 #include "DefaultPlayerState.h"

@@ -3,7 +3,7 @@
 #include "Components/TextRenderComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Interfaces/IKeycardUnlockable.h"
-#include "InventorySystem/InventoryComponent.h"
+#include "ActorComponents/InventoryComponent.h"
 
 AKeypadScanner::AKeypadScanner()
 {

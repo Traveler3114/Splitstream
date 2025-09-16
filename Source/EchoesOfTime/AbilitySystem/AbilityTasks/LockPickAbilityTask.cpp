@@ -1,5 +1,5 @@
 #include "LockPickAbilityTask.h"
-#include "LockPickingSystem/LockPickComponent.h"
+#include "ActorComponents/LockPickComponent.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "Widgets/HUD/LockPickWidget.h"

@@ -1,6 +1,6 @@
 #include "CharacterHUD.h"
 #include "GameFramework/PlayerController.h"
-#include "InventorySystem/InventoryComponent.h"
+#include "ActorComponents/InventoryComponent.h"
 #include "CharacterOverlay.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
 #include "AbilitySystemComponent.h"

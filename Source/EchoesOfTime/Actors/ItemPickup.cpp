@@ -1,5 +1,5 @@
 #include "ItemPickup.h"
-#include "InventorySystem/InventoryComponent.h"
+#include "ActorComponents/InventoryComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/Engine.h"
 

@@ -1,6 +1,6 @@
 #include "DefaultGALockPick.h"
 #include "AbilitySystem/AbilityTasks/LockPickAbilityTask.h"
-#include "LockPickingSystem/LockPickComponent.h"
+#include "ActorComponents/LockPickComponent.h"
 #include "Widgets/HUD/LockPickWidget.h"
 #include "AbilitySystem/EOTGameplayTags.h"
 #include "Engine/Engine.h"

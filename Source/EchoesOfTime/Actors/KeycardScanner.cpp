@@ -1,6 +1,6 @@
 #include "KeycardScanner.h"
-#include "InventorySystem/InventoryComponent.h"
-#include "InventorySystem/ItemBase.h"
+#include "ActorComponents/InventoryComponent.h"
+#include "DataAssets/ItemBase.h"
 
 AKeycardScanner::AKeycardScanner()
 {

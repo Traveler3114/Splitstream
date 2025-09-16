@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
-#include "LockPickingSystem/LockPickComponent.h"
 #include "DefaultGALockPick.generated.h"
 
 

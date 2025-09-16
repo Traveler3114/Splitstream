@@ -4,7 +4,6 @@
 #include "GameFramework/Character.h"
 #include "Interfaces/IInteractable.h"
 #include "InputActionValue.h"
-#include "LockPickingSystem/LockPickComponent.h"
 #include "AbilitySystemInterface.h"
 #include "DefaultCharacter.generated.h"
 

@@ -8,11 +8,9 @@
 #include "GameFramework/Controller.h"
 #include "DefaultPlayerState.h"
 #include "AbilitySystemComponent.h"
-#include "InventorySystem/InventoryComponent.h"
+#include "ActorComponents/InventoryComponent.h"
 #include "InputActionValue.h"
 #include "Net/UnrealNetwork.h"
-#include "LockPickingSystem/LockPickComponent.h"
-#include "HackingSystem/HackComponent.h"
 #include "Widgets/HUD/CharacterHUD.h"
 #include "AbilitySystem/EOTGameplayTags.h"
 

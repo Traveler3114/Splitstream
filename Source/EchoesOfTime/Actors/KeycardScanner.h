@@ -4,7 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "Interfaces/IInteractable.h"
 #include "Interfaces/IKeycardUnlockable.h"
-#include "InventorySystem/ItemBase.h" // <-- Include for EItemType
+#include "DataAssets/ItemBase.h" // <-- Include for EItemType
 #include "TimelineEra.h"
 #include "KeycardScanner.generated.h"
 

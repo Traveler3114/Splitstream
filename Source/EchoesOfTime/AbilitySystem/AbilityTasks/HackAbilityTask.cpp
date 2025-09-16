@@ -1,5 +1,5 @@
 #include "HackAbilityTask.h"
-#include "HackingSystem/HackComponent.h"
+#include "ActorComponents/HackComponent.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "Widgets/HUD/HackWidget.h"
