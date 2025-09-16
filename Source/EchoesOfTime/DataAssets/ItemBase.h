@@ -9,6 +9,7 @@ enum class EItemType : uint8
 {
     KeycardL1     UMETA(DisplayName = "KeycardL1"),
     KeycardL2     UMETA(DisplayName = "KeycardL2"),
+    Fingerprint     UMETA(DisplayName = "Fingerprint"),
     MoneyStack  UMETA(DisplayName = "MoneyStack"),
     Tool        UMETA(DisplayName = "Tool"),
     Gadget      UMETA(DisplayName = "Gadget"),
