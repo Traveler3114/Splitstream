@@ -53,6 +53,7 @@ void UInventoryComponent::SetActiveSlot(int32 Index)
 
         // --- Show debug message when active item is set ---
         UItemBase* Item = Slots[Index].ItemAsset;
+		OnRep_ActiveSlotIndex();
         FString ItemName = Item ? Item->ItemName.ToString() : TEXT("None");
         FString DebugMsg = FString::Printf(TEXT("Active Inventory Slot: %d | Item: %s"), Index, *ItemName);
         if (GEngine)
@@ -132,7 +133,7 @@ void UInventoryComponent::OnRep_Slots()
 
 void UInventoryComponent::OnRep_ActiveSlotIndex()
 {
-    // Optionally notify UI or other systems
+    OnInventoryChanged.Broadcast(Slots);
 }
 
 void UInventoryComponent::ServerSetActiveSlot_Implementation(int32 Index)

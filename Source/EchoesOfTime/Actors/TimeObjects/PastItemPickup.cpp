@@ -24,14 +24,10 @@ void APastItemPickup::SpawnLinkedFutureItem()
     if (!ItemData) return;
 
     FVector DesiredLocation = GetActorLocation() + FutureItemPickupOffset;
-
-    // ... your line trace logic here if you use it ...
-    FVector FutureLocation = DesiredLocation; // or result of your trace
-
+    FVector FutureLocation = DesiredLocation;
     FRotator ActorRotation = GetActorRotation();
     FRotator MeshRelativeRotation = OverrideMeshComp ? OverrideMeshComp->GetRelativeRotation() : FRotator::ZeroRotator;
     FRotator CombinedRotation = (ActorRotation.Quaternion() * MeshRelativeRotation.Quaternion()).Rotator();
-
 
     FTransform FutureTransform = FTransform(CombinedRotation, FutureLocation);
 
@@ -40,6 +36,24 @@ void APastItemPickup::SpawnLinkedFutureItem()
     {
         Future->ItemData = ItemData;
         Future->ItemInstanceID = ItemInstanceID;
+
+        // --- Copy mesh, scale, and rotation from Past to Future if set ---
+        if (OverrideMeshComp && OverrideMeshComp->GetStaticMesh())
+        {
+            Future->OverrideMeshComp->SetStaticMesh(OverrideMeshComp->GetStaticMesh());
+            Future->OverrideMeshComp->SetWorldScale3D(OverrideMeshComp->GetComponentScale());
+            Future->OverrideMeshComp->SetRelativeRotation(OverrideMeshComp->GetRelativeRotation());
+            // You may also want to copy material overrides:
+            for (int32 i = 0; i < OverrideMeshComp->GetNumMaterials(); ++i)
+            {
+                UMaterialInterface* Mat = OverrideMeshComp->GetMaterial(i);
+                if (Mat)
+                {
+                    Future->OverrideMeshComp->SetMaterial(i, Mat);
+                }
+            }
+        }
+
         UGameplayStatics::FinishSpawningActor(Future, FutureTransform);
         SpawnedFutureItem = Future;
     }

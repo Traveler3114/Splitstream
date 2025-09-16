@@ -15,14 +15,22 @@ ULockPickComponent::ULockPickComponent()
 void ULockPickComponent::BeginPlay()
 {
     Super::BeginPlay();
-    GeneratePins();
+    // Only generate pins on the server for multiplayer safety
+    if (GetOwner()->HasAuthority())
+    {
+        GeneratePins();
+    }
     PinSetStates.Init(false, Pins.Num());
 }
 
 void ULockPickComponent::OnComponentCreated()
 {
     Super::OnComponentCreated();
-    GeneratePins();
+    // Only generate pins on the server for multiplayer safety
+    if (GetOwner()->HasAuthority())
+    {
+        GeneratePins();
+    }
     PinSetStates.Init(false, Pins.Num());
 }
 
@@ -49,21 +57,13 @@ void ULockPickComponent::GeneratePins()
     default:                      Tolerance = 10.f; break;
     }
 
-    // SEEDING: Use something unique for each lock!
-    int32 Seed = 0;
-    if (AActor* Owner = GetOwner())
-    {
-        Seed = FCrc::StrCrc32(*Owner->GetName()); // Unique per actor name
-    }
-    else
-    {
-        Seed = FMath::Rand(); // Fallback if no owner
-    }
+    // Seed the random stream with a truly random value for each session
+    int32 Seed = FMath::Rand();
     FRandomStream Stream(Seed);
 
     for (int32 i = 0; i < NumPins; ++i)
     {
-        float Angle = Stream.FRandRange(0.f, 360.f); // Now actually random per lock!
+        float Angle = Stream.FRandRange(0.f, 360.f); // Truly random every time the level is loaded
         FLockPinData Pin;
         Pin.SweetSpotAngle = Angle;
         Pin.Tolerance = Tolerance;

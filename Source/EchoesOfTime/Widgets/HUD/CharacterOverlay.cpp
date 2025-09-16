@@ -10,15 +10,22 @@
 #include "Components/SizeBox.h"
 #include "Engine/Engine.h"
 #include "Widgets/DetectionWidget.h"
+#include "Components/Border.h"
 
+
+// --- Modify OnInventoryChanged to highlight the active item ---
 void UCharacterOverlay::OnInventoryChanged(const TArray<FInventorySlot>& Items)
 {
     if (!InventoryBox || !LinkedInventory) return;
 
     InventoryBox->ClearChildren();
 
-    for (const FInventorySlot& SlotItem : Items)
+    // Get index of active slot
+    int32 ActiveIndex = LinkedInventory->ActiveSlotIndex;
+
+    for (int32 i = 0; i < Items.Num(); ++i)
     {
+        const FInventorySlot& SlotItem = Items[i];
         UItemBase* Item = SlotItem.ItemAsset;
         if (!Item || !Item->ItemIcon) continue;
 
@@ -36,10 +43,15 @@ void UCharacterOverlay::OnInventoryChanged(const TArray<FInventorySlot>& Items)
 
         SizeBox->SetWidthOverride(FinalSize.X);
         SizeBox->SetHeightOverride(FinalSize.Y);
-
         SizeBox->AddChild(ItemImage);
 
-        UHorizontalBoxSlot* MySlot = Cast<UHorizontalBoxSlot>(InventoryBox->AddChild(SizeBox));
+        // --- Highlight active slot with a border ---
+        UBorder* Border = NewObject<UBorder>(InventoryBox);
+        Border->SetBrushColor(i == ActiveIndex ? FLinearColor::Yellow : FLinearColor::White);
+        Border->SetPadding(FMargin(2.0f));
+        Border->SetContent(SizeBox);
+
+        UHorizontalBoxSlot* MySlot = Cast<UHorizontalBoxSlot>(InventoryBox->AddChild(Border));
         if (MySlot)
         {
             MySlot->SetSize(FSlateChildSize(ESlateSizeRule::Automatic));
@@ -48,6 +60,8 @@ void UCharacterOverlay::OnInventoryChanged(const TArray<FInventorySlot>& Items)
         }
     }
 }
+
+// ... rest of file unchanged ...
 
 void UCharacterOverlay::SetStatusText(const FString& NewStatus)
 {
