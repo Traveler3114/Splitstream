@@ -101,23 +101,6 @@ void ADefaultPlayerController::HandlePauseMenuResumed()
     bIsPauseMenuOpen = false;
 }
 
-void ADefaultPlayerController::ServerLockPickConfirm_Implementation(AActor* DoorActor, float Angle)
-{
-    if (!DoorActor) return;
-    ULockPickComponent* LockComp = DoorActor->FindComponentByClass<ULockPickComponent>();
-    if (LockComp)
-    {
-        if (LockComp->TrySetCurrentPin(Angle))
-        {
-            if (LockComp->AdvancePin())
-            {
-                LockComp->EndLockPicking();
-            }
-        }
-    }
-}
-
-
 void ADefaultPlayerController::ClientShowCalendarWidget_Implementation(int32 Year, int32 Month, int32 Day, const TArray<FString>& CivilianNames, const TArray<UTexture2D*>& CivilianPortraits)
 {
     if (CalendarWidgetClass)

@@ -20,11 +20,8 @@ void ULockPickAbilityTask::Activate()
         return;
     }
 
-    UE_LOG(LogTemp, Warning, TEXT("LockPickAbilityTask Activate. Authority: %d"), GetAvatarActor()->HasAuthority());
-
     if (GetAvatarActor()->HasAuthority())
     {
-        UE_LOG(LogTemp, Warning, TEXT("Calling StartLockPicking on server!"));
         LockComp->StartLockPicking();
     }
 
@@ -139,12 +136,8 @@ void ULockPickAbilityTask::OnMouseY(float Axis)
 
 void ULockPickAbilityTask::OnConfirm()
 {
-    APawn* Pawn = Cast<APawn>(GetAvatarActor());
-    if (!Pawn) return;
-    ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(Pawn->GetController());
-    if (!MyPC || !LockComp) return;
-
-    MyPC->ServerLockPickConfirm(LockComp->GetOwner(), LockPickDialAngle);
+    if (!LockComp) return;
+	ServerConfirmPin(LockPickDialAngle);
 }
 
 void ULockPickAbilityTask::ServerConfirmPin_Implementation(float Angle)

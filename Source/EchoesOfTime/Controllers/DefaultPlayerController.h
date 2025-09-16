@@ -35,9 +35,6 @@ public:
 
     bool bIsPauseMenuOpen = false;
 
-    UFUNCTION(Server, Reliable)
-    void ServerLockPickConfirm(AActor* DoorActor, float Angle);
-
     UFUNCTION(Client, Reliable)
     void ClientShowCalendarWidget(int32 Year, int32 Month, int32 Day, const TArray<FString>& CivilianNames, const TArray<UTexture2D*>& CivilianPortraits);
 
