@@ -10,6 +10,7 @@ class ECHOESOFTIME_API APastItemPickup : public AItemPickup
     GENERATED_BODY()
 public:
     APastItemPickup();
+    virtual void OnConstruction(const FTransform& Transform) override;
 
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "TimeLink")
     class AFutureItemPickup* SpawnedFutureItem = nullptr;
@@ -22,4 +23,6 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ghost")
     FVector FutureItemPickupOffset = FVector(0.0f, 0.0f, 0.0f);
+
+    
 };
