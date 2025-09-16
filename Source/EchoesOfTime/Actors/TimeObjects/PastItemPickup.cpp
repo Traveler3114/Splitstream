@@ -26,10 +26,7 @@ void APastItemPickup::SpawnLinkedFutureItem()
     FVector DesiredLocation = GetActorLocation() + FutureItemPickupOffset;
     FVector FutureLocation = DesiredLocation;
     FRotator ActorRotation = GetActorRotation();
-    FRotator MeshRelativeRotation = OverrideMeshComp ? OverrideMeshComp->GetRelativeRotation() : FRotator::ZeroRotator;
-    FRotator CombinedRotation = (ActorRotation.Quaternion() * MeshRelativeRotation.Quaternion()).Rotator();
-
-    FTransform FutureTransform = FTransform(CombinedRotation, FutureLocation);
+    FTransform FutureTransform = FTransform(ActorRotation, FutureLocation);
 
     AFutureItemPickup* Future = GetWorld()->SpawnActorDeferred<AFutureItemPickup>(AFutureItemPickup::StaticClass(), FutureTransform);
     if (Future)
@@ -37,13 +34,15 @@ void APastItemPickup::SpawnLinkedFutureItem()
         Future->ItemData = ItemData;
         Future->ItemInstanceID = ItemInstanceID;
 
-        // --- Copy mesh, scale, and rotation from Past to Future if set ---
-        if (OverrideMeshComp && OverrideMeshComp->GetStaticMesh())
+        UGameplayStatics::FinishSpawningActor(Future, FutureTransform);
+        SpawnedFutureItem = Future;
+
+        // Copy mesh, scale, and relative rotation from Past to Future if set and valid
+        if (OverrideMeshComp && OverrideMeshComp->GetStaticMesh() && Future->OverrideMeshComp)
         {
             Future->OverrideMeshComp->SetStaticMesh(OverrideMeshComp->GetStaticMesh());
             Future->OverrideMeshComp->SetWorldScale3D(OverrideMeshComp->GetComponentScale());
             Future->OverrideMeshComp->SetRelativeRotation(OverrideMeshComp->GetRelativeRotation());
-            // You may also want to copy material overrides:
             for (int32 i = 0; i < OverrideMeshComp->GetNumMaterials(); ++i)
             {
                 UMaterialInterface* Mat = OverrideMeshComp->GetMaterial(i);
@@ -53,12 +52,8 @@ void APastItemPickup::SpawnLinkedFutureItem()
                 }
             }
         }
-
-        UGameplayStatics::FinishSpawningActor(Future, FutureTransform);
-        SpawnedFutureItem = Future;
     }
 }
-
 void APastItemPickup::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     if (ItemInstanceID.IsValid())
