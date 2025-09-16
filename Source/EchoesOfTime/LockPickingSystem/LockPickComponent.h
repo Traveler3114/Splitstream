@@ -101,6 +101,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "LockPick")
     float GetPinAngleProximity(int32 PinIndex, float InputAngle) const;
 
+    // Add to public section:
+    UFUNCTION(BlueprintCallable, Category = "LockPick")
+    void Interact(AActor* Interactor);
 protected:
     virtual void BeginPlay() override;
     virtual void OnComponentCreated() override;

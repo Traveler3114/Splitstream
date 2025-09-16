@@ -249,48 +249,9 @@ void ADefaultCharacter::ServerHandleInteract_Implementation()
     {
         if (AActor* HitActor = Hit.GetActor())
         {
-            // Interact with actors as usual
             if (HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
             {
                 IInteractable::Execute_Interact(HitActor, this);
-            }
-
-            // If lockpick component is present, fire a GameplayEvent for GAS
-            if (ULockPickComponent* LockComp = HitActor->FindComponentByClass<ULockPickComponent>())
-            {
-                // Get the AbilitySystemComponent from your PlayerState (or wherever it lives)
-                if (ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>())
-                {
-                    if (UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent())
-                    {
-                        FGameplayEventData EventData;
-                        EventData.Instigator = this;
-                        EventData.OptionalObject = HitActor;
-
-                        ASC->HandleGameplayEvent(
-                            TAG_Character_Ability_LockPick,
-                            &EventData
-                        );
-                    }
-                }
-            }
-
-            if (UHackComponent* HackComp = HitActor->FindComponentByClass<UHackComponent>())
-            {
-                if (ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>())
-                {
-                    if (UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent())
-                    {
-                        FGameplayEventData EventData;
-                        EventData.Instigator = this;
-                        EventData.OptionalObject = HitActor;
-
-                        ASC->HandleGameplayEvent(
-                            TAG_Character_Ability_Hack, // Use your hacking ability tag here
-                            &EventData
-                        );
-                    }
-                }
             }
         }
     }

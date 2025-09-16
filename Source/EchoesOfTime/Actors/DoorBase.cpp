@@ -38,17 +38,14 @@ void ADoorBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void ADoorBase::Interact_Implementation(AActor* Interactor)
 {
-    // If locked and has lockpick, cannot be opened by interact
     if (bIsLocked && LockPickComponent)
     {
-        // Optionally trigger lockpick UI here
+        LockPickComponent->Interact(Interactor);
         return;
     }
 
-    // If requires keycard, block direct opening by the player
     if (bRequiresKeycard)
     {
-        // Optional: Play denial sound or feedback
         return;
     }
 

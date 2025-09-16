@@ -52,7 +52,10 @@ void AComputer::SetupComputer(const FString& NewStaffName, const FString& NewSto
 
 void AComputer::Interact_Implementation(AActor* Interactor)
 {
-    // Optionally trigger hacking logic here
+    if (HackComponent)
+    {
+        HackComponent->Interact(Interactor);
+    }
 }
 
 void AComputer::SetHighlighted_Implementation(bool bHighlight)

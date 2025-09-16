@@ -1,5 +1,8 @@
 #include "LockPickComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "AbilitySystemInterface.h"
+#include "AbilitySystemComponent.h"
+#include "AbilitySystem/EOTGameplayTags.h"
 
 ULockPickComponent::ULockPickComponent()
 {
@@ -114,6 +117,29 @@ bool ULockPickComponent::GetCurrentPinData(float& OutSweetSpotAngle, float& OutT
     OutSweetSpotAngle = 0.f;
     OutTolerance = 0.f;
     return false;
+}
+
+
+
+void ULockPickComponent::Interact(AActor* Interactor)
+{
+    if (bUnlocked || bPickingInProgress) return;
+
+    // Fire gameplay event for GAS
+    if (IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(Interactor))
+    {
+        if (UAbilitySystemComponent* ASC = AbilityInterface->GetAbilitySystemComponent())
+        {
+            FGameplayEventData EventData;
+            EventData.Instigator = Interactor;
+            EventData.OptionalObject = GetOwner(); // The locked actor
+
+            ASC->HandleGameplayEvent(
+                TAG_Character_Ability_LockPick,
+                &EventData
+            );
+        }
+    }
 }
 
 bool ULockPickComponent::TrySetCurrentPin(float InputAngle)

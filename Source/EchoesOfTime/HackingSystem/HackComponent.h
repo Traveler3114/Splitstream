@@ -40,6 +40,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Hacking")
     float GetHackProgress() const;
 
+    UFUNCTION(BlueprintCallable, Category = "Hacking")
+    void Interact(AActor* Interactor);
+
 protected:
     virtual void BeginPlay() override;
     virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;

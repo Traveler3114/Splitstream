@@ -44,13 +44,12 @@ void ADoubleDoorBase::Interact_Implementation(AActor* Interactor)
 {
     if (bIsLocked && LockPickComponent)
     {
-        // Optionally trigger lockpick UI here
+        LockPickComponent->Interact(Interactor);
         return;
     }
 
     if (bRequiresKeycard)
     {
-        // Optionally play denial feedback
         return;
     }
 

@@ -1,5 +1,8 @@
 #include "HackComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "AbilitySystemInterface.h"
+#include "AbilitySystemComponent.h"
+#include "AbilitySystem/EOTGameplayTags.h"
 
 UHackComponent::UHackComponent()
 {
@@ -58,6 +61,28 @@ void UHackComponent::OnRep_Hacked()
     if (bHacked)
     {
         OnHackComplete.Broadcast();
+    }
+}
+
+
+void UHackComponent::Interact(AActor* Interactor)
+{
+    if (bHacked || bHackingInProgress) return;
+
+    // Fire gameplay event for GAS
+    if (IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(Interactor))
+    {
+        if (UAbilitySystemComponent* ASC = AbilityInterface->GetAbilitySystemComponent())
+        {
+            FGameplayEventData EventData;
+            EventData.Instigator = Interactor;
+            EventData.OptionalObject = GetOwner(); // This is the hackable actor, needed for GAS ability
+
+            ASC->HandleGameplayEvent(
+                TAG_Character_Ability_Hack,
+                &EventData
+            );
+        }
     }
 }
 
