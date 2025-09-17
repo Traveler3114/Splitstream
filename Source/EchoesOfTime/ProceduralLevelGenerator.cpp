@@ -23,7 +23,7 @@ AProceduralLevelGenerator::AProceduralLevelGenerator()
 void AProceduralLevelGenerator::BeginPlay()
 {
     Super::BeginPlay();
-	if (HasAuthority()) HandlePastSpawns();
+    if(HasAuthority()) HandlePastSpawns();
     //HandleFutureSpawns();
 }
 
@@ -322,7 +322,7 @@ void AProceduralLevelGenerator::HandleFutureSpawns()
     for (AActor* Actor : FoundCodeGenerators)
     {
         ACodeGenerator* CodeGen = Cast<ACodeGenerator>(Actor);
-        if (CodeGen && CodeGen->TimelineEra == ETimelineEra::Future && HasAuthority())
+        if (CodeGen && CodeGen->TimelineEra == ETimelineEra::Future)
         {
             CodeGen->TargetCivilian = TargetCivilian;
         }

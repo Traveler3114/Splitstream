@@ -22,6 +22,13 @@ public:
     UPROPERTY(VisibleAnywhere)
     class USceneComponent* DefaultSceneRoot;
 
+    // Replicated date string; when changed, will update text on all clients
+    UPROPERTY(ReplicatedUsing = OnRep_NewspaperDateString)
+    FString NewspaperDateString;
+
+    UFUNCTION()
+    void OnRep_NewspaperDateString();
+
     UFUNCTION(BlueprintCallable)
     void SetDateText(const FString& DateStr);
 
@@ -30,4 +37,6 @@ public:
 
 protected:
     virtual void BeginPlay() override;
+
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
