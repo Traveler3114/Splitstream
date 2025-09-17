@@ -101,23 +101,18 @@ void ADefaultPlayerController::HandlePauseMenuResumed()
     bIsPauseMenuOpen = false;
 }
 
-void ADefaultPlayerController::ClientShowCalendarWidget_Implementation(int32 Year, int32 Month, int32 Day, const TArray<FString>& CivilianNames, const TArray<UTexture2D*>& CivilianPortraits)
+void ADefaultPlayerController::ClientShowCalendarWidget_Implementation(const TArray<FCalendarCivilianRecord>& CivilianDateRecords)
 {
     if (CalendarWidgetClass)
     {
         UCalendarWidget* Widget = CreateWidget<UCalendarWidget>(this, CalendarWidgetClass);
         if (Widget)
         {
-            Widget->TargetYear = Year;
-            Widget->TargetMonth = Month;
-            Widget->TargetDay = Day;
-            Widget->CivilianNames = CivilianNames;
-            Widget->CivilianPortraits = CivilianPortraits;
+            Widget->CivilianDateRecords = CivilianDateRecords;
             Widget->AddToViewport();
         }
     }
 }
-
 
 void ADefaultPlayerController::ClientUpdateDetectionWidgetForGuard_Implementation(AActor* Guard, float Progress, bool bIsLocked, float AngleDegrees)
 {

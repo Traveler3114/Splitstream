@@ -4,11 +4,37 @@
 #include "Blueprint/UserWidget.h"
 #include "CalendarWidget.generated.h"
 
-
-
 class UUniformGridPanel;
 class UCalendarButtonWidget;
 class UCalendarResultWidget;
+
+USTRUCT(BlueprintType)
+struct FCivilianCalendarEntry
+{
+    GENERATED_BODY()
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    FString Name;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    UTexture2D* Portrait;
+};
+
+USTRUCT(BlueprintType)
+struct FCalendarCivilianRecord
+{
+    GENERATED_BODY()
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 Year;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 Month;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 Day;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TArray<FCivilianCalendarEntry> Civilians;
+};
 
 UENUM()
 enum class ECalendarStage : uint8
@@ -38,19 +64,7 @@ public:
     TSubclassOf<UCalendarResultWidget> CalendarResultWidgetClass;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Calendar")
-    int32 TargetYear = 2020;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Calendar")
-    int32 TargetMonth = 1;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Calendar")
-    int32 TargetDay = 1;
-
-    // Array of staff/civilian names to show multiple computers
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Calendar")
-    TArray<FString> CivilianNames;
-
-    // Array of portraits for each civilian
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Calendar")
-    TArray<UTexture2D*> CivilianPortraits;
+    TArray<FCalendarCivilianRecord> CivilianDateRecords;
 
 private:
     int32 SelectedYear = 0;

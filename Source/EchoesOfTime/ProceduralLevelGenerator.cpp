@@ -5,6 +5,9 @@
 #include "Actors/KeypadScanner/KeypadScanner.h"
 #include "Actors/NewspaperActor.h"
 #include "Actors/PointActors/RandomPointActor.h"
+#include "Actors/PointActors/SearchableItemSpawnPoint.h"
+#include "Actors/SearchableActor.h"
+#include "Actors/CupActor.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "TimelineEra.h"
@@ -20,11 +23,43 @@ AProceduralLevelGenerator::AProceduralLevelGenerator()
 void AProceduralLevelGenerator::BeginPlay()
 {
     Super::BeginPlay();
-
-    HandlePastSpawns();
-    HandleFutureSpawns();
+	if (HasAuthority()) HandlePastSpawns();
+    //HandleFutureSpawns();
 }
 
+void AProceduralLevelGenerator::SpawnCivilianDeskItems(const TArray<class ACivilianCharacter*>& Civilians, TSubclassOf<class ASearchableActor> ItemClass)
+{
+    for (ACivilianCharacter* Civ : Civilians)
+    {
+        if (!Civ || !Civ->AssignedDesk) continue;
+
+        for (ASearchableItemSpawnPoint* SpawnPoint : Civ->AssignedDesk->ItemSpawnPoints)
+        {
+            if (!SpawnPoint) continue;
+
+            FActorSpawnParameters Params;
+            Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+            FVector SpawnLocation = SpawnPoint->GetActorLocation();
+            FRotator SpawnRotation = SpawnPoint->GetActorRotation();
+
+            ASearchableActor* NewItem = GetWorld()->SpawnActor<ASearchableActor>(ItemClass, SpawnLocation, SpawnRotation, Params);
+
+            if (NewItem)
+            {
+                // Set the TimelineEra
+                NewItem->TimelineEra = Civ->TimelineEra;
+
+                // If it's a cup, set the LinkedCivilian
+                ACupActor* Cup = Cast<ACupActor>(NewItem);
+                if (Cup)
+                {
+                    Cup->LinkedCivilian = Civ;
+                }
+            }
+        }
+    }
+}
 void AProceduralLevelGenerator::HandlePastSpawns()
 {
     // ---- CIVILIAN SPAWN ----
@@ -174,6 +209,9 @@ void AProceduralLevelGenerator::HandlePastSpawns()
             Newspaper->SetDateText(DateStr);
         }
     }
+
+    SpawnCivilianDeskItems(SpawnedCivilians, SearchableItemBPClass);
+    HandleFutureSpawns();
 }
 
 void AProceduralLevelGenerator::HandleFutureSpawns()
@@ -267,7 +305,7 @@ void AProceduralLevelGenerator::HandleFutureSpawns()
     for (AActor* Actor : FoundCodeGenerators)
     {
         ACodeGenerator* CodeGen = Cast<ACodeGenerator>(Actor);
-        if (CodeGen && CodeGen->TimelineEra == ETimelineEra::Future)
+        if (CodeGen && CodeGen->TimelineEra == ETimelineEra::Future && HasAuthority())
         {
             CodeGen->TargetCivilian = TargetCivilian;
         }
@@ -303,7 +341,7 @@ void AProceduralLevelGenerator::HandleFutureSpawns()
             Newspaper->SetDateText(DateStr);
         }
     }
-
+	SpawnCivilianDeskItems(SpawnedCivilians, SearchableItemBPClass);
 
 }
 

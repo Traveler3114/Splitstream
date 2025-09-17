@@ -5,7 +5,6 @@
 #include "DefaultPlayerController.generated.h"
 
 class UPauseMenuWidget;
-class UCalendarWidget; // <-- Add this line
 
 UCLASS()
 class ECHOESOFTIME_API ADefaultPlayerController : public APlayerController
@@ -24,19 +23,16 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
     TSubclassOf<UPauseMenuWidget> PauseMenuWidgetClass;
 
-    // --- Add these for calendar widget support ---
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
-    TSubclassOf<UCalendarWidget> CalendarWidgetClass;
+    TSubclassOf<class UCalendarWidget> CalendarWidgetClass;
 
     UPROPERTY(BlueprintReadWrite)
     UCalendarWidget* CalendarWidgetInstance;
 
-    // ---------------------------------------------
-
     bool bIsPauseMenuOpen = false;
 
     UFUNCTION(Client, Reliable)
-    void ClientShowCalendarWidget(int32 Year, int32 Month, int32 Day, const TArray<FString>& CivilianNames, const TArray<UTexture2D*>& CivilianPortraits);
+    void ClientShowCalendarWidget(const TArray<FCalendarCivilianRecord>& CivilianDateRecords);
 
     UFUNCTION(Client, Reliable)
     void ClientUpdateDetectionWidgetForGuard(AActor* Guard, float Progress, bool bIsLocked = false, float AngleDegrees = 0.0f);

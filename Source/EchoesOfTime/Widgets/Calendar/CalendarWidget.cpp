@@ -139,19 +139,22 @@ void UCalendarWidget::ShowResult()
     CalendarStage = ECalendarStage::Results;
     CalendarPanel->ClearChildren();
 
-    if (SelectedYear == TargetYear && SelectedMonth == TargetMonth && SelectedDay == TargetDay)
-    {
-        if (CalendarResultWidgetClass)
+    const FCalendarCivilianRecord* Record = CivilianDateRecords.FindByPredicate(
+        [this](const FCalendarCivilianRecord& Rec)
         {
-            int32 Row = 0;
-            for (int32 i = 0; i < CivilianNames.Num(); ++i)
+            return Rec.Year == SelectedYear && Rec.Month == SelectedMonth && Rec.Day == SelectedDay;
+        });
+
+    if (Record && CalendarResultWidgetClass)
+    {
+        int32 Row = 0;
+        for (const FCivilianCalendarEntry& Civ : Record->Civilians)
+        {
+            UCalendarResultWidget* ResultWidget = CreateWidget<UCalendarResultWidget>(GetWorld(), CalendarResultWidgetClass);
+            if (ResultWidget)
             {
-                UCalendarResultWidget* ResultWidget = CreateWidget<UCalendarResultWidget>(GetWorld(), CalendarResultWidgetClass);
-                if (ResultWidget)
-                {
-                    ResultWidget->SetupResult(CivilianNames[i], CivilianPortraits.IsValidIndex(i) ? CivilianPortraits[i] : nullptr);
-                    CalendarPanel->AddChildToUniformGrid(ResultWidget, 0, Row++);
-                }
+                ResultWidget->SetupResult(Civ.Name, Civ.Portrait);
+                CalendarPanel->AddChildToUniformGrid(ResultWidget, 0, Row++);
             }
         }
     }

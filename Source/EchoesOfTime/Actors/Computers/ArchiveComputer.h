@@ -6,7 +6,8 @@
 #include "TimelineEra.h"
 #include "ArchiveComputer.generated.h"
 
-class UCalendarWidget;
+
+
 class AProceduralLevelGenerator;
 class AComputer;
 class ACivilianCharacter;

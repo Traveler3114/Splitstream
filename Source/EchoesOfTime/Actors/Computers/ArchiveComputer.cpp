@@ -2,11 +2,13 @@
 #include "ProceduralLevelGenerator.h"
 #include "Computer.h"
 #include "Actors/DeskActor.h"
+#include "Actors/CodeGenerator.h"
 #include "Characters/CivilianCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "Controllers/DefaultPlayerController.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
+#include "Widgets/Calendar/CalendarWidget.h"
 #include "EngineUtils.h" // for TActorIterator
 
 // Helper function: filter actors by TimelineEra
@@ -75,59 +77,72 @@ void AArchiveComputer::BeginPlay()
 
 void AArchiveComputer::Interact_Implementation(AActor* Interactor)
 {
-    // Filter for computers with a non-empty code
-    TArray<AComputer*> ComputersWithCodes;
-    for (AComputer* Computer : CodeComputers)
-    {
-        if (Computer && !Computer->StoredCode.IsEmpty())
-        {
-            ComputersWithCodes.Add(Computer);
-        }
-    }
-
     APawn* Pawn = Cast<APawn>(Interactor);
     if (!Pawn) return;
     APlayerController* PC = Cast<APlayerController>(Pawn->GetController());
     if (!PC) return;
 
-    if (GeneratorRef && ComputersWithCodes.Num() > 0)
-    {
-        if (ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(PC))
-        {
-            TArray<FString> CivilianNames;
-            TArray<UTexture2D*> CivilianPortraits;
-            for (AComputer* Comp : ComputersWithCodes)
-            {
-                FString Name;
-                UTexture2D* Portrait = nullptr;
+    TArray<FCalendarCivilianRecord> CivilianDateRecords;
 
-                // Prefer civilian name if mapped
-                if (ACivilianCharacter* FoundCiv = ComputerToCivilianMap.FindRef(Comp))
+    // PAST
+    if (GeneratorRef)
+    {
+        FCalendarCivilianRecord PastRec;
+        PastRec.Year = GeneratorRef->PastDate.Year;
+        PastRec.Month = GeneratorRef->PastDate.Month;
+        PastRec.Day = GeneratorRef->PastDate.Day;
+        for (AComputer* Comp : CodeComputers)
+        {
+            if (Comp && !Comp->StoredCode.IsEmpty())
+            {
+                FCivilianCalendarEntry Entry;
+                if (ACivilianCharacter* Civ = ComputerToCivilianMap.FindRef(Comp))
                 {
-                    Name = FoundCiv->CivilianName;
-                    Portrait = FoundCiv->PortraitTexture;
+                    Entry.Name = Civ->CivilianName;
+                    Entry.Portrait = Civ->PortraitTexture;
                 }
-                // Otherwise, fallback to desk staff name if mapped
                 else if (ADeskActor* Desk = ComputerToDeskMap.FindRef(Comp))
                 {
-                    Name = Desk->StaffName;
+                    Entry.Name = Desk->StaffName;
+                    Entry.Portrait = nullptr;
                 }
                 else
                 {
-                    Name = TEXT("Unknown Staff");
+                    Entry.Name = TEXT("Unknown Staff");
+                    Entry.Portrait = nullptr;
                 }
-
-                CivilianNames.Add(Name);
-                CivilianPortraits.Add(Portrait);
+                PastRec.Civilians.Add(Entry);
             }
-            MyPC->ClientShowCalendarWidget(
-                GeneratorRef->PastDate.Year,
-                GeneratorRef->PastDate.Month,
-                GeneratorRef->PastDate.Day,
-                CivilianNames,
-                CivilianPortraits
-            );
         }
+        CivilianDateRecords.Add(PastRec);
+
+        // FUTURE
+        FCalendarCivilianRecord FutureRec;
+        FutureRec.Year = GeneratorRef->FutureDate.Year;
+        FutureRec.Month = GeneratorRef->FutureDate.Month;
+        FutureRec.Day = GeneratorRef->FutureDate.Day;
+
+        TArray<AActor*> FoundCodeGenerators;
+        UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACodeGenerator::StaticClass(), FoundCodeGenerators);
+        for (AActor* Actor : FoundCodeGenerators)
+        {
+            ACodeGenerator* CodeGen = Cast<ACodeGenerator>(Actor);
+            if (CodeGen && CodeGen->TimelineEra == ETimelineEra::Future && CodeGen->TargetCivilian)
+            {
+                FCivilianCalendarEntry Entry;
+                Entry.Name = CodeGen->TargetCivilian->CivilianName;
+                Entry.Portrait = CodeGen->TargetCivilian->PortraitTexture;
+                FutureRec.Civilians.Add(Entry);
+                break;
+            }
+        }
+        if (FutureRec.Civilians.Num() > 0)
+            CivilianDateRecords.Add(FutureRec);
+    }
+
+    if (ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(PC))
+    {
+        MyPC->ClientShowCalendarWidget(CivilianDateRecords);
     }
 }
 

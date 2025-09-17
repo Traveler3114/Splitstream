@@ -27,12 +27,13 @@ public:
 	UStaticMeshComponent* CodeGenMesh;
 
 	// In CodeGenerator.h
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(Replicated,BlueprintReadOnly)
 	class ACivilianCharacter* TargetCivilian = nullptr;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void Interact_Implementation(AActor* Interactor) override;
 	virtual void SetHighlighted_Implementation(bool bHighlight) override;
 

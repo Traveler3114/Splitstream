@@ -4,8 +4,10 @@
 #include "CodeGenerator.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/SceneComponent.h"
+#include "Characters/CivilianCharacter.h"
 #include "DataAssets/ItemBase.h"
 #include "DataAssets/FingerprintItem.h"
+#include "Net/UnrealNetwork.h"
 #include "ActorComponents/InventoryComponent.h"
 
 // Sets default values
@@ -26,7 +28,17 @@ ACodeGenerator::ACodeGenerator()
 void ACodeGenerator::BeginPlay()
 {
 	Super::BeginPlay();
-	
+    if (GEngine && TargetCivilian && HasAuthority())
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Target Civilian: %s"), *TargetCivilian->CivilianName));
+    }
+
+}
+
+void ACodeGenerator::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ACodeGenerator, TargetCivilian);
 }
 
 void ACodeGenerator::Interact_Implementation(AActor* Interactor)
