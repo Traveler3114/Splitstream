@@ -28,11 +28,6 @@ ACodeGenerator::ACodeGenerator()
 void ACodeGenerator::BeginPlay()
 {
 	Super::BeginPlay();
-    if (GEngine && TargetCivilian && HasAuthority())
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Target Civilian: %s"), *TargetCivilian->CivilianName));
-    }
-
 }
 
 void ACodeGenerator::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
