@@ -20,6 +20,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CupActor")
 	UStaticMeshComponent* CupMesh;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ownership")
+	TSoftObjectPtr<class ACivilianCharacter> LinkedCivilian;
+
+
 protected:
 	virtual void OnSearchComplete() override;
 	virtual void SetHighlighted_Implementation(bool bHighlight) override;

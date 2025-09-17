@@ -21,10 +21,10 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hacking")
     float HackDuration = 10.f; // seconds
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "Hacking")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "Hacking")
     bool bHackingInProgress = false;
 
-    UPROPERTY(ReplicatedUsing = OnRep_Hacked, VisibleAnywhere, BlueprintReadOnly, Category = "Hacking")
+    UPROPERTY(ReplicatedUsing = OnRep_Hacked, EditAnywhere, BlueprintReadWrite, Category = "Hacking")
     bool bHacked = false;
 
     UFUNCTION()

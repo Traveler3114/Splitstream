@@ -1,6 +1,7 @@
 #include "ArchiveComputer.h"
 #include "ProceduralLevelGenerator.h"
 #include "Computer.h"
+#include "Actors/DeskActor.h"
 #include "Characters/CivilianCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "Controllers/DefaultPlayerController.h"
@@ -49,14 +50,25 @@ void AArchiveComputer::BeginPlay()
     CodeComputers.Empty();
     GetActorsByTimelineEra<AComputer>(GetWorld(), ETimelineEra::Past, CodeComputers);
 
-    // Build map: Computer -> Civilian (for O(1) lookup), only for Past
+    // Build map: Computer -> Civilian (via Desk), only for Past
     ComputerToCivilianMap.Empty();
     for (TActorIterator<ACivilianCharacter> CivItr(GetWorld()); CivItr; ++CivItr)
     {
         ACivilianCharacter* Civ = *CivItr;
-        if (Civ && Civ->AssignedComputer && Civ->AssignedComputer->TimelineEra == ETimelineEra::Past)
+        if (Civ && Civ->AssignedDesk && Civ->AssignedDesk->DeskComputer && Civ->AssignedDesk->DeskComputer->TimelineEra == ETimelineEra::Past)
         {
-            ComputerToCivilianMap.Add(Civ->AssignedComputer, Civ);
+            ComputerToCivilianMap.Add(Civ->AssignedDesk->DeskComputer, Civ);
+        }
+    }
+
+    // Build map: Computer -> Desk (for StaffName lookup)
+    ComputerToDeskMap.Empty();
+    for (TActorIterator<ADeskActor> DeskItr(GetWorld()); DeskItr; ++DeskItr)
+    {
+        ADeskActor* Desk = *DeskItr;
+        if (Desk && Desk->DeskComputer)
+        {
+            ComputerToDeskMap.Add(Desk->DeskComputer, Desk);
         }
     }
 }
@@ -86,20 +98,32 @@ void AArchiveComputer::Interact_Implementation(AActor* Interactor)
             TArray<UTexture2D*> CivilianPortraits;
             for (AComputer* Comp : ComputersWithCodes)
             {
-                FString Name = Comp->StaffName;
+                FString Name;
                 UTexture2D* Portrait = nullptr;
+
+                // Prefer civilian name if mapped
                 if (ACivilianCharacter* FoundCiv = ComputerToCivilianMap.FindRef(Comp))
                 {
                     Name = FoundCiv->CivilianName;
                     Portrait = FoundCiv->PortraitTexture;
                 }
+                // Otherwise, fallback to desk staff name if mapped
+                else if (ADeskActor* Desk = ComputerToDeskMap.FindRef(Comp))
+                {
+                    Name = Desk->StaffName;
+                }
+                else
+                {
+                    Name = TEXT("Unknown Staff");
+                }
+
                 CivilianNames.Add(Name);
                 CivilianPortraits.Add(Portrait);
             }
             MyPC->ClientShowCalendarWidget(
-                GeneratorRef->RandomDate.Year,
-                GeneratorRef->RandomDate.Month,
-                GeneratorRef->RandomDate.Day,
+                GeneratorRef->PastDate.Year,
+                GeneratorRef->PastDate.Month,
+                GeneratorRef->PastDate.Day,
                 CivilianNames,
                 CivilianPortraits
             );

@@ -15,21 +15,11 @@ AComputer::AComputer()
 
     ComputerMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ComputerMesh"));
     ComputerMesh->SetupAttachment(DefaultSceneRoot);
-
-    NameText = CreateDefaultSubobject<UTextRenderComponent>(TEXT("NameText"));
-    NameText->SetupAttachment(DefaultSceneRoot);
-
-    NameText->SetHorizontalAlignment(EHTA_Center);
-    NameText->SetWorldSize(32.f);
-    NameText->SetTextRenderColor(FColor::Cyan);
-    NameText->SetRelativeLocation(FVector(0, 0, 100));
 }
 
 void AComputer::BeginPlay()
 {
     Super::BeginPlay();
-
-    if (NameText) NameText->SetText(FText::FromString(StaffName));
 
     HackComponent = FindComponentByClass<UHackComponent>();
     if (HackComponent)
@@ -38,16 +28,12 @@ void AComputer::BeginPlay()
     }
 }
 
-void AComputer::OnRep_StaffName()
-{
-    if (NameText) NameText->SetText(FText::FromString(StaffName));
-}
+
 
 void AComputer::SetupComputer(const FString& NewStaffName, const FString& NewStoredCode)
 {
-    StaffName = NewStaffName;
+
     StoredCode = NewStoredCode;
-    if (NameText) NameText->SetText(FText::FromString(StaffName));
 }
 
 void AComputer::Interact_Implementation(AActor* Interactor)
@@ -93,5 +79,4 @@ void AComputer::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AComputer, StoredCode);
-    DOREPLIFETIME(AComputer, StaffName);
 }

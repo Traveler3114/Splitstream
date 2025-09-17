@@ -1,4 +1,5 @@
 #include "CivilianCharacter.h"
+#include "Actors/DeskActor.h"
 
 ACivilianCharacter::ACivilianCharacter()
 {

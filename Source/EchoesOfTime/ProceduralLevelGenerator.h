@@ -19,6 +19,12 @@ struct FRandomDate
     int32 Day;
 
     FRandomDate() : Year(2020), Month(1), Day(1) {}
+    bool operator<(const FRandomDate& Other) const
+    {
+        if (Year != Other.Year) return Year < Other.Year;
+        if (Month != Other.Month) return Month < Other.Month;
+        return Day < Other.Day;
+    }
 };
 
 UCLASS()
@@ -27,19 +33,26 @@ class ECHOESOFTIME_API AProceduralLevelGenerator : public AActor
     GENERATED_BODY()
 public:
     AProceduralLevelGenerator();
-	void HandlePastSpawns();
+    void HandlePastSpawns();
+    void HandleFutureSpawns();
 
     UPROPERTY(Replicated, BlueprintReadOnly)
-    FRandomDate RandomDate;
+    FRandomDate PastDate;
 
+    UPROPERTY(Replicated, BlueprintReadOnly)
+    FRandomDate FutureDate;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Civilian")
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Civilian")
     TSubclassOf<class ACivilianCharacter> CivilianBPClass;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Newspaper")
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Newspaper")
     TSubclassOf<class ANewspaperActor> NewspaperBPClass;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Items")
+    TSubclassOf<class ASearchableActor> SearchableItemBPClass;
 protected:
     virtual void BeginPlay() override;
+    void SpawnCivilianDeskItems(const TArray<class ACivilianCharacter*>& Civilians, TSubclassOf<class ASearchableActor> ItemClass);
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
     FString GenerateRandomCode(int Length = 4) const;

@@ -8,6 +8,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "TimelineEra.h"
+#include "Actors/DeskActor.h"
+#include "Actors/CodeGenerator.h"
 
 AProceduralLevelGenerator::AProceduralLevelGenerator()
 {
@@ -20,7 +22,7 @@ void AProceduralLevelGenerator::BeginPlay()
     Super::BeginPlay();
 
     HandlePastSpawns();
-    // Optionally: HandleFutureSpawns();
+    HandleFutureSpawns();
 }
 
 void AProceduralLevelGenerator::HandlePastSpawns()
@@ -62,7 +64,6 @@ void AProceduralLevelGenerator::HandlePastSpawns()
             if (Civilian)
             {
                 Civilian->TimelineEra = ETimelineEra::Past;
-                // Generate a unique name
                 FString Name;
                 do {
                     int32 FirstIdx = FMath::RandRange(0, FirstNames.Num() - 1);
@@ -77,65 +78,75 @@ void AProceduralLevelGenerator::HandlePastSpawns()
         }
     }
 
-    // ---- COMPUTER SETUP ----
-    TArray<AActor*> FoundComputers;
-    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AComputer::StaticClass(), FoundComputers);
+    // ---- DESK SETUP ----
+    TArray<AActor*> FoundDesks;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADeskActor::StaticClass(), FoundDesks);
 
-    TArray<AComputer*> PastComputers;
-    for (AActor* Actor : FoundComputers)
+    TArray<ADeskActor*> PastDesks;
+    for (AActor* Actor : FoundDesks)
     {
-        AComputer* Computer = Cast<AComputer>(Actor);
-        if (Computer && Computer->TimelineEra == ETimelineEra::Past)
+        ADeskActor* Desk = Cast<ADeskActor>(Actor);
+        if (Desk && Desk->TimelineEra == ETimelineEra::Past)
         {
-            PastComputers.Add(Computer);
+            PastDesks.Add(Desk);
         }
     }
 
-    // Assign computer staff names from civilian names if possible
-    TArray<FString> StaffNames;
-    for (ACivilianCharacter* Civ : SpawnedCivilians)
+    // ---- PAIR CIVILIANS TO DESKS ----
+    int32 PairCount = FMath::Min(SpawnedCivilians.Num(), PastDesks.Num());
+    for (int32 i = 0; i < PairCount; ++i)
     {
-        StaffNames.Add(Civ->CivilianName);
-    }
-    for (int32 i = StaffNames.Num(); i < PastComputers.Num(); ++i)
-    {
-        StaffNames.Add(FString::Printf(TEXT("Staff%02d"), i + 1));
-    }
-    for (int32 i = 0; i < StaffNames.Num(); ++i)
-    {
-        int32 SwapIdx = FMath::RandRange(0, StaffNames.Num() - 1);
-        StaffNames.Swap(i, SwapIdx);
-    }
-    for (int32 i = 0; i < PastComputers.Num(); ++i)
-    {
-        PastComputers[i]->SetupComputer(StaffNames[i], PastComputers[i]->StoredCode);
+        ACivilianCharacter* Civ = SpawnedCivilians[i];
+        ADeskActor* Desk = PastDesks[i];
+
+        Civ->AssignedDesk = Desk;
+        Desk->SetStaffName(Civ->CivilianName);
     }
 
-    // ---- KEYPAD SETUP ----
+    // ---- VAULT KEYPAD & COMPUTER CODE ASSIGNMENT ----
+    TArray<ADeskActor*> DesksWithComputer;
+    for (ADeskActor* Desk : PastDesks)
+    {
+        if (Desk && Desk->DeskComputer)
+            DesksWithComputer.Add(Desk);
+    }
+
     TArray<AActor*> FoundKeypads;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), AKeypadScanner::StaticClass(), FoundKeypads);
 
-    for (AActor* Actor : FoundKeypads)
+    FString TheKeypadCode;
+    if (DesksWithComputer.Num() > 0 && FoundKeypads.Num() > 0)
     {
-        AKeypadScanner* Keypad = Cast<AKeypadScanner>(Actor);
-        if (Keypad && Keypad->TimelineEra == ETimelineEra::Past)
-        {
-            FString ThisKeypadCode = GenerateRandomCode(4); // Generates random code
-            Keypad->SetCorrectCode(ThisKeypadCode);
+        TheKeypadCode = GenerateRandomCode(4);
 
-            // Only store code on ONE random past computer
-            if (Keypad->bStoreCodeOnComputer && PastComputers.Num() > 0)
+        int32 RandDeskIdx = FMath::RandRange(0, DesksWithComputer.Num() - 1);
+        for (int32 i = 0; i < DesksWithComputer.Num(); ++i)
+        {
+            if (DesksWithComputer[i]->DeskComputer)
             {
-                int32 RandIndex = FMath::RandRange(0, PastComputers.Num() - 1);
-                if (HasAuthority()) {
-                    PastComputers[RandIndex]->SetupComputer(PastComputers[RandIndex]->StaffName, ThisKeypadCode);
+                if (i == RandDeskIdx)
+                {
+                    DesksWithComputer[i]->DeskComputer->SetupComputer(TEXT(""), TheKeypadCode);
                 }
+                else
+                {
+                    DesksWithComputer[i]->DeskComputer->SetupComputer(TEXT(""), TEXT(""));
+                }
+            }
+        }
+
+        for (AActor* Actor : FoundKeypads)
+        {
+            AKeypadScanner* Keypad = Cast<AKeypadScanner>(Actor);
+            if (Keypad && Keypad->TimelineEra == ETimelineEra::Past)
+            {
+                Keypad->SetCorrectCode(TheKeypadCode);
             }
         }
     }
 
     // ---- RANDOM DATE FOR PUZZLE ----
-    RandomDate = GenerateRandomDate(); // Generates random date
+    PastDate = GenerateRandomDate();
 
     // ---- NEWSPAPER SPAWN ----
     TArray<AActor*> NewspaperPoints;
@@ -159,22 +170,141 @@ void AProceduralLevelGenerator::HandlePastSpawns()
         if (Newspaper)
         {
             Newspaper->TimelineEra = ETimelineEra::Past;
-            FString DateStr = FString::Printf(TEXT("%d-%02d-%02d"), RandomDate.Year, RandomDate.Month, RandomDate.Day);
+            FString DateStr = FString::Printf(TEXT("%d-%02d-%02d"), PastDate.Year, PastDate.Month, PastDate.Day);
+            Newspaper->SetDateText(DateStr);
+        }
+    }
+}
+
+void AProceduralLevelGenerator::HandleFutureSpawns()
+{
+    // ---- CIVILIAN SPAWN ----
+    TArray<AActor*> SpawnPoints;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACivilianSpawnPoint::StaticClass(), SpawnPoints);
+
+    TArray<ACivilianCharacter*> SpawnedCivilians;
+    TSet<FString> UsedNames;
+
+    TArray<FString> FirstNames = {
+        TEXT("John"), TEXT("Laura"), TEXT("Michael"), TEXT("Sarah"), TEXT("David"),
+        TEXT("Emily"), TEXT("James"), TEXT("Olivia"), TEXT("Daniel"), TEXT("Sophia"),
+        TEXT("Chris"), TEXT("Jessica"), TEXT("Ethan"), TEXT("Anna"), TEXT("Ryan"),
+        TEXT("Megan"), TEXT("Luke"), TEXT("Chloe"), TEXT("Nathan"), TEXT("Grace")
+    };
+    TArray<FString> Surnames = {
+        TEXT("Smith"), TEXT("Morgan"), TEXT("Davis"), TEXT("Lee"), TEXT("Clark"),
+        TEXT("Turner"), TEXT("Harris"), TEXT("Bennett"), TEXT("Evans"), TEXT("Carter"),
+        TEXT("Adams"), TEXT("Wright"), TEXT("Green"), TEXT("Hill"), TEXT("Cook"),
+        TEXT("Lewis"), TEXT("Roberts"), TEXT("Walker"), TEXT("Young"), TEXT("King")
+    };
+
+    for (AActor* Actor : SpawnPoints)
+    {
+        ACivilianSpawnPoint* SpawnPoint = Cast<ACivilianSpawnPoint>(Actor);
+        if (SpawnPoint && SpawnPoint->TimelineEra == ETimelineEra::Future)
+        {
+            FActorSpawnParameters Params;
+            Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+            ACivilianCharacter* Civilian = GetWorld()->SpawnActor<ACivilianCharacter>(
+                CivilianBPClass,
+                SpawnPoint->GetActorLocation(),
+                SpawnPoint->GetActorRotation(),
+                Params
+            );
+
+            if (Civilian)
+            {
+                Civilian->TimelineEra = ETimelineEra::Future;
+                FString Name;
+                do {
+                    int32 FirstIdx = FMath::RandRange(0, FirstNames.Num() - 1);
+                    int32 LastIdx = FMath::RandRange(0, Surnames.Num() - 1);
+                    Name = FirstNames[FirstIdx] + TEXT(" ") + Surnames[LastIdx];
+                } while (UsedNames.Contains(Name));
+                UsedNames.Add(Name);
+
+                Civilian->CivilianName = Name;
+                SpawnedCivilians.Add(Civilian);
+            }
+        }
+    }
+
+    // ---- DESK SETUP ----
+    TArray<AActor*> FoundDesks;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADeskActor::StaticClass(), FoundDesks);
+
+    TArray<ADeskActor*> FutureDesks;
+    for (AActor* Actor : FoundDesks)
+    {
+        ADeskActor* Desk = Cast<ADeskActor>(Actor);
+        if (Desk && Desk->TimelineEra == ETimelineEra::Future)
+        {
+            FutureDesks.Add(Desk);
+        }
+    }
+
+    // ---- PAIR CIVILIANS TO DESKS ----
+    int32 PairCount = FMath::Min(SpawnedCivilians.Num(), FutureDesks.Num());
+    for (int32 i = 0; i < PairCount; ++i)
+    {
+        ACivilianCharacter* Civ = SpawnedCivilians[i];
+        ADeskActor* Desk = FutureDesks[i];
+
+        Civ->AssignedDesk = Desk;
+        Desk->SetStaffName(Civ->CivilianName);
+    }
+
+    ACivilianCharacter* TargetCivilian = nullptr;
+    if (SpawnedCivilians.Num() > 0)
+    {
+        int32 VaultIdx = FMath::RandRange(0, SpawnedCivilians.Num() - 1);
+        TargetCivilian = SpawnedCivilians[VaultIdx];
+    }
+
+    // ---- ASSIGN TO CODE GENERATOR(S) ----
+    TArray<AActor*> FoundCodeGenerators;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACodeGenerator::StaticClass(), FoundCodeGenerators);
+    for (AActor* Actor : FoundCodeGenerators)
+    {
+        ACodeGenerator* CodeGen = Cast<ACodeGenerator>(Actor);
+        if (CodeGen && CodeGen->TimelineEra == ETimelineEra::Future)
+        {
+            CodeGen->TargetCivilian = TargetCivilian;
+        }
+    }
+
+
+    // ---- RANDOM DATE FOR PUZZLE ----
+    FutureDate = GenerateRandomDate();
+
+    // ---- NEWSPAPER SPAWN ----
+    TArray<AActor*> NewspaperPoints;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ARandomPointActor::StaticClass(), NewspaperPoints);
+
+    TArray<ARandomPointActor*> FutureRandomPoints;
+    for (AActor* Actor : NewspaperPoints) {
+        ARandomPointActor* Point = Cast<ARandomPointActor>(Actor);
+        if (Point && Point->TimelineEra == ETimelineEra::Future) {
+            FutureRandomPoints.Add(Point);
+        }
+    }
+    if (FutureRandomPoints.Num() > 0)
+    {
+        int32 SpawnIndex = FMath::RandRange(0, FutureRandomPoints.Num() - 1);
+        FVector SpawnLocation = FutureRandomPoints[SpawnIndex]->GetActorLocation();
+        FRotator SpawnRotation = FutureRandomPoints[SpawnIndex]->GetActorRotation();
+
+        FActorSpawnParameters SpawnParams;
+        ANewspaperActor* Newspaper = GetWorld()->SpawnActor<ANewspaperActor>(NewspaperBPClass, SpawnLocation, SpawnRotation, SpawnParams);
+        if (Newspaper)
+        {
+            Newspaper->TimelineEra = ETimelineEra::Future;
+            FString DateStr = FString::Printf(TEXT("%d-%02d-%02d"), FutureDate.Year, FutureDate.Month, FutureDate.Day);
             Newspaper->SetDateText(DateStr);
         }
     }
 
-    // ---- PAIR CIVILIANS TO COMPUTERS (Past only) ----
-    int32 PairCount = FMath::Min(SpawnedCivilians.Num(), PastComputers.Num());
-    for (int32 i = 0; i < PairCount; ++i)
-    {
-        PastComputers[i]->SetupComputer(SpawnedCivilians[i]->CivilianName, PastComputers[i]->StoredCode);
-        SpawnedCivilians[i]->AssignedComputer = PastComputers[i];
-    }
-    for (int32 i = PairCount; i < PastComputers.Num(); ++i)
-    {
-        PastComputers[i]->SetupComputer(FString::Printf(TEXT("Staff%02d"), i + 1), PastComputers[i]->StoredCode);
-    }
+
 }
 
 FString AProceduralLevelGenerator::GenerateRandomCode(int Length) const
@@ -211,5 +341,6 @@ FRandomDate AProceduralLevelGenerator::GenerateRandomDate() const
 void AProceduralLevelGenerator::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-    DOREPLIFETIME(AProceduralLevelGenerator, RandomDate);
+    DOREPLIFETIME(AProceduralLevelGenerator, PastDate);
+    DOREPLIFETIME(AProceduralLevelGenerator, FutureDate);
 }

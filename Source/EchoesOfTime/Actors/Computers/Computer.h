@@ -27,14 +27,10 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Computer")
     UStaticMeshComponent* ComputerMesh;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Computer")
-    UTextRenderComponent* NameText;
 
     UPROPERTY(ReplicatedUsing = OnRep_StoredCode, VisibleAnywhere, BlueprintReadOnly, Category = "Hack")
     FString StoredCode;
 
-    UPROPERTY(ReplicatedUsing = OnRep_StaffName, VisibleAnywhere, BlueprintReadOnly, Category = "Staff")
-    FString StaffName;
 
     UFUNCTION(BlueprintCallable, Category = "Setup")
     void SetupComputer(const FString& NewStaffName, const FString& NewStoredCode);
@@ -44,9 +40,6 @@ public:
 
     UFUNCTION()
     void OnHackComplete();
-
-    UFUNCTION()
-    void OnRep_StaffName();
 
 protected:
     virtual void BeginPlay() override;

@@ -2,6 +2,7 @@
 #include "ActorComponents/SearchComponent.h"
 #include "ActorComponents/InventoryComponent.h"
 #include "DataAssets/ItemBase.h"
+#include "DataAssets/FingerprintItem.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -43,13 +44,14 @@ void ACupActor::OnSearchComplete()
     UInventoryComponent* Inventory = LastInteractor->FindComponentByClass<UInventoryComponent>();
     if (Inventory)
     {
-        UItemBase* Fingerprint = Cast<UItemBase>(StaticLoadObject(
-            UItemBase::StaticClass(),
+        UFingerprintItem* Fingerprint = Cast<UFingerprintItem>(StaticLoadObject(
+            UFingerprintItem::StaticClass(),
             nullptr,
             TEXT("/Game/DataAssets/Items/DA_Fingerprint.DA_Fingerprint")
         ));
         if (Fingerprint)
         {
+            Fingerprint->OwnerCivilian = LinkedCivilian;
             FGuid NewInstanceID = FGuid::NewGuid();
             Inventory->AddItem(Fingerprint, NewInstanceID);
         }

@@ -10,6 +10,7 @@ class UCalendarWidget;
 class AProceduralLevelGenerator;
 class AComputer;
 class ACivilianCharacter;
+class ADeskActor;
 
 UCLASS()
 class ECHOESOFTIME_API AArchiveComputer : public AActor, public IInteractable
@@ -35,6 +36,10 @@ public:
     // Map for fast lookup: Computer -> Civilian
     UPROPERTY()
     TMap<AComputer*, ACivilianCharacter*> ComputerToCivilianMap;
+
+    // Map for fast lookup: Computer -> Desk
+    UPROPERTY()
+    TMap<AComputer*, ADeskActor*> ComputerToDeskMap;
 
     virtual void Interact_Implementation(AActor* Interactor) override;
     virtual void SetHighlighted_Implementation(bool bHighlight) override;

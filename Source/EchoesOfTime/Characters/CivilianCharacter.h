@@ -20,7 +20,7 @@ public:
     UTexture2D* PortraitTexture;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Civilian")
-    class AComputer* AssignedComputer = nullptr;
+    class ADeskActor* AssignedDesk = nullptr;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
     ETimelineEra TimelineEra = ETimelineEra::Past;
