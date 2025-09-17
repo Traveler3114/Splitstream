@@ -27,6 +27,23 @@ void AProceduralLevelGenerator::BeginPlay()
     //HandleFutureSpawns();
 }
 
+FRandomDate AProceduralLevelGenerator::GeneratePastDate() const
+{
+    // You can customize the range if you want
+    return GenerateRandomDate();
+}
+
+FRandomDate AProceduralLevelGenerator::GenerateFutureDate(const FRandomDate& MinDate) const
+{
+    FRandomDate Date;
+    do
+    {
+        Date = GenerateRandomDate();
+    }
+    while (!(MinDate < Date)); // Repeat until Date is after MinDate
+    return Date;
+}
+
 void AProceduralLevelGenerator::SpawnCivilianDeskItems(const TArray<class ACivilianCharacter*>& Civilians, TSubclassOf<class ASearchableActor> ItemClass)
 {
     for (ACivilianCharacter* Civ : Civilians)
@@ -181,7 +198,7 @@ void AProceduralLevelGenerator::HandlePastSpawns()
     }
 
     // ---- RANDOM DATE FOR PUZZLE ----
-    PastDate = GenerateRandomDate();
+    PastDate = GeneratePastDate();
 
     // ---- NEWSPAPER SPAWN ----
     TArray<AActor*> NewspaperPoints;
@@ -313,7 +330,7 @@ void AProceduralLevelGenerator::HandleFutureSpawns()
 
 
     // ---- RANDOM DATE FOR PUZZLE ----
-    FutureDate = GenerateRandomDate();
+    FutureDate = GenerateFutureDate(PastDate);
 
     // ---- NEWSPAPER SPAWN ----
     TArray<AActor*> NewspaperPoints;

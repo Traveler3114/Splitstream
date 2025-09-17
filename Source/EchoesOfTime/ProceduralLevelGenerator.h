@@ -56,5 +56,8 @@ protected:
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
     FString GenerateRandomCode(int Length = 4) const;
+
+    FRandomDate GeneratePastDate() const;
+    FRandomDate GenerateFutureDate(const FRandomDate& MinDate) const;
     FRandomDate GenerateRandomDate() const;
 };
