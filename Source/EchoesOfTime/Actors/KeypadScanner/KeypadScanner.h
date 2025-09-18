@@ -43,7 +43,7 @@ public:
     AActor* LinkedActor;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KeypadScanner")
-    FString CorrectCode = TEXT("1234");
+    FString CorrectCode = TEXT("");
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KeypadScanner")
     EItemType RequiredKeycardType = EItemType::KeycardL2;

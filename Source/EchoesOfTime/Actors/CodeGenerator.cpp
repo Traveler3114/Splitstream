@@ -58,7 +58,6 @@ void ACodeGenerator::Interact_Implementation(AActor* Interactor)
         {
             GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, TEXT("Correct fingerprint!"));
         }
-
         // TODO: Generate code, set code on keypad, start timer here
     }
     else if (ActiveItem && ActiveItem->ItemType == EItemType::Fingerprint)

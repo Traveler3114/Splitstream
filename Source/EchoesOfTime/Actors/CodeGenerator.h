@@ -8,6 +8,7 @@
 #include "TimelineEra.h"
 #include "CodeGenerator.generated.h"
 
+
 UCLASS()
 class ECHOESOFTIME_API ACodeGenerator : public AActor, public IInteractable
 {
@@ -17,6 +18,7 @@ public:
 	// Sets default values for this actor's properties
 	ACodeGenerator();
 
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
 	ETimelineEra TimelineEra = ETimelineEra::Past;
 
@@ -25,7 +27,6 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Desk")
 	UStaticMeshComponent* CodeGenMesh;
-
 	// In CodeGenerator.h
 	UPROPERTY(Replicated,BlueprintReadOnly)
 	class ACivilianCharacter* TargetCivilian = nullptr;
