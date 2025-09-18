@@ -41,37 +41,39 @@ ADefaultCharacter::ADefaultCharacter()
 void ADefaultCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
-    UpdateInteractHighlight();
+    // Only update highlights for the locally controlled character
+    if (IsLocallyControlled())
+    {
+        UpdateInteractHighlight();
+    }
 }
 
 void ADefaultCharacter::UpdateInteractHighlight()
 {
+    // Only the local player should handle highlighting logic
+    if (!IsLocallyControlled())
+        return;
+
     FHitResult Hit;
     FVector TraceEnd;
     bool bHit = GetForwardTraceResult(300.f, Hit, TraceEnd);
 
     AActor* HitActor = bHit ? Hit.GetActor() : nullptr;
 
+    // Remove highlight from previous actor if it's different from the one we're looking at
+    if (HighlightedActor && HighlightedActor != HitActor)
+    {
+        IInteractable::Execute_SetHighlighted(HighlightedActor, false);
+        HighlightedActor = nullptr;
+    }
+
+    // Highlight the new actor if valid and implements the interactable interface
     if (HitActor && HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
     {
         if (HitActor != HighlightedActor)
         {
-            // Remove highlight from previous
-            if (HighlightedActor)
-            {
-                IInteractable::Execute_SetHighlighted(HighlightedActor, false);
-            }
-            // Highlight new actor
             IInteractable::Execute_SetHighlighted(HitActor, true);
             HighlightedActor = HitActor;
-        }
-    }
-    else
-    {
-        if (HighlightedActor)
-        {
-            IInteractable::Execute_SetHighlighted(HighlightedActor, false);
-            HighlightedActor = nullptr;
         }
     }
 }
