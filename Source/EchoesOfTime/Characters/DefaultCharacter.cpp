@@ -371,11 +371,11 @@ void ADefaultCharacter::OnRep_SprintState()
 {
     if (bIsSprinting)
     {
-        GetCharacterMovement()->MaxWalkSpeed = 600.f;
+        GetCharacterMovement()->MaxWalkSpeed = 500.f;
     }
     else
     {
-        GetCharacterMovement()->MaxWalkSpeed = 300.f;
+        GetCharacterMovement()->MaxWalkSpeed = 250.f;
     }
 }
 
