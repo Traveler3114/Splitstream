@@ -81,7 +81,7 @@ public:
     virtual USkeletalMeshComponent* GetMirrorMesh_Implementation() const override;
 
 protected:
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
     class UAIPerceptionComponent* AIPerceptionComponent;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
