@@ -48,9 +48,6 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KeypadScanner")
     EItemType RequiredKeycardType = EItemType::KeycardL2;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KeypadScanner")
-    bool bStoreCodeOnComputer = true;
-
     virtual void Interact_Implementation(AActor* Interactor) override;
     virtual void SetHighlighted_Implementation(bool bHighlight) override;
 
@@ -64,12 +61,24 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
     ETimelineEra TimelineEra = ETimelineEra::Past;
 
+    // --- REPLICATION ---
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+    // Replicated code string
+    UPROPERTY(ReplicatedUsing = OnRep_EnteredCode)
+    FString EnteredCode;
+
+    UFUNCTION()
+    void OnRep_EnteredCode();
+
 protected:
     void SpawnKeypadButtons();
 
-    FString EnteredCode;
     bool bCodeCorrect = false;
     bool bUnlocked = false;
 
     void TryUnlock(AActor* Interactor);
+
+    // Helper to set code and update text everywhere
+    void SetEnteredCodeAndUpdateText(const FString& NewCode);
 };

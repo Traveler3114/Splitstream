@@ -4,10 +4,12 @@
 #include "Components/StaticMeshComponent.h"
 #include "Interfaces/IKeycardUnlockable.h"
 #include "ActorComponents/InventoryComponent.h"
+#include "Net/UnrealNetwork.h" // Needed for replication macros
 
 AKeypadScanner::AKeypadScanner()
 {
     PrimaryActorTick.bCanEverTick = true;
+    bReplicates = true; // Enable replication
 
     DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
     RootComponent = DefaultSceneRoot;
@@ -27,8 +29,9 @@ AKeypadScanner::AKeypadScanner()
 void AKeypadScanner::BeginPlay()
 {
     Super::BeginPlay();
-    // --- REMOVED: Random code generation and computer code assignment ---
     SpawnKeypadButtons();
+    // Initial update in case EnteredCode is set in editor
+    OnRep_EnteredCode();
 }
 
 void AKeypadScanner::SpawnKeypadButtons()
@@ -83,14 +86,44 @@ void AKeypadScanner::SpawnKeypadButtons()
     }
 }
 
+// --- REPLICATION SETUP ---
+void AKeypadScanner::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    DOREPLIFETIME(AKeypadScanner, EnteredCode);
+}
+
+// Called on clients when EnteredCode is updated
+void AKeypadScanner::OnRep_EnteredCode()
+{
+    if (CodeTextRenderComp)
+    {
+        CodeTextRenderComp->SetText(FText::FromString(EnteredCode));
+    }
+}
+
+// Helper for updating EnteredCode and text
+void AKeypadScanner::SetEnteredCodeAndUpdateText(const FString& NewCode)
+{
+    if (HasAuthority())
+    {
+        EnteredCode = NewCode;
+        // OnRep_EnteredCode will be called on clients, but not on server, so update locally too
+        if (CodeTextRenderComp)
+        {
+            CodeTextRenderComp->SetText(FText::FromString(EnteredCode));
+        }
+    }
+}
+
 void AKeypadScanner::AppendCodeSymbol(const FString& Symbol)
 {
-    if (!CodeTextRenderComp) return;
+    if (!HasAuthority()) return;
 
     if (Symbol == "*")
     {
-        EnteredCode.Empty();
-        CodeTextRenderComp->SetText(FText::FromString(""));
+        SetEnteredCodeAndUpdateText("");
         bCodeCorrect = false;
         return;
     }
@@ -100,19 +133,23 @@ void AKeypadScanner::AppendCodeSymbol(const FString& Symbol)
         if (EnteredCode == CorrectCode)
         {
             bCodeCorrect = true;
-            CodeTextRenderComp->SetText(FText::FromString("READY"));
+            SetEnteredCodeAndUpdateText(TEXT("READY"));
         }
         else
         {
             bCodeCorrect = false;
-            CodeTextRenderComp->SetText(FText::FromString("WRONG"));
-            EnteredCode.Empty();
+            SetEnteredCodeAndUpdateText(TEXT("WRONG"));
+            // Clear code after showing WRONG
+            FTimerHandle ClearHandle;
+            GetWorldTimerManager().SetTimer(ClearHandle, [this]()
+                {
+                    SetEnteredCodeAndUpdateText("");
+                }, 1.0f, false);
         }
         return;
     }
 
-    EnteredCode += Symbol;
-    CodeTextRenderComp->SetText(FText::FromString(EnteredCode));
+    SetEnteredCodeAndUpdateText(EnteredCode + Symbol);
 }
 
 void AKeypadScanner::TryUnlock(AActor* Interactor)
@@ -133,11 +170,11 @@ void AKeypadScanner::TryUnlock(AActor* Interactor)
         {
             IKeycardUnlockable::Execute_UnlockWithKeycard(LinkedActor, Interactor);
         }
-        CodeTextRenderComp->SetText(FText::FromString("UNLOCKED"));
+        SetEnteredCodeAndUpdateText(TEXT("UNLOCKED"));
     }
     else
     {
-        CodeTextRenderComp->SetText(FText::FromString("NEED CARD"));
+        SetEnteredCodeAndUpdateText(TEXT("NEED CARD"));
     }
 }
 

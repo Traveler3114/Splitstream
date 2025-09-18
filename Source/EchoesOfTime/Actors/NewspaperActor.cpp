@@ -43,7 +43,6 @@ void ANewspaperActor::SetDateText(const FString& DateStr)
     {
         DateText->SetText(FText::FromString(DateStr));
     }
-    // DO NOT call OnRep_NewspaperDateString here!
 }
 
 void ANewspaperActor::OnRep_NewspaperDateString()
