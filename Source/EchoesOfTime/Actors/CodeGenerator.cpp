@@ -1,39 +1,45 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "CodeGenerator.h"
+#include "Actors/KeypadScanner/KeypadScanner.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/SceneComponent.h"
+#include "Components/TextRenderComponent.h"
 #include "Characters/CivilianCharacter.h"
 #include "DataAssets/ItemBase.h"
 #include "DataAssets/FingerprintItem.h"
 #include "Net/UnrealNetwork.h"
 #include "ActorComponents/InventoryComponent.h"
 
-// Sets default values
 ACodeGenerator::ACodeGenerator()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
+    PrimaryActorTick.bCanEverTick = true;
 
-	DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
-	RootComponent = DefaultSceneRoot;
+    DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
+    RootComponent = DefaultSceneRoot;
 
-	CodeGenMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DeskMesh"));
+    CodeGenMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DeskMesh"));
     CodeGenMesh->SetupAttachment(DefaultSceneRoot);
 
+    CodesTextComp = CreateDefaultSubobject<UTextRenderComponent>(TEXT("CodesTextComp"));
+    CodesTextComp->SetupAttachment(CodeGenMesh);
+
+    if (CodesTextComp)
+    {
+        CodesTextComp->SetText(FText::GetEmpty());
+    }
 }
 
-// Called when the game starts or when spawned
 void ACodeGenerator::BeginPlay()
 {
-	Super::BeginPlay();
+    Super::BeginPlay();
+    UpdateDisplayText();
+
 }
 
 void ACodeGenerator::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(ACodeGenerator, TargetCivilian);
+    DOREPLIFETIME(ACodeGenerator, TargetCivilian);
+    DOREPLIFETIME(ACodeGenerator, CodesDisplayText);
 }
 
 void ACodeGenerator::Interact_Implementation(AActor* Interactor)
@@ -51,14 +57,34 @@ void ACodeGenerator::Interact_Implementation(AActor* Interactor)
     UFingerprintItem* FPItem = Cast<UFingerprintItem>(ActiveItem);
     if (FPItem && FPItem->OwnerCivilian == TargetCivilian)
     {
-        // Fingerprint matches!
         FPItem->OnUsed(Interactor);
 
         if (GEngine)
         {
             GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, TEXT("Correct fingerprint!"));
         }
-        // TODO: Generate code, set code on keypad, start timer here
+
+        StatusArray.Empty();
+
+        for (AKeypadScanner* Keypad : ManagedKeypads)
+        {
+            if (!Keypad || !Keypad->HasAuthority()) continue;
+
+            FString NewCode;
+            for (int32 i = 0; i < Keypad->CodeLength; ++i)
+            {
+                NewCode.AppendInt(FMath::RandRange(0, 9));
+            }
+
+            float Lifetime = Keypad->CodeLifetime;
+            float Expiry = GetWorld()->GetTimeSeconds() + Lifetime;
+
+            Keypad->SetCodeWithExpiry(NewCode, Lifetime);
+
+            StatusArray.Add(FKeypadCodeStatus(NewCode, Expiry, Keypad));
+        }
+
+        UpdateDisplayText();
     }
     else if (ActiveItem && ActiveItem->ItemType == EItemType::Fingerprint)
     {
@@ -76,6 +102,62 @@ void ACodeGenerator::Interact_Implementation(AActor* Interactor)
     }
 }
 
+void ACodeGenerator::Tick(float DeltaTime)
+{
+    Super::Tick(DeltaTime);
+
+    bool bChanged = false;
+    float Now = GetWorld()->GetTimeSeconds();
+
+    for (int32 i = StatusArray.Num() - 1; i >= 0; --i)
+    {
+        if (StatusArray[i].ExpiryTime <= Now)
+        {
+            StatusArray.RemoveAt(i);
+            bChanged = true;
+        }
+    }
+
+    if (bChanged)
+    {
+        UpdateDisplayText();
+    }
+    else if (StatusArray.Num() > 0)
+    {
+        UpdateDisplayText();
+    }
+}
+
+void ACodeGenerator::UpdateDisplayText()
+{
+    FString DisplayText;
+    float Now = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0f;
+    for (const FKeypadCodeStatus& Status : StatusArray)
+    {
+        float TimeLeft = FMath::Max(0.f, Status.ExpiryTime - Now);
+        FString KeypadName = Status.Keypad ? Status.Keypad->GetName() : TEXT("Unknown");
+        DisplayText += FString::Printf(TEXT("Keypad: %s\nCode: %s\nTime Left: %.0fs\n\n"),
+            *KeypadName, *Status.Code, TimeLeft);
+    }
+
+    // Always update the replicated string (server sets, clients receive)
+    CodesDisplayText = DisplayText;
+
+    // Only server should set the actual text component directly
+    if (CodesTextComp && HasAuthority())
+    {
+        CodesTextComp->SetText(FText::FromString(CodesDisplayText));
+    }
+}
+
+void ACodeGenerator::OnRep_CodesDisplayText()
+{
+    if (CodesTextComp)
+    {
+        CodesTextComp->SetText(FText::FromString(CodesDisplayText));
+    }
+}
+
 void ACodeGenerator::SetHighlighted_Implementation(bool bHighlight)
 {
     if (CodeGenMesh)
@@ -84,4 +166,3 @@ void ACodeGenerator::SetHighlighted_Implementation(bool bHighlight)
         CodeGenMesh->CustomDepthStencilValue = bHighlight ? 1 : 0;
     }
 }
-

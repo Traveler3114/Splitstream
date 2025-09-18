@@ -48,28 +48,43 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KeypadScanner")
     EItemType RequiredKeycardType = EItemType::KeycardL2;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Keypad")
+    int32 CodeLength = 4;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Keypad")
+    float CodeLifetime = 60.f;
+
+    // --- Replication ---
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+    UPROPERTY(ReplicatedUsing = OnRep_EnteredCode)
+    FString EnteredCode;
+
+    UFUNCTION()
+    void OnRep_EnteredCode();
+
+    FTimerHandle CodeExpiryHandle;
+
+    // --- API for CodeGenerator ---
+    UFUNCTION(BlueprintCallable, Category = "KeypadScanner")
+    void SetCodeWithExpiry(const FString& NewCode, float LifetimeSeconds);
+
+    UFUNCTION(BlueprintCallable, Category = "KeypadScanner")
+    void ClearCode();
+
+    // --- Your original method ---
+    UFUNCTION(BlueprintCallable, Category = "KeypadScanner")
+    void SetCorrectCode(const FString& Code);
+
+    // --- Interaction ---
     virtual void Interact_Implementation(AActor* Interactor) override;
     virtual void SetHighlighted_Implementation(bool bHighlight) override;
 
     UFUNCTION()
     void AppendCodeSymbol(const FString& Symbol);
 
-    // --- NEW CODE: External code setter ---
-    UFUNCTION(BlueprintCallable, Category = "KeypadScanner")
-    void SetCorrectCode(const FString& Code) { CorrectCode = Code; }
-
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
     ETimelineEra TimelineEra = ETimelineEra::Past;
-
-    // --- REPLICATION ---
-    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-    // Replicated code string
-    UPROPERTY(ReplicatedUsing = OnRep_EnteredCode)
-    FString EnteredCode;
-
-    UFUNCTION()
-    void OnRep_EnteredCode();
 
 protected:
     void SpawnKeypadButtons();
@@ -79,6 +94,5 @@ protected:
 
     void TryUnlock(AActor* Interactor);
 
-    // Helper to set code and update text everywhere
     void SetEnteredCodeAndUpdateText(const FString& NewCode);
 };
