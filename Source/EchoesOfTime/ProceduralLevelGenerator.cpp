@@ -29,7 +29,6 @@ void AProceduralLevelGenerator::BeginPlay()
 
 FRandomDate AProceduralLevelGenerator::GeneratePastDate() const
 {
-    // You can customize the range if you want
     return GenerateRandomDate();
 }
 
@@ -40,7 +39,7 @@ FRandomDate AProceduralLevelGenerator::GenerateFutureDate(const FRandomDate& Min
     {
         Date = GenerateRandomDate();
     }
-    while (!(MinDate < Date)); // Repeat until Date is after MinDate
+    while (!(MinDate < Date));
     return Date;
 }
 
@@ -64,10 +63,7 @@ void AProceduralLevelGenerator::SpawnCivilianDeskItems(const TArray<class ACivil
 
             if (NewItem)
             {
-                // Set the TimelineEra
                 NewItem->TimelineEra = Civ->TimelineEra;
-
-                // If it's a cup, set the LinkedCivilian
                 ACupActor* Cup = Cast<ACupActor>(NewItem);
                 if (Cup)
                 {
@@ -77,13 +73,29 @@ void AProceduralLevelGenerator::SpawnCivilianDeskItems(const TArray<class ACivil
         }
     }
 }
-void AProceduralLevelGenerator::HandlePastSpawns()
+
+FString AProceduralLevelGenerator::GenerateUniqueName(const TArray<FString>& FirstNames, const TArray<FString>& Surnames, TSet<FString>& UsedNames) const
+{
+    FString Name;
+    do {
+        int32 FirstIdx = FMath::RandRange(0, FirstNames.Num() - 1);
+        int32 LastIdx = FMath::RandRange(0, Surnames.Num() - 1);
+        Name = FirstNames[FirstIdx] + TEXT(" ") + Surnames[LastIdx];
+    } while (UsedNames.Contains(Name));
+    UsedNames.Add(Name);
+    return Name;
+}
+
+void AProceduralLevelGenerator::HandleEraSpawns(
+    ETimelineEra Era,
+    TArray<ACivilianCharacter*>& OutSpawnedCivilians,
+    TArray<ADeskActor*>& OutDesks
+)
 {
     // ---- CIVILIAN SPAWN ----
     TArray<AActor*> SpawnPoints;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACivilianSpawnPoint::StaticClass(), SpawnPoints);
 
-    TArray<ACivilianCharacter*> SpawnedCivilians;
     TSet<FString> UsedNames;
 
     TArray<FString> FirstNames = {
@@ -99,10 +111,12 @@ void AProceduralLevelGenerator::HandlePastSpawns()
         TEXT("Lewis"), TEXT("Roberts"), TEXT("Walker"), TEXT("Young"), TEXT("King")
     };
 
+    OutSpawnedCivilians.Empty();
+
     for (AActor* Actor : SpawnPoints)
     {
         ACivilianSpawnPoint* SpawnPoint = Cast<ACivilianSpawnPoint>(Actor);
-        if (SpawnPoint && SpawnPoint->TimelineEra == ETimelineEra::Past)
+        if (SpawnPoint && SpawnPoint->TimelineEra == Era)
         {
             FActorSpawnParameters Params;
             Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -115,17 +129,9 @@ void AProceduralLevelGenerator::HandlePastSpawns()
 
             if (Civilian)
             {
-                Civilian->TimelineEra = ETimelineEra::Past;
-                FString Name;
-                do {
-                    int32 FirstIdx = FMath::RandRange(0, FirstNames.Num() - 1);
-                    int32 LastIdx = FMath::RandRange(0, Surnames.Num() - 1);
-                    Name = FirstNames[FirstIdx] + TEXT(" ") + Surnames[LastIdx];
-                } while (UsedNames.Contains(Name));
-                UsedNames.Add(Name);
-
-                Civilian->CivilianName = Name;
-                SpawnedCivilians.Add(Civilian);
+                Civilian->TimelineEra = Era;
+                Civilian->CivilianName = GenerateUniqueName(FirstNames, Surnames, UsedNames);
+                OutSpawnedCivilians.Add(Civilian);
             }
         }
     }
@@ -134,26 +140,32 @@ void AProceduralLevelGenerator::HandlePastSpawns()
     TArray<AActor*> FoundDesks;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADeskActor::StaticClass(), FoundDesks);
 
-    TArray<ADeskActor*> PastDesks;
+    OutDesks.Empty();
     for (AActor* Actor : FoundDesks)
     {
         ADeskActor* Desk = Cast<ADeskActor>(Actor);
-        if (Desk && Desk->TimelineEra == ETimelineEra::Past)
+        if (Desk && Desk->TimelineEra == Era)
         {
-            PastDesks.Add(Desk);
+            OutDesks.Add(Desk);
         }
     }
 
     // ---- PAIR CIVILIANS TO DESKS ----
-    int32 PairCount = FMath::Min(SpawnedCivilians.Num(), PastDesks.Num());
+    int32 PairCount = FMath::Min(OutSpawnedCivilians.Num(), OutDesks.Num());
     for (int32 i = 0; i < PairCount; ++i)
     {
-        ACivilianCharacter* Civ = SpawnedCivilians[i];
-        ADeskActor* Desk = PastDesks[i];
-
+        ACivilianCharacter* Civ = OutSpawnedCivilians[i];
+        ADeskActor* Desk = OutDesks[i];
         Civ->AssignedDesk = Desk;
         Desk->SetStaffName(Civ->CivilianName);
     }
+}
+
+void AProceduralLevelGenerator::HandlePastSpawns()
+{
+    TArray<ACivilianCharacter*> SpawnedCivilians;
+    TArray<ADeskActor*> PastDesks;
+    HandleEraSpawns(ETimelineEra::Past, SpawnedCivilians, PastDesks);
 
     // ---- VAULT KEYPAD & COMPUTER CODE ASSIGNMENT ----
     TArray<ADeskActor*> DesksWithComputer;
@@ -233,81 +245,9 @@ void AProceduralLevelGenerator::HandlePastSpawns()
 
 void AProceduralLevelGenerator::HandleFutureSpawns()
 {
-    // ---- CIVILIAN SPAWN ----
-    TArray<AActor*> SpawnPoints;
-    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACivilianSpawnPoint::StaticClass(), SpawnPoints);
-
     TArray<ACivilianCharacter*> SpawnedCivilians;
-    TSet<FString> UsedNames;
-
-    TArray<FString> FirstNames = {
-        TEXT("John"), TEXT("Laura"), TEXT("Michael"), TEXT("Sarah"), TEXT("David"),
-        TEXT("Emily"), TEXT("James"), TEXT("Olivia"), TEXT("Daniel"), TEXT("Sophia"),
-        TEXT("Chris"), TEXT("Jessica"), TEXT("Ethan"), TEXT("Anna"), TEXT("Ryan"),
-        TEXT("Megan"), TEXT("Luke"), TEXT("Chloe"), TEXT("Nathan"), TEXT("Grace")
-    };
-    TArray<FString> Surnames = {
-        TEXT("Smith"), TEXT("Morgan"), TEXT("Davis"), TEXT("Lee"), TEXT("Clark"),
-        TEXT("Turner"), TEXT("Harris"), TEXT("Bennett"), TEXT("Evans"), TEXT("Carter"),
-        TEXT("Adams"), TEXT("Wright"), TEXT("Green"), TEXT("Hill"), TEXT("Cook"),
-        TEXT("Lewis"), TEXT("Roberts"), TEXT("Walker"), TEXT("Young"), TEXT("King")
-    };
-
-    for (AActor* Actor : SpawnPoints)
-    {
-        ACivilianSpawnPoint* SpawnPoint = Cast<ACivilianSpawnPoint>(Actor);
-        if (SpawnPoint && SpawnPoint->TimelineEra == ETimelineEra::Future)
-        {
-            FActorSpawnParameters Params;
-            Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-            ACivilianCharacter* Civilian = GetWorld()->SpawnActor<ACivilianCharacter>(
-                CivilianBPClass,
-                SpawnPoint->GetActorLocation(),
-                SpawnPoint->GetActorRotation(),
-                Params
-            );
-
-            if (Civilian)
-            {
-                Civilian->TimelineEra = ETimelineEra::Future;
-                FString Name;
-                do {
-                    int32 FirstIdx = FMath::RandRange(0, FirstNames.Num() - 1);
-                    int32 LastIdx = FMath::RandRange(0, Surnames.Num() - 1);
-                    Name = FirstNames[FirstIdx] + TEXT(" ") + Surnames[LastIdx];
-                } while (UsedNames.Contains(Name));
-                UsedNames.Add(Name);
-
-                Civilian->CivilianName = Name;
-                SpawnedCivilians.Add(Civilian);
-            }
-        }
-    }
-
-    // ---- DESK SETUP ----
-    TArray<AActor*> FoundDesks;
-    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADeskActor::StaticClass(), FoundDesks);
-
     TArray<ADeskActor*> FutureDesks;
-    for (AActor* Actor : FoundDesks)
-    {
-        ADeskActor* Desk = Cast<ADeskActor>(Actor);
-        if (Desk && Desk->TimelineEra == ETimelineEra::Future)
-        {
-            FutureDesks.Add(Desk);
-        }
-    }
-
-    // ---- PAIR CIVILIANS TO DESKS ----
-    int32 PairCount = FMath::Min(SpawnedCivilians.Num(), FutureDesks.Num());
-    for (int32 i = 0; i < PairCount; ++i)
-    {
-        ACivilianCharacter* Civ = SpawnedCivilians[i];
-        ADeskActor* Desk = FutureDesks[i];
-
-        Civ->AssignedDesk = Desk;
-        Desk->SetStaffName(Civ->CivilianName);
-    }
+    HandleEraSpawns(ETimelineEra::Future, SpawnedCivilians, FutureDesks);
 
     ACivilianCharacter* TargetCivilian = nullptr;
     if (SpawnedCivilians.Num() > 0)
@@ -327,7 +267,6 @@ void AProceduralLevelGenerator::HandleFutureSpawns()
             CodeGen->TargetCivilian = TargetCivilian;
         }
     }
-
 
     // ---- RANDOM DATE FOR PUZZLE ----
     FutureDate = GenerateFutureDate(PastDate);
@@ -358,8 +297,7 @@ void AProceduralLevelGenerator::HandleFutureSpawns()
             Newspaper->SetDateText(DateStr);
         }
     }
-	SpawnCivilianDeskItems(SpawnedCivilians, SearchableItemBPClass);
-
+    SpawnCivilianDeskItems(SpawnedCivilians, SearchableItemBPClass);
 }
 
 FString AProceduralLevelGenerator::GenerateRandomCode(int Length) const

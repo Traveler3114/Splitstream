@@ -60,4 +60,12 @@ protected:
     FRandomDate GeneratePastDate() const;
     FRandomDate GenerateFutureDate(const FRandomDate& MinDate) const;
     FRandomDate GenerateRandomDate() const;
+
+    // --- Helper for era-based spawning ---
+    void HandleEraSpawns(
+        ETimelineEra Era,
+        TArray<ACivilianCharacter*>& OutSpawnedCivilians,
+        TArray<class ADeskActor*>& OutDesks
+    );
+    FString GenerateUniqueName(const TArray<FString>& FirstNames, const TArray<FString>& Surnames, TSet<FString>& UsedNames) const;
 };
