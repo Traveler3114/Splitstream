@@ -227,7 +227,6 @@ void ADefaultCharacter::DropActiveItem()
     FHitResult Hit;
     FVector TraceEnd;
     FVector DropLocation;
-    FRotator DropRotation = FRotator::ZeroRotator;
 
     if (GetForwardTraceResult(300.f, Hit, TraceEnd))
     {
@@ -236,6 +235,19 @@ void ADefaultCharacter::DropActiveItem()
     else
     {
         DropLocation = TraceEnd;
+    }
+
+    // Add this: Downward trace to find the topmost surface
+    FHitResult DownHit;
+    FVector DownTraceStart = DropLocation + FVector(0, 0, 50); // 50 units above
+    FVector DownTraceEnd = DropLocation - FVector(0, 0, 200); // 200 units below
+
+    FCollisionQueryParams Params;
+    Params.AddIgnoredActor(this);
+
+    if (GetWorld()->LineTraceSingleByChannel(DownHit, DownTraceStart, DownTraceEnd, ECC_Visibility, Params))
+    {
+        DropLocation = DownHit.Location;
     }
 
     InventoryComponent->ServerDropActiveItem(DropLocation);
