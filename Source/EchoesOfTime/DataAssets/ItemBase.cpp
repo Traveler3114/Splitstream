@@ -37,8 +37,8 @@ void UItemBase::OnDroppedWithTeam_Implementation(AActor* Instigator, FGuid ItemI
     if (!World) return;
 
     FRotator SpawnRotation = PickupMeshRotation;
+	DropLocation.Z= FMath::Max(DropLocation.Z, 0.0f); // Slightly raise the drop location to avoid clipping into the ground
     FTransform SpawnTransform = FTransform(SpawnRotation, DropLocation);
-
     static FGameplayTag PastTag = FGameplayTag::RequestGameplayTag(TEXT("Team.Past"));
     static FGameplayTag FutureTag = FGameplayTag::RequestGameplayTag(TEXT("Team.Future"));
 

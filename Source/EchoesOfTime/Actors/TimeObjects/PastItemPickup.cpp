@@ -24,6 +24,7 @@ void APastItemPickup::SpawnLinkedFutureItem()
     if (!ItemData) return;
 
     FVector DesiredLocation = GetActorLocation() + FutureItemPickupOffset;
+    DesiredLocation.Z = FMath::Max(DesiredLocation.Z, 0.0f);
     FVector FutureLocation = DesiredLocation;
     FRotator ActorRotation = GetActorRotation();
     FTransform FutureTransform = FTransform(ActorRotation, FutureLocation);
