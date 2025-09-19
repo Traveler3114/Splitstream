@@ -4,30 +4,38 @@
 #include "Kismet/GameplayStatics.h"
 #include "Actors/PointActors/RefPointActor.h"
 
-APastItemPickup::APastItemPickup() 
+APastItemPickup::APastItemPickup()
 {
+    UE_LOG(LogTemp, Warning, TEXT("[APastItemPickup::APastItemPickup] Constructed!"));
 }
 
 void APastItemPickup::BeginPlay()
 {
     Super::BeginPlay();
     FutureItemPickupOffset = ARefPointActor::GetOffsetBetweenFirstTwoRefPoints(GetWorld());
+    UE_LOG(LogTemp, Warning, TEXT("[APastItemPickup::BeginPlay] FutureItemPickupOffset: %s"), *FutureItemPickupOffset.ToString());
     if (HasAuthority())
     {
         SpawnLinkedFutureItem();
     }
-
 }
 
 void APastItemPickup::SpawnLinkedFutureItem()
 {
-    if (!ItemData) return;
+    UE_LOG(LogTemp, Warning, TEXT("[APastItemPickup::SpawnLinkedFutureItem] Called!"));
+    if (!ItemData) {
+        UE_LOG(LogTemp, Error, TEXT("[APastItemPickup::SpawnLinkedFutureItem] ItemData is nullptr!"));
+        return;
+    }
 
     FVector DesiredLocation = GetActorLocation() + FutureItemPickupOffset;
     DesiredLocation.Z = FMath::Max(DesiredLocation.Z, 0.0f);
     FVector FutureLocation = DesiredLocation;
     FRotator ActorRotation = GetActorRotation();
     FTransform FutureTransform = FTransform(ActorRotation, FutureLocation);
+
+    UE_LOG(LogTemp, Warning, TEXT("[APastItemPickup::SpawnLinkedFutureItem] Spawning at location: %s, rotation: %s"),
+        *FutureLocation.ToString(), *ActorRotation.ToString());
 
     AFutureItemPickup* Future = GetWorld()->SpawnActorDeferred<AFutureItemPickup>(AFutureItemPickup::StaticClass(), FutureTransform);
     if (Future)
@@ -38,7 +46,8 @@ void APastItemPickup::SpawnLinkedFutureItem()
         UGameplayStatics::FinishSpawningActor(Future, FutureTransform);
         SpawnedFutureItem = Future;
 
-        // Copy mesh, scale, and relative rotation from Past to Future if set and valid
+        UE_LOG(LogTemp, Warning, TEXT("[APastItemPickup::SpawnLinkedFutureItem] FutureItem spawned: %s"), *Future->GetName());
+
         if (OverrideMeshComp && OverrideMeshComp->GetStaticMesh() && Future->OverrideMeshComp)
         {
             Future->OverrideMeshComp->SetStaticMesh(OverrideMeshComp->GetStaticMesh());
@@ -52,14 +61,25 @@ void APastItemPickup::SpawnLinkedFutureItem()
                     Future->OverrideMeshComp->SetMaterial(i, Mat);
                 }
             }
+            UE_LOG(LogTemp, Warning, TEXT("[APastItemPickup::SpawnLinkedFutureItem] Mesh and materials copied to FutureItem."));
+        }
+        else
+        {
+            UE_LOG(LogTemp, Error, TEXT("[APastItemPickup::SpawnLinkedFutureItem] Mesh copy failed (missing mesh or comp)!"));
         }
     }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("[APastItemPickup::SpawnLinkedFutureItem] Failed to spawn AFutureItemPickup!"));
+    }
 }
+
 void APastItemPickup::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     if (ItemInstanceID.IsValid())
     {
         AFutureItemPickup::OnFutureItemInvalidated.Broadcast(ItemInstanceID);
+        UE_LOG(LogTemp, Warning, TEXT("[APastItemPickup::EndPlay] FutureItemInvalidated broadcast for %s!"), *ItemInstanceID.ToString());
     }
     Super::EndPlay(EndPlayReason);
 }
@@ -69,5 +89,6 @@ void APastItemPickup::OnConstruction(const FTransform& Transform)
 {
     Super::OnConstruction(Transform);
     ItemInstanceID = FGuid::NewGuid();
+    UE_LOG(LogTemp, Warning, TEXT("[APastItemPickup::OnConstruction] New ItemInstanceID: %s"), *ItemInstanceID.ToString());
 }
 #endif
