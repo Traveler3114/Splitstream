@@ -84,11 +84,9 @@ void APastItemPickup::EndPlay(const EEndPlayReason::Type EndPlayReason)
     Super::EndPlay(EndPlayReason);
 }
 
-#if WITH_EDITOR
 void APastItemPickup::OnConstruction(const FTransform& Transform)
 {
     Super::OnConstruction(Transform);
     ItemInstanceID = FGuid::NewGuid();
     UE_LOG(LogTemp, Warning, TEXT("[APastItemPickup::OnConstruction] New ItemInstanceID: %s"), *ItemInstanceID.ToString());
 }
-#endif
