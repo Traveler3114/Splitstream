@@ -153,11 +153,27 @@ void AGuardCharacter::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
                     FGameplayTag IllegalTag = TAG_Character_Status_Illegal;
                     ASC->RegisterGameplayTagEvent(IllegalTag, EGameplayTagEventType::NewOrRemoved)
                         .AddLambda([this, Player](const FGameplayTag Tag, int32 NewCount)
+                        {
+                            // Check if the guard is currently sensing the player
+                            FActorPerceptionBlueprintInfo Info;
+                            if (AIPerceptionComponent)
+                                AIPerceptionComponent->GetActorsPerception(Player, Info);
+
+                            bool bSensedNow = false;
+                            for (const auto& Stimulus : Info.LastSensedStimuli)
+                            {
+                                if (Stimulus.WasSuccessfullySensed())
+                                {
+                                    bSensedNow = true;
+                                    break;
+                                }
+                            }
+
+                            if (bSensedNow)
                             {
                                 if (NewCount > 0)
                                 {
                                     DetectedActor = Player;
-                                    // Only show detection/progress if NOT chasing
                                     if (GuardTimeline && TargetActor == nullptr)
                                     {
                                         GuardTimeline->Play();
@@ -165,13 +181,13 @@ void AGuardCharacter::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
                                 }
                                 else
                                 {
-                                    // Reverse detection: only reverse if timeline is not at the beginning
                                     if (GuardTimeline && TargetActor == nullptr)
                                     {
                                         GuardTimeline->Reverse();
                                     }
                                 }
-                            });
+                            }
+                        });
 
                     // Immediately check current tag state
                     if (ASC->HasMatchingGameplayTag(IllegalTag))
