@@ -13,6 +13,7 @@ enum class EItemType : uint8
     MoneyStack  UMETA(DisplayName = "MoneyStack"),
     Tool        UMETA(DisplayName = "Tool"),
     Gadget      UMETA(DisplayName = "Gadget"),
+	Pistol      UMETA(DisplayName = "Pistol"),
     Other       UMETA(DisplayName = "Other")
 };
 

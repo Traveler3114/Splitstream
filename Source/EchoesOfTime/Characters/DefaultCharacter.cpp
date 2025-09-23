@@ -168,7 +168,7 @@ void ADefaultCharacter::UpdateEquippedItemActor()
             EquippedItemActor->AttachToComponent(
                 GetMesh(),
                 FAttachmentTransformRules::SnapToTargetNotIncludingScale,
-                TEXT("HandGrip_L")
+                TEXT("HandGrip_R")
             );
         }
 
@@ -185,7 +185,7 @@ void ADefaultCharacter::OnRep_EquippedItemActor()
         EquippedItemActor->AttachToComponent(
             GetMesh(),
             FAttachmentTransformRules::SnapToTargetNotIncludingScale,
-            TEXT("HandGrip_L")
+            TEXT("HandGrip_R")
         );
     }
 }
