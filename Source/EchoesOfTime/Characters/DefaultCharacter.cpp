@@ -136,6 +136,8 @@ void ADefaultCharacter::OnInventoryChanged(const TArray<FInventorySlot>& Slots)
 
 void ADefaultCharacter::UpdateEquippedItemActor()
 {
+    if (!HasAuthority()) return; // Only the server should do this
+
     // Destroy previous equipped actor if any
     if (EquippedItemActor)
     {
@@ -162,13 +164,29 @@ void ADefaultCharacter::UpdateEquippedItemActor()
         if (EquippedItemActor)
         {
             EquippedItemActor->InitFromItemData(ItemAsset, ActiveSlot.ItemInstanceID);
-            EquippedItemActor->SetActorEnableCollision(false);
+            EquippedItemActor->SetActorEnableCollision(false); // No collision
             EquippedItemActor->AttachToComponent(
                 GetMesh(),
                 FAttachmentTransformRules::SnapToTargetNotIncludingScale,
-                TEXT("HandGrip_L") // <-- Change to your socket name if needed
+                TEXT("HandGrip_L")
             );
         }
+
+        // IMPORTANT: Mark EquippedItemActor for replication
+        EquippedItemActor->SetReplicates(true);
+    }
+}
+
+void ADefaultCharacter::OnRep_EquippedItemActor()
+{
+    if (EquippedItemActor)
+    {
+        EquippedItemActor->SetActorEnableCollision(false); // Ensure no collision on clients
+        EquippedItemActor->AttachToComponent(
+            GetMesh(),
+            FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+            TEXT("HandGrip_L")
+        );
     }
 }
 
@@ -311,12 +329,37 @@ void ADefaultCharacter::ServerHandleInteract_Implementation()
     FVector TraceEnd;
     if (GetForwardTraceResult(300.f, Hit, TraceEnd))
     {
-        if (AActor* HitActor = Hit.GetActor())
+        AActor* HitActor = Hit.GetActor();
+        if (!HitActor)
+            return;
+
+        // If it requires an item, check for it using the interface method
+        if (HitActor->GetClass()->ImplementsInterface(URequiresItem::StaticClass()))
         {
-            if (HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
+            UInventoryComponent* Inventory = FindComponentByClass<UInventoryComponent>();
+            UItemBase* ActiveItem = nullptr;
+            if (Inventory)
             {
-                IInteractable::Execute_Interact(HitActor, this);
+                FInventorySlot ActiveSlot = Inventory->GetActiveItem();
+                ActiveItem = ActiveSlot.ItemAsset;
             }
+
+            // Let the interactable actor decide if the item is correct!
+            if (!IRequiresItem::Execute_IsCorrectItem(HitActor, ActiveItem))
+            {
+                // Optionally give feedback for missing/wrong item
+                return;
+            }
+
+            // Optionally:
+            if (ActiveItem) ActiveItem->OnUsed(this);
+            // You can also let the interactable handle OnUsed if you prefer!
+        }
+
+        // Now call Interact (item requirement is fulfilled or not needed)
+        if (HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
+        {
+            IInteractable::Execute_Interact(HitActor, this);
         }
     }
 }
@@ -451,4 +494,5 @@ void ADefaultCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 
     DOREPLIFETIME(ADefaultCharacter, bIsSprinting);
     DOREPLIFETIME(ADefaultCharacter, Pitch);
+    DOREPLIFETIME(ADefaultCharacter, EquippedItemActor);
 }

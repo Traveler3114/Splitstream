@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Interfaces/IInteractable.h"
+#include "Interfaces/IRequiresItem.h"
 #include "InputActionValue.h"
 #include "AbilitySystemInterface.h"
 #include "DataAssets/ItemBase.h"
@@ -16,7 +17,7 @@ class UAbilitySystemComponent;
 class AItemPickup;
 
 UCLASS()
-class ECHOESOFTIME_API ADefaultCharacter : public ACharacter, public IInteractable, public IAbilitySystemInterface
+class ECHOESOFTIME_API ADefaultCharacter : public ACharacter, public IInteractable, public IRequiresItem, public IAbilitySystemInterface
 {
     GENERATED_BODY()
 
@@ -35,9 +36,11 @@ public:
     UFUNCTION()
     void OnInventoryChanged(const TArray<FInventorySlot>& Slots);
 
-    // Equipped item as an actor
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
+    UPROPERTY(ReplicatedUsing = OnRep_EquippedItemActor, VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
     AItemPickup* EquippedItemActor = nullptr;
+
+    UFUNCTION()
+    void OnRep_EquippedItemActor();
 
     void UpdateEquippedItemActor();
 

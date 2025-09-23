@@ -1,5 +1,4 @@
 #include "KeycardScanner.h"
-#include "ActorComponents/InventoryComponent.h"
 #include "DataAssets/ItemBase.h"
 
 AKeycardScanner::AKeycardScanner()
@@ -20,29 +19,19 @@ void AKeycardScanner::BeginPlay()
     Super::BeginPlay();
 }
 
+bool AKeycardScanner::IsCorrectItem_Implementation(UItemBase* Item) const
+{
+    // This is the ONLY place that checks if the item is the correct keycard.
+    return Item && Item->ItemType == RequiredKeycardType;
+}
 void AKeycardScanner::Interact_Implementation(AActor* Interactor)
 {
     if (!Interactor || !LinkedActor)
         return;
 
-    UInventoryComponent* Inventory = Interactor->FindComponentByClass<UInventoryComponent>();
-    if (!Inventory)
-        return;
-
-    FInventorySlot ActiveSlot = Inventory->GetActiveItem();
-    UItemBase* ActiveItem = ActiveSlot.ItemAsset;
-    if (ActiveItem && ActiveItem->ItemType == RequiredKeycardType)
+    if (LinkedActor->GetClass()->ImplementsInterface(UKeycardUnlockable::StaticClass()))
     {
-        ActiveItem->OnUsed(Interactor);
-
-        if (LinkedActor->GetClass()->ImplementsInterface(UKeycardUnlockable::StaticClass()))
-        {
-            IKeycardUnlockable::Execute_UnlockWithKeycard(LinkedActor, Interactor);
-        }
-    }
-    else
-    {
-        // Optional: feedback for failure (wrong/no keycard)
+        IKeycardUnlockable::Execute_UnlockWithKeycard(LinkedActor, Interactor);
     }
 }
 

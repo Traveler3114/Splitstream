@@ -3,7 +3,6 @@
 #include "Components/TextRenderComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Interfaces/IKeycardUnlockable.h"
-#include "ActorComponents/InventoryComponent.h"
 #include "Net/UnrealNetwork.h"
 
 AKeypadScanner::AKeypadScanner()
@@ -180,26 +179,22 @@ void AKeypadScanner::TryUnlock(AActor* Interactor)
 {
     if (bUnlocked || !bCodeCorrect || !LinkedActor || !Interactor) return;
 
-    UInventoryComponent* Inventory = Interactor->FindComponentByClass<UInventoryComponent>();
-    if (!Inventory) return;
+    // At this point, the character has already checked and used the required item!
 
-    FInventorySlot ActiveSlot = Inventory->GetActiveItem();
-    UItemBase* ActiveItem = ActiveSlot.ItemAsset;
-    if (ActiveItem && ActiveItem->ItemType == RequiredKeycardType)
-    {
-        ActiveItem->OnUsed(Interactor);
-        bUnlocked = true;
+    bUnlocked = true;
 
-        if (LinkedActor->GetClass()->ImplementsInterface(UKeycardUnlockable::StaticClass()))
-        {
-            IKeycardUnlockable::Execute_UnlockWithKeycard(LinkedActor, Interactor);
-        }
-        SetEnteredCodeAndUpdateText(TEXT("UNLOCKED"));
-    }
-    else
+    if (LinkedActor->GetClass()->ImplementsInterface(UKeycardUnlockable::StaticClass()))
     {
-        SetEnteredCodeAndUpdateText(TEXT("NEED CARD"));
+        IKeycardUnlockable::Execute_UnlockWithKeycard(LinkedActor, Interactor);
     }
+    SetEnteredCodeAndUpdateText(TEXT("UNLOCKED"));
+}
+
+// KeypadScanner.cpp
+bool AKeypadScanner::IsCorrectItem_Implementation(UItemBase* Item) const
+{
+    // Only allow if the item is not null and is the right keycard type
+    return Item && Item->ItemType == RequiredKeycardType;
 }
 
 void AKeypadScanner::Interact_Implementation(AActor* Interactor)

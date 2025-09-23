@@ -42,64 +42,46 @@ void ACodeGenerator::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
     DOREPLIFETIME(ACodeGenerator, CodesDisplayText);
 }
 
+bool ACodeGenerator::IsCorrectItem_Implementation(UItemBase* Item) const
+{
+    // Accept only correct fingerprint for the assigned civilian
+    UFingerprintItem* FP = Cast<UFingerprintItem>(Item);
+    return FP && FP->OwnerCivilian == TargetCivilian;
+}
+
 void ACodeGenerator::Interact_Implementation(AActor* Interactor)
 {
     if (!Interactor || !TargetCivilian)
         return;
 
-    UInventoryComponent* Inventory = Interactor->FindComponentByClass<UInventoryComponent>();
-    if (!Inventory)
-        return;
+    // At this point, the correct fingerprint has already been checked and used!
 
-    FInventorySlot ActiveSlot = Inventory->GetActiveItem();
-    UItemBase* ActiveItem = ActiveSlot.ItemAsset;
-
-    UFingerprintItem* FPItem = Cast<UFingerprintItem>(ActiveItem);
-    if (FPItem && FPItem->OwnerCivilian == TargetCivilian)
+    if (GEngine)
     {
-        FPItem->OnUsed(Interactor);
-
-        if (GEngine)
-        {
-            GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, TEXT("Correct fingerprint!"));
-        }
-
-        StatusArray.Empty();
-
-        for (AKeypadScanner* Keypad : ManagedKeypads)
-        {
-            if (!Keypad || !Keypad->HasAuthority()) continue;
-
-            FString NewCode;
-            for (int32 i = 0; i < Keypad->CodeLength; ++i)
-            {
-                NewCode.AppendInt(FMath::RandRange(0, 9));
-            }
-
-            float Lifetime = Keypad->CodeLifetime;
-            float Expiry = GetWorld()->GetTimeSeconds() + Lifetime;
-
-            Keypad->SetCodeWithExpiry(NewCode, Lifetime);
-
-            StatusArray.Add(FKeypadCodeStatus(NewCode, Expiry, Keypad));
-        }
-
-        UpdateDisplayText();
+        GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, TEXT("Correct fingerprint!"));
     }
-    else if (ActiveItem && ActiveItem->ItemType == EItemType::Fingerprint)
+
+    StatusArray.Empty();
+
+    for (AKeypadScanner* Keypad : ManagedKeypads)
     {
-        if (GEngine)
+        if (!Keypad || !Keypad->HasAuthority()) continue;
+
+        FString NewCode;
+        for (int32 i = 0; i < Keypad->CodeLength; ++i)
         {
-            GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Incorrect fingerprint!"));
+            NewCode.AppendInt(FMath::RandRange(0, 9));
         }
+
+        float Lifetime = Keypad->CodeLifetime;
+        float Expiry = GetWorld()->GetTimeSeconds() + Lifetime;
+
+        Keypad->SetCodeWithExpiry(NewCode, Lifetime);
+
+        StatusArray.Add(FKeypadCodeStatus(NewCode, Expiry, Keypad));
     }
-    else
-    {
-        if (GEngine)
-        {
-            GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Incorrect item!"));
-        }
-    }
+
+    UpdateDisplayText();
 }
 
 void ACodeGenerator::Tick(float DeltaTime)
