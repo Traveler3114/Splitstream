@@ -13,7 +13,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Widgets/HUD/CharacterHUD.h"
 #include "AbilitySystem/EOTGameplayTags.h"
-
+#include "Actors/ItemPickup.h"
 #include "Controllers/DefaultPlayerController.h"
 
 ADefaultCharacter::ADefaultCharacter()
@@ -36,16 +36,6 @@ ADefaultCharacter::ADefaultCharacter()
     SetReplicateMovement(true);
     bIsSprinting = false;
     InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
-}
-
-void ADefaultCharacter::Tick(float DeltaTime)
-{
-    Super::Tick(DeltaTime);
-    // Only update highlights for the locally controlled character
-    if (IsLocallyControlled())
-    {
-        UpdateInteractHighlight();
-    }
 }
 
 void ADefaultCharacter::UpdateInteractHighlight()
@@ -98,9 +88,16 @@ UAbilitySystemComponent* ADefaultCharacter::GetAbilitySystemComponent() const
     return AbilitySystemComponent;
 }
 
+
+
+
 void ADefaultCharacter::PostInitializeComponents()
 {
     Super::PostInitializeComponents();
+    if (InventoryComponent)
+    {
+        InventoryComponent->OnInventoryChanged.AddDynamic(this, &ADefaultCharacter::OnInventoryChanged);
+    }
 }
 
 void ADefaultCharacter::BeginPlay()
@@ -119,7 +116,62 @@ void ADefaultCharacter::BeginPlay()
     {
         UE_LOG(LogTemp, Warning, TEXT("CameraComponent not found!"));
     }
+
+    UpdateEquippedItemActor();
 }
+
+void ADefaultCharacter::Tick(float DeltaTime)
+{
+    Super::Tick(DeltaTime);
+    if (IsLocallyControlled())
+    {
+        UpdateInteractHighlight();
+    }
+}
+
+void ADefaultCharacter::OnInventoryChanged(const TArray<FInventorySlot>& Slots)
+{
+    UpdateEquippedItemActor();
+}
+
+void ADefaultCharacter::UpdateEquippedItemActor()
+{
+    // Destroy previous equipped actor if any
+    if (EquippedItemActor)
+    {
+        EquippedItemActor->Destroy();
+        EquippedItemActor = nullptr;
+    }
+
+    if (!InventoryComponent) return;
+
+    FInventorySlot ActiveSlot = InventoryComponent->GetActiveItem();
+    UItemBase* ItemAsset = ActiveSlot.ItemAsset;
+
+    if (ItemAsset)
+    {
+        UWorld* World = GetWorld();
+        if (!World) return;
+
+        FActorSpawnParameters SpawnParams;
+        SpawnParams.Owner = this;
+        SpawnParams.Instigator = this;
+        SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+        EquippedItemActor = World->SpawnActor<AItemPickup>(AItemPickup::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
+        if (EquippedItemActor)
+        {
+            EquippedItemActor->InitFromItemData(ItemAsset, ActiveSlot.ItemInstanceID);
+            EquippedItemActor->SetActorEnableCollision(false);
+            EquippedItemActor->AttachToComponent(
+                GetMesh(),
+                FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+                TEXT("HandGrip_L") // <-- Change to your socket name if needed
+            );
+        }
+    }
+}
+
 
 void ADefaultCharacter::PossessedBy(AController* NewController)
 {

@@ -5,13 +5,15 @@
 #include "Interfaces/IInteractable.h"
 #include "InputActionValue.h"
 #include "AbilitySystemInterface.h"
+#include "DataAssets/ItemBase.h"
+
 #include "DefaultCharacter.generated.h"
 
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
 class UAbilitySystemComponent;
-struct FInputActionValue;
+class AItemPickup;
 
 UCLASS()
 class ECHOESOFTIME_API ADefaultCharacter : public ACharacter, public IInteractable, public IAbilitySystemInterface
@@ -30,8 +32,14 @@ public:
     void InitializeAbilitySystem();
     virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
-    // Input actions
+    UFUNCTION()
+    void OnInventoryChanged(const TArray<FInventorySlot>& Slots);
 
+    // Equipped item as an actor
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
+    AItemPickup* EquippedItemActor = nullptr;
+
+    void UpdateEquippedItemActor();
 
 protected:
     UPROPERTY()
@@ -39,7 +47,7 @@ protected:
 
     void UpdateInteractHighlight();
 
-    UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="ASC")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ASC")
     UAbilitySystemComponent* AbilitySystemComponent;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
@@ -81,9 +89,8 @@ protected:
     void StartCrouch();
     void StopCrouching();
 
-	virtual void Jump() override;
+    virtual void Jump() override;
 
-    // Sprint functions
     void StartSprint();
     void StopSprint();
 
@@ -99,13 +106,11 @@ protected:
 
     void DropActiveItem();
 
-    // Server-side sprinting
     UFUNCTION(Server, Reliable)
     void ServerStartSprint();
     UFUNCTION(Server, Reliable)
     void ServerStopSprint();
 
-    // Replicated sprint state
     UPROPERTY(ReplicatedUsing = OnRep_SprintState)
     bool bIsSprinting;
 
