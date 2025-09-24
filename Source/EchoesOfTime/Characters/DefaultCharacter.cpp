@@ -473,6 +473,21 @@ void ADefaultCharacter::Look(const FInputActionValue& Value)
     {
         AddControllerYawInput(LookAxisVector.X);
         AddControllerPitchInput(LookAxisVector.Y);
+        if (CameraComponent) {
+            ServerCameraRotationUpdate(CameraComponent->GetComponentRotation().Pitch);
+        }
+    }
+}
+
+void ADefaultCharacter::ServerCameraRotationUpdate_Implementation(float NewPitch) {
+    Pitch = NewPitch;
+    OnRep_Pitch();
+}
+
+void ADefaultCharacter::OnRep_Pitch() {
+    if (CameraComponent) {
+        FRotator NewRotation = FRotator(Pitch, CameraComponent->GetComponentRotation().Yaw, CameraComponent->GetComponentRotation().Roll);
+        CameraComponent->SetWorldRotation(NewRotation);
     }
 }
 
@@ -518,5 +533,6 @@ void ADefaultCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
     DOREPLIFETIME(ADefaultCharacter, bIsSprinting);
+    DOREPLIFETIME(ADefaultCharacter, Pitch);
     DOREPLIFETIME(ADefaultCharacter, EquippedItemActor);
 }

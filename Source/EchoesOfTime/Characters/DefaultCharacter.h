@@ -133,6 +133,15 @@ protected:
     UFUNCTION()
     void OnRep_SprintState();
 
+    UFUNCTION(Server, Reliable)
+    void ServerCameraRotationUpdate(float NewPitch);
+
+    UPROPERTY(ReplicatedUsing = OnRep_Pitch)
+    float Pitch = 0.0f;
+
+    UFUNCTION()
+    void OnRep_Pitch();
+
 public:
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
     bool GetForwardTraceResult(float TraceDistance, FHitResult& OutHit, FVector& OutTraceEnd) const;
