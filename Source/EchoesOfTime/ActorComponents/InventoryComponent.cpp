@@ -44,16 +44,6 @@ void UInventoryComponent::BeginPlay()
     }
 }
 
-//void UInventoryComponent::SetActiveSlot(int32 Index)
-//{
-//    if (Index >= 0 && Index < Slots.Num())
-//    {
-//        ActiveSlotIndex = Index;
-//        UItemBase* Item = Slots[Index].ItemAsset;
-//		OnRep_ActiveSlotIndex();
-//    }
-//}
-
 void UInventoryComponent::SetActiveSlot(int32 Index)
 {
     if (Index >= 0 && Index < Slots.Num())
@@ -87,6 +77,21 @@ bool UInventoryComponent::AddItem(UItemBase* ItemAsset, FGuid InstanceID)
             Slots[i].ItemAsset = ItemAsset;
             Slots[i].ItemInstanceID = InstanceID;
             OnInventoryChanged.Broadcast(Slots);
+
+            // If this is the first item added to inventory, auto-equip it
+            bool bWasInventoryEmpty = true;
+            for (const FInventorySlot& Slot : Slots)
+            {
+                if (Slot.ItemAsset && &Slot != &Slots[i])
+                {
+                    bWasInventoryEmpty = false;
+                    break;
+                }
+            }
+            if (bWasInventoryEmpty)
+            {
+                SetActiveSlot(i);
+            }
             return true;
         }
     }
