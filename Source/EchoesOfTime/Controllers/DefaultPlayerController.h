@@ -37,6 +37,8 @@ public:
     UFUNCTION(Client, Reliable)
     void ClientUpdateDetectionWidgetForGuard(AActor* Guard, float Progress, bool bIsLocked = false, float AngleDegrees = 0.0f);
 
+    UFUNCTION(Server, Reliable)
+    void ServerTryLockPick(AActor* TargetDoor, float Angle);
 private:
     UPROPERTY()
     class ACharacterHUD* CharacterHUD;

@@ -12,6 +12,17 @@ ADefaultPlayerController::ADefaultPlayerController()
     PauseMenuWidget = nullptr;
 }
 
+void ADefaultPlayerController::ServerTryLockPick_Implementation(AActor* TargetDoor, float Angle)
+{
+    if (TargetDoor)
+    {
+        if (ULockPickComponent* LockComp = TargetDoor->FindComponentByClass<ULockPickComponent>())
+        {
+            LockComp->ServerTrySetPin(Angle);
+        }
+    }
+}
+
 void ADefaultPlayerController::BeginPlay()
 {
     Super::BeginPlay();

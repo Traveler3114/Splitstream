@@ -136,12 +136,19 @@ void ULockPickAbilityTask::OnMouseY(float Axis)
 
 void ULockPickAbilityTask::OnConfirm()
 {
-    if (!LockComp) return;
-	ServerConfirmPin(LockPickDialAngle);
-}
+    if (!LockComp) return; 
 
+    APawn* Pawn = Cast<APawn>(GetAvatarActor());
+    if (!Pawn) return; 
+
+    ADefaultPlayerController* PC = Cast<ADefaultPlayerController>(Pawn->GetController());
+    if (!PC) return; 
+
+    PC->ServerTryLockPick(LockComp->GetOwner(), LockPickDialAngle);
+}
 void ULockPickAbilityTask::ServerConfirmPin_Implementation(float Angle)
 {
+
     if (!LockComp || !bIsLockPicking) return;
     bool bCorrect = LockComp->TrySetCurrentPin(Angle);
     if (bCorrect)

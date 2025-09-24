@@ -47,7 +47,7 @@ public:
     FOnLockUnlocked OnUnlock;
 
     // --- Pins (auto-generated, not editable) ---
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "LockPick")
+    UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "LockPick")
     TArray<FLockPinData> Pins;
 
     // --- Replicated State ---

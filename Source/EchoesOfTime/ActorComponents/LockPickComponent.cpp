@@ -18,14 +18,12 @@ ULockPickComponent::ULockPickComponent()
 void ULockPickComponent::BeginPlay()
 {
     Super::BeginPlay();
-    // Only generate pins on the server for multiplayer safety
     if (GetOwner()->HasAuthority())
     {
-        GeneratePins();
+        GeneratePins(); // Only on server!
     }
-    PinSetStates.Init(false, Pins.Num());
+    PinSetStates.Init(false, Pins.Num()); // Move this after Pins are valid
 }
-
 void ULockPickComponent::OnComponentCreated()
 {
     Super::OnComponentCreated();
@@ -84,6 +82,7 @@ void ULockPickComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
     DOREPLIFETIME(ULockPickComponent, CurrentPinIndex);
     DOREPLIFETIME(ULockPickComponent, PinSetStates);
     DOREPLIFETIME(ULockPickComponent, bUnlocked);
+    DOREPLIFETIME(ULockPickComponent, Pins);
     DOREPLIFETIME(ULockPickComponent, bPickingInProgress);
 }
 
@@ -165,6 +164,11 @@ bool ULockPickComponent::TrySetCurrentPin(float InputAngle)
 
 bool ULockPickComponent::AdvancePin()
 {
+    FString Side = GetOwner() && GetOwner()->HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT");
+    UE_LOG(LogTemp, Warning, TEXT("[LOCKPICK][%s] AdvancePin called (CurrentPinIndex=%d, Pins.Num()=%d)"), *Side, CurrentPinIndex, Pins.Num());
+    if (GEngine)
+        GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Blue, FString::Printf(TEXT("[LOCKPICK][%s] AdvancePin (Pin %d/%d)"), *Side, CurrentPinIndex, Pins.Num()));
+
     if (Pins.IsValidIndex(CurrentPinIndex))
     {
         PinSetStates[CurrentPinIndex] = true;
@@ -173,6 +177,9 @@ bool ULockPickComponent::AdvancePin()
         {
             bUnlocked = true;
             bPickingInProgress = false;
+            UE_LOG(LogTemp, Warning, TEXT("[LOCKPICK][%s] LOCK UNLOCKED!"), *Side);
+            if (GEngine)
+                GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, FString::Printf(TEXT("[LOCKPICK][%s] LOCK UNLOCKED!"), *Side));
             OnUnlock.Broadcast();
             OnRep_Unlocked();
             return true;
@@ -196,7 +203,6 @@ void ULockPickComponent::OnRep_Unlocked()
         OnUnlock.Broadcast();
     }
 }
-
 void ULockPickComponent::ServerTrySetPin_Implementation(float InputAngle)
 {
     if (TrySetCurrentPin(InputAngle))
