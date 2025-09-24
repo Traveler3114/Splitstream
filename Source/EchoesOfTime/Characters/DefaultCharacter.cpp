@@ -71,7 +71,6 @@ void ADefaultCharacter::InitializeAbilitySystem()
     if (PS)
     {
         AbilitySystemComponent = PS->GetAbilitySystemComponent();
-
         if (AbilitySystemComponent)
         {
             AbilitySystemComponent->InitAbilityActorInfo(PS, this);
@@ -81,12 +80,11 @@ void ADefaultCharacter::InitializeAbilitySystem()
 
 void ADefaultCharacter::GrantAbilitiesFromDefaultSet()
 {
-    if (!HasAuthority() || !DefaultGASet) return;
+    if (!DefaultGASet) return;
 
     ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
-    if (!PS) return;
+
     UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
-    if (!ASC) return;
 
     for (const TSubclassOf<UGameplayAbility>& AbilityClass : DefaultGASet->GrantedAbilities)
     {
@@ -96,15 +94,14 @@ void ADefaultCharacter::GrantAbilitiesFromDefaultSet()
     }
 }
 
+
 void ADefaultCharacter::GrantAbilitiesFromInputSet()
 {
-    if (!HasAuthority() || !AbilityInputSet) return;
-
+    if (!AbilityInputSet) return;
     ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
     if (!PS) return;
     UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
     if (!ASC) return;
-
     for (const FAbilityInputSetEntry& Entry : AbilityInputSet->Abilities)
     {
         if (!Entry.AbilityClass) continue;
@@ -114,6 +111,7 @@ void ADefaultCharacter::GrantAbilitiesFromInputSet()
             Spec.GetDynamicSpecSourceTags().AddTag(Entry.InputTag);
         }
         ASC->GiveAbility(Spec);
+
     }
 }
 
@@ -223,9 +221,9 @@ void ADefaultCharacter::PossessedBy(AController* NewController)
 {
     Super::PossessedBy(NewController);
     InitializeAbilitySystem();
+    if (!HasAuthority()) return;
     GrantAbilitiesFromInputSet();
     GrantAbilitiesFromDefaultSet();
-    if (!HasAuthority()) return;
     if (APlayerController* PC = Cast<APlayerController>(GetController()))
     {
         if (ACharacterHUD* HUD = Cast<ACharacterHUD>(PC->GetHUD()))
@@ -239,8 +237,8 @@ void ADefaultCharacter::OnRep_PlayerState()
 {
     Super::OnRep_PlayerState();
     InitializeAbilitySystem();
-    GrantAbilitiesFromInputSet();
-    GrantAbilitiesFromDefaultSet();
+    //GrantAbilitiesFromInputSet();
+    //GrantAbilitiesFromDefaultSet();
     if (APlayerController* PC = Cast<APlayerController>(GetController()))
     {
         if (ACharacterHUD* HUD = Cast<ACharacterHUD>(PC->GetHUD()))
@@ -292,12 +290,15 @@ void ADefaultCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 void ADefaultCharacter::HandleAbilityInput(const FInputActionInstance& Instance, FGameplayTag InputTag)
 {
+
     if (AbilitySystemComponent)
     {
         for (FGameplayAbilitySpec& Spec : AbilitySystemComponent->GetActivatableAbilities())
         {
+
             if (Spec.GetDynamicSpecSourceTags().HasTagExact(InputTag))
             {
+
                 AbilitySystemComponent->TryActivateAbility(Spec.Handle);
             }
         }
