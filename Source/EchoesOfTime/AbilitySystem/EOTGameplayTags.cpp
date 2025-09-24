@@ -16,7 +16,12 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_LockPicking, "Character.Status.LockP
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Hacking, "Character.Status.Hacking");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Searching, "Character.Status.Searching");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Illegal, "Character.Status.Illegal");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Aiming, "Character.Status.Aiming");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Firing, "Character.Status.Firing");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Illegal_Action, "Character.Status.Illegal.Action");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Illegal_Area, "Character.Status.Illegal.Area");
 UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_PastEcho_Activated, "GameplayCue.PastEcho.Activated");
 UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_PastEcho_Deactivated, "GameplayCue.PastEcho.Deactivated");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Weapon_Ability_Pistol_Fire, "Weapon.Ability.Pistol.Fire");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Weapon_Ability_Pistol_Aim, "Weapon.Ability.Pistol.Aim");

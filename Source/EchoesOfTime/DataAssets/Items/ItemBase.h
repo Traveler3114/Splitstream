@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "GameplayTagContainer.h"
 #include "ItemBase.generated.h"
 
 UENUM(BlueprintType)
@@ -44,16 +45,13 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
 	FRotator PickupMeshRotation = FRotator(0.0f);
 
-    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Item")
-    void OnEquipped(class AActor* Instigator);
+    virtual void OnEquipped(class AActor* Instigator);
 
-    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Item")
-    void OnUsed(class AActor* Instigator);
+    virtual void OnUnequipped(class AActor* Instigator);
 
-    // InstanceID is passed in now:
-    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Item")
-    void OnDropped(class AActor* Instigator, FGuid ItemInstanceID, FVector DropLocation);
+    virtual void OnUsed(class AActor* Instigator);
 
-    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Item")
-    void OnDroppedWithTeam(AActor* Instigator, FGuid ItemInstanceID, FGameplayTag TeamTag, FVector DropLocation);
+    virtual void OnDropped(class AActor* Instigator, FGuid ItemInstanceID, FVector DropLocation);
+
+    virtual void OnDroppedWithTeam(AActor* Instigator, FGuid ItemInstanceID, FGameplayTag TeamTag, FVector DropLocation);
 };

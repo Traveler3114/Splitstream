@@ -9,10 +9,12 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/PlayerController.h"
 
-void UItemBase::OnEquipped_Implementation(AActor* Instigator) {}
-void UItemBase::OnUsed_Implementation(AActor* Instigator) {}
+void UItemBase::OnEquipped(AActor* Instigator) {}
+void UItemBase::OnUnequipped(AActor* Instigator) {}
 
-void UItemBase::OnDropped_Implementation(AActor* Instigator, FGuid ItemInstanceID, FVector DropLocation)
+void UItemBase::OnUsed(AActor* Instigator) {}
+
+void UItemBase::OnDropped(AActor* Instigator, FGuid ItemInstanceID, FVector DropLocation)
 {
     if (!Instigator) return;
     UWorld* World = Instigator->GetWorld();
@@ -30,7 +32,7 @@ void UItemBase::OnDropped_Implementation(AActor* Instigator, FGuid ItemInstanceI
     }
 }
 
-void UItemBase::OnDroppedWithTeam_Implementation(AActor* Instigator, FGuid ItemInstanceID, FGameplayTag TeamTag, FVector DropLocation)
+void UItemBase::OnDroppedWithTeam(AActor* Instigator, FGuid ItemInstanceID, FGameplayTag TeamTag, FVector DropLocation)
 {
     if (!Instigator) return;
     UWorld* World = Instigator->GetWorld();

@@ -44,15 +44,40 @@ void UInventoryComponent::BeginPlay()
     }
 }
 
+//void UInventoryComponent::SetActiveSlot(int32 Index)
+//{
+//    if (Index >= 0 && Index < Slots.Num())
+//    {
+//        ActiveSlotIndex = Index;
+//        UItemBase* Item = Slots[Index].ItemAsset;
+//		OnRep_ActiveSlotIndex();
+//    }
+//}
+
 void UInventoryComponent::SetActiveSlot(int32 Index)
 {
     if (Index >= 0 && Index < Slots.Num())
     {
+        // Unequip previous item, if any and if it's different from new
+        if (ActiveSlotIndex != Index && Slots.IsValidIndex(ActiveSlotIndex))
+        {
+            FInventorySlot& OldSlot = Slots[ActiveSlotIndex];
+            if (OldSlot.ItemAsset)
+            {
+                OldSlot.ItemAsset->OnUnequipped(GetOwner());
+            }
+        }
+
         ActiveSlotIndex = Index;
-        UItemBase* Item = Slots[Index].ItemAsset;
-		OnRep_ActiveSlotIndex();
+        FInventorySlot& NewSlot = Slots[Index];
+        if (NewSlot.ItemAsset)
+        {
+            NewSlot.ItemAsset->OnEquipped(GetOwner());
+        }
+        OnRep_ActiveSlotIndex();
     }
 }
+
 bool UInventoryComponent::AddItem(UItemBase* ItemAsset, FGuid InstanceID)
 {
     for (int32 i = 0; i < Slots.Num(); ++i)
