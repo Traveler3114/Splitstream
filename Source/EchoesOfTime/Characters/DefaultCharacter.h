@@ -96,9 +96,6 @@ protected:
     UInputAction* InteractAction;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-    UInputAction* PastEchoAction;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     UInputAction* DropItemAction;
 
     // Movement and looking functions
