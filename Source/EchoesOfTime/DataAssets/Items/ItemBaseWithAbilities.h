@@ -20,6 +20,9 @@ public:
 
     virtual void OnEquipped(AActor* Instigator) override;
     virtual void OnUnequipped(AActor* Instigator) override;
-
+    virtual void OnDropped(AActor* Instigator, FGuid ItemInstanceID, FVector DropLocation) override;
     virtual void OnDroppedWithTeam(AActor* Instigator, FGuid ItemInstanceID, FGameplayTag TeamTag, FVector DropLocation) override;
+
+protected:
+    void RemoveGrantedAbilities(AActor* Instigator);
 };

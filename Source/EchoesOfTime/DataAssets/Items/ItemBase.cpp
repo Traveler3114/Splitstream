@@ -8,14 +8,37 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/PlayerController.h"
+#include "AbilitySystemInterface.h"
+#include "AbilitySystemComponent.h"
+#include "GameplayEffect.h"
 
-void UItemBase::OnEquipped(AActor* Instigator) {}
-void UItemBase::OnUnequipped(AActor* Instigator) {}
+void UItemBase::OnEquipped(AActor* Instigator)
+{
+    IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(Instigator);
+    if (!AbilityInterface) return;
 
-void UItemBase::OnUsed(AActor* Instigator) {}
+    UAbilitySystemComponent* ASC = AbilityInterface->GetAbilitySystemComponent();
+    if (!ASC) return;
+
+    for (TSubclassOf<UGameplayEffect> EffectClass : GrantedGameplayEffects)
+    {
+        if (EffectClass)
+        {
+            FActiveGameplayEffectHandle Handle = ASC->ApplyGameplayEffectToSelf(EffectClass->GetDefaultObject<UGameplayEffect>(), 1.0f, ASC->MakeEffectContext());
+            GrantedGameplayEffectHandles.Add(Handle);
+        }
+    }
+}
+
+void UItemBase::OnUnequipped(AActor* Instigator)
+{
+    RemoveGrantedGameplayEffects(Instigator);
+}
 
 void UItemBase::OnDropped(AActor* Instigator, FGuid ItemInstanceID, FVector DropLocation)
 {
+    RemoveGrantedGameplayEffects(Instigator);
+
     if (!Instigator) return;
     UWorld* World = Instigator->GetWorld();
     if (!World) return;
@@ -34,12 +57,14 @@ void UItemBase::OnDropped(AActor* Instigator, FGuid ItemInstanceID, FVector Drop
 
 void UItemBase::OnDroppedWithTeam(AActor* Instigator, FGuid ItemInstanceID, FGameplayTag TeamTag, FVector DropLocation)
 {
+    RemoveGrantedGameplayEffects(Instigator);
+
     if (!Instigator) return;
     UWorld* World = Instigator->GetWorld();
     if (!World) return;
 
     FRotator SpawnRotation = PickupMeshRotation;
-	DropLocation.Z= FMath::Max(DropLocation.Z, 0.0f); // Slightly raise the drop location to avoid clipping into the ground
+    DropLocation.Z = FMath::Max(DropLocation.Z, 0.0f); // Slightly raise the drop location to avoid clipping into the ground
     FTransform SpawnTransform = FTransform(SpawnRotation, DropLocation);
     static FGameplayTag PastTag = FGameplayTag::RequestGameplayTag(TEXT("Team.Past"));
     static FGameplayTag FutureTag = FGameplayTag::RequestGameplayTag(TEXT("Team.Future"));
@@ -74,4 +99,24 @@ void UItemBase::OnDroppedWithTeam(AActor* Instigator, FGuid ItemInstanceID, FGam
             UGameplayStatics::FinishSpawningActor(Pickup, SpawnTransform);
         }
     }
+}
+
+void UItemBase::OnUsed(AActor* Instigator)
+{
+    // Optional: implement use logic if needed
+}
+
+void UItemBase::RemoveGrantedGameplayEffects(AActor* Instigator)
+{
+    IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(Instigator);
+    if (!AbilityInterface) return;
+
+    UAbilitySystemComponent* ASC = AbilityInterface->GetAbilitySystemComponent();
+    if (!ASC) return;
+
+    for (const FActiveGameplayEffectHandle& Handle : GrantedGameplayEffectHandles)
+    {
+        ASC->RemoveActiveGameplayEffect(Handle);
+    }
+    GrantedGameplayEffectHandles.Empty();
 }

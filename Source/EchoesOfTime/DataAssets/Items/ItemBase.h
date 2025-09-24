@@ -10,12 +10,12 @@ enum class EItemType : uint8
 {
     KeycardL1     UMETA(DisplayName = "KeycardL1"),
     KeycardL2     UMETA(DisplayName = "KeycardL2"),
-    Fingerprint     UMETA(DisplayName = "Fingerprint"),
-    MoneyStack  UMETA(DisplayName = "MoneyStack"),
-    Tool        UMETA(DisplayName = "Tool"),
-    Gadget      UMETA(DisplayName = "Gadget"),
-	Pistol      UMETA(DisplayName = "Pistol"),
-    Other       UMETA(DisplayName = "Other")
+    Fingerprint   UMETA(DisplayName = "Fingerprint"),
+    MoneyStack    UMETA(DisplayName = "MoneyStack"),
+    Tool          UMETA(DisplayName = "Tool"),
+    Gadget        UMETA(DisplayName = "Gadget"),
+    Pistol        UMETA(DisplayName = "Pistol"),
+    Other         UMETA(DisplayName = "Other")
 };
 
 UCLASS(BlueprintType)
@@ -42,8 +42,8 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
     FVector PickupMeshScale = FVector(1.0f);
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
-	FRotator PickupMeshRotation = FRotator(0.0f);
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
+    FRotator PickupMeshRotation = FRotator(0.0f);
 
     virtual void OnEquipped(class AActor* Instigator);
 
@@ -54,4 +54,13 @@ public:
     virtual void OnDropped(class AActor* Instigator, FGuid ItemInstanceID, FVector DropLocation);
 
     virtual void OnDroppedWithTeam(AActor* Instigator, FGuid ItemInstanceID, FGameplayTag TeamTag, FVector DropLocation);
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tags")
+    TArray<TSubclassOf<class UGameplayEffect>> GrantedGameplayEffects;
+
+    UPROPERTY(Transient)
+    TArray<struct FActiveGameplayEffectHandle> GrantedGameplayEffectHandles;
+
+protected:
+    void RemoveGrantedGameplayEffects(AActor* Instigator);
 };
