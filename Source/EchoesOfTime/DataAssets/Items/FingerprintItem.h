@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "DataAssets/ItemBase.h"
+#include "ItemBase.h"
 #include "FingerprintItem.generated.h"
 
 /**

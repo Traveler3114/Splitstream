@@ -6,7 +6,10 @@
 #include "Interfaces/IRequiresItem.h"
 #include "InputActionValue.h"
 #include "AbilitySystemInterface.h"
-#include "DataAssets/ItemBase.h"
+#include "DataAssets/Items/ItemBase.h"
+#include "DataAssets/InputMappingSet.h"
+#include "DataAssets/AbilitySets/AbilityInputSet.h"
+#include "DataAssets/AbilitySets/DefaultGASet.h"
 
 #include "DefaultCharacter.generated.h"
 
@@ -43,6 +46,18 @@ public:
     void OnRep_EquippedItemActor();
 
     void UpdateEquippedItemActor();
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+    UInputMappingSet* InputMappingSet;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Abilities")
+    UAbilityInputSet* AbilityInputSet;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Abilities")
+    UDefaultGASet* DefaultGASet;
+
+    UFUNCTION()
+    void HandleAbilityInput(const FInputActionInstance& Instance, FGameplayTag InputTag);
 
 protected:
     UPROPERTY()
@@ -100,8 +115,6 @@ protected:
     UFUNCTION(Server, Reliable)
     void ServerHandleInteract();
 
-    void ActivateFutureGAPastEcho();
-
     void SelectInventorySlot(int32 SlotNumber);
 
     UFUNCTION()
@@ -120,16 +133,11 @@ protected:
     UFUNCTION()
     void OnRep_SprintState();
 
-    //UFUNCTION(Server, Reliable)
-    //void ServerCameraRotationUpdate(float NewPitch);
-
-    //UPROPERTY(ReplicatedUsing = OnRep_Pitch, EditAnywhere,BlueprintReadWrite)
-    //float Pitch = 0.0f;
-
-    //UFUNCTION()
-    //void OnRep_Pitch();
-
 public:
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
     bool GetForwardTraceResult(float TraceDistance, FHitResult& OutHit, FVector& OutTraceEnd) const;
+
+private:
+    void GrantAbilitiesFromInputSet(); // <<--- this is the new grant function
+    void GrantAbilitiesFromDefaultSet();
 };

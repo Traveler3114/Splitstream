@@ -5,7 +5,7 @@
 #include "Interfaces/IInteractable.h"
 #include "Interfaces/IRequiresItem.h"
 #include "Interfaces/IKeycardUnlockable.h"
-#include "DataAssets/ItemBase.h" // <-- Include for EItemType
+#include "DataAssets/Items/ItemBase.h"
 #include "TimelineEra.h"
 #include "KeycardScanner.generated.h"
 

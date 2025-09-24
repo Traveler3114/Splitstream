@@ -1,8 +1,8 @@
 #include "CupActor.h"
 #include "ActorComponents/SearchComponent.h"
 #include "ActorComponents/InventoryComponent.h"
-#include "DataAssets/ItemBase.h"
-#include "DataAssets/FingerprintItem.h"
+#include "DataAssets/Items/ItemBase.h"
+#include "DataAssets/Items/FingerprintItem.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 

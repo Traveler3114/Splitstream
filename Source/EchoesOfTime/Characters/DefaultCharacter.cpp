@@ -40,7 +40,6 @@ ADefaultCharacter::ADefaultCharacter()
 
 void ADefaultCharacter::UpdateInteractHighlight()
 {
-    // Only the local player should handle highlighting logic
     if (!IsLocallyControlled())
         return;
 
@@ -50,14 +49,12 @@ void ADefaultCharacter::UpdateInteractHighlight()
 
     AActor* HitActor = bHit ? Hit.GetActor() : nullptr;
 
-    // Remove highlight from previous actor if it's different from the one we're looking at
     if (HighlightedActor && HighlightedActor != HitActor)
     {
         IInteractable::Execute_SetHighlighted(HighlightedActor, false);
         HighlightedActor = nullptr;
     }
 
-    // Highlight the new actor if valid and implements the interactable interface
     if (HitActor && HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
     {
         if (HitActor != HighlightedActor)
@@ -79,7 +76,44 @@ void ADefaultCharacter::InitializeAbilitySystem()
         {
             AbilitySystemComponent->InitAbilityActorInfo(PS, this);
         }
-        PS->GiveAbilities();
+    }
+}
+
+void ADefaultCharacter::GrantAbilitiesFromDefaultSet()
+{
+    if (!HasAuthority() || !DefaultGASet) return;
+
+    ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
+    if (!PS) return;
+    UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
+    if (!ASC) return;
+
+    for (const TSubclassOf<UGameplayAbility>& AbilityClass : DefaultGASet->GrantedAbilities)
+    {
+        if (!AbilityClass) continue;
+        FGameplayAbilitySpec Spec(AbilityClass, 1, 0);
+        ASC->GiveAbility(Spec);
+    }
+}
+
+void ADefaultCharacter::GrantAbilitiesFromInputSet()
+{
+    if (!HasAuthority() || !AbilityInputSet) return;
+
+    ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
+    if (!PS) return;
+    UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
+    if (!ASC) return;
+
+    for (const FAbilityInputSetEntry& Entry : AbilityInputSet->Abilities)
+    {
+        if (!Entry.AbilityClass) continue;
+        FGameplayAbilitySpec Spec(Entry.AbilityClass, Entry.AbilityLevel, 0);
+        if (Entry.InputTag.IsValid())
+        {
+            Spec.GetDynamicSpecSourceTags().AddTag(Entry.InputTag);
+        }
+        ASC->GiveAbility(Spec);
     }
 }
 
@@ -87,9 +121,6 @@ UAbilitySystemComponent* ADefaultCharacter::GetAbilitySystemComponent() const
 {
     return AbilitySystemComponent;
 }
-
-
-
 
 void ADefaultCharacter::PostInitializeComponents()
 {
@@ -136,9 +167,8 @@ void ADefaultCharacter::OnInventoryChanged(const TArray<FInventorySlot>& Slots)
 
 void ADefaultCharacter::UpdateEquippedItemActor()
 {
-    if (!HasAuthority()) return; // Only the server should do this
+    if (!HasAuthority()) return;
 
-    // Destroy previous equipped actor if any
     if (EquippedItemActor)
     {
         EquippedItemActor->Destroy();
@@ -164,7 +194,7 @@ void ADefaultCharacter::UpdateEquippedItemActor()
         if (EquippedItemActor)
         {
             EquippedItemActor->InitFromItemData(ItemAsset, ActiveSlot.ItemInstanceID);
-            EquippedItemActor->SetActorEnableCollision(false); // No collision
+            EquippedItemActor->SetActorEnableCollision(false);
             EquippedItemActor->AttachToComponent(
                 GetMesh(),
                 FAttachmentTransformRules::SnapToTargetNotIncludingScale,
@@ -172,7 +202,6 @@ void ADefaultCharacter::UpdateEquippedItemActor()
             );
         }
 
-        // IMPORTANT: Mark EquippedItemActor for replication
         EquippedItemActor->SetReplicates(true);
     }
 }
@@ -181,7 +210,7 @@ void ADefaultCharacter::OnRep_EquippedItemActor()
 {
     if (EquippedItemActor)
     {
-        EquippedItemActor->SetActorEnableCollision(false); // Ensure no collision on clients
+        EquippedItemActor->SetActorEnableCollision(false);
         EquippedItemActor->AttachToComponent(
             GetMesh(),
             FAttachmentTransformRules::SnapToTargetNotIncludingScale,
@@ -190,11 +219,12 @@ void ADefaultCharacter::OnRep_EquippedItemActor()
     }
 }
 
-
 void ADefaultCharacter::PossessedBy(AController* NewController)
 {
     Super::PossessedBy(NewController);
     InitializeAbilitySystem();
+    GrantAbilitiesFromInputSet();
+    GrantAbilitiesFromDefaultSet();
     if (!HasAuthority()) return;
     if (APlayerController* PC = Cast<APlayerController>(GetController()))
     {
@@ -209,6 +239,8 @@ void ADefaultCharacter::OnRep_PlayerState()
 {
     Super::OnRep_PlayerState();
     InitializeAbilitySystem();
+    GrantAbilitiesFromInputSet();
+    GrantAbilitiesFromDefaultSet();
     if (APlayerController* PC = Cast<APlayerController>(GetController()))
     {
         if (ACharacterHUD* HUD = Cast<ACharacterHUD>(PC->GetHUD()))
@@ -233,8 +265,18 @@ void ADefaultCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
         EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &ADefaultCharacter::ServerStartSprint);
         EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ADefaultCharacter::ServerStopSprint);
         EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &ADefaultCharacter::ServerHandleInteract);
-        EnhancedInputComponent->BindAction(PastEchoAction, ETriggerEvent::Completed, this, &ADefaultCharacter::ActivateFutureGAPastEcho);
         EnhancedInputComponent->BindAction(DropItemAction, ETriggerEvent::Completed, this, &ADefaultCharacter::DropActiveItem);
+
+        if (InputMappingSet)
+        {
+            for (const FInputActionTagMapping& MapEntry : InputMappingSet->Mappings)
+            {
+                if (MapEntry.InputAction)
+                {
+                    EnhancedInputComponent->BindAction(MapEntry.InputAction, ETriggerEvent::Started, this, &ADefaultCharacter::HandleAbilityInput, MapEntry.InputTag);
+                }
+            }
+        }
     }
 
     PlayerInputComponent->BindKey(EKeys::One, IE_Pressed, this, &ADefaultCharacter::HandleNumberKey);
@@ -246,6 +288,20 @@ void ADefaultCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
     PlayerInputComponent->BindKey(EKeys::Seven, IE_Pressed, this, &ADefaultCharacter::HandleNumberKey);
     PlayerInputComponent->BindKey(EKeys::Eight, IE_Pressed, this, &ADefaultCharacter::HandleNumberKey);
     PlayerInputComponent->BindKey(EKeys::Nine, IE_Pressed, this, &ADefaultCharacter::HandleNumberKey);
+}
+
+void ADefaultCharacter::HandleAbilityInput(const FInputActionInstance& Instance, FGameplayTag InputTag)
+{
+    if (AbilitySystemComponent)
+    {
+        for (FGameplayAbilitySpec& Spec : AbilitySystemComponent->GetActivatableAbilities())
+        {
+            if (Spec.GetDynamicSpecSourceTags().HasTagExact(InputTag))
+            {
+                AbilitySystemComponent->TryActivateAbility(Spec.Handle);
+            }
+        }
+    }
 }
 
 void ADefaultCharacter::HandleNumberKey(FKey PressedKey)
@@ -307,10 +363,9 @@ void ADefaultCharacter::DropActiveItem()
         DropLocation = TraceEnd;
     }
 
-    // Add this: Downward trace to find the topmost surface
     FHitResult DownHit;
-    FVector DownTraceStart = DropLocation + FVector(0, 0, 50); // 50 units above
-    FVector DownTraceEnd = DropLocation - FVector(0, 0, 200); // 200 units below
+    FVector DownTraceStart = DropLocation + FVector(0, 0, 50);
+    FVector DownTraceEnd = DropLocation - FVector(0, 0, 200);
 
     FCollisionQueryParams Params;
     Params.AddIgnoredActor(this);
@@ -333,7 +388,6 @@ void ADefaultCharacter::ServerHandleInteract_Implementation()
         if (!HitActor)
             return;
 
-        // If it requires an item, check for it using the interface method
         if (HitActor->GetClass()->ImplementsInterface(URequiresItem::StaticClass()))
         {
             UInventoryComponent* Inventory = FindComponentByClass<UInventoryComponent>();
@@ -344,33 +398,18 @@ void ADefaultCharacter::ServerHandleInteract_Implementation()
                 ActiveItem = ActiveSlot.ItemAsset;
             }
 
-            // Let the interactable actor decide if the item is correct!
             if (!IRequiresItem::Execute_IsCorrectItem(HitActor, ActiveItem))
             {
-                // Optionally give feedback for missing/wrong item
                 return;
             }
 
-            // Optionally:
             if (ActiveItem) ActiveItem->OnUsed(this);
-            // You can also let the interactable handle OnUsed if you prefer!
         }
 
-        // Now call Interact (item requirement is fulfilled or not needed)
         if (HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
         {
             IInteractable::Execute_Interact(HitActor, this);
         }
-    }
-}
-
-void ADefaultCharacter::ActivateFutureGAPastEcho()
-{
-    ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
-    if (PS && PS->GetAbilitySystemComponent())
-    {
-        const FGameplayTag MyTag = TAG_Character_Ability_Future_PastEcho;
-        PS->GetAbilitySystemComponent()->TryActivateAbilitiesByTag(FGameplayTagContainer(MyTag));
     }
 }
 
@@ -421,7 +460,7 @@ void ADefaultCharacter::Move(const FInputActionValue& Value)
 void ADefaultCharacter::Look(const FInputActionValue& Value)
 {
     ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
-    if (!PS) return; // Fix: Guard against null PlayerState
+    if (!PS) return;
 
     UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
     if (ASC && ASC->HasMatchingGameplayTag(TAG_Character_Status_Block_Look))
@@ -433,23 +472,8 @@ void ADefaultCharacter::Look(const FInputActionValue& Value)
     {
         AddControllerYawInput(LookAxisVector.X);
         AddControllerPitchInput(LookAxisVector.Y);
-        //if (CameraComponent) {
-        //    ServerCameraRotationUpdate(CameraComponent->GetComponentRotation().Pitch);
-        //}
     }
 }
-
-//void ADefaultCharacter::ServerCameraRotationUpdate_Implementation(float NewPitch) {
-//    Pitch = NewPitch;
-//    OnRep_Pitch();
-//}
-//
-//void ADefaultCharacter::OnRep_Pitch() {
-//    if (CameraComponent) {
-//        FRotator NewRotation = FRotator(Pitch, CameraComponent->GetComponentRotation().Yaw, CameraComponent->GetComponentRotation().Roll);
-//        CameraComponent->SetWorldRotation(NewRotation);
-//    }
-//}
 
 void ADefaultCharacter::StartSprint()
 {
@@ -493,6 +517,5 @@ void ADefaultCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
     DOREPLIFETIME(ADefaultCharacter, bIsSprinting);
-    //DOREPLIFETIME(ADefaultCharacter, Pitch);
     DOREPLIFETIME(ADefaultCharacter, EquippedItemActor);
 }

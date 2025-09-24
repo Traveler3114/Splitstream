@@ -1,5 +1,4 @@
 #include "KeycardScanner.h"
-#include "DataAssets/ItemBase.h"
 
 AKeycardScanner::AKeycardScanner()
 {

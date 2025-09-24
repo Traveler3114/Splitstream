@@ -2,7 +2,7 @@
 #include "Components/HorizontalBox.h"
 #include "Components/TextBlock.h"
 #include "Components/Image.h"
-#include "DataAssets/ItemBase.h"
+#include "DataAssets/Items/ItemBase.h"
 #include "ActorComponents/InventoryComponent.h"
 #include "Components/HorizontalBoxSlot.h"
 #include "Components/CanvasPanel.h"

@@ -4,8 +4,8 @@
 #include "Components/SceneComponent.h"
 #include "Components/TextRenderComponent.h"
 #include "Characters/CivilianCharacter.h"
-#include "DataAssets/ItemBase.h"
-#include "DataAssets/FingerprintItem.h"
+#include "DataAssets/Items/ItemBase.h"
+#include "DataAssets/Items/FingerprintItem.h"
 #include "Net/UnrealNetwork.h"
 #include "ActorComponents/InventoryComponent.h"
 
