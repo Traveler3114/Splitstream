@@ -102,8 +102,29 @@ void UInventoryComponent::RemoveItem(int32 Index)
 {
     if (Slots.IsValidIndex(Index))
     {
-        Slots[Index].ItemAsset = nullptr;
-        Slots[Index].ItemInstanceID.Invalidate();
+        // Shift all items after Index down by one
+        for (int32 i = Index; i < Slots.Num() - 1; ++i)
+        {
+            Slots[i] = Slots[i + 1];
+        }
+        // Clear last slot
+        Slots[Slots.Num() - 1].ItemAsset = nullptr;
+        Slots[Slots.Num() - 1].ItemInstanceID.Invalidate();
+
+        // Fix active slot index if needed
+        if (ActiveSlotIndex >= Slots.Num())
+        {
+            ActiveSlotIndex = Slots.Num() - 1;
+        }
+        else if (ActiveSlotIndex > Index)
+        {
+            --ActiveSlotIndex;
+        }
+        else if (ActiveSlotIndex == Index)
+        {
+            ActiveSlotIndex = INDEX_NONE; // Or auto-select first item if you prefer
+        }
+
         OnInventoryChanged.Broadcast(Slots);
     }
 }
