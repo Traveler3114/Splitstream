@@ -16,6 +16,11 @@ public:
     virtual void BeginPlay() override;
     virtual void SetupInputComponent() override;
     void TogglePauseMenu();
+	void BindAttributeDelegates();
+
+    void OnHealthChanged(const struct FOnAttributeChangeData& Data);
+
+	virtual void OnRep_PlayerState() override;
 
     void BindPauseMenuEsc();
     void UnbindPauseMenuEsc();

@@ -61,7 +61,13 @@ void UCharacterOverlay::OnInventoryChanged(const TArray<FInventorySlot>& Items)
     }
 }
 
-// ... rest of file unchanged ...
+void UCharacterOverlay::SetHealthText(float NewHealth)
+{
+    if (health_txt)
+    {
+        health_txt->SetText(FText::AsNumber(FMath::RoundToInt(NewHealth)));
+    }
+}
 
 void UCharacterOverlay::SetStatusText(const FString& NewStatus)
 {

@@ -4,6 +4,11 @@
 #include "Widgets/PauseMenuWidget.h"
 #include "Widgets/Calendar/CalendarWidget.h"
 #include "Engine/Engine.h"
+#include "DefaultPlayerState.h"
+#include "AbilitySystemComponent.h"
+#include "AbilitySystem/AttributeSets/PlayerAttributeSet.h"
+#include "Widgets/HUD/CharacterOverlay.h"
+#include "GameplayEffectTypes.h"
 
 ADefaultPlayerController::ADefaultPlayerController()
 {
@@ -23,6 +28,34 @@ void ADefaultPlayerController::ServerTryLockPick_Implementation(AActor* TargetDo
     }
 }
 
+void ADefaultPlayerController::BindAttributeDelegates()
+{
+    ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
+    if (!PS) return;
+    UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
+    UPlayerAttributeSet* AttrSet = Cast<UPlayerAttributeSet>(PS->GetAttributeSet());
+    if (!ASC || !AttrSet || !CharacterHUD || !CharacterHUD->CharacterOverlay) return;
+
+    ASC->GetGameplayAttributeValueChangeDelegate(AttrSet->GetHealthAttribute())
+        .AddUObject(this, &ADefaultPlayerController::OnHealthChanged);
+
+    // Set initial value
+    CharacterHUD->CharacterOverlay->SetHealthText(AttrSet->GetHealth());
+}
+
+void ADefaultPlayerController::OnHealthChanged(const FOnAttributeChangeData& Data)
+{
+    if (CharacterHUD && CharacterHUD->CharacterOverlay)
+    {
+        CharacterHUD->CharacterOverlay->SetHealthText(Data.NewValue);
+    }
+}
+
+void ADefaultPlayerController::OnRep_PlayerState()
+{
+    BindAttributeDelegates();
+}
+
 void ADefaultPlayerController::BeginPlay()
 {
     Super::BeginPlay();
@@ -32,6 +65,7 @@ void ADefaultPlayerController::BeginPlay()
         if (CharacterHUD->CharacterOverlay == nullptr)
             CharacterHUD->AddCharacterOverlay();
     }
+    BindAttributeDelegates();
 }
 
 void ADefaultPlayerController::SetupInputComponent()

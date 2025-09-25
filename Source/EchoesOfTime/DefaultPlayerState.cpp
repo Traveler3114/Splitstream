@@ -2,9 +2,9 @@
 #include "Net/UnrealNetwork.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/DefaultAbilitySystemComponent.h"
-#include "AbilitySystem/AttributeSets/DefaultAttributeSet.h"
 #include "Abilities/GameplayAbility.h"
 #include "AttributeSet.h"
+#include "AbilitySystem/AttributeSets/PlayerAttributeSet.h"
 #include "TimerManager.h"
 #include "GameplayTagContainer.h"
 
@@ -14,7 +14,7 @@ ADefaultPlayerState::ADefaultPlayerState()
     AbilitySystemComponent->SetIsReplicated(true);
     AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 
-    AttributeSet = CreateDefaultSubobject<UDefaultAttributeSet>(TEXT("AttributeSet"));
+    AttributeSet = CreateDefaultSubobject<UPlayerAttributeSet>(TEXT("AttributeSet"));
 
     bReplicates = true;
 }

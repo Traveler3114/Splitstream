@@ -25,6 +25,12 @@ public:
     UPROPERTY(meta = (BindWidget))
     UTextBlock* status_txt;
 
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* health_txt;
+
+    UFUNCTION()
+    void SetHealthText(float NewHealth);
+
     UFUNCTION()
     void OnInventoryChanged(const TArray<FInventorySlot>& Items);
 
