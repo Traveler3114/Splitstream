@@ -39,13 +39,10 @@ public:
     UFUNCTION()
     void OnInventoryChanged(const TArray<FInventorySlot>& Slots);
 
-    UPROPERTY(ReplicatedUsing = OnRep_EquippedItemActor, VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
-    AItemPickup* EquippedItemActor = nullptr;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
+    UStaticMeshComponent* EquippedItemMeshComp;
 
-    UFUNCTION()
-    void OnRep_EquippedItemActor();
-
-    void UpdateEquippedItemActor();
+    void UpdateEquippedItemMesh();
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
     UInputMappingSet* InputMappingSet;

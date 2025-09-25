@@ -36,6 +36,14 @@ ADefaultCharacter::ADefaultCharacter()
     SetReplicateMovement(true);
     bIsSprinting = false;
     InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
+
+    EquippedItemMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("EquippedItemMeshComp"));
+    EquippedItemMeshComp->SetupAttachment(GetMesh(), TEXT("HandGrip_R")); // Attach to hand socket
+    EquippedItemMeshComp->SetIsReplicated(true); // Replicate mesh location if needed
+    EquippedItemMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	EquippedItemMeshComp->SetOwnerNoSee(true);
+
+    // If doing FP/TP separation, set up both and use OwnerNoSee/OnlyOwnerSee
 }
 
 void ADefaultCharacter::UpdateInteractHighlight()
@@ -146,7 +154,7 @@ void ADefaultCharacter::BeginPlay()
         UE_LOG(LogTemp, Warning, TEXT("CameraComponent not found!"));
     }
 
-    UpdateEquippedItemActor();
+    UpdateEquippedItemMesh();
 }
 
 void ADefaultCharacter::Tick(float DeltaTime)
@@ -160,62 +168,25 @@ void ADefaultCharacter::Tick(float DeltaTime)
 
 void ADefaultCharacter::OnInventoryChanged(const TArray<FInventorySlot>& Slots)
 {
-    UpdateEquippedItemActor();
+    UpdateEquippedItemMesh();
 }
 
-void ADefaultCharacter::UpdateEquippedItemActor()
+void ADefaultCharacter::UpdateEquippedItemMesh()
 {
-    if (!HasAuthority()) return;
-
-    if (EquippedItemActor)
-    {
-        EquippedItemActor->Destroy();
-        EquippedItemActor = nullptr;
-    }
-
-    if (!InventoryComponent) return;
+    if (!InventoryComponent || !EquippedItemMeshComp) return;
 
     FInventorySlot ActiveSlot = InventoryComponent->GetActiveItem();
     UItemBase* ItemAsset = ActiveSlot.ItemAsset;
 
-    if (ItemAsset)
+    if (ItemAsset && ItemAsset->ItemMesh)
     {
-        UWorld* World = GetWorld();
-        if (!World) return;
-
-        FActorSpawnParameters SpawnParams;
-        SpawnParams.Owner = this;
-        SpawnParams.Instigator = this;
-        SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-        EquippedItemActor = World->SpawnActor<AItemPickup>(AItemPickup::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
-        if (EquippedItemActor)
-        {
-            EquippedItemActor->InitFromItemData(ItemAsset, ActiveSlot.ItemInstanceID);
-            EquippedItemActor->SetActorEnableCollision(false);
-            EquippedItemActor->AttachToComponent(
-                GetMesh(),
-                FAttachmentTransformRules::SnapToTargetNotIncludingScale,
-                TEXT("HandGrip_R")
-            );
-        }
-
-        EquippedItemActor->SetReplicates(true);
+        EquippedItemMeshComp->SetStaticMesh(ItemAsset->ItemMesh);
+        EquippedItemMeshComp->SetWorldScale3D(ItemAsset->PickupMeshScale);
+        EquippedItemMeshComp->SetRelativeRotation(ItemAsset->PickupMeshRotation);
+        EquippedItemMeshComp->SetOwnerNoSee(true);
     }
 }
 
-void ADefaultCharacter::OnRep_EquippedItemActor()
-{
-    if (EquippedItemActor)
-    {
-        EquippedItemActor->SetActorEnableCollision(false);
-        EquippedItemActor->AttachToComponent(
-            GetMesh(),
-            FAttachmentTransformRules::SnapToTargetNotIncludingScale,
-            TEXT("HandGrip_R")
-        );
-    }
-}
 
 void ADefaultCharacter::PossessedBy(AController* NewController)
 {
@@ -536,5 +507,4 @@ void ADefaultCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 
     DOREPLIFETIME(ADefaultCharacter, bIsSprinting);
     DOREPLIFETIME(ADefaultCharacter, Pitch);
-    DOREPLIFETIME(ADefaultCharacter, EquippedItemActor);
 }
