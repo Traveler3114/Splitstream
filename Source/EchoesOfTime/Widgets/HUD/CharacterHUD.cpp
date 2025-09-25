@@ -3,9 +3,6 @@
 #include "ActorComponents/InventoryComponent.h"
 #include "CharacterOverlay.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
-#include "AbilitySystemComponent.h"
-#include "DefaultPlayerState.h"
-#include "AbilitySystem/EOTGameplayTags.h"
 #include "Components/CanvasPanelSlot.h"
 
 void ACharacterHUD::AddCharacterOverlay()
@@ -26,49 +23,11 @@ void ACharacterHUD::AddCharacterOverlay()
                 Inventory->OnInventoryChanged.AddDynamic(CharacterOverlay, &UCharacterOverlay::OnInventoryChanged);
                 CharacterOverlay->OnInventoryChanged(Inventory->Slots);
             }
-			BindTags(Pawn);
         }
-    }
-}
-
-void ACharacterHUD::BindTags(APawn* Pawn) {
-    if (!Pawn || !CharacterOverlay) return;
-
-    UAbilitySystemComponent* ASC = nullptr;
-    if (ADefaultPlayerState* PS = Pawn->GetPlayerState<ADefaultPlayerState>())
-    {
-        ASC = PS->GetAbilitySystemComponent();
-    }
-    if (ASC)
-    {
-        FGameplayTag IllegalTag = TAG_Character_Status_Illegal;
-        IllegalTagDelegateHandle = ASC->RegisterGameplayTagEvent(IllegalTag, EGameplayTagEventType::NewOrRemoved)
-            .AddLambda([this](const FGameplayTag Tag, int32 NewCount) {
-            if (CharacterOverlay) {
-                if (NewCount > 0) {
-                    CharacterOverlay->SetStatusText(TEXT("Illegal"));
-                }
-                else {
-                    CharacterOverlay->SetStatusText(TEXT(""));
-                }
-            }
-                });
     }
 }
 
 void ACharacterHUD::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-    APawn* Pawn = GetOwningPlayerController() ? GetOwningPlayerController()->GetPawn() : nullptr;
-    if (Pawn)
-    {
-        if (ADefaultPlayerState* PS = Pawn->GetPlayerState<ADefaultPlayerState>())
-        {
-            if (UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent())
-            {
-                ASC->RegisterGameplayTagEvent(TAG_Character_Status_Illegal, EGameplayTagEventType::NewOrRemoved)
-                    .Remove(IllegalTagDelegateHandle);
-            }
-        }
-    }
     Super::EndPlay(EndPlayReason);
 }

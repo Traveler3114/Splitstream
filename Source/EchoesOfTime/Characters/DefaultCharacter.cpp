@@ -195,28 +195,12 @@ void ADefaultCharacter::PossessedBy(AController* NewController)
     if (!HasAuthority()) return;
     GrantAbilitiesFromInputSet();
     GrantAbilitiesFromDefaultSet();
-    if (APlayerController* PC = Cast<APlayerController>(GetController()))
-    {
-        if (ACharacterHUD* HUD = Cast<ACharacterHUD>(PC->GetHUD()))
-        {
-            HUD->BindTags(this);
-        }
-    }
 }
 
 void ADefaultCharacter::OnRep_PlayerState()
 {
     Super::OnRep_PlayerState();
     InitializeAbilitySystem();
-    //GrantAbilitiesFromInputSet();
-    //GrantAbilitiesFromDefaultSet();
-    if (APlayerController* PC = Cast<APlayerController>(GetController()))
-    {
-        if (ACharacterHUD* HUD = Cast<ACharacterHUD>(PC->GetHUD()))
-        {
-            HUD->BindTags(this);
-        }
-    }
 }
 
 void ADefaultCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

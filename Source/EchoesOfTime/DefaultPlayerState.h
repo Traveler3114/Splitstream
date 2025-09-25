@@ -8,6 +8,7 @@ class UTexture2D;
 class UAbilitySystemComponent;
 class UGameplayAbility;
 class UAttributeSet;
+class UPlayerAttributeSet;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerMetaChanged, ADefaultPlayerState*, PS);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnReadyChanged, ADefaultPlayerState*, PS);
@@ -22,7 +23,7 @@ public:
     ADefaultPlayerState();
     virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
 
-    UAttributeSet* GetAttributeSet() const { return AttributeSet; }
+    UPlayerAttributeSet* GetAttributeSet() const { return PlayerAttributeSet; }
 
     virtual void CopyProperties(APlayerState* NewPlayerState) override;
 
@@ -94,5 +95,5 @@ protected:
     TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
-    TObjectPtr<UAttributeSet> AttributeSet;
+    TObjectPtr<UPlayerAttributeSet> PlayerAttributeSet;
 };

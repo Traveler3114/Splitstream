@@ -8,6 +8,7 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/AttributeSets/PlayerAttributeSet.h"
 #include "Widgets/HUD/CharacterOverlay.h"
+#include "AbilitySystem/EOTGameplayTags.h"
 #include "GameplayEffectTypes.h"
 
 ADefaultPlayerController::ADefaultPlayerController()
@@ -15,45 +16,6 @@ ADefaultPlayerController::ADefaultPlayerController()
     PrimaryActorTick.bCanEverTick = true;
     CharacterHUD = nullptr;
     PauseMenuWidget = nullptr;
-}
-
-void ADefaultPlayerController::ServerTryLockPick_Implementation(AActor* TargetDoor, float Angle)
-{
-    if (TargetDoor)
-    {
-        if (ULockPickComponent* LockComp = TargetDoor->FindComponentByClass<ULockPickComponent>())
-        {
-            LockComp->ServerTrySetPin(Angle);
-        }
-    }
-}
-
-void ADefaultPlayerController::BindAttributeDelegates()
-{
-    ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
-    if (!PS) return;
-    UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
-    UPlayerAttributeSet* AttrSet = Cast<UPlayerAttributeSet>(PS->GetAttributeSet());
-    if (!ASC || !AttrSet || !CharacterHUD || !CharacterHUD->CharacterOverlay) return;
-
-    ASC->GetGameplayAttributeValueChangeDelegate(AttrSet->GetHealthAttribute())
-        .AddUObject(this, &ADefaultPlayerController::OnHealthChanged);
-
-    // Set initial value
-    CharacterHUD->CharacterOverlay->SetHealthText(AttrSet->GetHealth());
-}
-
-void ADefaultPlayerController::OnHealthChanged(const FOnAttributeChangeData& Data)
-{
-    if (CharacterHUD && CharacterHUD->CharacterOverlay)
-    {
-        CharacterHUD->CharacterOverlay->SetHealthText(Data.NewValue);
-    }
-}
-
-void ADefaultPlayerController::OnRep_PlayerState()
-{
-    BindAttributeDelegates();
 }
 
 void ADefaultPlayerController::BeginPlay()
@@ -66,6 +28,28 @@ void ADefaultPlayerController::BeginPlay()
             CharacterHUD->AddCharacterOverlay();
     }
     BindAttributeDelegates();
+    BindGameplayTagDelegates();
+}
+
+void ADefaultPlayerController::OnRep_PlayerState()
+{
+    Super::OnRep_PlayerState();
+    BindAttributeDelegates();
+    BindGameplayTagDelegates();
+}
+
+void ADefaultPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
+    if (PS)
+    {
+        if (UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent())
+        {
+            ASC->RegisterGameplayTagEvent(TAG_Character_Status_Illegal, EGameplayTagEventType::NewOrRemoved)
+                .Remove(IllegalTagDelegateHandle);
+        }
+    }
+    Super::EndPlay(EndPlayReason);
 }
 
 void ADefaultPlayerController::SetupInputComponent()
@@ -164,5 +148,68 @@ void ADefaultPlayerController::ClientUpdateDetectionWidgetForGuard_Implementatio
     if (CharacterHUD && CharacterHUD->CharacterOverlay)
     {
         CharacterHUD->CharacterOverlay->UpdateDetectionWidgetForGuard(Guard, Progress, bIsLocked, AngleDegrees);
+    }
+}
+
+
+void ADefaultPlayerController::BindAttributeDelegates()
+{
+    ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
+    if (!PS) return;
+    UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
+    UPlayerAttributeSet* AttrSet = PS->GetAttributeSet();
+
+    if (!ASC || !AttrSet || !CharacterHUD || !CharacterHUD->CharacterOverlay) return;
+
+    ASC->GetGameplayAttributeValueChangeDelegate(AttrSet->GetHealthAttribute())
+        .AddUObject(this, &ADefaultPlayerController::OnHealthChanged);
+
+    CharacterHUD->CharacterOverlay->SetHealthText(AttrSet->GetHealth());
+}
+
+void ADefaultPlayerController::OnHealthChanged(const FOnAttributeChangeData& Data)
+{
+    if (CharacterHUD && CharacterHUD->CharacterOverlay)
+    {
+        CharacterHUD->CharacterOverlay->SetHealthText(Data.NewValue);
+    }
+}
+
+void ADefaultPlayerController::BindGameplayTagDelegates()
+{
+    ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
+    if (!PS || !CharacterHUD || !CharacterHUD->CharacterOverlay) return;
+
+    UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
+    if (!ASC) return;
+
+    FGameplayTag IllegalTag = TAG_Character_Status_Illegal;
+    IllegalTagDelegateHandle = ASC->RegisterGameplayTagEvent(IllegalTag, EGameplayTagEventType::NewOrRemoved)
+        .AddUObject(this, &ADefaultPlayerController::OnIllegalTagChanged);
+}
+
+void ADefaultPlayerController::OnIllegalTagChanged(const FGameplayTag Tag, int32 NewCount)
+{
+    if (CharacterHUD && CharacterHUD->CharacterOverlay)
+    {
+        if (NewCount > 0)
+        {
+            CharacterHUD->CharacterOverlay->SetStatusText(TEXT("Illegal"));
+        }
+        else
+        {
+            CharacterHUD->CharacterOverlay->SetStatusText(TEXT(""));
+        }
+    }
+}
+
+void ADefaultPlayerController::ServerTryLockPick_Implementation(AActor* TargetDoor, float Angle)
+{
+    if (TargetDoor)
+    {
+        if (ULockPickComponent* LockComp = TargetDoor->FindComponentByClass<ULockPickComponent>())
+        {
+            LockComp->ServerTrySetPin(Angle);
+        }
     }
 }

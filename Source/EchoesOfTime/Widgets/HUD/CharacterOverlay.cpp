@@ -12,15 +12,12 @@
 #include "Widgets/DetectionWidget.h"
 #include "Components/Border.h"
 
-
-// --- Modify OnInventoryChanged to highlight the active item ---
 void UCharacterOverlay::OnInventoryChanged(const TArray<FInventorySlot>& Items)
 {
     if (!InventoryBox || !LinkedInventory) return;
 
     InventoryBox->ClearChildren();
 
-    // Get index of active slot
     int32 ActiveIndex = LinkedInventory->ActiveSlotIndex;
 
     for (int32 i = 0; i < Items.Num(); ++i)
@@ -45,7 +42,6 @@ void UCharacterOverlay::OnInventoryChanged(const TArray<FInventorySlot>& Items)
         SizeBox->SetHeightOverride(FinalSize.Y);
         SizeBox->AddChild(ItemImage);
 
-        // --- Highlight active slot with a border ---
         UBorder* Border = NewObject<UBorder>(InventoryBox);
         Border->SetBrushColor(i == ActiveIndex ? FLinearColor::Yellow : FLinearColor::White);
         Border->SetPadding(FMargin(2.0f));
@@ -126,7 +122,6 @@ void UCharacterOverlay::UpdateDetectionWidgetForGuard(AActor* Guard, float Progr
             WidgetInstance->SetDetectionBarAngle(AngleDegrees);
         }
 
-        // Remove widget if progress is zero OR chase is started (locked/full)
         if ((Progress <= 0.0f && !bIsLocked) || bIsLocked)
         {
             WidgetInstance->RemoveFromParent();

@@ -46,11 +46,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Status")
     float TextureScale = 1.25f;
 
-    // ADD THIS MAP FOR MULTIPLE GUARDS
     UPROPERTY()
     TMap<AActor*, class UDetectionWidget*> GuardDetectionWidgets;
 
-    // ADD THIS FUNCTION DECLARATION
     UFUNCTION(BlueprintCallable)
     void UpdateDetectionWidgetForGuard(AActor* Guard, float Progress, bool bIsLocked, float AngleDegrees = 0.0f);
 };

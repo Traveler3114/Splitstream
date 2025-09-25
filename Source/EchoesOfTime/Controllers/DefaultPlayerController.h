@@ -15,15 +15,18 @@ public:
 
     virtual void BeginPlay() override;
     virtual void SetupInputComponent() override;
+    virtual void OnRep_PlayerState() override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
     void TogglePauseMenu();
-	void BindAttributeDelegates();
-
-    void OnHealthChanged(const struct FOnAttributeChangeData& Data);
-
-	virtual void OnRep_PlayerState() override;
-
     void BindPauseMenuEsc();
     void UnbindPauseMenuEsc();
+
+    void BindAttributeDelegates();
+    void BindGameplayTagDelegates();
+
+    void OnHealthChanged(const struct FOnAttributeChangeData& Data);
+    void OnIllegalTagChanged(const struct FGameplayTag Tag, int32 NewCount);
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
     TSubclassOf<UPauseMenuWidget> PauseMenuWidgetClass;
@@ -44,12 +47,15 @@ public:
 
     UFUNCTION(Server, Reliable)
     void ServerTryLockPick(AActor* TargetDoor, float Angle);
+
 private:
     UPROPERTY()
     class ACharacterHUD* CharacterHUD;
 
     UPROPERTY()
     UPauseMenuWidget* PauseMenuWidget;
+
+    FDelegateHandle IllegalTagDelegateHandle;
 
     UFUNCTION()
     void HandlePauseMenuResumed();

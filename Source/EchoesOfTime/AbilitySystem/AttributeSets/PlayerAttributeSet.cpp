@@ -4,7 +4,7 @@
 
 UPlayerAttributeSet::UPlayerAttributeSet()
 {
-    Health = 100.f;
+
 }
 
 void UPlayerAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
