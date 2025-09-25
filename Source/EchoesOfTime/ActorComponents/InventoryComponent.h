@@ -36,7 +36,7 @@ public:
     FOnInventoryChanged OnInventoryChanged;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
-    int32 SlotCount = 9;
+    int32 SlotCount = 10;
 
     UPROPERTY(ReplicatedUsing = OnRep_Slots, VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
     TArray<FInventorySlot> Slots;

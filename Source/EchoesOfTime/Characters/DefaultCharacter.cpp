@@ -286,6 +286,7 @@ void ADefaultCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
     PlayerInputComponent->BindKey(EKeys::Seven, IE_Pressed, this, &ADefaultCharacter::HandleNumberKey);
     PlayerInputComponent->BindKey(EKeys::Eight, IE_Pressed, this, &ADefaultCharacter::HandleNumberKey);
     PlayerInputComponent->BindKey(EKeys::Nine, IE_Pressed, this, &ADefaultCharacter::HandleNumberKey);
+    PlayerInputComponent->BindKey(EKeys::Zero, IE_Pressed, this, &ADefaultCharacter::HandleNumberKey);
 }
 
 void ADefaultCharacter::HandleAbilityInput(const FInputActionInstance& Instance, FGameplayTag InputTag)
@@ -317,6 +318,7 @@ void ADefaultCharacter::HandleNumberKey(FKey PressedKey)
     else if (PressedKey == EKeys::Seven) SlotIndex = 6;
     else if (PressedKey == EKeys::Eight) SlotIndex = 7;
     else if (PressedKey == EKeys::Nine) SlotIndex = 8;
+    else if (PressedKey == EKeys::Zero) SlotIndex = 9;
 
     if (SlotIndex != -1 && InventoryComponent)
     {
