@@ -56,6 +56,13 @@ public:
     UFUNCTION()
     void HandleAbilityInput(const FInputActionInstance& Instance, FGameplayTag InputTag);
 
+    UPROPERTY(Replicated,BlueprintReadOnly, Category = "Character|Aiming")
+    bool bAiming = false;
+
+    FDelegateHandle AimingTagDelegateHandle;
+
+    void OnAimingTagChanged(const FGameplayTag Tag, int32 NewCount);
+
 protected:
     UPROPERTY()
     AActor* HighlightedActor = nullptr;

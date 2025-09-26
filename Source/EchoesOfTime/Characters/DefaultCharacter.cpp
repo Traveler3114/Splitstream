@@ -155,6 +155,19 @@ void ADefaultCharacter::BeginPlay()
     }
 
     UpdateEquippedItemMesh();
+
+    if (AbilitySystemComponent)
+    {
+        FGameplayTag AimingTag = TAG_Character_Status_Aiming;
+        AimingTagDelegateHandle = AbilitySystemComponent->RegisterGameplayTagEvent(AimingTag, EGameplayTagEventType::NewOrRemoved)
+            .AddUObject(this, &ADefaultCharacter::OnAimingTagChanged);
+    }
+}
+
+void ADefaultCharacter::OnAimingTagChanged(const FGameplayTag Tag, int32 NewCount)
+{
+    bAiming = (NewCount > 0);
+    // Optionally: Notify AnimInstance or broadcast event
 }
 
 void ADefaultCharacter::Tick(float DeltaTime)
@@ -491,4 +504,5 @@ void ADefaultCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 
     DOREPLIFETIME(ADefaultCharacter, bIsSprinting);
     DOREPLIFETIME(ADefaultCharacter, Pitch);
+    DOREPLIFETIME(ADefaultCharacter, bAiming);
 }

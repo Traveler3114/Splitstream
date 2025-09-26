@@ -14,9 +14,5 @@ UPistolGAAim::UPistolGAAim()
 	SetAssetTags(Tags);
 	ActivationOwnedTags.AddTag(TAG_Character_Status_Aiming);
 	ActivationOwnedTags.AddTag(TAG_Character_Status_Illegal_Action);
-	//FAbilityTriggerData TriggerData;
-	//TriggerData.TriggerTag = TAG_Weapon_Ability_Pistol_Aim;
-	//TriggerData.TriggerSource = EGameplayAbilityTriggerSource::GameplayEvent;
-	//AbilityTriggers.Add(TriggerData);
 }
 
