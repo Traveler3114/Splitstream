@@ -66,3 +66,9 @@ void ABullet::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
         Destroy();
     }
 }
+
+void ABullet::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    Super::EndPlay(EndPlayReason);
+	CollisionComp->OnComponentBeginOverlap.RemoveDynamic(this, &ABullet::OnBeginOverlap);
+}
