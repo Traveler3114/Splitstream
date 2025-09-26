@@ -2,6 +2,7 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Engine/Engine.h" // For debug
 
 ABullet::ABullet()
 {
@@ -16,16 +17,12 @@ ABullet::ABullet()
     CollisionComp = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleComp"));
     CollisionComp->InitCapsuleSize(5.0f, 15.0f);
     CollisionComp->SetCollisionProfileName("Projectile");
-    CollisionComp->OnComponentHit.AddDynamic(this, &ABullet::OnHit);
     CollisionComp->SetupAttachment(RootComponent);
 
     // Mesh
     MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
     MeshComp->SetupAttachment(CollisionComp);
     MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-    // Optionally rotate mesh if needed:
-    // MeshComp->SetRelativeRotation(FRotator(0.f, 90.f, 0.f));
 
     // Movement
     ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileComp"));
@@ -36,6 +33,8 @@ ABullet::ABullet()
     ProjectileMovement->bShouldBounce = false;
 
     InitialLifeSpan = 3.0f;
+
+    
 }
 
 void ABullet::BeginPlay()
@@ -47,13 +46,23 @@ void ABullet::BeginPlay()
     {
         ProjectileMovement->Velocity = GetActorForwardVector() * ProjectileMovement->InitialSpeed;
     }
+    CollisionComp->OnComponentBeginOverlap.AddDynamic(this, &ABullet::OnBeginOverlap);
 }
 
-void ABullet::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+void ABullet::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+    UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
+    bool bFromSweep, const FHitResult& SweepResult)
 {
     if (OtherActor && OtherActor != this)
     {
-        //UGameplayStatics::ApplyPointDamage(OtherActor, 20.f, GetVelocity().GetSafeNormal(), Hit, GetInstigatorController(), this, nullptr);
+        // Print debug message on screen
+        if (GEngine)
+        {
+            GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Bullet hit!"));
+        }
+
+        // Example: Apply damage, spawn FX, etc. here
+
+        Destroy();
     }
-    Destroy();
 }
