@@ -155,20 +155,8 @@ void ADefaultCharacter::BeginPlay()
     }
 
     UpdateEquippedItemMesh();
-
-    if (AbilitySystemComponent)
-    {
-        FGameplayTag AimingTag = TAG_Character_Status_Aiming;
-        AimingTagDelegateHandle = AbilitySystemComponent->RegisterGameplayTagEvent(AimingTag, EGameplayTagEventType::NewOrRemoved)
-            .AddUObject(this, &ADefaultCharacter::OnAimingTagChanged);
-    }
 }
 
-void ADefaultCharacter::OnAimingTagChanged(const FGameplayTag Tag, int32 NewCount)
-{
-    bAiming = (NewCount > 0);
-    // Optionally: Notify AnimInstance or broadcast event
-}
 
 void ADefaultCharacter::Tick(float DeltaTime)
 {
@@ -240,6 +228,7 @@ void ADefaultCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
                 if (MapEntry.InputAction)
                 {
                     EnhancedInputComponent->BindAction(MapEntry.InputAction, ETriggerEvent::Started, this, &ADefaultCharacter::HandleAbilityInput, MapEntry.InputTag);
+                    EnhancedInputComponent->BindAction(MapEntry.InputAction, ETriggerEvent::Completed, this, &ADefaultCharacter::HandleAbilityInputReleased, MapEntry.InputTag);
                 }
             }
         }
@@ -274,6 +263,19 @@ void ADefaultCharacter::HandleAbilityInput(const FInputActionInstance& Instance,
     }
 }
 
+void ADefaultCharacter::HandleAbilityInputReleased(const FInputActionInstance& Instance, FGameplayTag InputTag)
+{
+    if (AbilitySystemComponent)
+    {
+        for (FGameplayAbilitySpec& Spec : AbilitySystemComponent->GetActivatableAbilities())
+        {
+            if (Spec.GetDynamicSpecSourceTags().HasTagExact(InputTag) && Spec.IsActive())
+            {
+                AbilitySystemComponent->CancelAbilityHandle(Spec.Handle);
+            }
+        }
+    }
+}
 void ADefaultCharacter::HandleNumberKey(FKey PressedKey)
 {
     int32 SlotIndex = -1;
@@ -504,5 +506,4 @@ void ADefaultCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 
     DOREPLIFETIME(ADefaultCharacter, bIsSprinting);
     DOREPLIFETIME(ADefaultCharacter, Pitch);
-    DOREPLIFETIME(ADefaultCharacter, bAiming);
 }
