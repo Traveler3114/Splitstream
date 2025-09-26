@@ -186,6 +186,11 @@ void ADefaultCharacter::UpdateEquippedItemMesh()
         EquippedItemMeshComp->SetRelativeRotation(ItemAsset->PickupMeshRotation);
         EquippedItemMeshComp->SetOwnerNoSee(true);
     }
+    else
+    {
+        // Clear the mesh if no item equipped!
+        EquippedItemMeshComp->SetStaticMesh(nullptr);
+    }
 }
 
 
