@@ -133,7 +133,7 @@ protected:
     UFUNCTION(Server, Reliable)
     void ServerCameraRotationUpdate(float NewPitch);
 
-    UPROPERTY(ReplicatedUsing = OnRep_Pitch)
+    UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Pitch)
     float Pitch = 0.0f;
 
     UFUNCTION()
