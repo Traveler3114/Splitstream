@@ -130,14 +130,14 @@ protected:
     UFUNCTION()
     void OnRep_SprintState();
 
-    UFUNCTION(Server, Reliable)
-    void ServerCameraRotationUpdate(float NewPitch);
+    // UFUNCTION(Server, Reliable)
+    // void ServerCameraRotationUpdate(float NewPitch);
 
-    UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Pitch)
-    float Pitch = 0.0f;
+    // UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Pitch)
+    // float Pitch = 0.0f;
 
-    UFUNCTION()
-    void OnRep_Pitch();
+    // UFUNCTION()
+    // void OnRep_Pitch();
 
 public:
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
