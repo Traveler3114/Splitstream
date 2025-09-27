@@ -315,7 +315,8 @@ bool ADefaultCharacter::GetForwardTraceResult(float TraceDistance, FHitResult& O
     if (!CameraComponent) return false;
 
     FVector Start = CameraComponent->GetComponentLocation();
-    FVector End = Start + CameraComponent->GetForwardVector() * TraceDistance;
+    FRotator ControlRot = Controller ? Controller->GetControlRotation() : CameraComponent->GetComponentRotation();
+    FVector End = Start + ControlRot.Vector() * TraceDistance;
     OutTraceEnd = End;
 
     FCollisionQueryParams Params;

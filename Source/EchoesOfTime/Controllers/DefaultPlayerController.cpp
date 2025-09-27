@@ -29,6 +29,8 @@ void ADefaultPlayerController::BeginPlay()
     }
     BindAttributeDelegates();
     BindGameplayTagDelegates();
+    PlayerCameraManager->ViewPitchMin = -50.0f;
+    PlayerCameraManager->ViewPitchMax = 50.0f;
 }
 
 void ADefaultPlayerController::OnRep_PlayerState()
