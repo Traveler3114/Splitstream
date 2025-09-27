@@ -511,5 +511,5 @@ void ADefaultCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
     DOREPLIFETIME(ADefaultCharacter, bIsSprinting);
-    //DOREPLIFETIME(ADefaultCharacter, Pitch);
+    DOREPLIFETIME(ADefaultCharacter, Pitch);
 }
