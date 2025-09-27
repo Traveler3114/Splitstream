@@ -11,6 +11,10 @@ class ECHOESOFTIME_API ABullet : public AActor
 public:
     ABullet();
 
+    UFUNCTION(BlueprintCallable, Category = "Bullet|Collision")
+    void SetIgnoreActorsAndComponents(AActor* IgnoreActor, UPrimitiveComponent* IgnoreComponent);
+
+
 protected:
     UPROPERTY(VisibleDefaultsOnly, Category = "Components")
     class USceneComponent* DefaultSceneRoot;

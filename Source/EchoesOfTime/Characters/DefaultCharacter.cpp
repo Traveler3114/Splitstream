@@ -41,7 +41,7 @@ ADefaultCharacter::ADefaultCharacter()
     EquippedItemMeshComp->SetupAttachment(GetMesh(), TEXT("HandGrip_R")); // Attach to hand socket
     EquippedItemMeshComp->SetIsReplicated(true); // Replicate mesh location if needed
     EquippedItemMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	EquippedItemMeshComp->SetOwnerNoSee(true);
+	//EquippedItemMeshComp->SetOwnerNoSee(true);
 
     // If doing FP/TP separation, set up both and use OwnerNoSee/OnlyOwnerSee
 }
@@ -184,7 +184,7 @@ void ADefaultCharacter::UpdateEquippedItemMesh()
         EquippedItemMeshComp->SetStaticMesh(ItemAsset->ItemMesh);
         EquippedItemMeshComp->SetWorldScale3D(ItemAsset->PickupMeshScale);
         EquippedItemMeshComp->SetRelativeRotation(ItemAsset->PickupMeshRotation);
-        EquippedItemMeshComp->SetOwnerNoSee(true);
+        //EquippedItemMeshComp->SetOwnerNoSee(true);
     }
     else
     {

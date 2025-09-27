@@ -30,9 +30,12 @@ void UPistolGAFire::ActivateAbility(
         return;
     }
 
-    FVector MuzzleLocation = Character->GetActorLocation() + Character->GetActorForwardVector() * 100.f + FVector(0, 0, 50.f);
-    FRotator MuzzleRotation = Character->GetControlRotation();
+    // Get muzzle location and rotation from the equipped item mesh
+    FVector MuzzleLocation = Character->EquippedItemMeshComp->GetSocketLocation(FName("Muzzle"));
+    FRotator MuzzleRotation = Character->EquippedItemMeshComp->GetSocketRotation(FName("Muzzle"));
 
+    // Optional: For true FPS, use camera rotation for bullet direction
+    // FRotator MuzzleRotation = Character->GetControlRotation();
 
     UWorld* World = Character->GetWorld();
     if (World && ProjectileClass)
@@ -41,13 +44,19 @@ void UPistolGAFire::ActivateAbility(
         SpawnParams.Owner = Character;
         SpawnParams.Instigator = Character;
 
-        // Only spawn, don't set velocity here
-        World->SpawnActor<ABullet>(
+        // Spawn the bullet and capture the pointer
+        ABullet* SpawnedBullet = World->SpawnActor<ABullet>(
             ProjectileClass,
             MuzzleLocation,
             MuzzleRotation,
             SpawnParams
         );
+
+        if (SpawnedBullet)
+        {
+            // Call the helper function instead of manipulating collision directly
+            SpawnedBullet->SetIgnoreActorsAndComponents(Character, Character->EquippedItemMeshComp);
+        }
     }
 
     EndAbility(Handle, ActorInfo, ActivationInfo, true, false);

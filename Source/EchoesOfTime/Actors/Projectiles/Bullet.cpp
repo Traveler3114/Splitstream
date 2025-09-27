@@ -56,10 +56,18 @@ void ABullet::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
     if (OtherActor && OtherActor != this)
     {
         // Print debug message on screen
+        FString DebugMsg = FString::Printf(
+            TEXT("Bullet hit! Actor: %s, Component: %s"),
+            *OtherActor->GetName(),
+            OtherComp ? *OtherComp->GetName() : TEXT("None")
+        );
         if (GEngine)
         {
-            GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Bullet hit!"));
+            GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, DebugMsg);
         }
+
+        // Log to UE output log
+        UE_LOG(LogTemp, Warning, TEXT("%s"), *DebugMsg);
 
         // Example: Apply damage, spawn FX, etc. here
 
@@ -71,4 +79,20 @@ void ABullet::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     Super::EndPlay(EndPlayReason);
 	CollisionComp->OnComponentBeginOverlap.RemoveDynamic(this, &ABullet::OnBeginOverlap);
+}
+
+
+void ABullet::SetIgnoreActorsAndComponents(AActor* IgnoreActor, UPrimitiveComponent* IgnoreComponent)
+{
+    if (CollisionComp)
+    {
+        if (IgnoreActor)
+        {
+            CollisionComp->IgnoreActorWhenMoving(IgnoreActor, true);
+        }
+        if (IgnoreComponent)
+        {
+            CollisionComp->IgnoreComponentWhenMoving(IgnoreComponent, true);
+        }
+    }
 }
