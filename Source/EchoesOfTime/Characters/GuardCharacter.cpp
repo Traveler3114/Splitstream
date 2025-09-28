@@ -13,7 +13,9 @@
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Components/TimelineComponent.h"
 #include "Curves/CurveFloat.h"
+#include "AbilitySystem/AttributeSets/PlayerAttributeSet.h"
 #include "Controllers/DefaultPlayerController.h"
+#include "GameplayEffectTypes.h"
 
 AGuardCharacter::AGuardCharacter()
 {
@@ -34,11 +36,35 @@ AGuardCharacter::AGuardCharacter()
     AIPerceptionComponent->SetDominantSense(SightConfig->GetSenseImplementation());
 
     GuardTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("GuardTimeline"));
+
+    AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+    AttributeSet = CreateDefaultSubobject<UPlayerAttributeSet>(TEXT("AttributeSet"));
+}
+
+void AGuardCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
+{
+    if (GEngine)
+    {
+        FString DebugMsg = FString::Printf(TEXT("Health changed: %.1f"), Data.NewValue);
+        GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, DebugMsg);
+    }
+
+    if (Data.NewValue <= 0.f)
+    {
+        if (GEngine)
+        {
+            GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Health is ZERO!"));
+        }
+        // Additional logic on death here
+    }
 }
 
 void AGuardCharacter::BeginPlay()
 {
     Super::BeginPlay();
+
+    AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute())
+        .AddUObject(this, &AGuardCharacter::OnHealthChanged);
 
     if (AIPerceptionComponent)
     {

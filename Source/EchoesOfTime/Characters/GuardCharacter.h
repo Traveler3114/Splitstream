@@ -6,13 +6,13 @@
 #include "Interfaces/IGhostMirrorSource.h"
 #include "Components/TimelineComponent.h"
 #include "Curves/CurveFloat.h"
-
+#include "AbilitySystemInterface.h"
 #include "GuardCharacter.generated.h"
 
 class ANavNode;
 
 UCLASS()
-class ECHOESOFTIME_API AGuardCharacter : public ACharacter, public ICameraDetectable, public IGhostMirrorSource
+class ECHOESOFTIME_API AGuardCharacter : public ACharacter, public ICameraDetectable, public IGhostMirrorSource, public IAbilitySystemInterface
 {
     GENERATED_BODY()
 
@@ -20,6 +20,20 @@ public:
     AGuardCharacter();
     virtual void BeginPlay() override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+    //UFUNCTION()
+    void OnHealthChanged(const struct FOnAttributeChangeData& Data);
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    class UAbilitySystemComponent* AbilitySystemComponent;
+
+    // Attribute Set
+    UPROPERTY()
+    class UPlayerAttributeSet* AttributeSet;
+
+    // IAbilitySystemInterface
+    virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
+
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Idle")
     float BaseStayChance = 0.5f;

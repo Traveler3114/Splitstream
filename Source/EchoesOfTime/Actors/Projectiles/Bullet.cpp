@@ -1,23 +1,25 @@
 #include "Bullet.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "AbilitySystemInterface.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "Engine/Engine.h" // For debug
+#include "Engine/Engine.h"
+#include "AbilitySystemComponent.h"
 
 ABullet::ABullet()
 {
     bReplicates = true;
     SetReplicateMovement(true);
 
-    // Create and set as Root
+    // Create a scene root
     DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
     RootComponent = DefaultSceneRoot;
 
-    // Capsule collision
+    // Collision
     CollisionComp = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleComp"));
     CollisionComp->InitCapsuleSize(5.0f, 15.0f);
     CollisionComp->SetCollisionProfileName("Projectile");
-    CollisionComp->SetupAttachment(RootComponent);
+    CollisionComp->SetupAttachment(DefaultSceneRoot);
 
     // Mesh
     MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
@@ -26,15 +28,13 @@ ABullet::ABullet()
 
     // Movement
     ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileComp"));
-    ProjectileMovement->UpdatedComponent = CollisionComp;
+    ProjectileMovement->UpdatedComponent = CollisionComp; // Moves collision, mesh follows via root
     ProjectileMovement->InitialSpeed = 3000.f;
     ProjectileMovement->MaxSpeed = 3000.f;
     ProjectileMovement->bRotationFollowsVelocity = true;
     ProjectileMovement->bShouldBounce = false;
 
     InitialLifeSpan = 3.0f;
-
-    
 }
 
 void ABullet::BeginPlay()
@@ -55,21 +55,22 @@ void ABullet::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
 {
     if (OtherActor && OtherActor != this)
     {
-        // Print debug message on screen
-        FString DebugMsg = FString::Printf(
-            TEXT("Bullet hit! Actor: %s, Component: %s"),
-            *OtherActor->GetName(),
-            OtherComp ? *OtherComp->GetName() : TEXT("None")
-        );
-        if (GEngine)
+        IAbilitySystemInterface* ASCActor = Cast<IAbilitySystemInterface>(OtherActor);
+        if (ASCActor && DamageEffectClass)
         {
-            GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, DebugMsg);
+            UAbilitySystemComponent* ASC = ASCActor->GetAbilitySystemComponent();
+            if (ASC)
+            {
+                FGameplayEffectContextHandle EffectContext = ASC->MakeEffectContext();
+                EffectContext.AddSourceObject(this);
+
+                FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(DamageEffectClass, 1, EffectContext);
+                if (SpecHandle.IsValid())
+                {
+                    ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+                }
+            }
         }
-
-        // Log to UE output log
-        UE_LOG(LogTemp, Warning, TEXT("%s"), *DebugMsg);
-
-        // Example: Apply damage, spawn FX, etc. here
 
         Destroy();
     }

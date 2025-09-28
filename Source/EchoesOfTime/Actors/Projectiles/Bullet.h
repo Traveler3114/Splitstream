@@ -16,6 +16,9 @@ public:
 
 
 protected:
+    UPROPERTY(EditDefaultsOnly, Category = "Damage")
+    TSubclassOf<class UGameplayEffect> DamageEffectClass;
+
     UPROPERTY(VisibleDefaultsOnly, Category = "Components")
     class USceneComponent* DefaultSceneRoot;
 
