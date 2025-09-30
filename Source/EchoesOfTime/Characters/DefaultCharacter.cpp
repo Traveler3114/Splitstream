@@ -185,7 +185,7 @@ void ADefaultCharacter::UpdateEquippedItemMesh()
         EquippedItemMeshComp->SetWorldScale3D(ItemAsset->PickupMeshScale);
         EquippedItemMeshComp->SetRelativeRotation(ItemAsset->PickupMeshRotation);
 		EquippedItemMeshComp->SetRelativeLocation(FVector(0.0f, -0.748768f, 2.162881f));
-        EquippedItemMeshComp->SetRelativeRotation(FRotator(-0.000000f, - 0.000000f, 10.000000f));
+        EquippedItemMeshComp->SetRelativeRotation(FRotator(0.506380f,-2.873100f, 9.987301f));
         //EquippedItemMeshComp->SetOwnerNoSee(true);
     }
     else
