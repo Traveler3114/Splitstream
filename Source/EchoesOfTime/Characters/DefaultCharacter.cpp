@@ -174,7 +174,7 @@ void ADefaultCharacter::OnInventoryChanged(const TArray<FInventorySlot>& Slots)
 
 void ADefaultCharacter::UpdateEquippedItemMesh()
 {
-    if (!InventoryComponent || !EquippedItemMeshComp) return;
+    if (!InventoryComponent || !EquippedItemMeshComp || !HasAuthority()) return;
 
     FInventorySlot ActiveSlot = InventoryComponent->GetActiveItem();
     UItemBase* ItemAsset = ActiveSlot.ItemAsset;

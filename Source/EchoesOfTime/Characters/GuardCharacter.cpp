@@ -56,6 +56,7 @@ void AGuardCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
             GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Health is ZERO!"));
         }
         // Additional logic on death here
+        Destroy();
     }
 }
 

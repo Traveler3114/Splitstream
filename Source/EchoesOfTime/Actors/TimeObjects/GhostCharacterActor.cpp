@@ -81,7 +81,11 @@ void AGhostCharacterActor::Tick(float DeltaTime)
         SourceMesh->RefreshBoneTransforms();
         SourceMesh->UpdateComponentToWorld();
         GhostMesh->SetLeaderPoseComponent(SourceMesh, true, true);
-
+    }
+    else
+    {
+        // If no source mesh, reset leader pose
+        GhostMesh->SetLeaderPoseComponent(nullptr, true, true);
     }
 
     if (GhostMaterial && GhostMesh->GetMaterial(0) != GhostMaterial)
