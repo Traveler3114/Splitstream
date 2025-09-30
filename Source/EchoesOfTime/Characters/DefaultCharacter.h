@@ -35,8 +35,11 @@ public:
     // Store start/end locations/rotations
     FVector CameraDefaultLocation;
     FRotator CameraDefaultRotation;
-    FVector CameraAimLocation;
-    FRotator CameraAimRotation;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Aim")
+    FVector CameraAimLocation = FVector(9.960482f, 15.432522f, 1.7f);
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Aim")
+    FRotator CameraAimRotation = FRotator(-14.932470f, 62.527103f, -102.804844f);
+
 
     UFUNCTION()
     void OnAimCameraTimelineUpdate(float Value);

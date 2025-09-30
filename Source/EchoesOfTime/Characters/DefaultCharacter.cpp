@@ -153,9 +153,6 @@ void ADefaultCharacter::BeginPlay()
     {
         CameraDefaultLocation = CameraComponent->GetRelativeLocation();
         CameraDefaultRotation = CameraComponent->GetRelativeRotation();
-
-        CameraAimLocation = FVector(9.960482f, 15.432522f, 1.7f);
-        CameraAimRotation = FRotator(-14.932470f, 62.527103f, -102.804844f);
     }
 
     UpdateEquippedItemMesh();
@@ -217,10 +214,7 @@ void ADefaultCharacter::UpdateEquippedItemMesh()
         EquippedItemMeshComp->SetWorldScale3D(ItemAsset->PickupMeshScale);
         EquippedItemMeshComp->SetRelativeRotation(ItemAsset->PickupMeshRotation);
 		EquippedItemMeshComp->SetRelativeLocation(FVector(-0.000000,0.500000,2.208336));
-        EquippedItemMeshComp->SetRelativeRotation(FRotator(0.362506,-2.366761,8.703122));
-        //Camera location (X=17.000000,Y=10.800000,Z=58.368401)
-        // Camera location 2(X=9.960482,Y=15.432522,Z=1.7)
-        // Camera rotation (Pitch=-14.932470,Yaw=62.527103,Roll=-102.804844)
+        EquippedItemMeshComp->SetRelativeRotation(FRotator(0.528160,-3.449450,8.694707));
         //EquippedItemMeshComp->SetOwnerNoSee(true);
     }
     else
