@@ -38,7 +38,7 @@ ADefaultCharacter::ADefaultCharacter()
     InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 
     EquippedItemMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("EquippedItemMeshComp"));
-    EquippedItemMeshComp->SetupAttachment(GetMesh(), TEXT("HandGrip_R")); // Attach to hand socket
+    //EquippedItemMeshComp->SetupAttachment(GetMesh(), TEXT("HandGrip_R")); // Attach to hand socket
     EquippedItemMeshComp->SetIsReplicated(true); // Replicate mesh location if needed
     EquippedItemMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	//EquippedItemMeshComp->SetOwnerNoSee(true);
@@ -184,6 +184,8 @@ void ADefaultCharacter::UpdateEquippedItemMesh()
         EquippedItemMeshComp->SetStaticMesh(ItemAsset->ItemMesh);
         EquippedItemMeshComp->SetWorldScale3D(ItemAsset->PickupMeshScale);
         EquippedItemMeshComp->SetRelativeRotation(ItemAsset->PickupMeshRotation);
+		EquippedItemMeshComp->SetRelativeLocation(FVector(0.0f, -0.748768f, 2.162881f));
+        EquippedItemMeshComp->SetRelativeRotation(FRotator(-0.000000f, - 0.000000f, 10.000000f));
         //EquippedItemMeshComp->SetOwnerNoSee(true);
     }
     else
