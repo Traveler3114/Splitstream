@@ -38,7 +38,7 @@ ADefaultCharacter::ADefaultCharacter()
     InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 
     EquippedItemMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("EquippedItemMeshComp"));
-    //EquippedItemMeshComp->SetupAttachment(GetMesh(), TEXT("HandGrip_R")); // Attach to hand socket
+    EquippedItemMeshComp->SetupAttachment(GetMesh(), TEXT("HandGrip_R")); // Attach to hand socket
     EquippedItemMeshComp->SetIsReplicated(true); // Replicate mesh location if needed
     EquippedItemMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	//EquippedItemMeshComp->SetOwnerNoSee(true);
@@ -184,8 +184,11 @@ void ADefaultCharacter::UpdateEquippedItemMesh()
         EquippedItemMeshComp->SetStaticMesh(ItemAsset->ItemMesh);
         EquippedItemMeshComp->SetWorldScale3D(ItemAsset->PickupMeshScale);
         EquippedItemMeshComp->SetRelativeRotation(ItemAsset->PickupMeshRotation);
-		EquippedItemMeshComp->SetRelativeLocation(FVector(0.0f, -0.748768f, 2.162881f));
-        EquippedItemMeshComp->SetRelativeRotation(FRotator(0.506380f,-2.873100f, 9.987301f));
+		EquippedItemMeshComp->SetRelativeLocation(FVector(-0.000000,0.500000,2.208336));
+        EquippedItemMeshComp->SetRelativeRotation(FRotator(0.362506,-2.366761,8.703122));
+        //Camera location (X=17.000000,Y=10.800000,Z=58.368401)
+        // Camera location 2(X=9.960482,Y=15.432522,Z=1.7)
+        // Camera rotation (Pitch=-14.932470,Yaw=62.527103,Roll=-102.804844)
         //EquippedItemMeshComp->SetOwnerNoSee(true);
     }
     else

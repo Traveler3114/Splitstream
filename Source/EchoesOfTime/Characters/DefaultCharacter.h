@@ -39,7 +39,7 @@ public:
     UFUNCTION()
     void OnInventoryChanged(const TArray<FInventorySlot>& Slots);
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
     UStaticMeshComponent* EquippedItemMeshComp;
 
     void UpdateEquippedItemMesh();
@@ -70,10 +70,10 @@ protected:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
     class UInventoryComponent* InventoryComponent;
-
+public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
     UCameraComponent* CameraComponent;
-
+protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     UInputMappingContext* DefaultMappingContext;
 
