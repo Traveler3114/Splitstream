@@ -42,7 +42,7 @@ ADefaultCharacter::ADefaultCharacter()
     EquippedItemMeshComp->SetIsReplicated(true); // Replicate mesh location if needed
     EquippedItemMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	//EquippedItemMeshComp->SetOwnerNoSee(true);
-
+    AimCameraTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("AimCameraTimeline"));
     // If doing FP/TP separation, set up both and use OwnerNoSee/OnlyOwnerSee
 }
 
@@ -149,12 +149,44 @@ void ADefaultCharacter::BeginPlay()
         }
     }
     CameraComponent = FindComponentByClass<UCameraComponent>();
-    if (!CameraComponent)
+    if (CameraComponent)
     {
-        UE_LOG(LogTemp, Warning, TEXT("CameraComponent not found!"));
+        CameraDefaultLocation = CameraComponent->GetRelativeLocation();
+        CameraDefaultRotation = CameraComponent->GetRelativeRotation();
+
+        CameraAimLocation = FVector(9.960482f, 15.432522f, 1.7f);
+        CameraAimRotation = FRotator(-14.932470f, 62.527103f, -102.804844f);
     }
 
     UpdateEquippedItemMesh();
+    if (AimCameraTimeline && AimCameraCurve)
+    {
+        FOnTimelineFloat ProgressFunction;
+        ProgressFunction.BindUFunction(this, FName("OnAimCameraTimelineUpdate"));
+        AimCameraTimeline->AddInterpFloat(AimCameraCurve, ProgressFunction);
+
+        FOnTimelineEvent FinishedFunction;
+        FinishedFunction.BindUFunction(this, FName("OnAimCameraTimelineFinished"));
+        AimCameraTimeline->SetTimelineFinishedFunc(FinishedFunction);
+
+        AimCameraTimeline->SetLooping(false);
+    }
+}
+
+void ADefaultCharacter::OnAimCameraTimelineUpdate(float Value)
+{
+    if (CameraComponent)
+    {
+        FVector NewLocation = FMath::Lerp(CameraDefaultLocation, CameraAimLocation, Value);
+        FRotator NewRotation = FMath::Lerp(CameraDefaultRotation, CameraAimRotation, Value);
+        CameraComponent->SetRelativeLocation(NewLocation);
+        CameraComponent->SetRelativeRotation(NewRotation);
+
+    }
+}
+
+void ADefaultCharacter::OnAimCameraTimelineFinished()
+{
 }
 
 

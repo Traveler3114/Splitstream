@@ -16,7 +16,10 @@ public:
 		const FGameplayAbilityActivationInfo ActivationInfo,
 		const FGameplayEventData* TriggerEventData) override;
 
-	virtual void InputReleased(const FGameplayAbilitySpecHandle Handle,
+	virtual void EndAbility(
+		const FGameplayAbilitySpecHandle Handle,
 		const FGameplayAbilityActorInfo* ActorInfo,
-		const FGameplayAbilityActivationInfo ActivationInfo) override;
+		const FGameplayAbilityActivationInfo ActivationInfo,
+		bool bReplicateEndAbility = true,
+		bool bWasCancelled = false) override;
 };

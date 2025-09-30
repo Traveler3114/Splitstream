@@ -10,6 +10,8 @@
 #include "DataAssets/InputMappingSet.h"
 #include "DataAssets/AbilitySets/AbilityInputSet.h"
 #include "DataAssets/AbilitySets/DefaultGASet.h"
+#include "Components/TimelineComponent.h"
+#include "Curves/CurveFloat.h"
 
 #include "DefaultCharacter.generated.h"
 
@@ -23,6 +25,24 @@ UCLASS()
 class ECHOESOFTIME_API ADefaultCharacter : public ACharacter, public IInteractable, public IRequiresItem, public IAbilitySystemInterface
 {
     GENERATED_BODY()
+public:
+    UPROPERTY()
+    UTimelineComponent* AimCameraTimeline;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Aim")
+    UCurveFloat* AimCameraCurve;
+
+    // Store start/end locations/rotations
+    FVector CameraDefaultLocation;
+    FRotator CameraDefaultRotation;
+    FVector CameraAimLocation;
+    FRotator CameraAimRotation;
+
+    UFUNCTION()
+    void OnAimCameraTimelineUpdate(float Value);
+
+    UFUNCTION()
+    void OnAimCameraTimelineFinished();
 
 public:
     ADefaultCharacter();
