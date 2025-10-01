@@ -38,12 +38,10 @@ ADefaultCharacter::ADefaultCharacter()
     InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 
     EquippedItemMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("EquippedItemMeshComp"));
-    EquippedItemMeshComp->SetupAttachment(GetMesh(), TEXT("HandGrip_R")); // Attach to hand socket
-    EquippedItemMeshComp->SetIsReplicated(true); // Replicate mesh location if needed
+    EquippedItemMeshComp->SetupAttachment(GetMesh(), TEXT("HandGrip_R"));
+    EquippedItemMeshComp->SetIsReplicated(true);
     EquippedItemMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	//EquippedItemMeshComp->SetOwnerNoSee(true);
     AimCameraTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("AimCameraTimeline"));
-    // If doing FP/TP separation, set up both and use OwnerNoSee/OnlyOwnerSee
 }
 
 void ADefaultCharacter::UpdateInteractHighlight()
@@ -215,7 +213,6 @@ void ADefaultCharacter::UpdateEquippedItemMesh()
         EquippedItemMeshComp->SetRelativeRotation(ItemAsset->PickupMeshRotation);
 		EquippedItemMeshComp->SetRelativeLocation(FVector(-0.000000,0.500000,2.208336));
         EquippedItemMeshComp->SetRelativeRotation(FRotator(0.528160,-3.449450,8.694707));
-        //EquippedItemMeshComp->SetOwnerNoSee(true);
     }
     else
     {
