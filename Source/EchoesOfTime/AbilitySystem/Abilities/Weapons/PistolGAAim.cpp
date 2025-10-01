@@ -22,7 +22,7 @@ void UPistolGAAim::ActivateAbility(const FGameplayAbilitySpecHandle Handle, cons
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
     ADefaultCharacter* Character = Cast<ADefaultCharacter>(ActorInfo->AvatarActor.Get());
-    if (!Character || !Character->CameraComponent) return;
+    if (!Character) return;
 
     if (Character->AimCameraTimeline)
         Character->AimCameraTimeline->Play();
@@ -37,7 +37,7 @@ void UPistolGAAim::EndAbility(
     bool bWasCancelled)
 {
     ADefaultCharacter* Character = Cast<ADefaultCharacter>(ActorInfo->AvatarActor.Get());
-    if (Character && Character->CameraComponent && Character->AimCameraTimeline)
+    if (Character && Character->AimCameraTimeline)
     {
         Character->AimCameraTimeline->Reverse();
     }

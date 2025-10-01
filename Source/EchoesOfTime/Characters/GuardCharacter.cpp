@@ -55,7 +55,8 @@ void AGuardCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
         {
             GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Health is ZERO!"));
         }
-        // Additional logic on death here
+		SpawnedGhost->Destroy();
+		SpawnedGhost = nullptr;
         Destroy();
     }
 }
@@ -63,6 +64,19 @@ void AGuardCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
 void AGuardCharacter::BeginPlay()
 {
     Super::BeginPlay();
+
+    if (HasAuthority() && AttributeInitGE)
+    {
+        if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+        {
+            FGameplayEffectContextHandle EffectContext = ASC->MakeEffectContext();
+            FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(AttributeInitGE, 1, EffectContext);
+            if (SpecHandle.IsValid())
+            {
+                ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+            }
+        }
+    }
 
     AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute())
         .AddUObject(this, &AGuardCharacter::OnHealthChanged);

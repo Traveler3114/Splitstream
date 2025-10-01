@@ -82,6 +82,9 @@ public:
     UFUNCTION()
     void HandleAbilityInputReleased(const FInputActionInstance& Instance, FGameplayTag InputTag);
 
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
+    TSubclassOf<UGameplayEffect> AttributeInitGE;
+
 protected:
     UPROPERTY()
     AActor* HighlightedActor = nullptr;
@@ -93,10 +96,10 @@ protected:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
     class UInventoryComponent* InventoryComponent;
-public:
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
     UCameraComponent* CameraComponent;
-protected:
+
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     UInputMappingContext* DefaultMappingContext;
 
