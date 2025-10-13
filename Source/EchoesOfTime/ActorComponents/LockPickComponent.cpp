@@ -4,6 +4,16 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/EOTGameplayTags.h"
 
+#if WITH_EDITOR
+#include "Editor/UnrealEd/Public/Editor.h"
+void ULockPickComponent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+    Super::PostEditChangeProperty(PropertyChangedEvent);
+    GeneratePins();
+    PinSetStates.Init(false, Pins.Num());
+}
+#endif
+
 ULockPickComponent::ULockPickComponent()
 {
     PrimaryComponentTick.bCanEverTick = false;
