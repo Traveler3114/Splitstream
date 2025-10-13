@@ -8,7 +8,7 @@
 UDefaultGALockPick::UDefaultGALockPick()
 {
     InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
-    NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::ServerInitiated;
+    NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
 
     FGameplayTagContainer Tags;
     FGameplayTag MyTag = TAG_Character_Ability_LockPick;
@@ -26,7 +26,6 @@ UDefaultGALockPick::UDefaultGALockPick()
     AbilityTriggers.Add(TriggerData);
 }
 
-
 void UDefaultGALockPick::ActivateAbility(
     const FGameplayAbilitySpecHandle Handle,
     const FGameplayAbilityActorInfo* ActorInfo,
@@ -38,25 +37,34 @@ void UDefaultGALockPick::ActivateAbility(
     ActiveLockComp = nullptr;
     if (TriggerEventData && TriggerEventData->OptionalObject)
     {
-        // Always resolve the actor/component in *this* context!
         AActor* HitActor = const_cast<AActor*>(Cast<AActor>(TriggerEventData->OptionalObject));
         if (HitActor)
         {
             ActiveLockComp = HitActor->FindComponentByClass<ULockPickComponent>();
         }
     }
-
     if (!ActiveLockComp)
     {
         EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
         return;
     }
 
-    // THIS WILL RUN ON BOTH CLIENT AND SERVER DUE TO GAS REPLICATION
-    ActiveLockPickTask = ULockPickAbilityTask::StartLockPickTask(this, ActiveLockComp);
-	ActiveLockPickTask->LockPickWidgetClass = LockPickWidgetClass;
-    ActiveLockPickTask->OnFinished.AddDynamic(this, &UDefaultGALockPick::OnLockPickTaskFinished);
-    ActiveLockPickTask->ReadyForActivation();
+    if (IsLocallyControlled() && ActorInfo && ActorInfo->AbilitySystemComponent.IsValid())
+    {
+        FScopedPredictionWindow ScopedPred(ActorInfo->AbilitySystemComponent.Get(), true);
+
+        ActiveLockPickTask = ULockPickAbilityTask::StartLockPickTask(this, ActiveLockComp);
+        ActiveLockPickTask->LockPickWidgetClass = LockPickWidgetClass;
+        ActiveLockPickTask->OnFinished.AddDynamic(this, &UDefaultGALockPick::OnLockPickTaskFinished);
+        ActiveLockPickTask->ReadyForActivation();
+    }
+    else
+    {
+        ActiveLockPickTask = ULockPickAbilityTask::StartLockPickTask(this, ActiveLockComp);
+        ActiveLockPickTask->LockPickWidgetClass = LockPickWidgetClass;
+        ActiveLockPickTask->OnFinished.AddDynamic(this, &UDefaultGALockPick::OnLockPickTaskFinished);
+        ActiveLockPickTask->ReadyForActivation();
+    }
 }
 
 void UDefaultGALockPick::EndAbility(

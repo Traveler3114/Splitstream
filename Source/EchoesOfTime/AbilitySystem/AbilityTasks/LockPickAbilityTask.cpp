@@ -20,11 +20,7 @@ void ULockPickAbilityTask::Activate()
         return;
     }
 
-    if (GetAvatarActor()->HasAuthority())
-    {
-        LockComp->StartLockPicking();
-    }
-
+    LockComp->StartLockPicking();
     if (APlayerController* PC = Cast<APlayerController>(GetAvatarActor()->GetInstigatorController()))
     {
         if (LockPickWidgetClass && !LockPickWidget)
@@ -35,7 +31,7 @@ void ULockPickAbilityTask::Activate()
                 if (LockPickWidget)
                 {
                     LockPickWidget->InitializeLockPickWidget(LockComp);
-                    LockPickWidget->AddToViewport();
+                    LockPickWidget->AddToViewport(1000);
                 }
             }
         }
@@ -136,19 +132,15 @@ void ULockPickAbilityTask::OnMouseY(float Axis)
 
 void ULockPickAbilityTask::OnConfirm()
 {
-    if (!LockComp) return; 
-
+    if (!LockComp) return;
     APawn* Pawn = Cast<APawn>(GetAvatarActor());
-    if (!Pawn) return; 
-
+    if (!Pawn) return;
     ADefaultPlayerController* PC = Cast<ADefaultPlayerController>(Pawn->GetController());
-    if (!PC) return; 
-
+    if (!PC) return;
     PC->ServerTryLockPick(LockComp->GetOwner(), LockPickDialAngle);
 }
 void ULockPickAbilityTask::ServerConfirmPin_Implementation(float Angle)
 {
-
     if (!LockComp || !bIsLockPicking) return;
     bool bCorrect = LockComp->TrySetCurrentPin(Angle);
     if (bCorrect)

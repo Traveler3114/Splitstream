@@ -22,27 +22,18 @@ void ULockPickComponent::BeginPlay()
     {
         GeneratePins(); // Only on server!
     }
-    PinSetStates.Init(false, Pins.Num()); // Move this after Pins are valid
+    PinSetStates.Init(false, Pins.Num());
 }
+
 void ULockPickComponent::OnComponentCreated()
 {
     Super::OnComponentCreated();
-    // Only generate pins on the server for multiplayer safety
     if (GetOwner()->HasAuthority())
     {
         GeneratePins();
     }
     PinSetStates.Init(false, Pins.Num());
 }
-
-#if WITH_EDITOR
-void ULockPickComponent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
-{
-    Super::PostEditChangeProperty(PropertyChangedEvent);
-    GeneratePins();
-    PinSetStates.Init(false, Pins.Num());
-}
-#endif
 
 void ULockPickComponent::GeneratePins()
 {
@@ -58,13 +49,12 @@ void ULockPickComponent::GeneratePins()
     default:                      Tolerance = 10.f; break;
     }
 
-    // Seed the random stream with a truly random value for each session
     int32 Seed = FMath::Rand();
     FRandomStream Stream(Seed);
 
     for (int32 i = 0; i < NumPins; ++i)
     {
-        float Angle = Stream.FRandRange(0.f, 360.f); // Truly random every time the level is loaded
+        float Angle = Stream.FRandRange(0.f, 360.f);
         FLockPinData Pin;
         Pin.SweetSpotAngle = Angle;
         Pin.Tolerance = Tolerance;
@@ -118,20 +108,18 @@ bool ULockPickComponent::GetCurrentPinData(float& OutSweetSpotAngle, float& OutT
     return false;
 }
 
-
-
 void ULockPickComponent::Interact(AActor* Interactor)
 {
-    if (bUnlocked || bPickingInProgress) return;
-
-    // Fire gameplay event for GAS
+    if (bUnlocked || bPickingInProgress) {
+        return;
+    }
     if (IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(Interactor))
     {
         if (UAbilitySystemComponent* ASC = AbilityInterface->GetAbilitySystemComponent())
         {
             FGameplayEventData EventData;
             EventData.Instigator = Interactor;
-            EventData.OptionalObject = GetOwner(); // The locked actor
+            EventData.OptionalObject = GetOwner();
 
             ASC->HandleGameplayEvent(
                 TAG_Character_Ability_LockPick,
@@ -164,11 +152,6 @@ bool ULockPickComponent::TrySetCurrentPin(float InputAngle)
 
 bool ULockPickComponent::AdvancePin()
 {
-    FString Side = GetOwner() && GetOwner()->HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT");
-    UE_LOG(LogTemp, Warning, TEXT("[LOCKPICK][%s] AdvancePin called (CurrentPinIndex=%d, Pins.Num()=%d)"), *Side, CurrentPinIndex, Pins.Num());
-    if (GEngine)
-        GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Blue, FString::Printf(TEXT("[LOCKPICK][%s] AdvancePin (Pin %d/%d)"), *Side, CurrentPinIndex, Pins.Num()));
-
     if (Pins.IsValidIndex(CurrentPinIndex))
     {
         PinSetStates[CurrentPinIndex] = true;
@@ -177,9 +160,6 @@ bool ULockPickComponent::AdvancePin()
         {
             bUnlocked = true;
             bPickingInProgress = false;
-            UE_LOG(LogTemp, Warning, TEXT("[LOCKPICK][%s] LOCK UNLOCKED!"), *Side);
-            if (GEngine)
-                GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, FString::Printf(TEXT("[LOCKPICK][%s] LOCK UNLOCKED!"), *Side));
             OnUnlock.Broadcast();
             OnRep_Unlocked();
             return true;
@@ -203,6 +183,7 @@ void ULockPickComponent::OnRep_Unlocked()
         OnUnlock.Broadcast();
     }
 }
+
 void ULockPickComponent::ServerTrySetPin_Implementation(float InputAngle)
 {
     if (TrySetCurrentPin(InputAngle))
@@ -225,5 +206,5 @@ float ULockPickComponent::GetPinAngleProximity(int32 PinIndex, float InputAngle)
     float Diff = FMath::Abs(SweetSpot - InputNorm);
     if (Diff > 180.f) Diff = 360.f - Diff;
 
-    return 1.0f - FMath::Clamp(Diff / Tolerance, 0.f, 1.f); // 1 when on sweet spot, 0 when outside tolerance
+    return 1.0f - FMath::Clamp(Diff / Tolerance, 0.f, 1.f);
 }
