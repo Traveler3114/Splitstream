@@ -124,6 +124,7 @@ void AArchiveComputer::Interact_Implementation(AActor* Interactor)
 
         TArray<AActor*> FoundCodeGenerators;
         UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACodeGenerator::StaticClass(), FoundCodeGenerators);
+
         for (AActor* Actor : FoundCodeGenerators)
         {
             ACodeGenerator* CodeGen = Cast<ACodeGenerator>(Actor);
@@ -140,12 +141,15 @@ void AArchiveComputer::Interact_Implementation(AActor* Interactor)
             CivilianDateRecords.Add(FutureRec);
     }
 
-    if (ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(PC))
+    // **Only the server sends the RPC. This works for both listen server and remote clients!**
+    if (HasAuthority())
     {
-        MyPC->ClientShowCalendarWidget(CivilianDateRecords);
+        if (ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(PC))
+        {
+            MyPC->ClientShowCalendarWidget(CivilianDateRecords);
+        }
     }
 }
-
 void AArchiveComputer::SetHighlighted_Implementation(bool bHighlight)
 {
     if (ComputerMesh)

@@ -1,13 +1,16 @@
 #include "DefaultGAHack.h"
-#include "AbilitySystem/AbilityTasks/HackAbilityTask.h"
+#include "AbilitySystemComponent.h"
 #include "AbilitySystem/EOTGameplayTags.h"
+#include "AbilitySystem/AbilityTasks/HackAbilityTask.h"
 #include "ActorComponents/HackComponent.h"
 #include "Widgets/HUD/HackWidget.h"
 
 UDefaultGAHack::UDefaultGAHack()
 {
     InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
-    NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::ServerInitiated;
+
+    // Make this ability local-predicted so clients run ActivateAbility immediately for snappy UI.
+    NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
 
     FGameplayTagContainer Tags;
     FGameplayTag MyTag = TAG_Character_Ability_Hack;
@@ -45,10 +48,32 @@ void UDefaultGAHack::ActivateAbility(
 
     if (!ActiveHackComp)
     {
+        // Nothing to hack; finish ability immediately.
         EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
         return;
     }
 
+    // If this ability is LocalPredicted, the client will execute this function locally immediately.
+    // Create a scoped prediction window on the owning ASC so this activation has a PredictionKey.
+    if (IsLocallyControlled() && ActorInfo && ActorInfo->AbilitySystemComponent.IsValid())
+    {
+        // Create a scoped prediction window so this activation carries a PredictionKey.
+        // This allows future predicted effects/operations to be reconciled by the server.
+        FScopedPredictionWindow ScopedPred(ActorInfo->AbilitySystemComponent.Get(), /*bCreateNewPredictionKeyIfNotAvailable=*/true);
+
+        // Start local predicted hack so UI appears instantly.
+        ActiveHackComp->StartHacking();
+    }
+    else
+    {
+        // Server/authority side: start authoritative hacking (server validation can be added here).
+        if (ActorInfo && ActorInfo->IsNetAuthority())
+        {
+            ActiveHackComp->StartHacking();
+        }
+    }
+
+    // Start the ability task that manages the UI and cancellation input.
     ActiveHackTask = UHackAbilityTask::StartHackTask(this, ActiveHackComp);
     ActiveHackTask->HackWidgetClass = HackWidgetClass;
     ActiveHackTask->OnFinished.AddDynamic(this, &UDefaultGAHack::OnHackTaskFinished);
@@ -61,11 +86,11 @@ void UDefaultGAHack::EndAbility(
     const FGameplayAbilityActivationInfo ActivationInfo,
     bool bReplicateEndAbility, bool bWasCancelled)
 {
-    if (ActiveHackComp)
+    if (ActiveHackComp && bWasCancelled)
     {
         ActiveHackComp->CancelHacking();
-        ActiveHackComp = nullptr;
     }
+    ActiveHackComp = nullptr;
     Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 

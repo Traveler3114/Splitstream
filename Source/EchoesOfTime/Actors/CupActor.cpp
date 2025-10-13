@@ -30,30 +30,32 @@ void ACupActor::SetHighlighted_Implementation(bool bHighlight)
     }
 }
 
+void ACupActor::Interact_Implementation(AActor* Interactor)
+{
+    if (SearchComponent)
+    {
+        SearchComponent->Interact(Interactor);
+    }
+}
 
 void ACupActor::OnSearchComplete()
 {
     Super::OnSearchComplete();
 
+
     if (!HasAuthority()) return; // Ensure only server gives the item
 
-    if (!SearchComponent) return;
+
     AActor* LastInteractor = SearchComponent->LastInteractor.Get();
-    if (!LastInteractor) return;
 
     UInventoryComponent* Inventory = LastInteractor->FindComponentByClass<UInventoryComponent>();
-    if (Inventory)
-    {
-        UFingerprintItem* Fingerprint = Cast<UFingerprintItem>(StaticLoadObject(
-            UFingerprintItem::StaticClass(),
-            nullptr,
-            TEXT("/Game/DataAssets/Items/DA_Fingerprint.DA_Fingerprint")
-        ));
-        if (Fingerprint)
-        {
-            Fingerprint->OwnerCivilian = LinkedCivilian;
-            FGuid NewInstanceID = FGuid::NewGuid();
-            Inventory->AddItem(Fingerprint, NewInstanceID);
-        }
-    }
+
+    UFingerprintItem* Fingerprint = Cast<UFingerprintItem>(StaticLoadObject(
+        UFingerprintItem::StaticClass(),
+        nullptr,
+        TEXT("/Game/DataAssets/Items/DA_Fingerprint.DA_Fingerprint")
+    ));
+    Fingerprint->OwnerCivilian = LinkedCivilian;
+    FGuid NewInstanceID = FGuid::NewGuid();
+    bool bAdded = Inventory->AddItem(Fingerprint, NewInstanceID);
 }

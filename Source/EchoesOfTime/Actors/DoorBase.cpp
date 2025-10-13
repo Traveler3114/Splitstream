@@ -38,6 +38,8 @@ void ADoorBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void ADoorBase::Interact_Implementation(AActor* Interactor)
 {
+    if (!HasAuthority()) return;
+
     if (bIsLocked && LockPickComponent)
     {
         LockPickComponent->Interact(Interactor);

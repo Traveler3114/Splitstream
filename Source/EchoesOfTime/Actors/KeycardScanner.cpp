@@ -25,6 +25,8 @@ bool AKeycardScanner::IsCorrectItem_Implementation(UItemBase* Item) const
 }
 void AKeycardScanner::Interact_Implementation(AActor* Interactor)
 {
+    if (!HasAuthority()) return;
+
     if (!Interactor || !LinkedActor)
         return;
 

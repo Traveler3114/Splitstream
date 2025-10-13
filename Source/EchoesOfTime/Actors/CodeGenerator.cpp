@@ -51,10 +51,11 @@ bool ACodeGenerator::IsCorrectItem_Implementation(UItemBase* Item) const
 
 void ACodeGenerator::Interact_Implementation(AActor* Interactor)
 {
+    if (!HasAuthority()) return;
+
     if (!Interactor || !TargetCivilian)
         return;
 
-    // At this point, the correct fingerprint has already been checked and used!
 
     if (GEngine)
     {

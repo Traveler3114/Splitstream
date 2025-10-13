@@ -63,13 +63,12 @@ void AComputer::SetHighlighted_Implementation(bool bHighlight)
 
 void AComputer::OnHackComplete()
 {
-    if (HasAuthority() && GEngine)
+    if (GEngine)
     {
         FString RevealMsg = FString::Printf(TEXT("Hacked! Keypad Code: %s"), *StoredCode);
         GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Green, RevealMsg);
     }
 }
-
 void AComputer::OnRep_StoredCode()
 {
     // Optionally display code in UI/widgets

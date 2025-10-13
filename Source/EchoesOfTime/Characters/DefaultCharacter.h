@@ -135,8 +135,11 @@ protected:
     void StartSprint();
     void StopSprint();
 
+	void HandleInteract();
+
+    // In DefaultCharacter.h
     UFUNCTION(Server, Reliable)
-    void ServerHandleInteract();
+    void ServerHandleInteract(AActor* TargetActor);
 
     void SelectInventorySlot(int32 SlotNumber);
 
@@ -170,6 +173,6 @@ public:
     bool GetForwardTraceResult(float TraceDistance, FHitResult& OutHit, FVector& OutTraceEnd) const;
 
 private:
-    void GrantAbilitiesFromInputSet(); // <<--- this is the new grant function
+    void GrantAbilitiesFromInputSet();
     void GrantAbilitiesFromDefaultSet();
 };

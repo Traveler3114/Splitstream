@@ -8,6 +8,7 @@ UHackComponent::UHackComponent()
 {
     SetIsReplicatedByDefault(true);
     PrimaryComponentTick.bCanEverTick = true;
+    PrimaryComponentTick.SetTickFunctionEnable(true);
     bHackingInProgress = false;
     bHacked = false;
     HackDuration = 10.f;

@@ -1,4 +1,5 @@
 #include "DefaultGASearch.h"
+#include "AbilitySystemComponent.h"
 #include "AbilitySystem/AbilityTasks/SearchAbilityTask.h"
 #include "AbilitySystem/EOTGameplayTags.h"
 #include "ActorComponents/SearchComponent.h"
@@ -7,7 +8,7 @@
 UDefaultGASearch::UDefaultGASearch()
 {
     InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
-    NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::ServerInitiated;
+    NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
 
     FGameplayTagContainer Tags;
     FGameplayTag MyTag = TAG_Character_Ability_Search;
@@ -49,6 +50,20 @@ void UDefaultGASearch::ActivateAbility(
         return;
     }
 
+    // LocalPredicted: open prediction window and start local predicted logic, server is authoritative.
+    if (IsLocallyControlled() && ActorInfo && ActorInfo->AbilitySystemComponent.IsValid())
+    {
+        FScopedPredictionWindow ScopedPred(ActorInfo->AbilitySystemComponent.Get(), /*bCreateNewPredictionKeyIfNotAvailable=*/true);
+        ActiveSearchComp->StartSearching(); // Start predicted search (UI/progress) locally
+    }
+    else
+    {
+        if (ActorInfo && ActorInfo->IsNetAuthority())
+        {
+            ActiveSearchComp->StartSearching(); // Start authoritative search on the server
+        }
+    }
+
     ActiveSearchTask = USearchAbilityTask::StartSearchTask(this, ActiveSearchComp);
     ActiveSearchTask->SearchWidgetClass = SearchWidgetClass;
     ActiveSearchTask->OnFinished.AddDynamic(this, &UDefaultGASearch::OnSearchTaskFinished);
@@ -61,11 +76,12 @@ void UDefaultGASearch::EndAbility(
     const FGameplayAbilityActivationInfo ActivationInfo,
     bool bReplicateEndAbility, bool bWasCancelled)
 {
-    if (ActiveSearchComp)
+    // Only cancel searching if the ability was actually cancelled (not on success)
+    if (ActiveSearchComp && bWasCancelled)
     {
         ActiveSearchComp->CancelSearching();
-        ActiveSearchComp = nullptr;
     }
+    ActiveSearchComp = nullptr;
     Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 

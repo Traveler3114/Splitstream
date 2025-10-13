@@ -55,6 +55,8 @@ void AItemPickup::RefreshMeshFromItemData()
 
 void AItemPickup::Interact_Implementation(AActor* Interactor)
 {
+    if (!HasAuthority()) return;
+
     if (!ItemData || !Interactor) return;
 
     UInventoryComponent* Inventory = Interactor->FindComponentByClass<UInventoryComponent>();

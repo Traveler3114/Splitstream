@@ -30,6 +30,7 @@ void AKeypadButton::Tick(float DeltaTime)
 
 void AKeypadButton::Interact_Implementation(AActor* Interactor)
 {
+    if (!HasAuthority()) return;
     OnButtonPressed.Broadcast(ButtonSymbol);
 }
 

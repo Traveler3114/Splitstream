@@ -132,13 +132,19 @@ void ADefaultPlayerController::HandlePauseMenuResumed()
 
 void ADefaultPlayerController::ClientShowCalendarWidget_Implementation(const TArray<FCalendarCivilianRecord>& CivilianDateRecords)
 {
+    if (CalendarWidgetInstance && CalendarWidgetInstance->IsInViewport())
+    {
+        // Widget is already open; don't create another!
+        return;
+    }
+
     if (CalendarWidgetClass)
     {
-        UCalendarWidget* Widget = CreateWidget<UCalendarWidget>(this, CalendarWidgetClass);
-        if (Widget)
+        CalendarWidgetInstance = CreateWidget<UCalendarWidget>(this, CalendarWidgetClass);
+        if (CalendarWidgetInstance)
         {
-            Widget->CivilianDateRecords = CivilianDateRecords;
-            Widget->AddToViewport();
+            CalendarWidgetInstance->CivilianDateRecords = CivilianDateRecords;
+            CalendarWidgetInstance->AddToViewport();
         }
     }
 }

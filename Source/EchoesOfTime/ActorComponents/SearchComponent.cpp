@@ -67,22 +67,22 @@ void USearchComponent::OnRep_Searched()
 
 void USearchComponent::Interact(AActor* Interactor)
 {
+    if (GetOwner()->HasAuthority()) {
+        LastInteractor = Interactor;
+    }
     if (bSearched || bSearchingInProgress) return;
-
-    // Only set LastInteractor if we have authority (server)
     if (GetOwner()->HasAuthority())
     {
-        LastInteractor = Interactor; // On the server, Interactor should be the server's pawn
+        LastInteractor = Interactor; // 'Interactor' MUST be the server pawn
     }
-
-    // Fire gameplay event for GAS (should work if this is called on the server)
+    // Fire gameplay event for GAS
     if (IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(Interactor))
     {
         if (UAbilitySystemComponent* ASC = AbilityInterface->GetAbilitySystemComponent())
         {
             FGameplayEventData EventData;
             EventData.Instigator = Interactor;
-            EventData.OptionalObject = GetOwner();
+            EventData.OptionalObject = GetOwner(); // This is the Searchable actor, needed for GAS ability
 
             ASC->HandleGameplayEvent(
                 TAG_Character_Ability_Search,
@@ -91,6 +91,8 @@ void USearchComponent::Interact(AActor* Interactor)
         }
     }
 }
+
+
 
 void USearchComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
