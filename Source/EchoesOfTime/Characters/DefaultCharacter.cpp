@@ -433,7 +433,8 @@ void ADefaultCharacter::HandleInteract()
                 FInventorySlot ActiveSlot = Inventory->GetActiveItem();
                 ActiveItem = ActiveSlot.ItemAsset;
             }
-            if (!IRequiresItem::Execute_IsCorrectItem(HitActor, ActiveItem))
+            // Only check and show error on the SERVER!
+            if (HasAuthority() && !IRequiresItem::Execute_IsCorrectItem(HitActor, ActiveItem))
             {
                 if (IsLocallyControlled() && GEngine)
                 {
@@ -473,6 +474,7 @@ void ADefaultCharacter::ServerHandleInteract_Implementation(AActor* TargetActor)
         }
         if (!IRequiresItem::Execute_IsCorrectItem(TargetActor, ActiveItem))
         {
+            // Optionally, send an error to the client here
             return;
         }
         if (ActiveItem)
@@ -486,7 +488,6 @@ void ADefaultCharacter::ServerHandleInteract_Implementation(AActor* TargetActor)
         IInteractable::Execute_Interact(TargetActor, this); // Always authority!
     }
 }
-
 void ADefaultCharacter::Jump()
 {
     ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
