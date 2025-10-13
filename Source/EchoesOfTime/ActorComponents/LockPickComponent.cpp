@@ -49,7 +49,9 @@ void ULockPickComponent::GeneratePins()
     default:                      Tolerance = 10.f; break;
     }
 
-    int32 Seed = FMath::Rand();
+    // Use a GUID for the seed for maximum unpredictability
+    FGuid Guid = FGuid::NewGuid();
+    int32 Seed = HashCombine(GetTypeHash(Guid.A), GetTypeHash(Guid.B) ^ GetTypeHash(Guid.C) ^ GetTypeHash(Guid.D));
     FRandomStream Stream(Seed);
 
     for (int32 i = 0; i < NumPins; ++i)
