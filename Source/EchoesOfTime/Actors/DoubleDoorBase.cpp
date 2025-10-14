@@ -1,5 +1,7 @@
 #include "DoubleDoorBase.h"
 #include "ActorComponents/LockPickComponent.h"
+#include "Components/BoxComponent.h"
+#include "Characters/GuardCharacter.h"
 #include "Net/UnrealNetwork.h"
 
 ADoubleDoorBase::ADoubleDoorBase()
@@ -20,6 +22,12 @@ ADoubleDoorBase::ADoubleDoorBase()
     DoorLeftMesh->SetupAttachment(SceneRoot);
     DoorLeftMesh->SetIsReplicated(true);
     DoorLeftMesh->SetCanEverAffectNavigation(false);
+
+    GuardOpenTrigger = CreateDefaultSubobject<UBoxComponent>(TEXT("GuardOpenTrigger"));
+    GuardOpenTrigger->SetupAttachment(RootComponent);
+    GuardOpenTrigger->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    GuardOpenTrigger->SetCollisionResponseToAllChannels(ECR_Ignore);
+    GuardOpenTrigger->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 }
 
 void ADoubleDoorBase::BeginPlay()
@@ -31,6 +39,8 @@ void ADoubleDoorBase::BeginPlay()
     {
         LockPickComponent->OnUnlock.AddDynamic(this, &ADoubleDoorBase::OnLockUnlocked);
     }
+    GuardOpenTrigger->OnComponentBeginOverlap.AddDynamic(this, &ADoubleDoorBase::OnGuardOpenBeginOverlap);
+    GuardOpenTrigger->OnComponentEndOverlap.AddDynamic(this, &ADoubleDoorBase::OnGuardOpenEndOverlap);
 }
 
 void ADoubleDoorBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -98,14 +108,63 @@ bool ADoubleDoorBase::RequiresKeycard_Implementation() const
     return bRequiresKeycard;
 }
 
-
 void ADoubleDoorBase::SetHighlighted_Implementation(bool bHighlight)
 {
-    if (DoorLeftMesh&&DoorRightMesh)
+    if (DoorLeftMesh && DoorRightMesh)
     {
         DoorLeftMesh->SetRenderCustomDepth(bHighlight);
         DoorLeftMesh->CustomDepthStencilValue = bHighlight ? 1 : 0;
         DoorRightMesh->SetRenderCustomDepth(bHighlight);
         DoorRightMesh->CustomDepthStencilValue = bHighlight ? 1 : 0;
     }
+}
+
+// --- Guard Auto Open/Close Logic ---
+
+void ADoubleDoorBase::OnGuardOpenBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+    UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+    if (!bAutoOpenForGuards)
+        return;
+    if (OtherActor && OtherActor->IsA(AGuardCharacter::StaticClass()))
+    {
+        ForceOpenDoorForGuard();
+    }
+}
+
+void ADoubleDoorBase::OnGuardOpenEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+    UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+    if (!bAutoOpenForGuards)
+        return;
+    if (OtherActor && OtherActor->IsA(AGuardCharacter::StaticClass()))
+    {
+        // Check if any other guards are still overlapping
+        TArray<AActor*> Overlapping;
+        GuardOpenTrigger->GetOverlappingActors(Overlapping, AGuardCharacter::StaticClass());
+        if (Overlapping.Num() == 0)
+        {
+            ForceCloseDoorForGuard();
+        }
+    }
+}
+
+void ADoubleDoorBase::ForceOpenDoorForGuard()
+{
+    if (!bIsOpen)
+    {
+        bIsOpen = true;
+        OnRep_IsOpen();
+    }
+    // Do NOT touch bIsLocked or bRequiresKeycard
+}
+
+void ADoubleDoorBase::ForceCloseDoorForGuard()
+{
+    if (bIsOpen)
+    {
+        bIsOpen = false;
+        OnRep_IsOpen();
+    }
+    // Do NOT touch bIsLocked or bRequiresKeycard
 }

@@ -32,10 +32,20 @@ public:
     UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Lock")
     bool bIsLocked = false;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door")
+    bool bAutoOpenForGuards = true;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door")
+    class UBoxComponent* GuardOpenTrigger;
+
     class ULockPickComponent* LockPickComponent = nullptr;
 
+    // IInteractable
     virtual void Interact_Implementation(AActor* Interactor) override;
-	virtual void SetHighlighted_Implementation(bool bHighlight) override;
+
+    virtual void SetHighlighted_Implementation(bool bHighlight) override;
+
+    // Keycard unlockable interface
     virtual void UnlockWithKeycard_Implementation(AActor* Interactor) override;
     virtual bool RequiresKeycard_Implementation() const override;
 
@@ -55,4 +65,19 @@ public:
     void CloseDoor();
 
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+    // Guard auto open/close
+    UFUNCTION()
+    void OnGuardOpenBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+        UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+    UFUNCTION()
+    void OnGuardOpenEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+        UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+    UFUNCTION()
+    void ForceOpenDoorForGuard();
+
+    UFUNCTION()
+    void ForceCloseDoorForGuard();
 };
