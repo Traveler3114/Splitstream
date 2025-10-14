@@ -1,5 +1,6 @@
 #include "DoorBase.h"
 #include "ActorComponents/LockPickComponent.h"
+#include "Components/BoxComponent.h"
 #include "Net/UnrealNetwork.h"
 
 ADoorBase::ADoorBase()
@@ -14,6 +15,7 @@ ADoorBase::ADoorBase()
     DoorMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DoorMesh"));
     DoorMesh->SetupAttachment(SceneRoot);
     DoorMesh->SetIsReplicated(true);
+    DoorMesh->SetCanEverAffectNavigation(false);
 }
 
 void ADoorBase::BeginPlay()

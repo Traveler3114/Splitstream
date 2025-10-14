@@ -14,10 +14,12 @@ ADoubleDoorBase::ADoubleDoorBase()
     DoorRightMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DoorRightMesh"));
     DoorRightMesh->SetupAttachment(SceneRoot);
     DoorRightMesh->SetIsReplicated(true);
+    DoorRightMesh->SetCanEverAffectNavigation(false);
 
     DoorLeftMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DoorLeftMesh"));
     DoorLeftMesh->SetupAttachment(SceneRoot);
     DoorLeftMesh->SetIsReplicated(true);
+    DoorLeftMesh->SetCanEverAffectNavigation(false);
 }
 
 void ADoubleDoorBase::BeginPlay()
