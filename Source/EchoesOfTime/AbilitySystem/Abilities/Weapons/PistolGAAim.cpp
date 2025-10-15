@@ -2,11 +2,12 @@
 #include "AbilitySystem/EOTGameplayTags.h"
 #include "Characters/DefaultCharacter.h"
 #include "Camera/CameraComponent.h"
+#include "AbilitySystemComponent.h"
 
 UPistolGAAim::UPistolGAAim()
 {
     InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
-    NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::ServerInitiated;
+    NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted; // LOCAL PREDICTED
 
     FGameplayTagContainer Tags;
     FGameplayTag MyTag = TAG_Weapon_Ability_Pistol_Aim;
@@ -19,14 +20,19 @@ UPistolGAAim::UPistolGAAim()
 
 void UPistolGAAim::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+    Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-    ADefaultCharacter* Character = Cast<ADefaultCharacter>(ActorInfo->AvatarActor.Get());
-    if (!Character) return;
+    // Local prediction window for responsive input
+    if (IsLocallyControlled() && ActorInfo && ActorInfo->AbilitySystemComponent.IsValid())
+    {
+        FScopedPredictionWindow ScopedPrediction(ActorInfo->AbilitySystemComponent.Get(), true);
 
-    if (Character->AimCameraTimeline)
-        Character->AimCameraTimeline->Play();
-
+        ADefaultCharacter* Character = Cast<ADefaultCharacter>(ActorInfo->AvatarActor.Get());
+        if (Character && Character->AimCameraTimeline)
+        {
+            Character->AimCameraTimeline->Play();
+        }
+    }
 }
 
 void UPistolGAAim::EndAbility(
@@ -42,6 +48,4 @@ void UPistolGAAim::EndAbility(
         Character->AimCameraTimeline->Reverse();
     }
     Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
-
 }
-
