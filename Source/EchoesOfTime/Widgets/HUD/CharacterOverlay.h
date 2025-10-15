@@ -31,6 +31,13 @@ public:
     UFUNCTION()
     void SetHealthText(float NewHealth);
 
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* ping_txt;
+
+    UFUNCTION(BlueprintCallable)
+    void SetPingText(float NewPing);
+
     UFUNCTION()
     void OnInventoryChanged(const TArray<FInventorySlot>& Items);
 

@@ -59,4 +59,7 @@ private:
 
     UFUNCTION()
     void HandlePauseMenuResumed();
+
+    FTimerHandle PingUpdateTimerHandle;
+    void UpdatePingOnOverlay();
 };

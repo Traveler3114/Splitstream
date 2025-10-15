@@ -65,6 +65,30 @@ void UCharacterOverlay::SetHealthText(float NewHealth)
     }
 }
 
+void UCharacterOverlay::SetPingText(float NewPing)
+{
+    if (ping_txt)
+    {
+        ping_txt->SetText(FText::FromString(FString::Printf(TEXT("%d ms"), FMath::RoundToInt(NewPing))));
+
+        // Set color based on ping
+        FSlateColor PingColor;
+        if (NewPing <= 80.f)
+        {
+            PingColor = FSlateColor(FLinearColor::Green);
+        }
+        else if (NewPing <= 150.f)
+        {
+            PingColor = FSlateColor(FLinearColor::Yellow);
+        }
+        else
+        {
+            PingColor = FSlateColor(FLinearColor::Red);
+        }
+        ping_txt->SetColorAndOpacity(PingColor);
+    }
+}
+
 void UCharacterOverlay::SetStatusText(const FString& NewStatus)
 {
     if (status_txt)

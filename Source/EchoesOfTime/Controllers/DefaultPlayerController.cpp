@@ -29,6 +29,20 @@ void ADefaultPlayerController::BeginPlay()
     }
     BindAttributeDelegates();
     BindGameplayTagDelegates();
+    GetWorldTimerManager().SetTimer(PingUpdateTimerHandle, this, &ADefaultPlayerController::UpdatePingOnOverlay, 1.0f, true);
+}
+
+void ADefaultPlayerController::UpdatePingOnOverlay()
+{
+    if (CharacterHUD && CharacterHUD->CharacterOverlay)
+    {
+        APlayerState* PS = GetPlayerState<APlayerState>();
+        if (PS)
+        {
+            float PingMs = PS->ExactPing;
+            CharacterHUD->CharacterOverlay->SetPingText(PingMs);
+        }
+    }
 }
 
 void ADefaultPlayerController::OnRep_PlayerState()
@@ -49,6 +63,7 @@ void ADefaultPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
                 .Remove(IllegalTagDelegateHandle);
         }
     }
+    GetWorldTimerManager().ClearTimer(PingUpdateTimerHandle);
     Super::EndPlay(EndPlayReason);
 }
 
