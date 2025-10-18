@@ -4,8 +4,19 @@
 #include "DefaultPlayerState.h"
 #include "AbilitySystemComponent.h"
 #include "Engine/World.h"
+#include "GameStates/DefaultGameState.h"
 #include "DrawDebugHelpers.h"
 #include "GameplayTagContainer.h"
+
+
+void ADefaultGameMode::BeginPlay()
+{
+    Super::BeginPlay();
+    if (ADefaultGameState* GS = GetGameState<ADefaultGameState>())
+    {
+        GS->OnRestartRequested.AddUObject(this, &ADefaultGameMode::RestartLevel);
+    }
+}
 
 
 AActor* ADefaultGameMode::ChoosePlayerStart_Implementation(AController* Player)
@@ -71,4 +82,28 @@ AActor* ADefaultGameMode::ChoosePlayerStart_Implementation(AController* Player)
 
     UE_LOG(LogTemp, Warning, TEXT("ChoosePlayerStart: No PlayerStart found for team %s, using default."), *TeamString);
     return Super::ChoosePlayerStart_Implementation(Player);
+}
+
+// In DefaultGameMode.cpp
+void ADefaultGameMode::RestartLevel()
+{
+    if (HasAuthority())
+    {
+        UWorld* World = GetWorld();
+        if (World)
+        {
+            FString CurrentLevel = World->GetMapName();
+            // Remove any prefix (e.g., streaming levels add "UEDPIE_0_" etc.)
+            CurrentLevel.RemoveFromStart(World->StreamingLevelsPrefix);
+
+            // Build travel URL with ?listen if you are using listen server
+            FString URL = CurrentLevel;
+            if (!URL.Contains(TEXT("?")))
+                URL += TEXT("?listen");
+            else if (!URL.Contains(TEXT("listen")))
+                URL += TEXT("&listen");
+
+            World->ServerTravel(URL);
+        }
+    }
 }

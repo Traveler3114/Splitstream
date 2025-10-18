@@ -14,5 +14,10 @@ class ECHOESOFTIME_API ADefaultGameMode : public AGameMode
 {
 	GENERATED_BODY()
 public:
+	virtual void BeginPlay() override;
+
 	virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
+
+	UFUNCTION(BlueprintCallable)
+	void RestartLevel();
 };

@@ -15,6 +15,7 @@
 #include "Curves/CurveFloat.h"
 #include "AbilitySystem/AttributeSets/PlayerAttributeSet.h"
 #include "Controllers/DefaultPlayerController.h"
+#include "GameStates/DefaultGameState.h"
 #include "GameplayEffectTypes.h"
 
 AGuardCharacter::AGuardCharacter()
@@ -285,6 +286,7 @@ void AGuardCharacter::OnTimelineFloatUpdate(float Value)
     }
 }
 
+
 void AGuardCharacter::OnTimelineFinished()
 {
     // Timeline finished = fully detected OR fully undetected (if reversed)
@@ -295,6 +297,13 @@ void AGuardCharacter::OnTimelineFinished()
         {
             TargetActor = DetectedActor;
             // Start chase logic here!
+            if (HasAuthority())
+            {
+                if (ADefaultGameState* GS = Cast<ADefaultGameState>(GetWorld()->GetGameState()))
+                {
+                    GS->RequestRestart();
+                }
+            }
         }
 
         // UI update: Progress bar full/locked
