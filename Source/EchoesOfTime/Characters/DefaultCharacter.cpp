@@ -26,7 +26,7 @@ ADefaultCharacter::ADefaultCharacter()
     bUseControllerRotationYaw = true;
     bUseControllerRotationRoll = false;
     GetCharacterMovement()->bOrientRotationToMovement = false;
-    GetCharacterMovement()->JumpZVelocity = 500.f;
+    GetCharacterMovement()->JumpZVelocity = 300.f;
     GetCharacterMovement()->AirControl = 0.35f;
     GetCharacterMovement()->MaxWalkSpeed = 300.f;
     GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
@@ -500,6 +500,7 @@ void ADefaultCharacter::Jump()
 
 void ADefaultCharacter::StartCrouch()
 {
+	if (!GetCharacterMovement()->IsFalling())
     Crouch();
 }
 
