@@ -14,7 +14,7 @@ void ADefaultGameMode::BeginPlay()
     Super::BeginPlay();
     if (ADefaultGameState* GS = GetGameState<ADefaultGameState>())
     {
-        GS->OnRestartRequested.AddUObject(this, &ADefaultGameMode::RestartLevel);
+        GS->OnRestartRequested.AddDynamic(this, &ADefaultGameMode::RestartLevel);
     }
 }
 
@@ -89,6 +89,14 @@ void ADefaultGameMode::RestartLevel()
 {
     if (HasAuthority())
     {
+        for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
+        {
+            if (ADefaultPlayerController* PC = Cast<ADefaultPlayerController>(Iterator->Get()))
+            {
+                PC->ClientShowLoadingScreen();
+            }
+        }
+
         UWorld* World = GetWorld();
         if (World)
         {
@@ -107,3 +115,4 @@ void ADefaultGameMode::RestartLevel()
         }
     }
 }
+

@@ -34,6 +34,12 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
     TSubclassOf<class UCalendarWidget> CalendarWidgetClass;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+    TSubclassOf<class UUserWidget> LoadingWidgetClass;
+
+    UPROPERTY()
+    UUserWidget* LoadingWidgetInstance = nullptr;
+
     UPROPERTY(BlueprintReadWrite)
     UCalendarWidget* CalendarWidgetInstance;
 
@@ -47,6 +53,9 @@ public:
 
     UFUNCTION(Server, Reliable)
     void ServerTryLockPick(AActor* TargetDoor, float Angle);
+
+    UFUNCTION(Client, Reliable)
+    void ClientShowLoadingScreen();
 
 private:
     UPROPERTY()

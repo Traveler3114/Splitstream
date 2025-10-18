@@ -9,6 +9,7 @@
 #include "AbilitySystem/AttributeSets/PlayerAttributeSet.h"
 #include "Widgets/HUD/CharacterOverlay.h"
 #include "AbilitySystem/EOTGameplayTags.h"
+#include "GameStates/DefaultGameState.h"
 #include "GameplayEffectTypes.h"
 
 ADefaultPlayerController::ADefaultPlayerController()
@@ -41,6 +42,19 @@ void ADefaultPlayerController::UpdatePingOnOverlay()
         {
             float PingMs = PS->ExactPing;
             CharacterHUD->CharacterOverlay->SetPingText(PingMs);
+        }
+    }
+}
+
+void ADefaultPlayerController::ClientShowLoadingScreen_Implementation()
+{
+    if (LoadingWidgetClass)
+    {
+        // Assign outside the if condition to avoid C4706
+        LoadingWidgetInstance = CreateWidget<UUserWidget>(this, LoadingWidgetClass, TEXT("LoadingWidget"));
+        if (LoadingWidgetInstance)
+        {
+            LoadingWidgetInstance->AddToViewport();
         }
     }
 }

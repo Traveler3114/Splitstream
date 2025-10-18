@@ -6,7 +6,7 @@
 #include "GameFramework/GameState.h"
 #include "DefaultGameState.generated.h"
 
-DECLARE_MULTICAST_DELEGATE(FOnRestartRequested);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnRestartRequested);
 
 UCLASS()
 class ECHOESOFTIME_API ADefaultGameState : public AGameState
@@ -14,11 +14,15 @@ class ECHOESOFTIME_API ADefaultGameState : public AGameState
 	GENERATED_BODY()
 
 public:
+
+    UPROPERTY(BlueprintAssignable)
     FOnRestartRequested OnRestartRequested;
+
 
     UFUNCTION(BlueprintCallable)
     void RequestRestart()
     {
         OnRestartRequested.Broadcast();
     }
+
 };
