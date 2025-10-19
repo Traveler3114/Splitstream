@@ -1,13 +1,12 @@
 #include "LaserSensor.h"
-#include "Characters/DefaultCharacter.h"
-#include "Kismet/GameplayStatics.h"
-#include "Net/UnrealNetwork.h"
 #include "Components/SceneComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/BoxComponent.h"
 #include "NiagaraComponent.h"
-#include "GameStates/DefaultGameState.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Net/UnrealNetwork.h"
+#include "GameStates/DefaultGameState.h"
+#include "Characters/DefaultCharacter.h"
 
 ALaserSensor::ALaserSensor()
 {
@@ -28,12 +27,18 @@ ALaserSensor::ALaserSensor()
 
     LaserBeamNiagara = CreateDefaultSubobject<UNiagaraComponent>(TEXT("LaserBeamNiagara"));
     LaserBeamNiagara->SetupAttachment(DefaultSceneRoot);
+
+    bIsActive = true;
 }
 
 void ALaserSensor::BeginPlay()
 {
     Super::BeginPlay();
+
     LaserBox->OnComponentBeginOverlap.AddDynamic(this, &ALaserSensor::OnLaserOverlap);
+
+    // Ensure initial visuals reflect replicated bIsActive
+    ApplyActiveState();
 }
 
 void ALaserSensor::OnConstruction(const FTransform& Transform)
@@ -58,7 +63,7 @@ void ALaserSensor::OnConstruction(const FTransform& Transform)
     LaserBox->SetWorldRotation(BoxRot);
 
     // Set Box size: X = Length, Y and Z = desired thickness
-    FVector BoxExtent = FVector(Length * 0.5f, 2.5f, 2.5f); // 30 is thickness, tweak as needed
+    FVector BoxExtent = FVector(Length * 0.5f, 2.5f, 2.5f); // adjust thickness as needed
     LaserBox->SetBoxExtent(BoxExtent);
 
     // Update Niagara beam
@@ -70,22 +75,71 @@ void ALaserSensor::OnConstruction(const FTransform& Transform)
     }
 }
 
-
 void ALaserSensor::OnLaserOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
     bool bFromSweep, const FHitResult& SweepResult)
 {
-    if (HasAuthority())
+    if (!HasAuthority())
     {
-        if (OtherActor && OtherActor->IsA(ADefaultCharacter::StaticClass()))
+        return;
+    }
+
+    if (OtherActor && OtherActor->IsA(ADefaultCharacter::StaticClass()))
+    {
+        if (ADefaultGameState* GS = Cast<ADefaultGameState>(GetWorld()->GetGameState()))
         {
-            if (HasAuthority())
-            {
-                if (ADefaultGameState* GS = Cast<ADefaultGameState>(GetWorld()->GetGameState()))
-                {
-                    GS->RequestRestart();
-                }
-            }
+            GS->RequestRestart();
         }
     }
+}
+
+void ALaserSensor::SetActive(bool bNewActive)
+{
+    if (HasAuthority())
+    {
+        // We are server: set directly
+        bIsActive = bNewActive;
+        ApplyActiveState();
+    }
+    else
+    {
+        // Ask server to set it
+        ServerSetActive(bNewActive);
+    }
+}
+
+void ALaserSensor::ServerSetActive_Implementation(bool bNewActive)
+{
+    bIsActive = bNewActive;
+    ApplyActiveState();
+}
+
+void ALaserSensor::OnRep_IsActive()
+{
+    ApplyActiveState();
+}
+
+void ALaserSensor::ApplyActiveState()
+{
+    // Visuals
+    if (LaserBeamNiagara)
+    {
+        LaserBeamNiagara->SetActive(bIsActive, true);
+        LaserBeamNiagara->SetVisibility(bIsActive, true);
+    }
+
+
+    // Collision / overlap
+    if (LaserBox)
+    {
+        LaserBox->SetGenerateOverlapEvents(bIsActive);
+        LaserBox->SetCollisionEnabled(bIsActive ? ECollisionEnabled::QueryOnly : ECollisionEnabled::NoCollision);
+    }
+}
+
+void ALaserSensor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    DOREPLIFETIME(ALaserSensor, bIsActive);
 }
