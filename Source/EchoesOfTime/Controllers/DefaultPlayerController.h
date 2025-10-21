@@ -1,3 +1,4 @@
+// DefaultPlayerController.h
 #pragma once
 
 #include "CoreMinimal.h"
@@ -57,6 +58,14 @@ public:
     UFUNCTION(Client, Reliable)
     void ClientShowLoadingScreen();
 
+    // --- Pre-alarm client RPCs ---
+    // Renamed parameter to avoid shadowing the member variable
+    UFUNCTION(Client, Reliable)
+    void ClientStartPreAlarm(float InPreAlarmEndTime);
+
+    UFUNCTION(Client, Reliable)
+    void ClientCancelPreAlarm();
+
 private:
     UPROPERTY()
     class ACharacterHUD* CharacterHUD;
@@ -71,4 +80,32 @@ private:
 
     FTimerHandle PingUpdateTimerHandle;
     void UpdatePingOnOverlay();
+
+    // Alarm UI handling (final alarm before restart)
+    UPROPERTY()
+    float AlarmEndTime = 0.f;
+
+    FTimerHandle AlarmUpdateTimerHandle;
+
+    UFUNCTION()
+    void HandleAlarmStarted(float InAlarmEndTime);
+
+    UFUNCTION()
+    void HandleAlarmCanceled(); // handles alarm cancel from server
+
+    void UpdateAlarmUI();
+
+    // Pre-alarm UI handling (guard detection -> pre-alarm)
+    UPROPERTY()
+    float PreAlarmEndTime = 0.f;
+
+    FTimerHandle PreAlarmUpdateTimerHandle;
+
+    UFUNCTION()
+    void HandlePreAlarmStarted(float InPreAlarmEndTime);
+
+    UFUNCTION()
+    void HandlePreAlarmCanceled();
+
+    void UpdatePreAlarmUI();
 };

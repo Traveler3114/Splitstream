@@ -1,3 +1,4 @@
+// CharacterOverlay.cpp
 #include "CharacterOverlay.h"
 #include "Components/HorizontalBox.h"
 #include "Components/TextBlock.h"
@@ -91,10 +92,20 @@ void UCharacterOverlay::SetPingText(float NewPing)
 
 void UCharacterOverlay::SetStatusText(const FString& NewStatus)
 {
+    // Keep old behavior: white when empty, red when non-empty
     if (status_txt)
     {
         status_txt->SetText(FText::FromString(NewStatus));
         status_txt->SetColorAndOpacity(NewStatus.IsEmpty() ? FLinearColor::White : FLinearColor::Red);
+    }
+}
+
+void UCharacterOverlay::SetStatusTextWithColor(const FString& NewStatus, const FLinearColor& Color)
+{
+    if (status_txt)
+    {
+        status_txt->SetText(FText::FromString(NewStatus));
+        status_txt->SetColorAndOpacity(Color);
     }
 }
 

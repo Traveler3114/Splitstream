@@ -88,7 +88,8 @@ void ALaserSensor::OnLaserOverlap(UPrimitiveComponent* OverlappedComp, AActor* O
     {
         if (ADefaultGameState* GS = Cast<ADefaultGameState>(GetWorld()->GetGameState()))
         {
-            GS->RequestRestart();
+            // start alarm instead of immediate restart
+            GS->StartAlarm();
         }
     }
 }

@@ -1,3 +1,4 @@
+// CharacterOverlay.h
 #pragma once
 
 #include "CoreMinimal.h"
@@ -41,8 +42,13 @@ public:
     UFUNCTION()
     void OnInventoryChanged(const TArray<FInventorySlot>& Items);
 
+    // Old helper kept for simple uses (sets red when non-empty)
     UFUNCTION(BlueprintCallable)
     void SetStatusText(const FString& NewStatus);
+
+    // New helper: set status text with explicit color (use for pre-alarm vs alarm)
+    UFUNCTION(BlueprintCallable)
+    void SetStatusTextWithColor(const FString& NewStatus, const FLinearColor& Color);
 
     UPROPERTY()
     class UInventoryComponent* LinkedInventory;

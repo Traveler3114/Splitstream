@@ -1,3 +1,4 @@
+// GuardCharacter.h
 #pragma once
 
 #include "CoreMinimal.h"
@@ -71,7 +72,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
     AActor* TargetActor = nullptr;
 
-	AActor* DetectedActor = nullptr;
+    AActor* DetectedActor = nullptr;
 
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Ghost", meta = (AllowPrivateAccess = "true"))
     class AGhostCharacterActor* SpawnedGhost = nullptr;
@@ -106,4 +107,20 @@ protected:
 
     UFUNCTION()
     void OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors);
+
+    // --- Pre-alarm functionality ---
+    // Duration in seconds from guard fully spotting until alarm activation starts (server authoritative)
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Alarm")
+    float PreAlarmDuration = 3.0f;
+
+    // Server timer handle for pre-alarm
+    FTimerHandle PreAlarmTimerHandle;
+
+    // Called on server when pre-alarm timer completes -> triggers GameState::StartAlarm(this)
+    UFUNCTION()
+    void OnPreAlarmTimeout();
+
+    // Start/cancel pre-alarm for the currently detected player (server-side helpers)
+    void StartPreAlarmForDetectedPlayer();
+    void CancelPreAlarmForDetectedPlayer();
 };

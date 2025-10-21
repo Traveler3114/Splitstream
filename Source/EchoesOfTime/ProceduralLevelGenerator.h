@@ -4,6 +4,8 @@
 #include "GameFramework/Actor.h"
 #include "ProceduralLevelGenerator.generated.h"
 
+enum class ETimelineEra : uint8;
+
 USTRUCT(BlueprintType)
 struct FRandomDate
 {
