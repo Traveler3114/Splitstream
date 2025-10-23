@@ -93,7 +93,7 @@ void ADefaultPlayerController::UpdateAlarmUI()
     float Now = GetWorld()->GetTimeSeconds();
     float Remaining = FMath::Max(0.f, AlarmEndTime - Now);
 
-    int32 SecondsLeft = FMath::CeilToInt(Remaining);
+    int32 SecondsLeft = FMath::FloorToInt(Remaining);
     FString StatusText = FString::Printf(TEXT("ALARM - Restart in %d s"), SecondsLeft);
 
     CharacterHUD->CharacterOverlay->SetStatusTextWithColor(StatusText, FLinearColor::Red);
@@ -138,7 +138,7 @@ void ADefaultPlayerController::UpdatePreAlarmUI()
     float Now = GetWorld()->GetTimeSeconds();
     float Remaining = FMath::Max(0.f, PreAlarmEndTime - Now);
 
-    int32 SecondsLeft = FMath::CeilToInt(Remaining);
+    int32 SecondsLeft = FMath::FloorToInt(Remaining);
     FString StatusText = FString::Printf(TEXT("Guard spotted you! Alarm in %d s"), SecondsLeft);
 
     CharacterHUD->CharacterOverlay->SetStatusTextWithColor(StatusText, FLinearColor::Yellow);
