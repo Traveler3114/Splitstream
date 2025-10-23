@@ -59,14 +59,11 @@ void AGuardCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
             GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Health is ZERO!"));
         }
 
-        // If this guard had a pending pre-alarm, cancel it and notify the player
         if (HasAuthority())
         {
-            CancelPreAlarmForDetectedPlayer();
-
-            // If this guard already started the real alarm, cancel that as well
             if (ADefaultGameState* GS = Cast<ADefaultGameState>(GetWorld()->GetGameState()))
             {
+                GS->CancelPreAlarm(this);
                 GS->CancelAlarm(this);
             }
         }
@@ -142,8 +139,6 @@ void AGuardCharacter::BeginPlay()
     }
 }
 
-// ICameraDetectable implementation
-
 void AGuardCharacter::OnDetectedByCamera_Implementation(ASecurityCamera* Camera)
 {
     if (!bIsInCameraView)
@@ -175,8 +170,6 @@ void AGuardCharacter::OnRep_IsInCameraView()
         SpawnedGhost->UpdateGhostVisibility();
     }
 }
-
-// IGhostMirrorSource implementation
 
 bool AGuardCharacter::ShouldGhostBeVisible_Implementation() const
 {
@@ -211,11 +204,9 @@ void AGuardCharacter::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
             {
                 FGameplayTag IllegalTag = TAG_Character_Status_Illegal;
 
-                // Handle illegal tag change
                 ASC->RegisterGameplayTagEvent(IllegalTag, EGameplayTagEventType::NewOrRemoved)
                     .AddLambda([this, Player](const FGameplayTag Tag, int32 NewCount)
                         {
-                            // Check if the guard is currently sensing the player
                             FActorPerceptionBlueprintInfo Info;
                             if (AIPerceptionComponent)
                                 AIPerceptionComponent->GetActorsPerception(Player, Info);
@@ -248,7 +239,6 @@ void AGuardCharacter::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
                                     }
                                 }
                             }
-                            // If not sensed, always reverse (stop) detection
                             else
                             {
                                 if (GuardTimeline && TargetActor == nullptr)
@@ -258,7 +248,6 @@ void AGuardCharacter::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
                             }
                         });
 
-                // Immediately check current state
                 if (ASC->HasMatchingGameplayTag(IllegalTag) && bSensed)
                 {
                     DetectedActor = Player;
@@ -267,7 +256,6 @@ void AGuardCharacter::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
                         GuardTimeline->Play();
                     }
                 }
-                // If the player has the illegal tag but is NOT sensed, reverse detection
                 else if (ASC->HasMatchingGameplayTag(IllegalTag) && !bSensed)
                 {
                     if (GuardTimeline && TargetActor == nullptr)
@@ -290,62 +278,52 @@ void AGuardCharacter::OnTimelineFloatUpdate(float Value)
             ADefaultPlayerController* PC = Cast<ADefaultPlayerController>(DetectedPlayer->GetController());
             if (PC)
             {
-                // Calculate angle to guard
                 FVector PlayerLoc = DetectedPlayer->GetActorLocation();
                 FVector GuardLoc = GetActorLocation();
 
-                // Get player camera forward and right vectors
                 FRotator CameraRot = PC->PlayerCameraManager->GetCameraRotation();
                 FVector CameraForward = CameraRot.Vector();
                 FVector CameraRight = FRotationMatrix(CameraRot).GetUnitAxis(EAxis::Y);
 
                 FVector ToGuard = GuardLoc - PlayerLoc;
 
-                // Project ToGuard and CameraForward to XY plane (ignore Z)
                 FVector FlatForward = CameraForward; FlatForward.Z = 0; FlatForward.Normalize();
                 FVector FlatToGuard = ToGuard; FlatToGuard.Z = 0; FlatToGuard.Normalize();
 
-                // Calculate angle in degrees between forward and direction to guard
                 float AngleRad = FMath::Acos(FVector::DotProduct(FlatForward, FlatToGuard));
                 float AngleDeg = FMath::RadiansToDegrees(AngleRad);
 
-                // Determine sign: left/right
                 float Sign = FVector::DotProduct(CameraRight, FlatToGuard) > 0 ? 1.0f : -1.0f;
                 AngleDeg *= Sign;
 
-                // Now pass angle to widget via controller
                 PC->ClientUpdateDetectionWidgetForGuard(this, Value, false, AngleDeg);
             }
         }
     }
 }
 
-
 void AGuardCharacter::OnTimelineFinished()
 {
-    // Timeline finished = fully detected OR fully undetected (if reversed)
     if (GuardTimeline->GetPlaybackPosition() >= GuardTimeline->GetTimelineLength())
     {
-        // Detection complete, start chase if not already
         if (DetectedActor && TargetActor == nullptr)
         {
             TargetActor = DetectedActor;
-            // Start chase logic here!
             if (HasAuthority())
             {
-                // Start pre-alarm (server-side) and mark this guard as the instigator so we can cancel if guard is killed
-                StartPreAlarmForDetectedPlayer();
+                if (ADefaultGameState* GS = Cast<ADefaultGameState>(GetWorld()->GetGameState()))
+                {
+                    GS->StartPreAlarm(this, PreAlarmDuration);
+                }
             }
         }
 
-        // UI update: Progress bar full/locked
         ADefaultCharacter* DetectedPlayer = Cast<ADefaultCharacter>(DetectedActor);
         if (DetectedPlayer)
         {
             ADefaultPlayerController* PC = Cast<ADefaultPlayerController>(DetectedPlayer->GetController());
             if (PC)
             {
-                // Calculate current angle
                 FVector PlayerLoc = DetectedPlayer->GetActorLocation();
                 FVector GuardLoc = GetActorLocation();
                 FRotator CameraRot = PC->PlayerCameraManager->GetCameraRotation();
@@ -365,9 +343,13 @@ void AGuardCharacter::OnTimelineFinished()
     }
     else if (GuardTimeline->GetPlaybackPosition() <= 0.0f)
     {
-        // Timeline reversed to start, detection bar should disappear
-        // If a pre-alarm was pending, cancel it
-        CancelPreAlarmForDetectedPlayer();
+        if (HasAuthority())
+        {
+            if (ADefaultGameState* GS = Cast<ADefaultGameState>(GetWorld()->GetGameState()))
+            {
+                GS->CancelPreAlarm(this);
+            }
+        }
 
         if (DetectedActor)
         {
@@ -377,7 +359,6 @@ void AGuardCharacter::OnTimelineFinished()
                 ADefaultPlayerController* PC = Cast<ADefaultPlayerController>(DetectedPlayer->GetController());
                 if (PC)
                 {
-                    // Calculate current angle
                     FVector PlayerLoc = DetectedPlayer->GetActorLocation();
                     FVector GuardLoc = GetActorLocation();
                     FRotator CameraRot = PC->PlayerCameraManager->GetCameraRotation();
@@ -395,60 +376,7 @@ void AGuardCharacter::OnTimelineFinished()
                 }
             }
         }
-        // Stop the timeline completely, ready for next detection
         GuardTimeline->Stop();
-    }
-}
-
-void AGuardCharacter::StartPreAlarmForDetectedPlayer()
-{
-    if (!HasAuthority() || !DetectedActor)
-        return;
-
-    // Start or restart pre-alarm server timer
-    GetWorld()->GetTimerManager().ClearTimer(PreAlarmTimerHandle);
-    GetWorld()->GetTimerManager().SetTimer(PreAlarmTimerHandle, this, &AGuardCharacter::OnPreAlarmTimeout, PreAlarmDuration, false);
-
-    // Notify the detected player's controller (client) to show the pre-alarm UI
-    if (ADefaultCharacter* DetectedPlayer = Cast<ADefaultCharacter>(DetectedActor))
-    {
-        if (ADefaultPlayerController* PC = Cast<ADefaultPlayerController>(DetectedPlayer->GetController()))
-        {
-            float EndTime = GetWorld()->GetTimeSeconds() + PreAlarmDuration;
-            PC->ClientStartPreAlarm(EndTime);
-        }
-    }
-}
-
-void AGuardCharacter::CancelPreAlarmForDetectedPlayer()
-{
-    if (!HasAuthority())
-        return;
-
-    if (GetWorld()->GetTimerManager().IsTimerActive(PreAlarmTimerHandle))
-    {
-        GetWorld()->GetTimerManager().ClearTimer(PreAlarmTimerHandle);
-
-        // Notify the detected player's controller (client) to clear the pre-alarm UI
-        if (ADefaultCharacter* DetectedPlayer = Cast<ADefaultCharacter>(DetectedActor))
-        {
-            if (ADefaultPlayerController* PC = Cast<ADefaultPlayerController>(DetectedPlayer->GetController()))
-            {
-                PC->ClientCancelPreAlarm();
-            }
-        }
-    }
-}
-
-void AGuardCharacter::OnPreAlarmTimeout()
-{
-    // Pre-alarm timer completed on server -> start the normal alarm
-    if (HasAuthority())
-    {
-        if (ADefaultGameState* GS = Cast<ADefaultGameState>(GetWorld()->GetGameState()))
-        {
-            GS->StartAlarm(this);
-        }
     }
 }
 
@@ -456,5 +384,4 @@ void AGuardCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AGuardCharacter, bIsInCameraView);
-    //DOREPLIFETIME(AGuardCharacter, TargetActor);
 }

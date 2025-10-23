@@ -19,12 +19,19 @@ public:
 
 protected:
 	FTimerHandle RestartTimerHandle;
+	FTimerHandle PreAlarmTimerHandle;
 
-	// Called on server when alarm starts (bound to GameState->OnAlarmStarted)
 	UFUNCTION()
 	void OnAlarmStarted(float AlarmEndTime);
 
-	// Called on server when alarm is canceled (bound to GameState->OnAlarmCanceled)
 	UFUNCTION()
 	void OnAlarmCanceled();
+
+	UFUNCTION()
+	void OnPreAlarmStarted(float PreAlarmEndTime, AActor* PreAlarmInstigator);
+
+	UFUNCTION()
+	void OnPreAlarmCanceled();
+
+	void PreAlarmTimeout();
 };

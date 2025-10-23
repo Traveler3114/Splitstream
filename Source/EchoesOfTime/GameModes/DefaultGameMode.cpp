@@ -17,14 +17,12 @@ void ADefaultGameMode::BeginPlay()
 	Super::BeginPlay();
 	if (ADefaultGameState* GS = GetGameState<ADefaultGameState>())
 	{
-		// keep existing binding for immediate restart requests
 		GS->OnRestartRequested.AddDynamic(this, &ADefaultGameMode::RestartLevel);
-
-		// Bind to alarm event so GameMode (server) can schedule the authoritative restart
 		GS->OnAlarmStarted.AddDynamic(this, &ADefaultGameMode::OnAlarmStarted);
-
-		// Bind to alarm canceled to clear any scheduled restart
 		GS->OnAlarmCanceled.AddDynamic(this, &ADefaultGameMode::OnAlarmCanceled);
+
+		GS->OnPreAlarmStarted.AddDynamic(this, &ADefaultGameMode::OnPreAlarmStarted);
+		GS->OnPreAlarmCanceled.AddDynamic(this, &ADefaultGameMode::OnPreAlarmCanceled);
 	}
 }
 
@@ -66,7 +64,6 @@ AActor* ADefaultGameMode::ChoosePlayerStart_Implementation(AController* Player)
 		TeamString = "Past";
 	}
 
-	// Find all PlayerStart actors for this team
 	TArray<APlayerStart*> TeamStarts;
 	TArray<AActor*> PlayerStarts;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), PlayerStarts);
@@ -98,15 +95,13 @@ void ADefaultGameMode::OnAlarmStarted(float AlarmEndTime)
 	if (!HasAuthority())
 		return;
 
-	// compute remaining time on server clock
+	GetWorldTimerManager().ClearTimer(PreAlarmTimerHandle);
+
 	float Remaining = AlarmEndTime - GetWorld()->GetTimeSeconds();
 	Remaining = FMath::Max(0.f, Remaining);
 
-	// schedule restart on the server when the alarm ends
 	GetWorldTimerManager().ClearTimer(RestartTimerHandle);
 	GetWorldTimerManager().SetTimer(RestartTimerHandle, this, &ADefaultGameMode::RestartLevel, Remaining, false);
-
-	// Optionally play server-side global effects here (omitted)
 }
 
 void ADefaultGameMode::OnAlarmCanceled()
@@ -114,10 +109,37 @@ void ADefaultGameMode::OnAlarmCanceled()
 	if (!HasAuthority())
 		return;
 
-	// Clear any scheduled restart
 	GetWorldTimerManager().ClearTimer(RestartTimerHandle);
+}
 
-	// Optionally perform other server-side cleanup (e.g. stop alarm music, notify services)
+void ADefaultGameMode::OnPreAlarmStarted(float PreAlarmEndTime, AActor* PreAlarmInstigator)
+{
+	if (!HasAuthority())
+		return;
+
+	float Remaining = PreAlarmEndTime - GetWorld()->GetTimeSeconds();
+	Remaining = FMath::Max(0.f, Remaining);
+
+	GetWorldTimerManager().ClearTimer(PreAlarmTimerHandle);
+	GetWorldTimerManager().SetTimer(PreAlarmTimerHandle, this, &ADefaultGameMode::PreAlarmTimeout, Remaining, false);
+}
+
+void ADefaultGameMode::OnPreAlarmCanceled()
+{
+	if (!HasAuthority())
+		return;
+
+	GetWorldTimerManager().ClearTimer(PreAlarmTimerHandle);
+}
+
+void ADefaultGameMode::PreAlarmTimeout()
+{
+	if (!HasAuthority())
+		return;
+	if (ADefaultGameState* GS = GetGameState<ADefaultGameState>())
+	{
+		GS->StartAlarm(GS->PreAlarmInstigator);
+	}
 }
 
 void ADefaultGameMode::RestartLevel()
@@ -127,7 +149,6 @@ void ADefaultGameMode::RestartLevel()
 		return;
 	}
 
-	// Safety: verify the GameState still has an active alarm (authoritative source)
 	if (ADefaultGameState* GS = GetGameState<ADefaultGameState>())
 	{
 		if (!GS->bAlarmActive)
@@ -136,12 +157,10 @@ void ADefaultGameMode::RestartLevel()
 			return;
 		}
 
-		// Optional: small tolerance to avoid firing too early due to tiny timer drift.
 		const float Now = GetWorld()->GetTimeSeconds();
-		const float Tolerance = 0.2f; // seconds (adjust if you want)
+		const float Tolerance = 0.2f;
 		if (GS->AlarmEndTime > 0.f && (GS->AlarmEndTime - Now) > Tolerance)
 		{
-			// Timer fired too early compared to the authoritative end time; reschedule or abort.
 			UE_LOG(LogTemp, Warning, TEXT("RestartLevel aborted: timer fired early (remaining %.3f s > tolerance %.3f)."), GS->AlarmEndTime - Now, Tolerance);
 			return;
 		}
@@ -152,7 +171,6 @@ void ADefaultGameMode::RestartLevel()
 		return;
 	}
 
-	// If we got here, the alarm is still authoritative — proceed with restart.
 	for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
 	{
 		if (ADefaultPlayerController* PC = Cast<ADefaultPlayerController>(Iterator->Get()))
@@ -165,10 +183,8 @@ void ADefaultGameMode::RestartLevel()
 	if (World)
 	{
 		FString CurrentLevel = World->GetMapName();
-		// Remove any prefix (e.g., streaming levels add "UEDPIE_0_" etc.)
 		CurrentLevel.RemoveFromStart(World->StreamingLevelsPrefix);
 
-		// Build travel URL with ?listen if you are using listen server
 		FString URL = CurrentLevel;
 		if (!URL.Contains(TEXT("?")))
 			URL += TEXT("?listen");

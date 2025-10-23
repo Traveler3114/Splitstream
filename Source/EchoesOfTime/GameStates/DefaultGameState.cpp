@@ -10,68 +10,59 @@ ADefaultGameState::ADefaultGameState()
 	bAlarmActive = false;
 	AlarmDuration = 5.f;
 	AlarmInstigator = nullptr;
+
+	PreAlarmEndTime = 0.f;
+	bPreAlarmActive = false;
+	PreAlarmInstigator = nullptr;
+	PreAlarmDuration = 3.f;
 }
 
 void ADefaultGameState::StartAlarm(AActor* InAlarmInstigator)
 {
-	// Only server should start the alarm
 	if (!HasAuthority())
-	{
 		return;
-	}
 
-	// If already active, ignore (or you can choose to restart it)
 	if (bAlarmActive)
-	{
 		return;
-	}
 
 	const float ServerNow = GetWorld()->GetTimeSeconds();
 	AlarmEndTime = ServerNow + AlarmDuration;
 	bAlarmActive = true;
 	AlarmInstigator = InAlarmInstigator;
 
-	// Immediately broadcast on server; replicated properties + OnRep will notify clients
+	// Cancel any pre-alarm that might be active
+	if (bPreAlarmActive)
+	{
+		bPreAlarmActive = false;
+		PreAlarmEndTime = 0.f;
+		PreAlarmInstigator = nullptr;
+		OnPreAlarmCanceled.Broadcast();
+	}
+
 	OnAlarmStarted.Broadcast(AlarmEndTime);
 }
 
 void ADefaultGameState::CancelAlarm(AActor* InAlarmInstigator)
 {
-	// Only server can cancel
 	if (!HasAuthority())
-	{
 		return;
-	}
 
 	if (!bAlarmActive)
-	{
 		return;
-	}
 
-	// If an instigator is provided, only cancel if it matches the stored instigator.
-	// This ensures e.g. killing a guard cancels alarms that guard started, but doesn't cancel laser-started alarms.
 	if (InAlarmInstigator && AlarmInstigator && InAlarmInstigator != AlarmInstigator)
-	{
-		// instigator doesn't match, don't cancel
 		return;
-	}
 
-	// Perform cancel
 	bAlarmActive = false;
 	AlarmEndTime = 0.f;
 	AlarmInstigator = nullptr;
-
-	// Notify server listeners immediately
 	OnAlarmCanceled.Broadcast();
-	// Clients will be notified via replication/OnRep_AlarmActive
 }
 
 float ADefaultGameState::GetRemainingAlarmTime() const
 {
 	if (!bAlarmActive)
-	{
 		return 0.f;
-	}
 	const float Now = GetWorld()->GetTimeSeconds();
 	return FMath::Max(0.f, AlarmEndTime - Now);
 }
@@ -81,20 +72,65 @@ void ADefaultGameState::RequestRestart()
 	OnRestartRequested.Broadcast();
 }
 
+void ADefaultGameState::StartPreAlarm(AActor* InPreAlarmInstigator, float Duration)
+{
+	if (!HasAuthority())
+		return;
+	if (bAlarmActive)
+		return;
+	if (bPreAlarmActive)
+		return;
+
+	const float ServerNow = GetWorld()->GetTimeSeconds();
+	PreAlarmEndTime = ServerNow + Duration;
+	bPreAlarmActive = true;
+	PreAlarmInstigator = InPreAlarmInstigator;
+	OnPreAlarmStarted.Broadcast(PreAlarmEndTime, PreAlarmInstigator);
+}
+
+void ADefaultGameState::CancelPreAlarm(AActor* InPreAlarmInstigator)
+{
+	if (!HasAuthority())
+		return;
+	if (!bPreAlarmActive)
+		return;
+	if (InPreAlarmInstigator && PreAlarmInstigator && InPreAlarmInstigator != PreAlarmInstigator)
+		return;
+
+	bPreAlarmActive = false;
+	PreAlarmEndTime = 0.f;
+	PreAlarmInstigator = nullptr;
+	OnPreAlarmCanceled.Broadcast();
+}
+
+float ADefaultGameState::GetRemainingPreAlarmTime() const
+{
+	if (!bPreAlarmActive)
+		return 0.f;
+	const float Now = GetWorld()->GetTimeSeconds();
+	return FMath::Max(0.f, PreAlarmEndTime - Now);
+}
+
 void ADefaultGameState::OnRep_AlarmStarted()
 {
-	// When clients receive AlarmEndTime, notify local listeners
 	OnAlarmStarted.Broadcast(AlarmEndTime);
 }
 
 void ADefaultGameState::OnRep_AlarmActive()
 {
-	// If alarm was cleared on server, notify clients
 	if (!bAlarmActive)
-	{
 		OnAlarmCanceled.Broadcast();
-	}
-	// If bAlarmActive became true the OnRep_AlarmStarted will have already fired for AlarmEndTime.
+}
+
+void ADefaultGameState::OnRep_PreAlarmStarted()
+{
+	OnPreAlarmStarted.Broadcast(PreAlarmEndTime, PreAlarmInstigator);
+}
+
+void ADefaultGameState::OnRep_PreAlarmActive()
+{
+	if (!bPreAlarmActive)
+		OnPreAlarmCanceled.Broadcast();
 }
 
 void ADefaultGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -104,4 +140,8 @@ void ADefaultGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME(ADefaultGameState, AlarmEndTime);
 	DOREPLIFETIME(ADefaultGameState, bAlarmActive);
 	DOREPLIFETIME(ADefaultGameState, AlarmInstigator);
+
+	DOREPLIFETIME(ADefaultGameState, PreAlarmEndTime);
+	DOREPLIFETIME(ADefaultGameState, bPreAlarmActive);
+	DOREPLIFETIME(ADefaultGameState, PreAlarmInstigator);
 }

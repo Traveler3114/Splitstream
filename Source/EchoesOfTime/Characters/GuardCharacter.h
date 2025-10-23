@@ -1,4 +1,5 @@
 // GuardCharacter.h
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -22,19 +23,15 @@ public:
     virtual void BeginPlay() override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-    //UFUNCTION()
     void OnHealthChanged(const struct FOnAttributeChangeData& Data);
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     class UAbilitySystemComponent* AbilitySystemComponent;
 
-    // Attribute Set
     UPROPERTY()
     class UPlayerAttributeSet* AttributeSet;
 
-    // IAbilitySystemInterface
     virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
-
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
     TSubclassOf<UGameplayEffect> AttributeInitGE;
@@ -77,7 +74,6 @@ public:
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Ghost", meta = (AllowPrivateAccess = "true"))
     class AGhostCharacterActor* SpawnedGhost = nullptr;
 
-    // Timeline
     UPROPERTY()
     UTimelineComponent* GuardTimeline;
 
@@ -108,19 +104,7 @@ protected:
     UFUNCTION()
     void OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors);
 
-    // --- Pre-alarm functionality ---
-    // Duration in seconds from guard fully spotting until alarm activation starts (server authoritative)
+    // PRE-ALARM duration for this guard
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Alarm")
     float PreAlarmDuration = 3.0f;
-
-    // Server timer handle for pre-alarm
-    FTimerHandle PreAlarmTimerHandle;
-
-    // Called on server when pre-alarm timer completes -> triggers GameState::StartAlarm(this)
-    UFUNCTION()
-    void OnPreAlarmTimeout();
-
-    // Start/cancel pre-alarm for the currently detected player (server-side helpers)
-    void StartPreAlarmForDetectedPlayer();
-    void CancelPreAlarmForDetectedPlayer();
 };

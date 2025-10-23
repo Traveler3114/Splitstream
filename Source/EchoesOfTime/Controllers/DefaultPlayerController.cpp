@@ -42,15 +42,23 @@ void ADefaultPlayerController::BeginPlay()
             GS->OnAlarmStarted.AddDynamic(this, &ADefaultPlayerController::HandleAlarmStarted);
             GS->OnAlarmCanceled.AddDynamic(this, &ADefaultPlayerController::HandleAlarmCanceled);
 
+            // Pre-alarm binding
+            GS->OnPreAlarmStarted.AddDynamic(this, &ADefaultPlayerController::HandlePreAlarmStarted);
+            GS->OnPreAlarmCanceled.AddDynamic(this, &ADefaultPlayerController::HandlePreAlarmCanceled);
+
             // If an alarm is already active by the time we join, initialize from the replicated values:
             if (GS->bAlarmActive && GS->AlarmEndTime > 0.f)
             {
                 HandleAlarmStarted(GS->AlarmEndTime);
             }
+            else if (GS->bPreAlarmActive && GS->PreAlarmEndTime > 0.f)
+            {
+                HandlePreAlarmStarted(GS->PreAlarmEndTime, GS->PreAlarmInstigator);
+            }
             else
             {
-                // Ensure UI is clear if no alarm is active
                 HandleAlarmCanceled();
+                HandlePreAlarmCanceled();
             }
         }
     }
@@ -58,20 +66,17 @@ void ADefaultPlayerController::BeginPlay()
 
 void ADefaultPlayerController::HandleAlarmStarted(float InAlarmEndTime)
 {
-    // store end time and start a small timer to update UI frequently (0.1s)
-    AlarmEndTime = InAlarmEndTime;
+    // If a pre-alarm UI is active, clear it IMMEDIATELY
+    HandlePreAlarmCanceled();
 
-    // ensure existing timer cleared
+    AlarmEndTime = InAlarmEndTime;
     GetWorldTimerManager().ClearTimer(AlarmUpdateTimerHandle);
     GetWorldTimerManager().SetTimer(AlarmUpdateTimerHandle, this, &ADefaultPlayerController::UpdateAlarmUI, 0.1f, true);
-
-    // Immediately update UI once
     UpdateAlarmUI();
 }
 
 void ADefaultPlayerController::HandleAlarmCanceled()
 {
-    // Stop local timer and clear UI immediately
     AlarmEndTime = 0.f;
     GetWorldTimerManager().ClearTimer(AlarmUpdateTimerHandle);
 
@@ -88,41 +93,26 @@ void ADefaultPlayerController::UpdateAlarmUI()
     float Now = GetWorld()->GetTimeSeconds();
     float Remaining = FMath::Max(0.f, AlarmEndTime - Now);
 
-    // Format text - you can tweak presentation here
     int32 SecondsLeft = FMath::CeilToInt(Remaining);
     FString StatusText = FString::Printf(TEXT("ALARM - Restart in %d s"), SecondsLeft);
 
-    // Set status text on overlay in RED for full alarm
     CharacterHUD->CharacterOverlay->SetStatusTextWithColor(StatusText, FLinearColor::Red);
 
-    // Stop when done
     if (Remaining <= 0.f)
     {
         GetWorldTimerManager().ClearTimer(AlarmUpdateTimerHandle);
-        // Clear status text when done
         CharacterHUD->CharacterOverlay->SetStatusTextWithColor(TEXT(""), FLinearColor::White);
         AlarmEndTime = 0.f;
     }
 }
 
-// --- Pre-alarm client RPCs & handlers ---
-
-// Implementation must match header parameter name (InPreAlarmEndTime)
-void ADefaultPlayerController::ClientStartPreAlarm_Implementation(float InPreAlarmEndTime)
+void ADefaultPlayerController::HandlePreAlarmStarted(float InPreAlarmEndTime, AActor* PreAlarmInstigator)
 {
-    HandlePreAlarmStarted(InPreAlarmEndTime);
-}
+    // Only show pre-alarm if full alarm is not active
+    if (AlarmEndTime > 0.f)
+        return;
 
-void ADefaultPlayerController::ClientCancelPreAlarm_Implementation()
-{
-    HandlePreAlarmCanceled();
-}
-
-void ADefaultPlayerController::HandlePreAlarmStarted(float InPreAlarmEndTime)
-{
     PreAlarmEndTime = InPreAlarmEndTime;
-
-    // make sure any previous timer is cleared
     GetWorldTimerManager().ClearTimer(PreAlarmUpdateTimerHandle);
     GetWorldTimerManager().SetTimer(PreAlarmUpdateTimerHandle, this, &ADefaultPlayerController::UpdatePreAlarmUI, 0.1f, true);
 
@@ -136,7 +126,8 @@ void ADefaultPlayerController::HandlePreAlarmCanceled()
 
     if (CharacterHUD && CharacterHUD->CharacterOverlay)
     {
-        CharacterHUD->CharacterOverlay->SetStatusTextWithColor(TEXT(""), FLinearColor::White);
+        if (AlarmEndTime <= 0.f)
+            CharacterHUD->CharacterOverlay->SetStatusTextWithColor(TEXT(""), FLinearColor::White);
     }
 }
 
@@ -150,14 +141,13 @@ void ADefaultPlayerController::UpdatePreAlarmUI()
     int32 SecondsLeft = FMath::CeilToInt(Remaining);
     FString StatusText = FString::Printf(TEXT("Guard spotted you! Alarm in %d s"), SecondsLeft);
 
-    // Set pre-alarm text to YELLOW as a warning
     CharacterHUD->CharacterOverlay->SetStatusTextWithColor(StatusText, FLinearColor::Yellow);
 
     if (Remaining <= 0.f)
     {
         GetWorldTimerManager().ClearTimer(PreAlarmUpdateTimerHandle);
-        // Clear pre-alarm UI; GameState->StartAlarm will arrive shortly and trigger full alarm UI
-        CharacterHUD->CharacterOverlay->SetStatusTextWithColor(TEXT(""), FLinearColor::White);
+        if (AlarmEndTime <= 0.f)
+            CharacterHUD->CharacterOverlay->SetStatusTextWithColor(TEXT(""), FLinearColor::White);
         PreAlarmEndTime = 0.f;
     }
 }
@@ -179,7 +169,6 @@ void ADefaultPlayerController::ClientShowLoadingScreen_Implementation()
 {
     if (LoadingWidgetClass)
     {
-        // Assign outside the if condition to avoid C4706
         LoadingWidgetInstance = CreateWidget<UUserWidget>(this, LoadingWidgetClass, TEXT("LoadingWidget"));
         if (LoadingWidgetInstance)
         {
@@ -294,7 +283,6 @@ void ADefaultPlayerController::ClientShowCalendarWidget_Implementation(const TAr
 {
     if (CalendarWidgetInstance && CalendarWidgetInstance->IsInViewport())
     {
-        // Widget is already open; don't create another!
         return;
     }
 
@@ -359,7 +347,6 @@ void ADefaultPlayerController::OnIllegalTagChanged(const FGameplayTag Tag, int32
     {
         if (NewCount > 0)
         {
-            // Keep illegal status RED
             CharacterHUD->CharacterOverlay->SetStatusTextWithColor(TEXT("Illegal"), FLinearColor::Red);
         }
         else
