@@ -57,7 +57,7 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "LockPick")
     TArray<bool> PinSetStates;
 
-    UPROPERTY(ReplicatedUsing = OnRep_Unlocked)
+    UPROPERTY(ReplicatedUsing = OnRep_Unlocked, BlueprintReadWrite,EditAnywhere)
     bool bUnlocked = false;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "LockPick")
