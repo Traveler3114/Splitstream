@@ -4,10 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Interfaces/IPuzzleCompletionReceiver.h"
 #include "MetalDetector.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API AMetalDetector : public AActor
+class ECHOESOFTIME_API AMetalDetector : public AActor, public IPuzzleCompletionReceiver 
 {
 	GENERATED_BODY()
 
@@ -24,6 +25,7 @@ protected:
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
 		bool bFromSweep, const FHitResult& SweepResult);
 
+	virtual void OnPuzzleCompleted_Implementation() override;
 	// RepNotify called when 'bEnabled' changes
 	UFUNCTION()
 	void OnRep_Enabled();

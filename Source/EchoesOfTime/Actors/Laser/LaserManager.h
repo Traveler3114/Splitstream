@@ -2,17 +2,17 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "LaserGroup.generated.h"
+#include "LaserManager.generated.h"
 
 class ALaserSensor;
 
 UCLASS()
-class ECHOESOFTIME_API ALaserGroup : public AActor
+class ECHOESOFTIME_API ALaserManager : public AActor
 {
     GENERATED_BODY()
 
 public:
-    ALaserGroup();
+    ALaserManager();
 
 protected:
     virtual void BeginPlay() override;

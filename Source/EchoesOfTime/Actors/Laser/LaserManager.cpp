@@ -1,16 +1,16 @@
-#include "LaserGroup.h"
+#include "LaserManager.h"
 #include "LaserSensor.h"
 #include "TimerManager.h"
 #include "Engine/World.h"
 #include "Math/UnrealMathUtility.h" // FMath
 
-ALaserGroup::ALaserGroup()
+ALaserManager::ALaserManager()
 {
     PrimaryActorTick.bCanEverTick = false;
     bReplicates = true;
 }
 
-void ALaserGroup::BeginPlay()
+void ALaserManager::BeginPlay()
 {
     Super::BeginPlay();
 
@@ -20,7 +20,7 @@ void ALaserGroup::BeginPlay()
 
         if (bRandomize && bStartRandomOnBeginPlay && RandomizeInterval > 0.f)
         {
-            GetWorldTimerManager().SetTimer(TimerHandle_Randomize, this, &ALaserGroup::RandomizeOnce, RandomizeInterval, true);
+            GetWorldTimerManager().SetTimer(TimerHandle_Randomize, this, &ALaserManager::RandomizeOnce, RandomizeInterval, true);
             RandomizeOnce();
         }
         else
@@ -49,7 +49,7 @@ void ALaserGroup::BeginPlay()
     }
 }
 
-void ALaserGroup::OnConstruction(const FTransform& Transform)
+void ALaserManager::OnConstruction(const FTransform& Transform)
 {
     //LaserSensors.Empty();
 
@@ -73,7 +73,7 @@ void ALaserGroup::OnConstruction(const FTransform& Transform)
     //}
 }
 
-void ALaserGroup::RandomizeOnce()
+void ALaserManager::RandomizeOnce()
 {
     if (!HasAuthority() || LaserSensors.Num() == 0)
     {
@@ -102,7 +102,7 @@ void ALaserGroup::RandomizeOnce()
     SetSensorsActiveByIndices(ToActivate);
 }
 
-void ALaserGroup::SetSensorsActiveByIndices(const TArray<int32>& IndicesToActivate)
+void ALaserManager::SetSensorsActiveByIndices(const TArray<int32>& IndicesToActivate)
 {
     // Build a set for quick lookup
     TSet<int32> ActivateSet(IndicesToActivate);
@@ -119,7 +119,7 @@ void ALaserGroup::SetSensorsActiveByIndices(const TArray<int32>& IndicesToActiva
     }
 }
 
-void ALaserGroup::SetAllSensorsActive(bool bActive)
+void ALaserManager::SetAllSensorsActive(bool bActive)
 {
     for (ALaserSensor* Sensor : LaserSensors)
     {
