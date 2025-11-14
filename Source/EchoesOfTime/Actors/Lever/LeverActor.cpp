@@ -12,6 +12,9 @@ ALeverActor::ALeverActor()
     LeverMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LeverMesh"));
     LeverMesh->SetupAttachment(SceneRootComp);
     LeverMesh->SetIsReplicated(true);
+
+    LeverBaseMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LeverBaseMesh"));
+    LeverBaseMesh->SetupAttachment(SceneRootComp);
 }
 
 void ALeverActor::Interact_Implementation(AActor* Interactor)
@@ -49,4 +52,5 @@ void ALeverActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(ALeverActor, bActivated);
+    DOREPLIFETIME(ALeverActor, OrderIndex);
 }

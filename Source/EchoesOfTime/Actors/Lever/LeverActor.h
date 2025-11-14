@@ -22,7 +22,10 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lever")
     UStaticMeshComponent* LeverMesh;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Lever")
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lever")
+    UStaticMeshComponent* LeverBaseMesh;
+
+    UPROPERTY(EditAnywhere,Replicated, BlueprintReadWrite, Category="Lever")
     int32 OrderIndex = -1; // -1 for solo
 
     UPROPERTY(ReplicatedUsing=OnRep_Activated)
@@ -45,6 +48,7 @@ public:
 
     UFUNCTION(BlueprintImplementableEvent, Category="Lever")
     void OnDeactivated();
+
 
 protected:
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
