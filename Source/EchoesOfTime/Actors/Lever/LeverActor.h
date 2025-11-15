@@ -3,9 +3,9 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Interfaces/IInteractable.h"
+#include "TimelineEra.h"
 #include "LeverActor.generated.h"
 
-// Only DECLARE the delegate ONCE here!
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLeverInteracted, ALeverActor*, Lever);
 
 UCLASS()
@@ -15,6 +15,9 @@ class ECHOESOFTIME_API ALeverActor : public AActor, public IInteractable
 
 public:
     ALeverActor();
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
+    ETimelineEra TimelineEra = ETimelineEra::Past;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lever")
     USceneComponent* SceneRootComp;
