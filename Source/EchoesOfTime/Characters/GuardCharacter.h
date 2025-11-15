@@ -8,6 +8,7 @@
 #include "Interfaces/IGhostMirrorSource.h"
 #include "Components/TimelineComponent.h"
 #include "Curves/CurveFloat.h"
+#include "TimelineEra.h"
 #include "AbilitySystemInterface.h"
 #include "GuardCharacter.generated.h"
 
@@ -24,6 +25,9 @@ public:
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
     void OnHealthChanged(const struct FOnAttributeChangeData& Data);
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
+    ETimelineEra TimelineEra = ETimelineEra::Past;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     class UAbilitySystemComponent* AbilitySystemComponent;

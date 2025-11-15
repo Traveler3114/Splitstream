@@ -64,7 +64,11 @@ void AGuardCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
             if (ADefaultGameState* GS = Cast<ADefaultGameState>(GetWorld()->GetGameState()))
             {
                 GS->CancelPreAlarm(this);
-                GS->CancelAlarm(this);
+                // Only cancel alarm if it's NOT active (still in pre-alarm)
+                if (!GS->bAlarmActive)
+                {
+                    GS->CancelAlarm(this);
+                }
             }
         }
 
