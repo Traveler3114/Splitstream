@@ -1,4 +1,5 @@
 #include "LeverActor.h"
+#include "Components/TextRenderComponent.h"
 #include "Net/UnrealNetwork.h"
 
 ALeverActor::ALeverActor()
@@ -15,6 +16,16 @@ ALeverActor::ALeverActor()
 
     LeverBaseMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LeverBaseMesh"));
     LeverBaseMesh->SetupAttachment(SceneRootComp);
+
+
+    TextRenderComp = CreateDefaultSubobject<UTextRenderComponent>(TEXT("TextRenderComp"));
+    TextRenderComp->SetupAttachment(SceneRootComp);
+}
+
+void ALeverActor::BeginPlay()
+{
+    Super::BeginPlay();
+	TextRenderComp->SetText(FText::FromString(FString::Printf(TEXT("%d"), OrderIndex)));
 }
 
 void ALeverActor::Interact_Implementation(AActor* Interactor)

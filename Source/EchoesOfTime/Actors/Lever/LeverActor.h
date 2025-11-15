@@ -15,9 +15,13 @@ class ECHOESOFTIME_API ALeverActor : public AActor, public IInteractable
 
 public:
     ALeverActor();
+	virtual void BeginPlay() override;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
     ETimelineEra TimelineEra = ETimelineEra::Past;
+
+    UPROPERTY(VisibleAnywhere)
+    class UTextRenderComponent* TextRenderComp;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lever")
     USceneComponent* SceneRootComp;
