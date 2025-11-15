@@ -52,6 +52,9 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Items")
     TSubclassOf<class ASearchableActor> SearchableItemBPClass;
+
+    UPROPERTY(Replicated, BlueprintReadOnly)
+    FString PastLeverOrderString;
 protected:
     virtual void BeginPlay() override;
     void SpawnCivilianDeskItems(const TArray<class ACivilianCharacter*>& Civilians, TSubclassOf<class ASearchableActor> ItemClass);

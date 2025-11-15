@@ -176,7 +176,6 @@ void AProceduralLevelGenerator::HandlePastSpawns()
         auto* Manager = Cast<ALeverManager>(Managers[0]);
         if (Manager && Manager->PuzzleLevers.Num() > 0 && Manager->TimelineEra== ETimelineEra::Past)
         {
-            // Only randomize order within manager's lever references
             TArray<int32> Order;
             Order.SetNum(Manager->PuzzleLevers.Num());
             for (int32 i = 0; i < Manager->PuzzleLevers.Num(); ++i)
@@ -184,6 +183,15 @@ void AProceduralLevelGenerator::HandlePastSpawns()
             for (int32 i = Order.Num() - 1; i > 0; --i)
                 Order.Swap(i, FMath::RandRange(0, i));
 
+            // Convert Order to comma-separated string
+            TArray<FString> OrderStrings;
+            for (int32 Num : Order)
+            {
+                OrderStrings.Add(FString::FromInt(Num));
+            }
+            PastLeverOrderString = FString::Join(OrderStrings, TEXT(","));
+
+            // Setup lever puzzle with randomized order
             Manager->SetupPuzzle(Order);
         }
     }
@@ -360,4 +368,5 @@ void AProceduralLevelGenerator::GetLifetimeReplicatedProps(TArray<FLifetimePrope
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AProceduralLevelGenerator, PastDate);
     DOREPLIFETIME(AProceduralLevelGenerator, FutureDate);
+    DOREPLIFETIME(AProceduralLevelGenerator, PastLeverOrderString);
 }

@@ -57,6 +57,11 @@ void ALeverActor::SetHighlighted_Implementation(bool bHighlight)
         LeverMesh->SetRenderCustomDepth(bHighlight);
         LeverMesh->CustomDepthStencilValue = bHighlight ? 1 : 0;
     }
+    if (LeverBaseMesh)
+    {
+        LeverBaseMesh->SetRenderCustomDepth(bHighlight);
+        LeverBaseMesh->CustomDepthStencilValue = bHighlight ? 1 : 0;
+    }
 }
 
 void ALeverActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

@@ -139,15 +139,28 @@ void UCalendarWidget::ShowResult()
     CalendarStage = ECalendarStage::Results;
     CalendarPanel->ClearChildren();
 
-    const FCalendarCivilianRecord* Record = CivilianDateRecords.FindByPredicate(
-        [this](const FCalendarCivilianRecord& Rec)
+    // FIXED: Use FCalendarDateRecord (the new name), not FCalendarCivilianRecord
+    const FCalendarDateRecord* Record = CalendarDateRecords.FindByPredicate(
+        [this](const FCalendarDateRecord& Rec)
         {
             return Rec.Year == SelectedYear && Rec.Month == SelectedMonth && Rec.Day == SelectedDay;
         });
 
+    int32 Row = 0; // Row index for grid
     if (Record && CalendarResultWidgetClass)
     {
-        int32 Row = 0;
+        // Show lever order ONLY if present (i.e., for past records)
+        if (!Record->LeverOrderString.IsEmpty())
+        {
+            UTextBlock* LeverOrderText = NewObject<UTextBlock>(this);
+            LeverOrderText->SetText(FText::Format(
+                FText::FromString("Lever Order: {0}"),
+                FText::FromString(Record->LeverOrderString))
+            );
+            CalendarPanel->AddChildToUniformGrid(LeverOrderText, 0, Row++);
+        }
+
+        // Add each civilian result widget
         for (const FCivilianCalendarEntry& Civ : Record->Civilians)
         {
             UCalendarResultWidget* ResultWidget = CreateWidget<UCalendarResultWidget>(GetWorld(), CalendarResultWidgetClass);

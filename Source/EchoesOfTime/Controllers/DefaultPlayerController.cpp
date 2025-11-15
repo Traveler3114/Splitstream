@@ -1,4 +1,3 @@
-// DefaultPlayerController.cpp
 #include "DefaultPlayerController.h"
 #include "ActorComponents/LockPickComponent.h"
 #include "Widgets/HUD/CharacterHUD.h"
@@ -279,7 +278,7 @@ void ADefaultPlayerController::HandlePauseMenuResumed()
     bIsPauseMenuOpen = false;
 }
 
-void ADefaultPlayerController::ClientShowCalendarWidget_Implementation(const TArray<FCalendarCivilianRecord>& CivilianDateRecords)
+void ADefaultPlayerController::ClientShowCalendarWidget_Implementation(const TArray<FCalendarDateRecord>& CalendarDateRecords)
 {
     if (CalendarWidgetInstance && CalendarWidgetInstance->IsInViewport())
     {
@@ -291,7 +290,7 @@ void ADefaultPlayerController::ClientShowCalendarWidget_Implementation(const TAr
         CalendarWidgetInstance = CreateWidget<UCalendarWidget>(this, CalendarWidgetClass);
         if (CalendarWidgetInstance)
         {
-            CalendarWidgetInstance->CivilianDateRecords = CivilianDateRecords;
+            CalendarWidgetInstance->CalendarDateRecords = CalendarDateRecords;
             CalendarWidgetInstance->AddToViewport();
         }
     }

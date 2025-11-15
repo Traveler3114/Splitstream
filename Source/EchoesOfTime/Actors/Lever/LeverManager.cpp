@@ -71,19 +71,6 @@ void ALeverManager::ResetPuzzle()
         }
     }
     ProgressIndex = 0;
-
-    // --- On-screen puzzle debugger for RESET ---
-    FString DebugText = TEXT("PUZZLE RESET: LeverManager ") + GetName();
-    if (GEngine)
-    {
-        GEngine->AddOnScreenDebugMessage(
-            /*Key*/ -1,
-            /*TimeToDisplay*/ 10.0f,
-            /*Color*/ FColor::Red,
-            DebugText
-        );
-    }
-    UE_LOG(LogTemp, Warning, TEXT("%s"), *DebugText);
 }
 
 void ALeverManager::CompletePuzzle()
@@ -91,21 +78,6 @@ void ALeverManager::CompletePuzzle()
     bCompleted = true;
     OnRep_PuzzleCompleted();
     OnLeverPuzzleCompleted.Broadcast();
-
-    // --- On-screen puzzle debug info ---
-    FString DebugText = TEXT("PUZZLE COMPLETED: LeverManager ") + GetName();
-    // Show persistent (10s) text for all players
-    if (GEngine)
-    {
-        GEngine->AddOnScreenDebugMessage(
-            /*Key*/-1,
-            /*TimeToDisplay*/10.0f,
-            /*Color*/FColor::Green,
-            DebugText
-        );
-    }
-    // For consoles/logs as well
-    UE_LOG(LogTemp, Warning, TEXT("%s"), *DebugText);
 
     if (CompletionTarget && CompletionTarget->GetClass()->ImplementsInterface(UPuzzleCompletionReceiver::StaticClass()))
     {

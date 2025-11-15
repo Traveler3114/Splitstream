@@ -20,7 +20,7 @@ struct FCivilianCalendarEntry
 };
 
 USTRUCT(BlueprintType)
-struct FCalendarCivilianRecord
+struct FCalendarDateRecord
 {
     GENERATED_BODY()
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -34,6 +34,9 @@ struct FCalendarCivilianRecord
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TArray<FCivilianCalendarEntry> Civilians;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    FString LeverOrderString;
 };
 
 UENUM()
@@ -64,7 +67,7 @@ public:
     TSubclassOf<UCalendarResultWidget> CalendarResultWidgetClass;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Calendar")
-    TArray<FCalendarCivilianRecord> CivilianDateRecords;
+    TArray<FCalendarDateRecord> CalendarDateRecords;
 
 private:
     int32 SelectedYear = 0;

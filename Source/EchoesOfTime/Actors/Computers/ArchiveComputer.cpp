@@ -82,15 +82,17 @@ void AArchiveComputer::Interact_Implementation(AActor* Interactor)
     APlayerController* PC = Cast<APlayerController>(Pawn->GetController());
     if (!PC) return;
 
-    TArray<FCalendarCivilianRecord> CivilianDateRecords;
+    TArray<FCalendarDateRecord> CalendarDateRecords;
 
     // PAST
     if (GeneratorRef)
     {
-        FCalendarCivilianRecord PastRec;
+        FCalendarDateRecord PastRec;
         PastRec.Year = GeneratorRef->PastDate.Year;
         PastRec.Month = GeneratorRef->PastDate.Month;
         PastRec.Day = GeneratorRef->PastDate.Day;
+        PastRec.LeverOrderString = GeneratorRef->PastLeverOrderString; // <--- ADD THIS LINE
+
         for (AComputer* Comp : CodeComputers)
         {
             if (Comp && !Comp->StoredCode.IsEmpty())
@@ -114,10 +116,10 @@ void AArchiveComputer::Interact_Implementation(AActor* Interactor)
                 PastRec.Civilians.Add(Entry);
             }
         }
-        CivilianDateRecords.Add(PastRec);
+        CalendarDateRecords.Add(PastRec);
 
         // FUTURE
-        FCalendarCivilianRecord FutureRec;
+        FCalendarDateRecord FutureRec;
         FutureRec.Year = GeneratorRef->FutureDate.Year;
         FutureRec.Month = GeneratorRef->FutureDate.Month;
         FutureRec.Day = GeneratorRef->FutureDate.Day;
@@ -138,7 +140,7 @@ void AArchiveComputer::Interact_Implementation(AActor* Interactor)
             }
         }
         if (FutureRec.Civilians.Num() > 0)
-            CivilianDateRecords.Add(FutureRec);
+            CalendarDateRecords.Add(FutureRec);
     }
 
     // **Only the server sends the RPC. This works for both listen server and remote clients!**
@@ -146,7 +148,7 @@ void AArchiveComputer::Interact_Implementation(AActor* Interactor)
     {
         if (ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(PC))
         {
-            MyPC->ClientShowCalendarWidget(CivilianDateRecords);
+            MyPC->ClientShowCalendarWidget(CalendarDateRecords);
         }
     }
 }

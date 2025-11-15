@@ -47,7 +47,7 @@ public:
     bool bIsPauseMenuOpen = false;
 
     UFUNCTION(Client, Reliable)
-    void ClientShowCalendarWidget(const TArray<FCalendarCivilianRecord>& CivilianDateRecords);
+    void ClientShowCalendarWidget(const TArray<FCalendarDateRecord>& CivilianDateRecords);
 
     UFUNCTION(Client, Reliable)
     void ClientUpdateDetectionWidgetForGuard(AActor* Guard, float Progress, bool bIsLocked = false, float AngleDegrees = 0.0f);
