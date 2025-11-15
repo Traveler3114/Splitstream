@@ -26,25 +26,7 @@ void AProceduralLevelGenerator::BeginPlay()
     Super::BeginPlay();
 
     // Find LeverManager in level (or spawn one)
-    TArray<AActor*> Managers;
-    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ALeverManager::StaticClass(), Managers);
 
-    if (Managers.Num() > 0)
-    {
-        auto* Manager = Cast<ALeverManager>(Managers[0]);
-        if (Manager && Manager->PuzzleLevers.Num() > 0)
-        {
-            // Only randomize order within manager's lever references
-            TArray<int32> Order;
-            Order.SetNum(Manager->PuzzleLevers.Num());
-            for (int32 i = 0; i < Manager->PuzzleLevers.Num(); ++i)
-                Order[i] = i;
-            for (int32 i = Order.Num() - 1; i > 0; --i)
-                Order.Swap(i, FMath::RandRange(0, i));
-
-            Manager->SetupPuzzle(Order);
-        }
-    }
 
     if (HasAuthority()) HandlePastSpawns();
     //HandleFutureSpawns();
@@ -186,6 +168,25 @@ void AProceduralLevelGenerator::HandleEraSpawns(
 
 void AProceduralLevelGenerator::HandlePastSpawns()
 {
+    TArray<AActor*> Managers;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ALeverManager::StaticClass(), Managers);
+
+    if (Managers.Num() > 0)
+    {
+        auto* Manager = Cast<ALeverManager>(Managers[0]);
+        if (Manager && Manager->PuzzleLevers.Num() > 0 && Manager->TimelineEra== ETimelineEra::Past)
+        {
+            // Only randomize order within manager's lever references
+            TArray<int32> Order;
+            Order.SetNum(Manager->PuzzleLevers.Num());
+            for (int32 i = 0; i < Manager->PuzzleLevers.Num(); ++i)
+                Order[i] = i;
+            for (int32 i = Order.Num() - 1; i > 0; --i)
+                Order.Swap(i, FMath::RandRange(0, i));
+
+            Manager->SetupPuzzle(Order);
+        }
+    }
     TArray<ACivilianCharacter*> SpawnedCivilians;
     TArray<ADeskActor*> PastDesks;
     HandleEraSpawns(ETimelineEra::Past, SpawnedCivilians, PastDesks);

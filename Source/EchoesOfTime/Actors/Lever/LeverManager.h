@@ -2,7 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "LeverActor.h" // Needed for delegate type!
+#include "LeverActor.h"
+#include "TimelineEra.h"
 #include "LeverManager.generated.h"
 
 class ALeverActor;
@@ -17,6 +18,8 @@ class ECHOESOFTIME_API ALeverManager : public AActor
 public:
     ALeverManager();
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
+    ETimelineEra TimelineEra = ETimelineEra::Past;
     // Manually select levers in editor
     UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Replicated, Category = "Lever")
     TArray<ALeverActor*> PuzzleLevers;
