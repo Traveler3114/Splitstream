@@ -9,6 +9,8 @@
 #include "TimelineEra.h"
 #include "CivilianCharacter.generated.h"
 
+
+
 UCLASS()
 class ECHOESOFTIME_API ACivilianCharacter : public ACharacter, public IAbilitySystemInterface
 {
@@ -19,6 +21,9 @@ public:
     virtual void BeginPlay() override;
 
     void OnHealthChanged(const struct FOnAttributeChangeData& Data);
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Civilian")
+	bool bTargetFullyDetected = false;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Civilian")
     FString CivilianName;

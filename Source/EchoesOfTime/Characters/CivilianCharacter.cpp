@@ -1,5 +1,4 @@
 #include "CivilianCharacter.h"
-#include "Actors/DeskActor.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
 #include "AbilitySystem/AttributeSets/PlayerAttributeSet.h"
@@ -8,6 +7,9 @@
 #include "GameplayEffectTypes.h"
 #include "Controllers/DefaultPlayerController.h"
 #include "Characters/DefaultCharacter.h"
+#include "Components/TimelineComponent.h"
+#include "Components/StateTreeComponent.h"
+
 
 ACivilianCharacter::ACivilianCharacter()
 {
@@ -202,6 +204,8 @@ void ACivilianCharacter::OnTimelineFloatUpdate(float Value)
         // When detection timeline reaches max, hide widget for player, DO NOT set TargetActor!
         if (Value >= 1.0f)
         {
+            bTargetFullyDetected = true;
+
             if (DetectedPlayer)
             {
                 ADefaultPlayerController* PC = Cast<ADefaultPlayerController>(DetectedPlayer->GetController());

@@ -23,5 +23,6 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Illegal_Area, "Character.Status.Ille
 UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_PastEcho_Activated, "GameplayCue.PastEcho.Activated");
 UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_PastEcho_Deactivated, "GameplayCue.PastEcho.Deactivated");
 
+
 UE_DEFINE_GAMEPLAY_TAG(TAG_Weapon_Ability_Pistol_Fire, "Weapon.Ability.Pistol.Fire");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Weapon_Ability_Pistol_Aim, "Weapon.Ability.Pistol.Aim");
