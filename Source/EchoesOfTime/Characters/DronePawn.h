@@ -1,12 +1,8 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
-#include "Perception/AIPerceptionComponent.h"
-#include "Perception/AISenseConfig_Sight.h"
-#include "Components/RectLightComponent.h"
+#include "Components/SpotLightComponent.h"
 #include "DronePawn.generated.h"
 
 UCLASS()
@@ -15,33 +11,41 @@ class ECHOESOFTIME_API ADronePawn : public APawn
     GENERATED_BODY()
 
 public:
-    // Sets default values for this pawn's properties
     ADronePawn();
-
-    // Syncs RectLight cone with perception in Editor and at runtime
     virtual void OnConstruction(const FTransform& Transform) override;
 
 protected:
     virtual void BeginPlay() override;
-    UFUNCTION()
-    void OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors);
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-    // Perception
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
-    UAIPerceptionComponent* AIPerceptionComponent;
+    FTimerHandle DetectionTimerHandle;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
-    UAISenseConfig_Sight* SightConfig;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection")
+    float DetectionInterval = 0.2f; // seconds
 
-    // Skeletal mesh to represent the drone
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection")
+    float DetectionDistance = 800.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection")
+    float ViewConeAngle = 90.0f;
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone")
     USkeletalMeshComponent* DroneMesh;
 
-    // The actor currently detected by the drone (set immediately when seen)
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
+    UPROPERTY(ReplicatedUsing=OnRep_DetectedActor, VisibleAnywhere, BlueprintReadOnly, Category = "AI")
     AActor* DetectedActor = nullptr;
 
-    // Drone spotlight (cone)
+    UFUNCTION()
+    void OnRep_DetectedActor();
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone|Visual")
-    URectLightComponent* DroneRectLight;
+    USpotLightComponent* DroneSpotLight;
+
+    // Optional debug visual
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection|Debug")
+    bool bDrawDebugCone = true;
+
+    void DetectionUpdate();
+
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
