@@ -11,6 +11,39 @@ AWirePuzzleManager::AWirePuzzleManager()
     bReplicates = true;
 }
 
+//void AWirePuzzleManager::HighlightNextCorrectWire()
+//{
+//    // Remove highlight from all wires first
+//    for (auto* Device : PuzzleDevices)
+//    {
+//        if (Device)
+//        {
+//            for (auto* Wire : Device->WireActors)
+//            {
+//                if (Wire)
+//                    Wire->SetHighlighted_Implementation(false);
+//            }
+//        }
+//    }
+//    // Highlight the next correct wire (if not completed)
+//    if (!bCompleted && DeviceOrder.IsValidIndex(ProgressIndex) && CorrectWireColors.IsValidIndex(DeviceOrder[ProgressIndex]))
+//    {
+//        int32 NextIdx = DeviceOrder[ProgressIndex];
+//        AWireDeviceActor* NextDevice = PuzzleDevices.IsValidIndex(NextIdx) ? PuzzleDevices[NextIdx] : nullptr;
+//        if (NextDevice)
+//        {
+//            for (AWireActor* Wire : NextDevice->WireActors)
+//            {
+//                if (Wire && Wire->WireColor == CorrectWireColors[NextIdx] && !Wire->bIsCut)
+//                {
+//                    Wire->SetHighlighted_Implementation(true);
+//                    break; // Only highlight one wire
+//                }
+//            }
+//        }
+//    }
+//}
+
 void AWirePuzzleManager::BeginPlay()
 {
     Super::BeginPlay();
@@ -59,6 +92,7 @@ void AWirePuzzleManager::SetupPuzzle()
             }
         }
     }
+    //HighlightNextCorrectWire();
 }
 
 void AWirePuzzleManager::OnWireCut(AWireActor* CutWire)
@@ -104,10 +138,12 @@ void AWirePuzzleManager::OnWireCut(AWireActor* CutWire)
         // Optionally reset puzzle, comment if you don't want auto-reset:
         // ResetPuzzle();
     }
+    //HighlightNextCorrectWire();
 }
 
 void AWirePuzzleManager::ResetPuzzle()
 {
+    //HighlightNextCorrectWire();
     for (auto* Device : PuzzleDevices)
     {
         if (Device)
