@@ -1,9 +1,11 @@
 #include "WirePuzzleManager.h"
 #include "Net/UnrealNetwork.h"
 #include "Interfaces/IPuzzleCompletionReceiver.h"
+#include "ProceduralLevelGenerator.h"
 #include "Engine/Engine.h"
 #include "WireActor.h"
 #include "WireDeviceActor.h"
+#include "EngineUtils.h"
 #include "GameStates/DefaultGameState.h"
 
 AWirePuzzleManager::AWirePuzzleManager()
@@ -13,87 +15,90 @@ AWirePuzzleManager::AWirePuzzleManager()
 
 //void AWirePuzzleManager::HighlightNextCorrectWire()
 //{
-//    // Remove highlight from all wires first
-//    for (auto* Device : PuzzleDevices)
-//    {
-//        if (Device)
-//        {
-//            for (auto* Wire : Device->WireActors)
-//            {
-//                if (Wire)
-//                    Wire->SetHighlighted_Implementation(false);
-//            }
-//        }
-//    }
-//    // Highlight the next correct wire (if not completed)
-//    if (!bCompleted && DeviceOrder.IsValidIndex(ProgressIndex) && CorrectWireColors.IsValidIndex(DeviceOrder[ProgressIndex]))
-//    {
-//        int32 NextIdx = DeviceOrder[ProgressIndex];
-//        AWireDeviceActor* NextDevice = PuzzleDevices.IsValidIndex(NextIdx) ? PuzzleDevices[NextIdx] : nullptr;
-//        if (NextDevice)
-//        {
-//            for (AWireActor* Wire : NextDevice->WireActors)
-//            {
-//                if (Wire && Wire->WireColor == CorrectWireColors[NextIdx] && !Wire->bIsCut)
-//                {
-//                    Wire->SetHighlighted_Implementation(true);
-//                    break; // Only highlight one wire
-//                }
-//            }
-//        }
-//    }
+//   // Remove highlight from all wires first
+//   for (auto* Device : PuzzleDevices)
+//   {
+//       if (Device)
+//       {
+//           for (auto* Wire : Device->WireActors)
+//           {
+//               if (Wire)
+//                   Wire->SetHighlighted_Implementation(false);
+//           }
+//       }
+//   }
+//   // Highlight the next correct wire (if not completed)
+//   if (!bCompleted && DeviceOrder.IsValidIndex(ProgressIndex) && CorrectWireColors.IsValidIndex(DeviceOrder[ProgressIndex]))
+//   {
+//       int32 NextIdx = DeviceOrder[ProgressIndex];
+//       AWireDeviceActor* NextDevice = PuzzleDevices.IsValidIndex(NextIdx) ? PuzzleDevices[NextIdx] : nullptr;
+//       if (NextDevice)
+//       {
+//           for (AWireActor* Wire : NextDevice->WireActors)
+//           {
+//               if (Wire && Wire->WireColor == CorrectWireColors[NextIdx] && !Wire->bIsCut)
+//               {
+//                   Wire->SetHighlighted_Implementation(true);
+//                   break; // Only highlight one wire
+//               }
+//           }
+//       }
+//   }
 //}
 
 void AWirePuzzleManager::BeginPlay()
 {
     Super::BeginPlay();
     if (HasAuthority())
-        SetupPuzzle();
-}
-
-void AWirePuzzleManager::SetupPuzzle()
-{
-    if (!HasAuthority()) return;
-    ProgressIndex = 0;
-    bCompleted = false;
-
-    DeviceOrder.Empty();
-    for (int32 i = 0; i < PuzzleDevices.Num(); ++i)
-        DeviceOrder.Add(i);
-    for (int32 i = DeviceOrder.Num() - 1; i > 0; --i)
-        DeviceOrder.Swap(i, FMath::RandRange(0, i));
-
-    CorrectWireColors.SetNum(PuzzleDevices.Num());
-    for (int32 i = 0; i < PuzzleDevices.Num(); ++i)
     {
-        auto* Device = PuzzleDevices[i];
-        if (Device && Device->WireActors.Num() > 0)
+        FString WireOrderString;
+        FString WireColorString;
+        // Obtain order string and color string from generator
+        for (TActorIterator<AProceduralLevelGenerator> It(GetWorld()); It; ++It)
         {
-            int32 WireIdx = FMath::RandRange(0, Device->WireActors.Num() - 1);
-            CorrectWireColors[i] = Device->WireActors[WireIdx]->WireColor;
+            WireOrderString = It->PastWireDeviceOrderString;
+            WireColorString = It->PastWireCorrectColorString;
+            break; // Only need one generator
         }
-        else
+        TArray<FString> OrderStrs;
+        WireOrderString.ParseIntoArray(OrderStrs, TEXT(","));
+        DeviceOrder.SetNum(OrderStrs.Num());
+        for (int32 i = 0; i < OrderStrs.Num(); ++i)
         {
-            CorrectWireColors[i] = EWireColor::Red;
+            DeviceOrder[i] = FCString::Atoi(*OrderStrs[i]);
         }
-    }
 
-    for (int32 i = 0; i < PuzzleDevices.Num(); ++i)
-    {
-        auto* Device = PuzzleDevices[i];
-        if (Device)
+        // Parse colors
+        TArray<FString> ColorStrs;
+        WireColorString.ParseIntoArray(ColorStrs, TEXT(","));
+        CorrectWireColors.SetNum(ColorStrs.Num());
+        for (int32 i = 0; i < ColorStrs.Num(); ++i)
         {
-            for (AWireActor* Wire : Device->WireActors)
+            FString ColorStr = ColorStrs[i].Replace(TEXT("EWireColor::"), TEXT(""));
+            if (ColorStr == TEXT("Red")) CorrectWireColors[i] = EWireColor::Red;
+            else if (ColorStr == TEXT("Green")) CorrectWireColors[i] = EWireColor::Green;
+            else if (ColorStr == TEXT("Blue")) CorrectWireColors[i] = EWireColor::Blue;
+            else if (ColorStr == TEXT("Yellow")) CorrectWireColors[i] = EWireColor::Yellow;
+            else CorrectWireColors[i] = EWireColor::Red; // fallback
+        }
+
+        ProgressIndex = 0;
+        bCompleted = false;
+        for (AWireDeviceActor* Device : PuzzleDevices)
+        {
+            if (Device)
             {
-                if (Wire)
+                for (AWireActor* Wire : Device->WireActors)
                 {
-                    Wire->OnWireCut.AddDynamic(this, &AWirePuzzleManager::OnWireCut);
+                    if (Wire)
+                        Wire->OnWireCut.AddDynamic(this, &AWirePuzzleManager::OnWireCut);
                 }
             }
         }
     }
     //HighlightNextCorrectWire();
 }
+
 
 void AWirePuzzleManager::OnWireCut(AWireActor* CutWire)
 {

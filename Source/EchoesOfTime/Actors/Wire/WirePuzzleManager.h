@@ -40,7 +40,6 @@ public:
     UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "WirePuzzle|Completion")
     AActor* CompletionTarget = nullptr;
 
-    void SetupPuzzle();
 	virtual void BeginPlay() override;
 protected:
     UFUNCTION()

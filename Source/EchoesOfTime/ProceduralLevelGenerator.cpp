@@ -168,6 +168,47 @@ void AProceduralLevelGenerator::HandleEraSpawns(
 
 void AProceduralLevelGenerator::HandlePastSpawns()
 {
+    TArray<AActor*> FoundWireManagers;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AWirePuzzleManager::StaticClass(), FoundWireManagers);
+
+    if (FoundWireManagers.Num() > 0)
+    {
+        // Gather device order
+        auto* WireManager = Cast<AWirePuzzleManager>(FoundWireManagers[0]);
+        if (WireManager && WireManager->PuzzleDevices.Num() > 0 && WireManager->TimelineEra== ETimelineEra::Past)
+        {
+            TArray<int32> Order;
+            Order.SetNum(WireManager->PuzzleDevices.Num());
+            for (int32 i = 0; i < WireManager->PuzzleDevices.Num(); ++i)
+                Order[i] = i;
+            for (int32 i = Order.Num() - 1; i > 0; --i)
+                Order.Swap(i, FMath::RandRange(0, i));
+
+            TArray<FString> OrderStrings;
+            for (int32 Num : Order) OrderStrings.Add(FString::FromInt(Num));
+            PastWireDeviceOrderString = FString::Join(OrderStrings, TEXT(","));
+
+            // Gather correct colors
+            TArray<FString> ColorStrs;
+            for (int32 i = 0; i < WireManager->PuzzleDevices.Num(); ++i)
+            {
+                auto* Device = WireManager->PuzzleDevices[Order[i]];
+                if (Device && Device->WireActors.Num() > 0)
+                {
+                    int32 WireIdx = FMath::RandRange(0, Device->WireActors.Num() - 1);
+                    auto WireColor = Device->WireActors[WireIdx]->WireColor;
+                    ColorStrs.Add(UEnum::GetValueAsString(WireColor));
+                }
+                else
+                {
+                    ColorStrs.Add(UEnum::GetValueAsString(EWireColor::Red));
+                }
+            }
+            PastWireCorrectColorString = FString::Join(ColorStrs, TEXT(","));
+        }
+    }
+
+
     TArray<AActor*> Managers;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), ALeverManager::StaticClass(), Managers);
 

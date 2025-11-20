@@ -55,6 +55,12 @@ public:
 
     UPROPERTY(Replicated, BlueprintReadOnly)
     FString PastLeverOrderString;
+
+    UPROPERTY(Replicated, BlueprintReadOnly)
+    FString PastWireDeviceOrderString;
+
+    UPROPERTY(Replicated, BlueprintReadOnly)
+    FString PastWireCorrectColorString;
 protected:
     virtual void BeginPlay() override;
     void SpawnCivilianDeskItems(const TArray<class ACivilianCharacter*>& Civilians, TSubclassOf<class ASearchableActor> ItemClass);
