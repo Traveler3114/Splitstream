@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "WireActor.h"
+#include "TimelineEra.h"
 #include "WireDeviceActor.generated.h"
 
 UCLASS()
@@ -12,6 +13,9 @@ class ECHOESOFTIME_API AWireDeviceActor : public AActor
 
 public:
     AWireDeviceActor();
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
+    ETimelineEra TimelineEra = ETimelineEra::Past;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     USceneComponent* SceneRoot;

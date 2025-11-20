@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Interfaces/IInteractable.h"
+#include "TimelineEra.h"
 #include "WireActor.generated.h"
 
 UENUM(BlueprintType)
@@ -23,6 +24,9 @@ class ECHOESOFTIME_API AWireActor : public AActor, public IInteractable
 
 public:
     AWireActor();
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
+    ETimelineEra TimelineEra = ETimelineEra::Past;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     USceneComponent* SceneRoot;

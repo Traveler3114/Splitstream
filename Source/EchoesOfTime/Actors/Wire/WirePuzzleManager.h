@@ -4,6 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "WireActor.h"
 #include "WireDeviceActor.h"
+#include "TimelineEra.h"
 #include "WirePuzzleManager.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWirePuzzleCompleted);
@@ -14,6 +15,9 @@ class ECHOESOFTIME_API AWirePuzzleManager : public AActor
     GENERATED_BODY()
 public:
     AWirePuzzleManager();
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
+    ETimelineEra TimelineEra = ETimelineEra::Past;
 
     UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "WirePuzzle", Replicated)
     TArray<AWireDeviceActor*> PuzzleDevices;
