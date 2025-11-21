@@ -161,8 +161,6 @@ void AWirePuzzleManager::ResetPuzzle()
         }
     }
     ProgressIndex = 0;
-    if (GEngine)
-        GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Orange, TEXT("Wire puzzle RESET!"));
 }
 
 void AWirePuzzleManager::CompletePuzzle()
@@ -179,9 +177,7 @@ void AWirePuzzleManager::CompletePuzzle()
 
 void AWirePuzzleManager::OnRep_PuzzleCompleted()
 {
-    // Optionally play VFX or sound
-    if (GEngine)
-        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Emerald, TEXT("Wire puzzle completed [client]!"));
+
 }
 
 int32 AWirePuzzleManager::GetDeviceIndexForWire(AWireActor* Wire) const
