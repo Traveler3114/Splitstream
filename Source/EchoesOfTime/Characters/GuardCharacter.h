@@ -10,6 +10,7 @@
 #include "Curves/CurveFloat.h"
 #include "TimelineEra.h"
 #include "AbilitySystemInterface.h"
+#include "GameplayEffect.h"
 #include "GuardCharacter.generated.h"
 
 class ANavNode;

@@ -1,0 +1,56 @@
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GameFramework/Actor.h"
+#include "Interfaces/IInteractable.h"
+#include "TimelineEra.h"
+#include "DisablingDeviceActor.generated.h"
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnSoloDeviceDisabled);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDeviceStateChanged, ADisablingDeviceActor*, Device);
+
+UCLASS()
+class ECHOESOFTIME_API ADisablingDeviceActor : public AActor, public IInteractable
+{
+    GENERATED_BODY()
+    
+public:
+    ADisablingDeviceActor();
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
+    ETimelineEra TimelineEra = ETimelineEra::Past;
+
+    UPROPERTY(EditAnywhere, ReplicatedUsing=OnRep_DeviceState)
+    bool bIsActive = true;
+
+    UPROPERTY(EditAnywhere, Replicated)
+    bool bIsSolo = true;
+
+    UPROPERTY(BlueprintAssignable, Category="Device")
+    FOnSoloDeviceDisabled OnSoloDeviceDisabled; // Fires if solo device disabled
+
+    UPROPERTY(BlueprintAssignable, Category="Device")
+    FOnDeviceStateChanged OnDeviceStateChanged;
+
+    /** Root Scene Component */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Device")
+    USceneComponent* SceneRootComp;
+
+    /** Static Mesh for the device */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Device")
+    UStaticMeshComponent* DeviceMesh;
+
+    UFUNCTION(BlueprintCallable)
+    void DisableDevice();
+
+    UFUNCTION(BlueprintCallable)
+    void SetIsSolo(bool bSolo) { bIsSolo = bSolo; }
+
+    virtual void Interact_Implementation(AActor* Interactor) override;
+    virtual void SetHighlighted_Implementation(bool bHighlight) override;
+
+protected:
+    virtual void BeginPlay() override;
+    UFUNCTION() void OnRep_DeviceState();
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+};
