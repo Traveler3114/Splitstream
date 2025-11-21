@@ -1,4 +1,5 @@
 #include "WireActor.h"
+#include "ActorComponents/SearchComponent.h"
 #include "Net/UnrealNetwork.h"
 
 AWireActor::AWireActor()
@@ -10,6 +11,9 @@ AWireActor::AWireActor()
     WireMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WireMesh"));
     WireMesh->SetupAttachment(SceneRoot);
 
+    SearchComponent = CreateDefaultSubobject<USearchComponent>(TEXT("SearchComponent"));
+    SearchComponent->SetIsReplicated(true);
+
     WireColor = EWireColor::Red;
     bIsCut = false;
 }
@@ -17,12 +21,15 @@ AWireActor::AWireActor()
 void AWireActor::BeginPlay()
 {
     Super::BeginPlay();
+
+    if (SearchComponent)
+    {
+        SearchComponent->OnSearchComplete.AddDynamic(this, &AWireActor::OnSearchComplete);
+    }
 }
 
-
-void AWireActor::Interact_Implementation(AActor* InteractingActor)
+void AWireActor::OnSearchComplete()
 {
-    // Always notify manager, even if already cut
     OnWireCut.Broadcast(this);
 
     // Only hide/cut if not already cut
@@ -31,6 +38,12 @@ void AWireActor::Interact_Implementation(AActor* InteractingActor)
         bIsCut = true;
         OnRep_CutState();
     }
+}
+
+void AWireActor::Interact_Implementation(AActor* Interactor)
+{
+    if (SearchComponent)
+        SearchComponent->Interact(Interactor);
 }
 
 void AWireActor::SetHighlighted_Implementation(bool bHighlight)

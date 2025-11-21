@@ -40,6 +40,9 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Device")
     UStaticMeshComponent* DeviceMesh;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Device")
+    class USearchComponent* SearchComponent;
+
     UFUNCTION(BlueprintCallable)
     void DisableDevice();
 
@@ -49,8 +52,15 @@ public:
     virtual void Interact_Implementation(AActor* Interactor) override;
     virtual void SetHighlighted_Implementation(bool bHighlight) override;
 
+    UFUNCTION()
+    virtual void OnSearchComplete();
+
+
+
 protected:
     virtual void BeginPlay() override;
     UFUNCTION() void OnRep_DeviceState();
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+
 };

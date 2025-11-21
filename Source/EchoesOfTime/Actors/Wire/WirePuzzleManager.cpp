@@ -112,29 +112,29 @@ void AWirePuzzleManager::OnWireCut(AWireActor* CutWire)
         CorrectWireColors.IsValidIndex(DeviceIdx) &&
         CutWire->WireColor == CorrectWireColors[DeviceIdx])
     {
-        if (GEngine)
+        /*if (GEngine)
             GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green,
                 FString::Printf(TEXT("Wire puzzle: Correct wire cut on device %d -- %s"),
                     DeviceIdx + 1,
-                    *UEnum::GetValueAsString(CutWire->WireColor)));
+                    *UEnum::GetValueAsString(CutWire->WireColor)));*/
         ++ProgressIndex;
         if (ProgressIndex >= DeviceOrder.Num())
         {
-            if (GEngine)
-                GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Wire puzzle COMPLETED!"));
+            //if (GEngine)
+            //    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Wire puzzle COMPLETED!"));
             CompletePuzzle();
         }
     }
     else
     {
-        FString debugMsg;
-        if (DeviceIdx != ExpectedDeviceIdx)
-            debugMsg = FString::Printf(TEXT("Wire puzzle: Wrong device! Expected Device %d"), ExpectedDeviceIdx + 1);
-        else
-            debugMsg = FString::Printf(TEXT("Wire puzzle: Wrong wire on device %d! Expected: %s"),
-                DeviceIdx + 1, *UEnum::GetValueAsString(CorrectWireColors[DeviceIdx]));
-        if (GEngine)
-            GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, debugMsg);
+        //FString debugMsg;
+        //if (DeviceIdx != ExpectedDeviceIdx)
+        //    debugMsg = FString::Printf(TEXT("Wire puzzle: Wrong device! Expected Device %d"), ExpectedDeviceIdx + 1);
+        //else
+        //    debugMsg = FString::Printf(TEXT("Wire puzzle: Wrong wire on device %d! Expected: %s"),
+        //        DeviceIdx + 1, *UEnum::GetValueAsString(CorrectWireColors[DeviceIdx]));
+        //if (GEngine)
+        //    GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, debugMsg);
 
         // Trigger alarm
         ADefaultGameState* GS = GetWorld() ? GetWorld()->GetGameState<ADefaultGameState>() : nullptr;

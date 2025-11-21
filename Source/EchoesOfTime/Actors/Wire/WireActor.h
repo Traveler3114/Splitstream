@@ -34,6 +34,9 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     UStaticMeshComponent* WireMesh;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Device")
+    class USearchComponent* SearchComponent;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wire")
     EWireColor WireColor = EWireColor::Red;
 
@@ -43,11 +46,14 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "Wire")
     FOnWireCutSignature OnWireCut;
 
-    virtual void Interact_Implementation(AActor* InteractingActor) override;
+    virtual void Interact_Implementation(AActor* Interactor) override;
     virtual void SetHighlighted_Implementation(bool bHighlight) override;
 
     UFUNCTION()
     void OnRep_CutState();
+
+    UFUNCTION()
+    virtual void OnSearchComplete();
 
 protected:
     virtual void BeginPlay() override;

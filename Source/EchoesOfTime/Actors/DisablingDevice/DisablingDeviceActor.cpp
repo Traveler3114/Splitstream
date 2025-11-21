@@ -1,4 +1,5 @@
 #include "DisablingDeviceActor.h"
+#include "ActorComponents/SearchComponent.h"
 #include "Net/UnrealNetwork.h"
 
 ADisablingDeviceActor::ADisablingDeviceActor()
@@ -12,11 +13,24 @@ ADisablingDeviceActor::ADisablingDeviceActor()
     // Create the device mesh and attach to root
     DeviceMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DeviceMesh"));
     DeviceMesh->SetupAttachment(SceneRootComp);
+
+	SearchComponent = CreateDefaultSubobject<USearchComponent>(TEXT("SearchComponent"));
+	SearchComponent->SetIsReplicated(true);
 }
 
 void ADisablingDeviceActor::BeginPlay()
 {
     Super::BeginPlay();
+
+    if (SearchComponent)
+    {
+        SearchComponent->OnSearchComplete.AddDynamic(this, &ADisablingDeviceActor::OnSearchComplete);
+    }
+}
+
+void ADisablingDeviceActor::OnSearchComplete()
+{
+    DisableDevice();
 }
 
 void ADisablingDeviceActor::DisableDevice()
@@ -37,13 +51,20 @@ void ADisablingDeviceActor::DisableDevice()
 
 void ADisablingDeviceActor::Interact_Implementation(AActor* Interactor)
 {
-    DisableDevice();
+    if (SearchComponent)
+        SearchComponent->Interact(Interactor);
 }
 
 void ADisablingDeviceActor::SetHighlighted_Implementation(bool bHighlight)
 {
-    if (DeviceMesh)
+    if (DeviceMesh && SearchComponent)
     {
+        if (SearchComponent->bSearched)
+        {
+            DeviceMesh->SetRenderCustomDepth(false);
+            DeviceMesh->CustomDepthStencilValue = 0;
+            return;
+        }
         DeviceMesh->SetRenderCustomDepth(bHighlight);
         DeviceMesh->CustomDepthStencilValue = bHighlight ? 1 : 0;
     }

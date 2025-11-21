@@ -50,6 +50,9 @@ protected:
 
     void ResetPuzzle();
     void CompletePuzzle();
+
+
+
     //void HighlightNextCorrectWire();
 
     int32 GetDeviceIndexForWire(AWireActor* Wire) const;
