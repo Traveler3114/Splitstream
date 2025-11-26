@@ -118,11 +118,11 @@ void UCharacterOverlay::NativeDestruct()
     Super::NativeDestruct();
 }
 
-void UCharacterOverlay::UpdateDetectionWidgetForGuard(AActor* Guard, float Progress, bool bIsLocked, float AngleDegrees)
+void UCharacterOverlay::UpdateDetectionWidget(AActor* DetectorActor, float Progress, bool bIsLocked, float AngleDegrees)
 {
-    if (!Guard) return;
+    if (!DetectorActor) return;
 
-    UDetectionWidget*& WidgetInstance = GuardDetectionWidgets.FindOrAdd(Guard);
+    UDetectionWidget*& WidgetInstance = DetectionWidgets.FindOrAdd(DetectorActor);
 
     if (!WidgetInstance && DetectionWidgetClass && CanvasPanel && (Progress > 0.0f || bIsLocked))
     {
@@ -160,7 +160,7 @@ void UCharacterOverlay::UpdateDetectionWidgetForGuard(AActor* Guard, float Progr
         if ((Progress <= 0.0f && !bIsLocked) || bIsLocked)
         {
             WidgetInstance->RemoveFromParent();
-            GuardDetectionWidgets.Remove(Guard);
+            DetectionWidgets.Remove(DetectorActor);
         }
     }
 }

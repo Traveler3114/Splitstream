@@ -300,7 +300,7 @@ void AGuardCharacter::OnTimelineFloatUpdate(float Value)
                 float Sign = FVector::DotProduct(CameraRight, FlatToGuard) > 0 ? 1.0f : -1.0f;
                 AngleDeg *= Sign;
 
-                PC->ClientUpdateDetectionWidgetForGuard(this, Value, false, AngleDeg);
+                PC->ClientUpdateDetectionWidget(this, Value, false, AngleDeg);
             }
         }
     }
@@ -341,7 +341,7 @@ void AGuardCharacter::OnTimelineFinished()
                 float Sign = FVector::DotProduct(CameraRight, FlatToGuard) > 0 ? 1.0f : -1.0f;
                 AngleDeg *= Sign;
 
-                PC->ClientUpdateDetectionWidgetForGuard(this, 1.0f, true, AngleDeg);
+                PC->ClientUpdateDetectionWidget(this, 1.0f, true, AngleDeg);
             }
         }
     }
@@ -376,7 +376,7 @@ void AGuardCharacter::OnTimelineFinished()
                     float Sign = FVector::DotProduct(CameraRight, FlatToGuard) > 0 ? 1.0f : -1.0f;
                     AngleDeg *= Sign;
 
-                    PC->ClientUpdateDetectionWidgetForGuard(this, 0.0f, false, AngleDeg);
+                    PC->ClientUpdateDetectionWidget(this, 0.0f, false, AngleDeg);
                 }
             }
         }

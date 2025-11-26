@@ -172,6 +172,43 @@ public:
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
     bool GetForwardTraceResult(float TraceDistance, FHitResult& OutHit, FVector& OutTraceEnd) const;
 
+    UFUNCTION(BlueprintPure, Category = "Detection")
+    static float CalculateDetectionAngle(
+        const FVector& CameraLocation,
+        const FRotator& PlayerCameraRotation,
+        const FVector& SelfLocation)
+    {
+        // Vector from player to detector
+        FVector ToDetector = CameraLocation - SelfLocation;
+
+        // Get Forward and Right vector from camera rotation
+        FVector CameraForward = PlayerCameraRotation.Vector();
+        FVector CameraRight = FRotationMatrix(PlayerCameraRotation).GetUnitAxis(EAxis::Y);
+
+        // Flatten vectors (ignore Z)
+        CameraForward.Z = 0.f;
+        CameraRight.Z = 0.f;
+        ToDetector.Z = 0.f;
+
+        // Normalize
+        CameraForward.Normalize();
+        CameraRight.Normalize();
+        ToDetector.Normalize();
+
+        // Compute angle between camera forward and ToDetector
+        float Dot = FVector::DotProduct(CameraForward, ToDetector);
+        Dot = FMath::Clamp(Dot, -1.f, 1.f); // Prevent NaN
+
+        float AngleRad = FMath::Acos(Dot);
+        float AngleDeg = FMath::RadiansToDegrees(AngleRad);
+
+        // Sign determines left/right side for UI
+        float Sign = FVector::DotProduct(CameraRight, ToDetector) > 0.f ? 1.f : -1.f;
+        AngleDeg *= Sign;
+
+        return AngleDeg;
+    }
+
 private:
     void GrantAbilitiesFromInputSet();
     void GrantAbilitiesFromDefaultSet();

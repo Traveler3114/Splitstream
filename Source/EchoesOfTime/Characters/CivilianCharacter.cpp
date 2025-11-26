@@ -197,22 +197,7 @@ void ACivilianCharacter::OnTimelineFloatUpdate(float Value)
                 float Sign = FVector::DotProduct(CameraRight, FlatToCivilian) > 0 ? 1.0f : -1.0f;
                 AngleDeg *= Sign;
 
-                PC->ClientUpdateDetectionWidgetForGuard(this, Value, false, AngleDeg);
-            }
-        }
-
-        // When detection timeline reaches max, hide widget for player, DO NOT set TargetActor!
-        if (Value >= 1.0f)
-        {
-            bTargetFullyDetected = true;
-
-            if (DetectedPlayer)
-            {
-                ADefaultPlayerController* PC = Cast<ADefaultPlayerController>(DetectedPlayer->GetController());
-                if (PC)
-                {
-                    PC->ClientUpdateDetectionWidgetForGuard(this, 0.0f, false, 0.0f);
-                }
+                PC->ClientUpdateDetectionWidget(this, Value, false, AngleDeg);
             }
         }
     }
@@ -220,5 +205,20 @@ void ACivilianCharacter::OnTimelineFloatUpdate(float Value)
 
 void ACivilianCharacter::OnTimelineFinished()
 {
+    // At this point detection is finished (fully detected or reversed)
     CivilianTimeline->Stop();
+
+    // Hide the widget for player:
+    if (DetectedActor)
+    {
+        ADefaultCharacter* DetectedPlayer = Cast<ADefaultCharacter>(DetectedActor);
+        if (DetectedPlayer)
+        {
+            ADefaultPlayerController* PC = Cast<ADefaultPlayerController>(DetectedPlayer->GetController());
+            if (PC)
+            {
+                PC->ClientUpdateDetectionWidget(this, 0.0f, true, 0.0f); // bIsLocked=true means hide
+            }
+        }
+    }
 }

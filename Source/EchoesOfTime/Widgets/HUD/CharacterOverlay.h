@@ -60,8 +60,8 @@ public:
     float TextureScale = 1.25f;
 
     UPROPERTY()
-    TMap<AActor*, class UDetectionWidget*> GuardDetectionWidgets;
+    TMap<AActor*, class UDetectionWidget*> DetectionWidgets;
 
     UFUNCTION(BlueprintCallable)
-    void UpdateDetectionWidgetForGuard(AActor* Guard, float Progress, bool bIsLocked, float AngleDegrees = 0.0f);
+    void UpdateDetectionWidget(AActor* DetectorActor, float Progress, bool bIsLocked, float AngleDegrees = 0.0f);
 };

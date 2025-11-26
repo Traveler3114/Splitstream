@@ -23,9 +23,6 @@ public:
     void OnHealthChanged(const struct FOnAttributeChangeData& Data);
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Civilian")
-	bool bTargetFullyDetected = false;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Civilian")
     FString CivilianName;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Civilian")
