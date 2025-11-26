@@ -21,10 +21,16 @@ void USearchComponent::BeginPlay()
 
 void USearchComponent::StartSearching()
 {
-    if (bSearchingInProgress || bSearched) return;
+    if (bSearchingInProgress) return; // block concurrent searches
+
+    if (bSearched && !bAllowMultipleSearches) return; // only block if already searched AND only one search allowed
+
     bSearchingInProgress = true;
     SearchElapsed = 0.f;
     SetComponentTickEnabled(true);
+
+    if (bAllowMultipleSearches)
+        bSearched = false; // clear so future checks (UI, code) see the new search in progress
 }
 
 
@@ -70,7 +76,7 @@ void USearchComponent::Interact(AActor* Interactor)
     if (GetOwner()->HasAuthority()) {
         LastInteractor = Interactor;
     }
-    if (bSearched || bSearchingInProgress) return;
+    if ((bSearched || bSearchingInProgress) && !bAllowMultipleSearches) return;
     if (GetOwner()->HasAuthority())
     {
         LastInteractor = Interactor; // 'Interactor' MUST be the server pawn

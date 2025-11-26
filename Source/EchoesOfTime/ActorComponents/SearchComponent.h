@@ -27,6 +27,9 @@ public:
     UPROPERTY(ReplicatedUsing = OnRep_Searched, VisibleAnywhere, BlueprintReadOnly, Category = "Searching")
     bool bSearched = false;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Searching")
+    bool bAllowMultipleSearches = false;
+
     UFUNCTION()
     void OnRep_Searched();
 
