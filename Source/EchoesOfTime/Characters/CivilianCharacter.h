@@ -2,14 +2,15 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "AbilitySystemComponent.h" // Needed for FOnAttributeChangeData!
+#include "AbilitySystemComponent.h"
 #include "AbilitySystemInterface.h"
-#include "Components/TimelineComponent.h"
-#include "Curves/CurveFloat.h"
 #include "TimelineEra.h"
 #include "CivilianCharacter.generated.h"
 
-
+class ADeskActor;
+class UAIPerceptionComponent;
+class UAISenseConfig_Sight;
+class UPlayerAttributeSet;
 
 UCLASS()
 class ECHOESOFTIME_API ACivilianCharacter : public ACharacter, public IAbilitySystemInterface
@@ -29,16 +30,16 @@ public:
     UTexture2D* PortraitTexture;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Civilian")
-    class ADeskActor* AssignedDesk = nullptr;
+    ADeskActor* AssignedDesk = nullptr;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
     ETimelineEra TimelineEra = ETimelineEra::Past;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-    class UAbilitySystemComponent* AbilitySystemComponent;
+    UAbilitySystemComponent* AbilitySystemComponent;
 
     UPROPERTY()
-    class UPlayerAttributeSet* AttributeSet;
+    UPlayerAttributeSet* AttributeSet;
 
     virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
 
@@ -46,27 +47,19 @@ public:
     TSubclassOf<UGameplayEffect> AttributeInitGE;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
-    class UAIPerceptionComponent* AIPerceptionComponent;
+    UAIPerceptionComponent* AIPerceptionComponent;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
-    class UAISenseConfig_Sight* SightConfig;
+    UAISenseConfig_Sight* SightConfig;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
     AActor* TargetActor = nullptr;
 
     AActor* DetectedActor = nullptr;
 
-    UPROPERTY()
-    UTimelineComponent* CivilianTimeline;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Timeline")
-    UCurveFloat* CivilianCurve;
-
-    UFUNCTION()
-    void OnTimelineFloatUpdate(float Value);
-
-    UFUNCTION()
-    void OnTimelineFinished();
+    // IDetectable implementation (called by detected actors)
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Detection")
+    void OnFullyDetected(AActor* DetectingActor);
 
 protected:
     UFUNCTION()

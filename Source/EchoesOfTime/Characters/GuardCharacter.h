@@ -4,10 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "Interfaces/ICameraDetectable.h"
+#include "Interfaces/IDetectable.h"
 #include "Interfaces/IGhostMirrorSource.h"
-#include "Components/TimelineComponent.h"
-#include "Curves/CurveFloat.h"
 #include "TimelineEra.h"
 #include "AbilitySystemInterface.h"
 #include "GameplayEffect.h"
@@ -16,7 +14,7 @@
 class ANavNode;
 
 UCLASS()
-class ECHOESOFTIME_API AGuardCharacter : public ACharacter, public ICameraDetectable, public IGhostMirrorSource, public IAbilitySystemInterface
+class ECHOESOFTIME_API AGuardCharacter : public ACharacter, public IDetectable, public IGhostMirrorSource, public IAbilitySystemInterface
 {
     GENERATED_BODY()
 
@@ -79,21 +77,9 @@ public:
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Ghost", meta = (AllowPrivateAccess = "true"))
     class AGhostCharacterActor* SpawnedGhost = nullptr;
 
-    UPROPERTY()
-    UTimelineComponent* GuardTimeline;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Timeline")
-    UCurveFloat* GuardCurve;
-
-    UFUNCTION()
-    void OnTimelineFloatUpdate(float Value);
-
-    UFUNCTION()
-    void OnTimelineFinished();
-
-    // ICameraDetectable implementation
-    virtual void OnDetectedByCamera_Implementation(class ASecurityCamera* Camera) override;
-    virtual void OnLostByCamera_Implementation(class ASecurityCamera* Camera) override;
+    virtual void OnDetected_Implementation(AActor* Detector) override;
+    virtual void OnLost_Implementation(AActor* Detector) override;
+    virtual void OnFullyDetected_Implementation(AActor* DetectingActor) override;
 
     // IGhostMirrorSource implementation
     virtual bool ShouldGhostBeVisible_Implementation() const override;

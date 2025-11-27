@@ -3,7 +3,6 @@
 #include "Actors/TimeObjects/GhostCharacterActor.h"
 #include "Actors/PointActors/NavNode.h"
 #include "Engine/Engine.h"
-#include "Actors/SecurityCamera.h"
 #include "Characters/DefaultCharacter.h"
 #include "Actors/PointActors/RefPointActor.h"
 #include "Net/UnrealNetwork.h"
@@ -12,12 +11,11 @@
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
-#include "Components/TimelineComponent.h"
-#include "Curves/CurveFloat.h"
 #include "AbilitySystem/AttributeSets/PlayerAttributeSet.h"
 #include "Controllers/DefaultPlayerController.h"
 #include "GameStates/DefaultGameState.h"
 #include "GameplayEffectTypes.h"
+#include "Interfaces/IDetectable.h"
 #include "TimerManager.h"
 
 AGuardCharacter::AGuardCharacter()
@@ -37,8 +35,6 @@ AGuardCharacter::AGuardCharacter()
 
     AIPerceptionComponent->ConfigureSense(*SightConfig);
     AIPerceptionComponent->SetDominantSense(SightConfig->GetSenseImplementation());
-
-    GuardTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("GuardTimeline"));
 
     AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
     AttributeSet = CreateDefaultSubobject<UPlayerAttributeSet>(TEXT("AttributeSet"));
@@ -64,7 +60,6 @@ void AGuardCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
             if (ADefaultGameState* GS = Cast<ADefaultGameState>(GetWorld()->GetGameState()))
             {
                 GS->CancelPreAlarm(this);
-                // Only cancel alarm if it's NOT active (still in pre-alarm)
                 if (!GS->bAlarmActive)
                 {
                     GS->CancelAlarm(this);
@@ -106,8 +101,7 @@ void AGuardCharacter::BeginPlay()
     {
         AIPerceptionComponent->OnPerceptionUpdated.AddDynamic(this, &AGuardCharacter::OnPerceptionUpdated);
     }
-    const bool bAuth = HasAuthority();
-    if (bAuth)
+    if (HasAuthority())
     {
         FActorSpawnParameters Params;
         Params.Owner = this;
@@ -127,23 +121,9 @@ void AGuardCharacter::BeginPlay()
             SpawnedGhost->GhostOffset = Offset;
         }
     }
-
-    // Timeline setup
-    if (GuardCurve)
-    {
-        FOnTimelineFloat ProgressFunction;
-        ProgressFunction.BindUFunction(this, FName("OnTimelineFloatUpdate"));
-        GuardTimeline->AddInterpFloat(GuardCurve, ProgressFunction);
-
-        FOnTimelineEvent FinishedFunction;
-        FinishedFunction.BindUFunction(this, FName("OnTimelineFinished"));
-        GuardTimeline->SetTimelineFinishedFunc(FinishedFunction);
-
-        GuardTimeline->SetLooping(false); // Do not loop, handle manually
-    }
 }
 
-void AGuardCharacter::OnDetectedByCamera_Implementation(ASecurityCamera* Camera)
+void AGuardCharacter::OnDetected_Implementation(AActor* Detector)
 {
     if (!bIsInCameraView)
     {
@@ -155,7 +135,7 @@ void AGuardCharacter::OnDetectedByCamera_Implementation(ASecurityCamera* Camera)
     }
 }
 
-void AGuardCharacter::OnLostByCamera_Implementation(ASecurityCamera* Camera)
+void AGuardCharacter::OnLost_Implementation(AActor* Detector)
 {
     if (bIsInCameraView)
     {
@@ -163,6 +143,19 @@ void AGuardCharacter::OnLostByCamera_Implementation(ASecurityCamera* Camera)
         if (SpawnedGhost)
         {
             SpawnedGhost->UpdateGhostVisibility();
+        }
+    }
+}
+
+// Called by detected actors when their own detection timeline is finished
+void AGuardCharacter::OnFullyDetected_Implementation(AActor* DetectingActor)
+{
+    TargetActor = DetectingActor; // The actor that is now fully detected
+    if (HasAuthority())
+    {
+        if (ADefaultGameState* GS = Cast<ADefaultGameState>(GetWorld()->GetGameState()))
+        {
+            GS->StartPreAlarm(this, PreAlarmDuration);
         }
     }
 }
@@ -189,7 +182,7 @@ void AGuardCharacter::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
 {
     for (AActor* Actor : UpdatedActors)
     {
-        if (ADefaultCharacter* Player = Cast<ADefaultCharacter>(Actor))
+        if (Actor && Actor->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
         {
             FActorPerceptionBlueprintInfo Info;
             AIPerceptionComponent->GetActorsPerception(Actor, Info);
@@ -204,185 +197,24 @@ void AGuardCharacter::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
                 }
             }
 
-            if (UAbilitySystemComponent* ASC = Player->GetAbilitySystemComponent())
+            if (bSensed)
             {
-                FGameplayTag IllegalTag = TAG_Character_Status_Illegal;
-
-                ASC->RegisterGameplayTagEvent(IllegalTag, EGameplayTagEventType::NewOrRemoved)
-                    .AddLambda([this, Player](const FGameplayTag Tag, int32 NewCount)
-                        {
-                            FActorPerceptionBlueprintInfo Info;
-                            if (AIPerceptionComponent)
-                                AIPerceptionComponent->GetActorsPerception(Player, Info);
-
-                            bool bSensedNow = false;
-                            for (const auto& Stimulus : Info.LastSensedStimuli)
-                            {
-                                if (Stimulus.WasSuccessfullySensed())
-                                {
-                                    bSensedNow = true;
-                                    break;
-                                }
-                            }
-
-                            if (bSensedNow)
-                            {
-                                if (NewCount > 0)
-                                {
-                                    DetectedActor = Player;
-                                    if (GuardTimeline && TargetActor == nullptr)
-                                    {
-                                        GuardTimeline->Play();
-                                    }
-                                }
-                                else
-                                {
-                                    if (GuardTimeline && TargetActor == nullptr)
-                                    {
-                                        GuardTimeline->Reverse();
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                if (GuardTimeline && TargetActor == nullptr)
-                                {
-                                    GuardTimeline->Reverse();
-                                }
-                            }
-                        });
-
-                if (ASC->HasMatchingGameplayTag(IllegalTag) && bSensed)
+                DetectedActor = Actor;
+                IDetectable::Execute_OnDetected(Actor, this); // Notify target it is being detected
+            }
+            else
+            {
+                IDetectable::Execute_OnLost(Actor, this); // Notify target it is not being detected
+                if (DetectedActor == Actor)
                 {
-                    DetectedActor = Player;
-                    if (GuardTimeline && TargetActor == nullptr)
-                    {
-                        GuardTimeline->Play();
-                    }
-                }
-                else if (ASC->HasMatchingGameplayTag(IllegalTag) && !bSensed)
-                {
-                    if (GuardTimeline && TargetActor == nullptr)
-                    {
-                        GuardTimeline->Reverse();
-                    }
+                    DetectedActor = nullptr;
                 }
             }
         }
     }
 }
 
-void AGuardCharacter::OnTimelineFloatUpdate(float Value)
-{
-    if (DetectedActor)
-    {
-        ADefaultCharacter* DetectedPlayer = Cast<ADefaultCharacter>(DetectedActor);
-        if (DetectedPlayer)
-        {
-            ADefaultPlayerController* PC = Cast<ADefaultPlayerController>(DetectedPlayer->GetController());
-            if (PC)
-            {
-                FVector PlayerLoc = DetectedPlayer->GetActorLocation();
-                FVector GuardLoc = GetActorLocation();
 
-                FRotator CameraRot = PC->PlayerCameraManager->GetCameraRotation();
-                FVector CameraForward = CameraRot.Vector();
-                FVector CameraRight = FRotationMatrix(CameraRot).GetUnitAxis(EAxis::Y);
-
-                FVector ToGuard = GuardLoc - PlayerLoc;
-
-                FVector FlatForward = CameraForward; FlatForward.Z = 0; FlatForward.Normalize();
-                FVector FlatToGuard = ToGuard; FlatToGuard.Z = 0; FlatToGuard.Normalize();
-
-                float AngleRad = FMath::Acos(FVector::DotProduct(FlatForward, FlatToGuard));
-                float AngleDeg = FMath::RadiansToDegrees(AngleRad);
-
-                float Sign = FVector::DotProduct(CameraRight, FlatToGuard) > 0 ? 1.0f : -1.0f;
-                AngleDeg *= Sign;
-
-                PC->ClientUpdateDetectionWidget(this, Value, false, AngleDeg);
-            }
-        }
-    }
-}
-
-void AGuardCharacter::OnTimelineFinished()
-{
-    if (GuardTimeline->GetPlaybackPosition() >= GuardTimeline->GetTimelineLength())
-    {
-        if (DetectedActor && TargetActor == nullptr)
-        {
-            TargetActor = DetectedActor;
-            if (HasAuthority())
-            {
-                if (ADefaultGameState* GS = Cast<ADefaultGameState>(GetWorld()->GetGameState()))
-                {
-                    GS->StartPreAlarm(this, PreAlarmDuration);
-                }
-            }
-        }
-
-        ADefaultCharacter* DetectedPlayer = Cast<ADefaultCharacter>(DetectedActor);
-        if (DetectedPlayer)
-        {
-            ADefaultPlayerController* PC = Cast<ADefaultPlayerController>(DetectedPlayer->GetController());
-            if (PC)
-            {
-                FVector PlayerLoc = DetectedPlayer->GetActorLocation();
-                FVector GuardLoc = GetActorLocation();
-                FRotator CameraRot = PC->PlayerCameraManager->GetCameraRotation();
-                FVector CameraForward = CameraRot.Vector();
-                FVector CameraRight = FRotationMatrix(CameraRot).GetUnitAxis(EAxis::Y);
-                FVector ToGuard = GuardLoc - PlayerLoc;
-                FVector FlatForward = CameraForward; FlatForward.Z = 0; FlatForward.Normalize();
-                FVector FlatToGuard = ToGuard; FlatToGuard.Z = 0; FlatToGuard.Normalize();
-                float AngleRad = FMath::Acos(FVector::DotProduct(FlatForward, FlatToGuard));
-                float AngleDeg = FMath::RadiansToDegrees(AngleRad);
-                float Sign = FVector::DotProduct(CameraRight, FlatToGuard) > 0 ? 1.0f : -1.0f;
-                AngleDeg *= Sign;
-
-                PC->ClientUpdateDetectionWidget(this, 1.0f, true, AngleDeg);
-            }
-        }
-    }
-    else if (GuardTimeline->GetPlaybackPosition() <= 0.0f)
-    {
-        if (HasAuthority())
-        {
-            if (ADefaultGameState* GS = Cast<ADefaultGameState>(GetWorld()->GetGameState()))
-            {
-                GS->CancelPreAlarm(this);
-            }
-        }
-
-        if (DetectedActor)
-        {
-            ADefaultCharacter* DetectedPlayer = Cast<ADefaultCharacter>(DetectedActor);
-            if (DetectedPlayer)
-            {
-                ADefaultPlayerController* PC = Cast<ADefaultPlayerController>(DetectedPlayer->GetController());
-                if (PC)
-                {
-                    FVector PlayerLoc = DetectedPlayer->GetActorLocation();
-                    FVector GuardLoc = GetActorLocation();
-                    FRotator CameraRot = PC->PlayerCameraManager->GetCameraRotation();
-                    FVector CameraForward = CameraRot.Vector();
-                    FVector CameraRight = FRotationMatrix(CameraRot).GetUnitAxis(EAxis::Y);
-                    FVector ToGuard = GuardLoc - PlayerLoc;
-                    FVector FlatForward = CameraForward; FlatForward.Z = 0; FlatForward.Normalize();
-                    FVector FlatToGuard = ToGuard; FlatToGuard.Z = 0; FlatToGuard.Normalize();
-                    float AngleRad = FMath::Acos(FVector::DotProduct(FlatForward, FlatToGuard));
-                    float AngleDeg = FMath::RadiansToDegrees(AngleRad);
-                    float Sign = FVector::DotProduct(CameraRight, FlatToGuard) > 0 ? 1.0f : -1.0f;
-                    AngleDeg *= Sign;
-
-                    PC->ClientUpdateDetectionWidget(this, 0.0f, false, AngleDeg);
-                }
-            }
-        }
-        GuardTimeline->Stop();
-    }
-}
 
 void AGuardCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {

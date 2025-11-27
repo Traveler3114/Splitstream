@@ -7,7 +7,7 @@
 #include "Components/ArrowComponent.h"
 #include "DrawDebugHelpers.h"
 #include "Net/UnrealNetwork.h"
-#include "Interfaces/ICameraDetectable.h"
+#include "Interfaces/IDetectable.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 
@@ -91,7 +91,7 @@ void ASecurityCamera::DetectionUpdate()
 
     for (AActor* Actor : OverlappedActors)
     {
-        if (!Actor || !Actor->GetClass()->ImplementsInterface(UCameraDetectable::StaticClass()))
+        if (!Actor || !Actor->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
             continue;
 
         UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(Actor->GetRootComponent());
@@ -146,7 +146,7 @@ void ASecurityCamera::DetectionUpdate()
                 }
             }
             if (!bWasDetected)
-                ICameraDetectable::Execute_OnDetectedByCamera(Actor, this);
+                IDetectable::Execute_OnDetected(Actor, this);
         }
     }
 
@@ -157,7 +157,7 @@ void ASecurityCamera::DetectionUpdate()
         if (!Actor)
             continue;
         if (!DetectedThisFrame.Contains(Actor))
-            ICameraDetectable::Execute_OnLostByCamera(Actor, this);
+            IDetectable::Execute_OnLost(Actor, this);
     }
 
     // Store for next frame
