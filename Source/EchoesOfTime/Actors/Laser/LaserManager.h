@@ -2,12 +2,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Interfaces/IPuzzleCompletionReceiver.h"
 #include "LaserManager.generated.h"
 
 class ALaserSensor;
 
 UCLASS()
-class ECHOESOFTIME_API ALaserManager : public AActor
+class ECHOESOFTIME_API ALaserManager : public AActor, public IPuzzleCompletionReceiver
 {
     GENERATED_BODY()
 
@@ -36,6 +37,8 @@ protected:
     // Should randomization start automatically on BeginPlay (server)
     UPROPERTY(EditAnywhere, Category = "Laser Group")
     bool bStartRandomOnBeginPlay = true;
+
+    virtual void OnPuzzleCompleted_Implementation() override;
 
 private:
     FTimerHandle TimerHandle_Randomize;

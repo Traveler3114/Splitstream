@@ -10,6 +10,12 @@ ALaserManager::ALaserManager()
     bReplicates = true;
 }
 
+void ALaserManager::OnPuzzleCompleted_Implementation()
+{
+    // On puzzle completion, activate all lasers
+    SetAllSensorsActive(false);
+}
+
 void ALaserManager::BeginPlay()
 {
     Super::BeginPlay();

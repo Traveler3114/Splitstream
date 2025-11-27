@@ -35,7 +35,7 @@ protected:
     // Timer callbacks
     void DetectionUpdate();
     void PanUpdate();
-    //void DebugDrawUpdate();
+    void DebugDrawUpdate();
 
 public:
     // Replication
@@ -62,8 +62,8 @@ public:
     float ViewConeAngle = 90.0f; // degrees (full angle)
 
     // Debug: draw vision cone and trace
-    //UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection|Debug")
-    //bool bDrawDebug = false;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection|Debug")
+    bool bDrawDebug = false;
 
     // Camera rotation (pan) settings
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Pan")
