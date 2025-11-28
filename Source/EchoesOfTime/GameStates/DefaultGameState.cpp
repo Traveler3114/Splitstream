@@ -133,6 +133,16 @@ void ADefaultGameState::OnRep_PreAlarmActive()
 		OnPreAlarmCanceled.Broadcast();
 }
 
+void ADefaultGameState::AddCollectedMoney(int32 Amount)
+{
+    if (!HasAuthority()) return;
+
+    CurrentMoneyCollected += Amount;
+    CurrentMoneyCollected = FMath::Min(CurrentMoneyCollected, TargetMoneyAmount);
+
+    // Optionally trigger completion logic here if CurrentMoneyCollected >= TargetMoneyAmount
+}
+
 void ADefaultGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -144,4 +154,6 @@ void ADefaultGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME(ADefaultGameState, PreAlarmEndTime);
 	DOREPLIFETIME(ADefaultGameState, bPreAlarmActive);
 	DOREPLIFETIME(ADefaultGameState, PreAlarmInstigator);
+
+	DOREPLIFETIME(ADefaultGameState, CurrentMoneyCollected);
 }

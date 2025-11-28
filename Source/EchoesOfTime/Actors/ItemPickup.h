@@ -23,9 +23,14 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "Item")
     FOnPickedUp OnPickedUp;
 
-    // Only need this one mesh component for both override and runtime
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     UStaticMeshComponent* OverrideMeshComp;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Search", meta = (AllowPrivateAccess = true))
+    class USearchComponent* SearchComp = nullptr;
+
+    UFUNCTION()
+    void OnSearchComplete();
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Item")
     UItemBase* ItemData;
@@ -39,9 +44,11 @@ public:
     void InitFromItemData(UItemBase* InItemData, FGuid InInstanceID);
 
     virtual void Interact_Implementation(AActor* Interactor) override;
-	virtual void SetHighlighted_Implementation(bool bHighlight) override;
+    virtual void SetHighlighted_Implementation(bool bHighlight) override;
 
-    // Call this after pickup to refresh mesh to ItemData mesh
     UFUNCTION(BlueprintCallable, Category = "Item")
     void RefreshMeshFromItemData();
+
+protected:
+    void TryPickup(AActor* Interactor);
 };

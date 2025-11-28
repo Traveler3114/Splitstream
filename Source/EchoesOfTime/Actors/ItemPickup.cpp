@@ -1,6 +1,7 @@
 #include "ItemPickup.h"
 #include "ActorComponents/InventoryComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "ActorComponents/SearchComponent.h"
 #include "Engine/Engine.h"
 
 AItemPickup::AItemPickup()
@@ -23,12 +24,17 @@ void AItemPickup::BeginPlay()
 {
     Super::BeginPlay();
 
-    // At BeginPlay, if OverrideMeshComp has a mesh set, keep it (do nothing)
-    // If no mesh is set, fall back to ItemData mesh
     if (OverrideMeshComp && !OverrideMeshComp->GetStaticMesh() && ItemData && ItemData->ItemMesh)
     {
         OverrideMeshComp->SetStaticMesh(ItemData->ItemMesh);
         OverrideMeshComp->SetWorldScale3D(ItemData->PickupMeshScale);
+    }
+
+    // Find optional search component and bind delegate
+    SearchComp = FindComponentByClass<USearchComponent>();
+    if (SearchComp)
+    {
+        SearchComp->OnSearchComplete.AddDynamic(this, &AItemPickup::OnSearchComplete);
     }
 }
 
@@ -36,7 +42,6 @@ void AItemPickup::InitFromItemData(UItemBase* InItemData, FGuid InInstanceID)
 {
     ItemData = InItemData;
     ItemInstanceID = InInstanceID;
-    // Only set if there is no override mesh
     if (OverrideMeshComp && !OverrideMeshComp->GetStaticMesh() && ItemData && ItemData->ItemMesh)
     {
         OverrideMeshComp->SetStaticMesh(ItemData->ItemMesh);
@@ -53,20 +58,36 @@ void AItemPickup::RefreshMeshFromItemData()
     }
 }
 
+void AItemPickup::OnSearchComplete()
+{
+    // Just use LastInteractor from the SearchComponent (already set in its Interact)
+    AActor* Interactor = SearchComp ? SearchComp->LastInteractor.Get() : nullptr;
+    TryPickup(Interactor);
+}
+
 void AItemPickup::Interact_Implementation(AActor* Interactor)
 {
-    if (!HasAuthority()) return;
+    if (SearchComp)
+    {
+        // This will internally set LastInteractor in SearchComp and start search
+        SearchComp->Interact(Interactor);
+        // Do not continue with pickup logic here; OnSearchComplete will handle it if search required
+        return;
+    }
 
+    TryPickup(Interactor);
+}
+
+void AItemPickup::TryPickup(AActor* Interactor)
+{
+    if (!HasAuthority()) return;
     if (!ItemData || !Interactor) return;
 
     UInventoryComponent* Inventory = Interactor->FindComponentByClass<UInventoryComponent>();
-    if (Inventory)
+    if (Inventory && Inventory->AddItem(ItemData, ItemInstanceID))
     {
-        if (Inventory->AddItem(ItemData, ItemInstanceID))
-        {
-            OnPickedUp.Broadcast(Interactor, ItemData);
-            Destroy();
-        }
+        OnPickedUp.Broadcast(Interactor, ItemData);
+        Destroy();
     }
 }
 
@@ -84,14 +105,11 @@ void AItemPickup::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedE
 {
     Super::PostEditChangeProperty(PropertyChangedEvent);
 
-    // Auto-generate unique instance ID if not set
     if (!ItemInstanceID.IsValid())
     {
         ItemInstanceID = FGuid::NewGuid();
     }
 
-    // In editor, leave mesh as is (designer can set it directly on the component)
-    // Optionally, you could preview ItemData mesh if none is set
     if (OverrideMeshComp && !OverrideMeshComp->GetStaticMesh() && ItemData && ItemData->ItemMesh)
     {
         OverrideMeshComp->SetStaticMesh(ItemData->ItemMesh);

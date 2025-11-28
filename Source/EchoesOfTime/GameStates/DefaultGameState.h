@@ -85,6 +85,17 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	float GetRemainingPreAlarmTime() const;
 
+	// Amount of money players need to collect to complete the objective
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Objective")
+	int32 TargetMoneyAmount = 50000;
+
+	// Current progress (total money collected so far)
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Objective")
+	int32 CurrentMoneyCollected = 0;
+
+	UFUNCTION(BlueprintCallable)
+	void AddCollectedMoney(int32 Amount);
+
 protected:
 	UFUNCTION()
 	void OnRep_AlarmStarted();
