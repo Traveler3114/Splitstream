@@ -41,7 +41,6 @@ ADefaultCharacter::ADefaultCharacter()
     EquippedItemMeshComp->SetupAttachment(GetMesh(), TEXT("HandGrip_R"));
     EquippedItemMeshComp->SetIsReplicated(true);
     EquippedItemMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-    AimCameraTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("AimCameraTimeline"));
 }
 
 void ADefaultCharacter::UpdateInteractHighlight()
@@ -167,18 +166,6 @@ void ADefaultCharacter::BeginPlay()
     }
 
     UpdateEquippedItemMesh();
-    if (AimCameraTimeline && AimCameraCurve)
-    {
-        FOnTimelineFloat ProgressFunction;
-        ProgressFunction.BindUFunction(this, FName("OnAimCameraTimelineUpdate"));
-        AimCameraTimeline->AddInterpFloat(AimCameraCurve, ProgressFunction);
-
-        FOnTimelineEvent FinishedFunction;
-        FinishedFunction.BindUFunction(this, FName("OnAimCameraTimelineFinished"));
-        AimCameraTimeline->SetTimelineFinishedFunc(FinishedFunction);
-
-        AimCameraTimeline->SetLooping(false);
-    }
 
     // In BeginPlay or similar (after AbilitySystemComponent is valid):
     AbilitySystemComponent->RegisterGameplayTagEvent(
@@ -213,23 +200,6 @@ void ADefaultCharacter::OnIllegalTagChanged(const FGameplayTag Tag, int32 NewCou
         // If you want a UI transition, you may signal here.
     }
 }
-
-void ADefaultCharacter::OnAimCameraTimelineUpdate(float Value)
-{
-    if (CameraComponent)
-    {
-        FVector NewLocation = FMath::Lerp(CameraDefaultLocation, CameraAimLocation, Value);
-        FRotator NewRotation = FMath::Lerp(CameraDefaultRotation, CameraAimRotation, Value);
-        CameraComponent->SetRelativeLocation(NewLocation);
-        CameraComponent->SetRelativeRotation(NewRotation);
-
-    }
-}
-
-void ADefaultCharacter::OnAimCameraTimelineFinished()
-{
-}
-
 
 void ADefaultCharacter::Tick(float DeltaTime)
 {

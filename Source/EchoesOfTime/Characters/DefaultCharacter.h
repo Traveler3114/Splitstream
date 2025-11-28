@@ -26,26 +26,15 @@ class ECHOESOFTIME_API ADefaultCharacter : public ACharacter, public IInteractab
 {
     GENERATED_BODY()
 public:
-    UPROPERTY()
-    UTimelineComponent* AimCameraTimeline;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Aim")
-    UCurveFloat* AimCameraCurve;
-
     // Store start/end locations/rotations
     FVector CameraDefaultLocation;
     FRotator CameraDefaultRotation;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Aim")
-    FVector CameraAimLocation = FVector(9.960482f, 15.432522f, 1.7f);
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Aim")
-    FRotator CameraAimRotation = FRotator(-14.932470f, 62.527103f, -102.804844f);
 
+    UFUNCTION(BlueprintImplementableEvent, Category = "Aim")
+    void StartAimCamera(FVector AimLocation, FRotator AimRotation);
 
-    UFUNCTION()
-    void OnAimCameraTimelineUpdate(float Value);
-
-    UFUNCTION()
-    void OnAimCameraTimelineFinished();
+    UFUNCTION(BlueprintImplementableEvent, Category = "Aim")
+    void StopAimCamera(FVector ReturnLocation, FRotator ReturnRotation);
 
 public:
     ADefaultCharacter();
