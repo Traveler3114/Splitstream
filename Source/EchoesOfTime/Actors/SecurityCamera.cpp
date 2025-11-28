@@ -64,6 +64,41 @@ void ASecurityCamera::EndPlay(const EEndPlayReason::Type EndPlayReason)
     Super::EndPlay(EndPlayReason);
 }
 
+void ASecurityCamera::PanUpdate()
+{
+    // If camera shouldn't pan, early-out
+    if (PanSpeed <= 0.0f) return;
+
+    // Use world delta seconds for smooth movement
+    const float DeltaYaw = PanSpeed * PanInterval * (bPanningRight ? 1.0f : -1.0f);
+    if (PauseTimer > 0.0f)
+    {
+        PauseTimer -= PanInterval;
+        return;
+    }
+
+    PanOffset += DeltaYaw;
+    float NewYaw = CurrentYaw + PanOffset;
+
+    // Clamp between MinYaw and MaxYaw, handle direction change/pause at edges
+    if (NewYaw > CurrentYaw + MaxYaw)
+    {
+        PanOffset = MaxYaw;
+        bPanningRight = false;
+        PauseTimer = PauseAtLimit;
+    }
+    else if (NewYaw < CurrentYaw + MinYaw)
+    {
+        PanOffset = MinYaw;
+        bPanningRight = true;
+        PauseTimer = PauseAtLimit;
+    }
+
+    OnRep_PanOffset();
+
+    // Optionally, call MarkPackageDirty or replicate PanOffset (already handled via replication)
+}
+
 void ASecurityCamera::DetectionUpdate()
 {
     if (!HasAuthority())
