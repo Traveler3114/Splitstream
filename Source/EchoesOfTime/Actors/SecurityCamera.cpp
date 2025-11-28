@@ -88,6 +88,7 @@ void ASecurityCamera::DetectionUpdate()
     );
 
     TSet<AActor*> DetectedThisFrame;
+    UWorld* World = GetWorld();
 
     for (AActor* Actor : OverlappedActors)
     {
@@ -128,8 +129,50 @@ void ASecurityCamera::DetectionUpdate()
             float CosHalfFOV = FMath::Cos(FMath::DegreesToRadians(ViewConeAngle * 0.5f));
             if (Dot >= CosHalfFOV)
             {
-                bAnyPointDetected = true;
-                break;
+                // === LINE TRACE FOR OBSTRUCTION ===
+                FHitResult HitResult;
+                FCollisionQueryParams Params;
+                Params.AddIgnoredActor(this);
+                Params.AddIgnoredActor(Actor); // ignore self (root) for multi-part meshes
+
+                bool bHit = World->LineTraceSingleByChannel(
+                    HitResult,
+                    CamLoc,
+                    Point,
+                    ECC_Visibility,
+                    Params
+                );
+
+                // Debug draw the test line
+                if (bDrawDebug)
+                {
+                    FColor LineColor = (bHit && HitResult.GetActor() == Actor) ? FColor::Green : FColor::Red;
+                    DrawDebugLine(World, CamLoc, Point, LineColor, false, 0.2f, 0, 2.0f);
+                }
+
+                // Only detect if the trace hits the actor first (not a wall etc)
+                if (bHit && HitResult.GetActor() == Actor)
+                {
+                    if (bDrawDebug)
+                        DrawDebugPoint(World, Point, 14.f, FColor::Green, false, 0.2f);
+
+                    bAnyPointDetected = true;
+
+                    // Log success
+                    UE_LOG(LogTemp, Verbose, TEXT("Camera [%s] CAN SEE [%s] at %s (distance %.1f)"),
+                        *GetName(), *Actor->GetName(), *HitResult.Location.ToString(), Distance);
+
+                    break;
+                }
+                else
+                {
+                    // Trace blocked, do NOT detect
+                    if (bDrawDebug)
+                        DrawDebugPoint(World, Point, 10.f, FColor::Red, false, 0.2f);
+
+                    // Optional log for blocked trace
+                    UE_LOG(LogTemp, VeryVerbose, TEXT("Camera [%s] LOS BLOCKED for [%s]"), *GetName(), *Actor->GetName());
+                }
             }
         }
 
@@ -164,41 +207,6 @@ void ASecurityCamera::DetectionUpdate()
     LastDetectedActors.Empty();
     for (AActor* Actor : DetectedThisFrame)
         LastDetectedActors.Add(Actor);
-}
-
-void ASecurityCamera::PanUpdate()
-{
-    if (!HasAuthority() || PanSpeed <= 0.0f)
-        return;
-
-    float DeltaTime = PanInterval;
-
-    if (PauseTimer > 0.0f)
-    {
-        PauseTimer -= DeltaTime;
-        if (PauseTimer < 0.0f)
-            PauseTimer = 0.0f;
-    }
-    else
-    {
-        float DeltaYaw = PanSpeed * DeltaTime * (bPanningRight ? 1.0f : -1.0f);
-        PanOffset += DeltaYaw;
-
-        if (PanOffset > MaxYaw)
-        {
-            PanOffset = MaxYaw;
-            bPanningRight = false;
-            PauseTimer = PauseAtLimit;
-        }
-        else if (PanOffset < MinYaw)
-        {
-            PanOffset = MinYaw;
-            bPanningRight = true;
-            PauseTimer = PauseAtLimit;
-        }
-    }
-
-    OnRep_PanOffset();
 }
 
 void ASecurityCamera::DebugDrawUpdate()
