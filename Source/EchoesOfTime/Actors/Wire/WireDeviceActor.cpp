@@ -1,6 +1,7 @@
 #include "WireDeviceActor.h"
 #include "WireActor.h"
 #include "Engine/World.h"
+#include "Components/ArrowComponent.h"
 
 AWireDeviceActor::AWireDeviceActor()
 {
@@ -11,6 +12,9 @@ AWireDeviceActor::AWireDeviceActor()
 
     DeviceMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DeviceMesh"));
     DeviceMesh->SetupAttachment(SceneRoot);
+
+    ArrowComp = CreateDefaultSubobject<UArrowComponent>(TEXT("ArrowComp"));
+    ArrowComp->SetupAttachment(RootComponent);
 }
 
 void AWireDeviceActor::BeginPlay()

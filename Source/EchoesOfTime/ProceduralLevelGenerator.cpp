@@ -14,7 +14,104 @@
 #include "Actors/DeskActor.h"
 #include "Actors/CodeGenerator.h"
 #include "Actors/Lever/LeverManager.h"
+#include "Actors/Wire/WirePuzzleManager.h"
+#include "Actors/DisablingDevice/DevicesManagerActor.h"
+#include "Actors/DisablingDevice/DisablingDeviceActor.h"
 
+// Template helper function for spawning and aligning actors
+template<typename TSpawnActor, typename TManagerActor>
+void SpawnActorsOnRandomPointsAndAddToManager(
+    UWorld* World,
+    TSubclassOf<TSpawnActor> SpawnActorBPClass,
+    const FName& PointTag,
+    ETimelineEra Era,
+    TSubclassOf<TManagerActor> ManagerClass,
+    const FName& ManagerTag,
+    int32 NumToSpawn,
+    TFunction<void(TManagerActor*, TSpawnActor*)> AddToManagerArray
+)
+{
+    // 1. Find spawn points matching tag and era
+    TArray<AActor*> FoundPoints;
+    UGameplayStatics::GetAllActorsOfClass(World, ARandomPointActor::StaticClass(), FoundPoints);
+
+    TArray<ARandomPointActor*> ValidPoints;
+    for (AActor* Actor : FoundPoints)
+    {
+        ARandomPointActor* Point = Cast<ARandomPointActor>(Actor);
+        if (Point
+            && Point->TimelineEra == Era
+            && Point->Tags.Contains(PointTag))
+        {
+            ValidPoints.Add(Point);
+        }
+    }
+
+    // 2. Shuffle points randomly
+    for (int32 i = ValidPoints.Num() - 1; i > 0; --i)
+    {
+        int32 j = FMath::RandRange(0, i);
+        ValidPoints.Swap(i, j);
+    }
+
+    // 3. Choose up to NumToSpawn random points
+    int32 SpawnCount = FMath::Min(NumToSpawn, ValidPoints.Num());
+
+    // 4. Spawn actors at points, align to ArrowComponent
+    TArray<TSpawnActor*> SpawnedActors;
+    for (int32 i = 0; i < SpawnCount; ++i)
+    {
+        ARandomPointActor* Point = ValidPoints[i];
+        FActorSpawnParameters SpawnParams;
+        SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+        // Find ArrowComponent on spawn point
+        UArrowComponent* PointArrow = Point->FindComponentByClass<UArrowComponent>();
+        FRotator SpawnRotation = PointArrow ? PointArrow->GetComponentRotation() : Point->GetActorRotation();
+
+        FVector SpawnLocation = Point->GetActorLocation();
+
+        TSpawnActor* SpawnedActor = World->SpawnActor<TSpawnActor>(SpawnActorBPClass, SpawnLocation, SpawnRotation, SpawnParams);
+        if (SpawnedActor)
+        {
+            // Set TimelineEra if present
+            SpawnedActor->TimelineEra = Era; // Assumes you have a public TimelineEra, adjust if needed
+
+            // Optionally further align the spawned actor
+            UArrowComponent* SpawnedArrow = SpawnedActor->FindComponentByClass<UArrowComponent>();
+            if (SpawnedArrow && PointArrow)
+            {
+                SpawnedActor->SetActorRotation(PointArrow->GetComponentRotation());
+            }
+
+            SpawnedActors.Add(SpawnedActor);
+        }
+    }
+
+    // 5. Find manager with given tag
+    TArray<AActor*> FoundManagers;
+    UGameplayStatics::GetAllActorsOfClass(World, ManagerClass, FoundManagers);
+
+    TManagerActor* Manager = nullptr;
+    for (AActor* Actor : FoundManagers)
+    {
+        TManagerActor* Candidate = Cast<TManagerActor>(Actor);
+        if (Candidate && Candidate->Tags.Contains(ManagerTag))
+        {
+            Manager = Candidate;
+            break;
+        }
+    }
+
+    // 6. Add spawned actors to manager
+    if (Manager)
+    {
+        for (TSpawnActor* SpawnedActor : SpawnedActors)
+        {
+            AddToManagerArray(Manager, SpawnedActor);
+        }
+    }
+}
 AProceduralLevelGenerator::AProceduralLevelGenerator()
 {
     PrimaryActorTick.bCanEverTick = false;
@@ -168,6 +265,19 @@ void AProceduralLevelGenerator::HandleEraSpawns(
 
 void AProceduralLevelGenerator::HandlePastSpawns()
 {
+
+    SpawnActorsOnRandomPointsAndAddToManager<AWireDeviceActor, AWirePuzzleManager>(
+        GetWorld(),
+        WireDeviceBPClass,
+        "WireDevice",
+        ETimelineEra::Past,
+        AWirePuzzleManager::StaticClass(),
+        "BarsTarget",
+        3,
+        [](AWirePuzzleManager* Manager, AWireDeviceActor* Device) { Manager->PuzzleDevices.Add(Device); }
+    );
+
+
     TArray<AActor*> FoundWireManagers;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), AWirePuzzleManager::StaticClass(), FoundWireManagers);
 
@@ -209,6 +319,19 @@ void AProceduralLevelGenerator::HandlePastSpawns()
     }
 
 
+
+
+    SpawnActorsOnRandomPointsAndAddToManager<ALeverActor, ALeverManager>(
+        GetWorld(),
+        LeverBPClass,
+        "Lever",
+        ETimelineEra::Past,
+        ALeverManager::StaticClass(),
+        "LaserManagerTarget",
+        3,
+        [](ALeverManager* Manager, ALeverActor* Lever) { Manager->PuzzleLevers.Add(Lever); }
+    );
+
     TArray<AActor*> Managers;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), ALeverManager::StaticClass(), Managers);
 
@@ -236,6 +359,11 @@ void AProceduralLevelGenerator::HandlePastSpawns()
             Manager->SetupPuzzle(Order);
         }
     }
+
+
+
+
+
     TArray<ACivilianCharacter*> SpawnedCivilians;
     TArray<ADeskActor*> PastDesks;
     HandleEraSpawns(ETimelineEra::Past, SpawnedCivilians, PastDesks);
@@ -281,6 +409,18 @@ void AProceduralLevelGenerator::HandlePastSpawns()
             }
         }
     }
+
+
+    SpawnActorsOnRandomPointsAndAddToManager<ADisablingDeviceActor, ADevicesManagerActor>(
+        GetWorld(),
+        DisablingDeviceBPClass,
+        "DisablingDevice",
+        ETimelineEra::Past,
+        ADevicesManagerActor::StaticClass(),
+        "MetalDetectorTarget",
+        3,
+        [](ADevicesManagerActor* Manager, ADisablingDeviceActor* Device) { Manager->Devices.Add(Device); }
+    );
 
     // ---- RANDOM DATE FOR PUZZLE ----
     PastDate = GeneratePastDate();

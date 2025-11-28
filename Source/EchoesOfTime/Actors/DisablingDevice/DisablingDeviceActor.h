@@ -40,6 +40,9 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Device")
     UStaticMeshComponent* DeviceMesh;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TObjectPtr<class UArrowComponent> ArrowComp;
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Device")
     class USearchComponent* SearchComponent;
 

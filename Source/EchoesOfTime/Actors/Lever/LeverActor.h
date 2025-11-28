@@ -32,6 +32,9 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lever")
     UStaticMeshComponent* LeverBaseMesh;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TObjectPtr<class UArrowComponent> ArrowComp;
+
     UPROPERTY(EditAnywhere,Replicated, BlueprintReadWrite, Category="Lever")
     int32 OrderIndex = -1; // -1 for solo
 

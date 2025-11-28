@@ -1,6 +1,7 @@
 #include "DisablingDeviceActor.h"
 #include "ActorComponents/SearchComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "Components/ArrowComponent.h"
 
 ADisablingDeviceActor::ADisablingDeviceActor()
 {
@@ -16,6 +17,9 @@ ADisablingDeviceActor::ADisablingDeviceActor()
 
 	SearchComponent = CreateDefaultSubobject<USearchComponent>(TEXT("SearchComponent"));
 	SearchComponent->SetIsReplicated(true);
+
+    ArrowComp = CreateDefaultSubobject<UArrowComponent>(TEXT("ArrowComp"));
+    ArrowComp->SetupAttachment(RootComponent);
 }
 
 void ADisablingDeviceActor::BeginPlay()

@@ -15,4 +15,7 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
     ETimelineEra TimelineEra = ETimelineEra::Past;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SpawnPoint")
+    TObjectPtr<class UArrowComponent> ArrowComp; // Add this property
 };

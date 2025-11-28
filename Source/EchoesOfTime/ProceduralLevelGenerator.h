@@ -53,6 +53,15 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Items")
     TSubclassOf<class ASearchableActor> SearchableItemBPClass;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Disabling Device")
+	TSubclassOf<class ADisablingDeviceActor> DisablingDeviceBPClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Levers")
+	TSubclassOf<class ALeverActor> LeverBPClass;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wires")
+	TSubclassOf<class AWireDeviceActor> WireDeviceBPClass;
+
     UPROPERTY(Replicated, BlueprintReadOnly)
     FString PastLeverOrderString;
 

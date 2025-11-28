@@ -23,6 +23,9 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     UStaticMeshComponent* DeviceMesh;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TObjectPtr<class UArrowComponent> ArrowComp;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Device")
     TSubclassOf<AWireActor> WireClass;
 

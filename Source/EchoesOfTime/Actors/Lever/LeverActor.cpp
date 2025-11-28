@@ -1,6 +1,7 @@
 #include "LeverActor.h"
 #include "Components/TextRenderComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "Components/ArrowComponent.h"
 
 ALeverActor::ALeverActor()
 {
@@ -20,6 +21,9 @@ ALeverActor::ALeverActor()
 
     TextRenderComp = CreateDefaultSubobject<UTextRenderComponent>(TEXT("TextRenderComp"));
     TextRenderComp->SetupAttachment(SceneRootComp);
+
+    ArrowComp = CreateDefaultSubobject<UArrowComponent>(TEXT("ArrowComp"));
+    ArrowComp->SetupAttachment(RootComponent);
 }
 
 void ALeverActor::BeginPlay()
