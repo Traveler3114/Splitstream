@@ -292,7 +292,11 @@ void AProceduralLevelGenerator::HandlePastSpawns()
     TArray<ARandomPointActor*> PastRandomPoints;
     for (AActor* Actor : NewspaperPoints) {
         ARandomPointActor* Point = Cast<ARandomPointActor>(Actor);
-        if (Point && Point->TimelineEra == ETimelineEra::Past) {
+        if (Point
+            && Point->TimelineEra == ETimelineEra::Past
+            && Point->Tags.Num() > 0
+            && Point->Tags[0] == "Newspaper")
+        {
             PastRandomPoints.Add(Point);
         }
     }
