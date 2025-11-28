@@ -3,10 +3,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "TimelineEra.h"
+#include "Interfaces/IDetectable.h"
 #include "SecurityCamera.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API ASecurityCamera : public AActor
+class ECHOESOFTIME_API ASecurityCamera : public AActor, public IDetectable
 {
     GENERATED_BODY()
 
@@ -16,6 +17,8 @@ public:
 protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+    virtual bool IsActorAlreadyDetected_Implementation(AActor* DetectingActor) const override;
 
     // Timer handles
     FTimerHandle DetectionTimerHandle;

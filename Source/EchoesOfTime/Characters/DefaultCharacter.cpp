@@ -11,9 +11,9 @@
 #include "ActorComponents/InventoryComponent.h"
 #include "InputActionValue.h"
 #include "Net/UnrealNetwork.h"
-#include "Widgets/HUD/CharacterHUD.h"
 #include "AbilitySystem/EOTGameplayTags.h"
-#include "Actors/ItemPickup.h"
+#include "Interfaces/IDetectable.h"
+#include "EngineUtils.h"
 #include "Controllers/DefaultPlayerController.h"
 
 ADefaultCharacter::ADefaultCharacter()
@@ -179,8 +179,40 @@ void ADefaultCharacter::BeginPlay()
 
         AimCameraTimeline->SetLooping(false);
     }
+
+    // In BeginPlay or similar (after AbilitySystemComponent is valid):
+    AbilitySystemComponent->RegisterGameplayTagEvent(
+        FGameplayTag::RequestGameplayTag("Character.Status.Illegal"),
+        EGameplayTagEventType::NewOrRemoved
+    ).AddUObject(this, &ADefaultCharacter::OnIllegalTagChanged);
 }
 
+void ADefaultCharacter::OnIllegalTagChanged(const FGameplayTag Tag, int32 NewCount)
+{
+    UWorld* World = GetWorld();
+    if (!World) return;
+
+    if (NewCount > 0)
+    {
+        // Player just became illegal. No change needed here.
+        for (TActorIterator<AActor> ActorItr(World); ActorItr; ++ActorItr)
+        {
+            if (ActorItr->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
+            {
+                if (IDetectable::Execute_IsActorAlreadyDetected(*ActorItr, this))
+                {
+                    IDetectable::Execute_OnDetected(this, *ActorItr);
+                }
+            }
+        }
+    }
+    else // Just became legal
+    {
+        // Do NOT call OnLost_Implementation or remove detectors instantly.
+        // Detection bars will smoothly reverse and be removed in Tick()
+        // If you want a UI transition, you may signal here.
+    }
+}
 
 void ADefaultCharacter::OnAimCameraTimelineUpdate(float Value)
 {
@@ -205,6 +237,76 @@ void ADefaultCharacter::Tick(float DeltaTime)
     if (IsLocallyControlled())
     {
         UpdateInteractHighlight();
+    }
+
+    TArray<AActor*> ToRemove;
+
+    for (auto& Elem : DetectionProgressMap)
+    {
+        AActor* Detector = Elem.Key;
+        float& Progress = Elem.Value;
+
+        // Check if detector is still tracking (in vision)
+        bool bInVision = Detector && Detector->GetClass()->ImplementsInterface(UDetectable::StaticClass())
+            && IDetectable::Execute_IsActorAlreadyDetected(Detector, this);
+
+        // Check illegal state
+        bool bIsIllegal = AbilitySystemComponent && AbilitySystemComponent->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("Character.Status.Illegal"));
+
+        float Rate = DeltaTime * 0.5f;
+
+        if (bInVision && bIsIllegal)
+        {
+            Progress += Rate;
+            if (Progress >= 1.f)
+            {
+                Progress = 1.f;
+                // Notify detector (if not already notified)
+                if (Detector && Detector->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
+                {
+                    IDetectable::Execute_OnFullyDetected(Detector, this);
+                }
+                OnFullyDetected_Implementation(Detector);
+            }
+        }
+        else
+        {
+            Progress -= Rate;
+            if (Progress <= 0.f) Progress = 0.f;
+        }
+
+        // Update bar UI every frame, even when reversing:
+        if (APlayerController* PC = Cast<APlayerController>(GetController()))
+        {
+            if (PC->IsLocalController())
+            {
+                if (ADefaultPlayerController* DefPC = Cast<ADefaultPlayerController>(PC))
+                {
+                    float Angle = CalculateDetectionAngle(
+                        Detector->GetActorLocation(),
+                        PC->PlayerCameraManager->GetCameraRotation(),
+                        GetActorLocation());
+                    DefPC->ClientUpdateDetectionWidget(
+                        Detector,
+                        Progress,
+                        Progress >= 1.0f,
+                        Angle
+                    );
+                }
+            }
+        }
+
+        // Schedule to remove this detector if progress bar emptied
+        if (Progress == 0.f)
+        {
+            ToRemove.Add(Detector);
+        }
+    }
+
+    // Remove from detection map ONLY when bar is gone (progress == 0)
+    for (AActor* Detector : ToRemove)
+    {
+        DetectionProgressMap.Remove(Detector);
     }
 }
 
@@ -233,6 +335,43 @@ void ADefaultCharacter::UpdateEquippedItemMesh()
         // Clear the mesh if no item equipped!
         EquippedItemMeshComp->SetStaticMesh(nullptr);
     }
+}
+
+void ADefaultCharacter::OnDetected_Implementation(AActor* Detector)
+{
+    if (!Detector) return;
+
+    // Check if player is "illegal" before starting detection!
+    if (!AbilitySystemComponent || !AbilitySystemComponent->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("Character.Status.Illegal")))
+    {
+        // Not illegal, do not start detection or show bar
+        return;
+    }
+
+    // If not already tracking, start progress at 0
+    if (!DetectionProgressMap.Contains(Detector))
+    {
+        DetectionProgressMap.Add(Detector, 0.f);
+    }
+    // (Optional UI update logic here)
+}
+
+void ADefaultCharacter::OnLost_Implementation(AActor* Detector)
+{
+    //if (!Detector) return;
+    //DetectionProgressMap.Remove(Detector);
+    // (Optional UI update here for or via controller/overlay)
+}
+
+void ADefaultCharacter::OnFullyDetected_Implementation(AActor* Detector)
+{
+    if (!Detector) return;
+    if (DetectionProgressMap.Contains(Detector))
+    {
+        DetectionProgressMap[Detector] = 1.f;
+        // (Alarm logic, lock icon, etc)
+    }
+    // (Optional UI update here for or via controller/overlay)
 }
 
 

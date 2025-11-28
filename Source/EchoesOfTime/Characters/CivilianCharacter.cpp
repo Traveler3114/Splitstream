@@ -106,3 +106,14 @@ void ACivilianCharacter::OnFullyDetected_Implementation(AActor* DetectingActor)
 {
     TargetActor = DetectingActor; // The actor that is now fully detected
 }
+
+bool ACivilianCharacter::IsActorAlreadyDetected_Implementation(AActor* DetectingActor) const
+{
+    // Example for player character - returns true if this guard is currently perceiving DetectingActor
+    if (!AIPerceptionComponent)
+        return false;
+
+    TArray<AActor*> PerceivedActors;
+    AIPerceptionComponent->GetCurrentlyPerceivedActors(UAISense_Sight::StaticClass(), PerceivedActors);
+    return PerceivedActors.Contains(DetectingActor);
+}

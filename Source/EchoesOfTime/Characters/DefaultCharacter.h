@@ -6,7 +6,7 @@
 #include "Interfaces/IRequiresItem.h"
 #include "InputActionValue.h"
 #include "AbilitySystemInterface.h"
-#include "DataAssets/Items/ItemBase.h"
+#include "Interfaces/IDetectable.h"
 #include "DataAssets/InputMappingSet.h"
 #include "DataAssets/AbilitySets/AbilityInputSet.h"
 #include "DataAssets/AbilitySets/DefaultGASet.h"
@@ -22,7 +22,7 @@ class UAbilitySystemComponent;
 class AItemPickup;
 
 UCLASS()
-class ECHOESOFTIME_API ADefaultCharacter : public ACharacter, public IInteractable, public IRequiresItem, public IAbilitySystemInterface
+class ECHOESOFTIME_API ADefaultCharacter : public ACharacter, public IInteractable, public IRequiresItem, public IAbilitySystemInterface, public IDetectable
 {
     GENERATED_BODY()
 public:
@@ -55,6 +55,18 @@ public:
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
     virtual void OnRep_PlayerState() override;
     virtual void PossessedBy(AController* NewController) override;
+
+    UFUNCTION(BlueprintCallable)
+    virtual void OnDetected_Implementation(AActor* Detector) override;
+    UFUNCTION(BlueprintCallable)
+    virtual void OnLost_Implementation(AActor* Detector) override;
+    UFUNCTION(BlueprintCallable)
+    virtual void OnFullyDetected_Implementation(AActor* Detector) override;
+
+    UPROPERTY(BlueprintReadOnly)
+    TMap<AActor*, float> DetectionProgressMap;
+
+	void OnIllegalTagChanged(const FGameplayTag CallbackTag, int32 NewCount);
 
     void InitializeAbilitySystem();
     virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;

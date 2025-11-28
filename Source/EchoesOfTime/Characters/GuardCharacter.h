@@ -80,6 +80,7 @@ public:
     virtual void OnDetected_Implementation(AActor* Detector) override;
     virtual void OnLost_Implementation(AActor* Detector) override;
     virtual void OnFullyDetected_Implementation(AActor* DetectingActor) override;
+    virtual bool IsActorAlreadyDetected_Implementation(AActor* DetectingActor) const override;
 
     // IGhostMirrorSource implementation
     virtual bool ShouldGhostBeVisible_Implementation() const override;

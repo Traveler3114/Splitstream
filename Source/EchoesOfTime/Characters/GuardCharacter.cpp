@@ -221,3 +221,14 @@ void AGuardCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AGuardCharacter, bIsInCameraView);
 }
+
+bool AGuardCharacter::IsActorAlreadyDetected_Implementation(AActor* DetectingActor) const
+{
+    // Example for player character - returns true if this guard is currently perceiving DetectingActor
+    if (!AIPerceptionComponent)
+        return false;
+
+    TArray<AActor*> PerceivedActors;
+    AIPerceptionComponent->GetCurrentlyPerceivedActors(UAISense_Sight::StaticClass(), PerceivedActors);
+    return PerceivedActors.Contains(DetectingActor);
+}

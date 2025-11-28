@@ -261,3 +261,9 @@ void ASecurityCamera::OnRep_PanOffset()
     if (SceneCapture)
         SceneCapture->SetWorldRotation(NewRot.Add(0.0f, 90.0f, 0.0f)); // adjust if your camera mesh needs an offset
 }
+
+bool ASecurityCamera::IsActorAlreadyDetected_Implementation(AActor* DetectingActor) const
+{
+    // Return true if this camera is currently detecting that actor
+    return LastDetectedActors.Contains(DetectingActor);
+}

@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemComponent.h"
+#include "Interfaces/IDetectable.h"
 #include "AbilitySystemInterface.h"
 #include "TimelineEra.h"
 #include "CivilianCharacter.generated.h"
@@ -13,7 +14,7 @@ class UAISenseConfig_Sight;
 class UPlayerAttributeSet;
 
 UCLASS()
-class ECHOESOFTIME_API ACivilianCharacter : public ACharacter, public IAbilitySystemInterface
+class ECHOESOFTIME_API ACivilianCharacter : public ACharacter, public IAbilitySystemInterface, public IDetectable
 {
     GENERATED_BODY()
 
@@ -22,6 +23,8 @@ public:
     virtual void BeginPlay() override;
 
     void OnHealthChanged(const struct FOnAttributeChangeData& Data);
+
+    
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Civilian")
     FString CivilianName;
@@ -57,9 +60,10 @@ public:
 
     AActor* DetectedActor = nullptr;
 
-    // IDetectable implementation (called by detected actors)
-    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Detection")
-    void OnFullyDetected(AActor* DetectingActor);
+
+    virtual void OnFullyDetected_Implementation(AActor* DetectingActor) override;
+
+    virtual bool IsActorAlreadyDetected_Implementation(AActor* DetectingActor) const override;
 
 protected:
     UFUNCTION()
