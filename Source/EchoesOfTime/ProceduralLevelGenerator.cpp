@@ -18,7 +18,6 @@
 #include "Actors/DisablingDevice/DevicesManagerActor.h"
 #include "Actors/DisablingDevice/DisablingDeviceActor.h"
 
-// Template helper function for spawning and aligning actors
 template<typename TSpawnActor, typename TManagerActor>
 void SpawnActorsOnRandomPointsAndAddToManager(
     UWorld* World,
@@ -57,7 +56,7 @@ void SpawnActorsOnRandomPointsAndAddToManager(
     // 3. Choose up to NumToSpawn random points
     int32 SpawnCount = FMath::Min(NumToSpawn, ValidPoints.Num());
 
-    // 4. Spawn actors at points, align to ArrowComponent
+    // 4. Spawn actors at points, align the WHOLE actor so its arrow matches the node's arrow
     TArray<TSpawnActor*> SpawnedActors;
     for (int32 i = 0; i < SpawnCount; ++i)
     {
@@ -67,23 +66,44 @@ void SpawnActorsOnRandomPointsAndAddToManager(
 
         // Find ArrowComponent on spawn point
         UArrowComponent* PointArrow = Point->FindComponentByClass<UArrowComponent>();
-        FRotator SpawnRotation = PointArrow ? PointArrow->GetComponentRotation() : Point->GetActorRotation();
-
+        FRotator NodeBaseRotation = PointArrow ? PointArrow->GetComponentRotation() : Point->GetActorRotation();
         FVector SpawnLocation = Point->GetActorLocation();
 
-        TSpawnActor* SpawnedActor = World->SpawnActor<TSpawnActor>(SpawnActorBPClass, SpawnLocation, SpawnRotation, SpawnParams);
+        // First spawn actor, using node's location and base rotation
+        TSpawnActor* SpawnedActor = World->SpawnActor<TSpawnActor>(SpawnActorBPClass, SpawnLocation, NodeBaseRotation, SpawnParams);
+
         if (SpawnedActor)
         {
             // Set TimelineEra if present
-            SpawnedActor->TimelineEra = Era; // Assumes you have a public TimelineEra, adjust if needed
+            SpawnedActor->TimelineEra = Era; // If TimelineEra is public, adjust as needed
 
-            // Optionally further align the spawned actor
-            UArrowComponent* SpawnedArrow = SpawnedActor->FindComponentByClass<UArrowComponent>();
-            if (SpawnedArrow && PointArrow)
+            // Alignment fix: rotate the entire actor so its arrow matches node's arrow
+            if (PointArrow)
             {
-                SpawnedActor->SetActorRotation(PointArrow->GetComponentRotation());
-            }
+                UArrowComponent* SpawnedArrow = SpawnedActor->FindComponentByClass<UArrowComponent>();
+                if (SpawnedArrow)
+                {
+                    // Get desired arrow direction from node
+                    const FVector DesiredForward = PointArrow->GetForwardVector();
+                    const FVector DesiredUp = PointArrow->GetUpVector();
 
+                    // Desired world transform for arrow
+                    FRotator DesiredRotator = FRotationMatrix::MakeFromXZ(DesiredForward, DesiredUp).Rotator();
+
+                    // Arrow's relative rotation to actor
+                    FRotator ArrowCompRelRot = SpawnedArrow->GetRelativeTransform().GetRotation().Rotator();
+
+                    // Final actor rotation: desired arrow rotation minus arrow's relative
+                    FRotator FinalActorRotation = DesiredRotator - ArrowCompRelRot;
+
+                    SpawnedActor->SetActorRotation(FinalActorRotation);
+                }
+                else
+                {
+                    // Fallback for no ArrowComponent
+                    SpawnedActor->SetActorRotation(PointArrow->GetComponentRotation());
+                }
+            }
             SpawnedActors.Add(SpawnedActor);
         }
     }
