@@ -20,7 +20,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
     ETimelineEra TimelineEra = ETimelineEra::Past;
 
-    UPROPERTY(VisibleAnywhere)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     class UTextRenderComponent* TextRenderComp;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lever")
@@ -35,8 +35,11 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TObjectPtr<class UArrowComponent> ArrowComp;
 
-    UPROPERTY(EditAnywhere,Replicated, BlueprintReadWrite, Category="Lever")
+    UPROPERTY(EditAnywhere, ReplicatedUsing = OnRep_OrderIndex, BlueprintReadWrite, Category="Lever")
     int32 OrderIndex = -1; // -1 for solo
+
+	UFUNCTION()
+	void OnRep_OrderIndex();
 
     UPROPERTY(ReplicatedUsing=OnRep_Activated)
     bool bActivated = false;

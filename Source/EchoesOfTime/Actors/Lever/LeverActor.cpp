@@ -68,6 +68,13 @@ void ALeverActor::SetHighlighted_Implementation(bool bHighlight)
     }
 }
 
+void ALeverActor::OnRep_OrderIndex()
+{
+    // Update the text to show new OrderIndex
+    if (TextRenderComp)
+        TextRenderComp->SetText(FText::FromString(FString::Printf(TEXT("%d"), OrderIndex)));
+}
+
 void ALeverActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);

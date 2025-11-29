@@ -24,6 +24,7 @@ void ALeverManager::SetupPuzzle(const TArray<int32>& OrderSeq)
             Lever->OrderIndex = idx;
             Lever->bActivated = false;
             // Bind manager to lever event
+            Lever->OnRep_OrderIndex();
             Lever->OnLeverInteracted.AddDynamic(this, &ALeverManager::OnLeverInteracted);
         }
     }
