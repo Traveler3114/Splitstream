@@ -43,8 +43,10 @@ void UItemBase::OnDropped(AActor* Instigator, FGuid ItemInstanceID, FVector Drop
     UWorld* World = Instigator->GetWorld();
     if (!World) return;
 
+    // Spawn at character location if physics is enabled, otherwise DropLocation
+    FVector SpawnLocation = bEnablePhysicsOnDrop ? Instigator->GetActorLocation() : DropLocation;
     FRotator SpawnRotation = PickupMeshRotation;
-    FTransform SpawnTransform = FTransform(SpawnRotation, DropLocation);
+    FTransform SpawnTransform = FTransform(SpawnRotation, SpawnLocation);
 
     AItemPickup* Pickup = World->SpawnActorDeferred<AItemPickup>(AItemPickup::StaticClass(), SpawnTransform);
     if (Pickup)
@@ -52,6 +54,21 @@ void UItemBase::OnDropped(AActor* Instigator, FGuid ItemInstanceID, FVector Drop
         Pickup->ItemData = this;
         Pickup->ItemInstanceID = ItemInstanceID;
         UGameplayStatics::FinishSpawningActor(Pickup, SpawnTransform);
+
+        // Physics and impulse if enabled
+        if (bEnablePhysicsOnDrop && Pickup->OverrideMeshComp)
+        {
+            // Just to ensure correct position
+            Pickup->SetActorLocation(Instigator->GetActorLocation());
+
+            // Enable physics
+            Pickup->OverrideMeshComp->SetSimulatePhysics(true);
+
+            // Add impulse in character's forward vector
+            FVector ForwardVector = Instigator->GetActorForwardVector();
+            FVector Impulse = ForwardVector * DropImpulseStrength;
+            Pickup->OverrideMeshComp->AddImpulse(Impulse, NAME_None, true);
+        }
     }
 }
 
@@ -63,9 +80,11 @@ void UItemBase::OnDroppedWithTeam(AActor* Instigator, FGuid ItemInstanceID, FGam
     UWorld* World = Instigator->GetWorld();
     if (!World) return;
 
+    // Spawn at character location if physics is enabled, otherwise DropLocation
+    FVector SpawnLocation = bEnablePhysicsOnDrop ? Instigator->GetActorLocation() : DropLocation;
     FRotator SpawnRotation = PickupMeshRotation;
-    DropLocation.Z = FMath::Max(DropLocation.Z, 0.0f); // Slightly raise the drop location to avoid clipping into the ground
-    FTransform SpawnTransform = FTransform(SpawnRotation, DropLocation);
+    SpawnLocation.Z = FMath::Max(SpawnLocation.Z, 0.0f); // Slightly raise the drop location
+    FTransform SpawnTransform = FTransform(SpawnRotation, SpawnLocation);
     static FGameplayTag PastTag = FGameplayTag::RequestGameplayTag(TEXT("Team.Past"));
     static FGameplayTag FutureTag = FGameplayTag::RequestGameplayTag(TEXT("Team.Future"));
 
@@ -77,6 +96,14 @@ void UItemBase::OnDroppedWithTeam(AActor* Instigator, FGuid ItemInstanceID, FGam
             Pickup->ItemData = this;
             Pickup->ItemInstanceID = ItemInstanceID;
             UGameplayStatics::FinishSpawningActor(Pickup, SpawnTransform);
+
+            if (bEnablePhysicsOnDrop && Pickup->OverrideMeshComp)
+            {
+                Pickup->SetActorLocation(Instigator->GetActorLocation());
+                Pickup->OverrideMeshComp->SetSimulatePhysics(true);
+                FVector Impulse = Instigator->GetActorForwardVector() * DropImpulseStrength;
+                Pickup->OverrideMeshComp->AddImpulse(Impulse, NAME_None, true);
+            }
         }
     }
     else if (TeamTag == FutureTag)
@@ -87,6 +114,14 @@ void UItemBase::OnDroppedWithTeam(AActor* Instigator, FGuid ItemInstanceID, FGam
             Pickup->ItemData = this;
             Pickup->ItemInstanceID = ItemInstanceID;
             UGameplayStatics::FinishSpawningActor(Pickup, SpawnTransform);
+
+            if (bEnablePhysicsOnDrop && Pickup->OverrideMeshComp)
+            {
+                Pickup->SetActorLocation(Instigator->GetActorLocation());
+                Pickup->OverrideMeshComp->SetSimulatePhysics(true);
+                FVector Impulse = Instigator->GetActorForwardVector() * DropImpulseStrength;
+                Pickup->OverrideMeshComp->AddImpulse(Impulse, NAME_None, true);
+            }
         }
     }
     else
@@ -97,6 +132,14 @@ void UItemBase::OnDroppedWithTeam(AActor* Instigator, FGuid ItemInstanceID, FGam
             Pickup->ItemData = this;
             Pickup->ItemInstanceID = ItemInstanceID;
             UGameplayStatics::FinishSpawningActor(Pickup, SpawnTransform);
+
+            if (bEnablePhysicsOnDrop && Pickup->OverrideMeshComp)
+            {
+                Pickup->SetActorLocation(Instigator->GetActorLocation());
+                Pickup->OverrideMeshComp->SetSimulatePhysics(true);
+                FVector Impulse = Instigator->GetActorForwardVector() * DropImpulseStrength;
+                Pickup->OverrideMeshComp->AddImpulse(Impulse, NAME_None, true);
+            }
         }
     }
 }

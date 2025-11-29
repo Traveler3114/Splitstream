@@ -27,6 +27,10 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
     FText ItemName;
 
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
+    int32 Value = 0;
+
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
     FText ItemDescription;
 
@@ -44,6 +48,12 @@ public:
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
     FRotator PickupMeshRotation = FRotator(0.0f);
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
+    bool bEnablePhysicsOnDrop = false;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
+    float DropImpulseStrength = 500.f; // Or whatever default!
 
     virtual void OnEquipped(class AActor* Instigator);
 
