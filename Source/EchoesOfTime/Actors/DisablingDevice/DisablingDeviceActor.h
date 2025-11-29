@@ -20,6 +20,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
     ETimelineEra TimelineEra = ETimelineEra::Past;
 
+    UPROPERTY(BlueprintReadOnly, Replicated)
+    FString SpawnLocationName;
+
     UPROPERTY(EditAnywhere, ReplicatedUsing=OnRep_DeviceState)
     bool bIsActive = true;
 

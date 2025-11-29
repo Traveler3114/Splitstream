@@ -2,6 +2,7 @@
 #include "WireActor.h"
 #include "Engine/World.h"
 #include "Components/ArrowComponent.h"
+#include "Net/UnrealNetwork.h"
 
 AWireDeviceActor::AWireDeviceActor()
 {
@@ -37,4 +38,10 @@ void AWireDeviceActor::BeginPlay()
 void AWireDeviceActor::OnWireCut(AWireActor* CutWire)
 {
     UE_LOG(LogTemp, Log, TEXT("Standalone WireDeviceActor: Wire cut %s"), *UEnum::GetValueAsString(CutWire->WireColor));
+}
+
+void AWireDeviceActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(AWireDeviceActor, SpawnLocationName);
 }

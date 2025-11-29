@@ -53,54 +53,45 @@ void SpawnActorsOnRandomPointsAndAddToManager(
         ValidPoints.Swap(i, j);
     }
 
-    // 3. Choose up to NumToSpawn random points
     int32 SpawnCount = FMath::Min(NumToSpawn, ValidPoints.Num());
 
-    // 4. Spawn actors at points, align the WHOLE actor so its arrow matches the node's arrow
     TArray<TSpawnActor*> SpawnedActors;
     for (int32 i = 0; i < SpawnCount; ++i)
     {
         ARandomPointActor* Point = ValidPoints[i];
         FActorSpawnParameters SpawnParams;
         SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-
-        // Find ArrowComponent on spawn point
         UArrowComponent* PointArrow = Point->FindComponentByClass<UArrowComponent>();
         FRotator NodeBaseRotation = PointArrow ? PointArrow->GetComponentRotation() : Point->GetActorRotation();
         FVector SpawnLocation = Point->GetActorLocation();
 
-        // First spawn actor, using node's location and base rotation
         TSpawnActor* SpawnedActor = World->SpawnActor<TSpawnActor>(SpawnActorBPClass, SpawnLocation, NodeBaseRotation, SpawnParams);
 
         if (SpawnedActor)
         {
-            // Set TimelineEra if present
-            SpawnedActor->TimelineEra = Era; // If TimelineEra is public, adjust as needed
+            SpawnedActor->TimelineEra = Era;
 
-            // Alignment fix: rotate the entire actor so its arrow matches node's arrow
+            // Assign the location name from Tags[1]
+            if (Point->Tags.Num() > 1)
+            {
+                SpawnedActor->SpawnLocationName = Point->Tags[1].ToString();
+            }
+
+            // Alignment fix (as you had)
             if (PointArrow)
             {
                 UArrowComponent* SpawnedArrow = SpawnedActor->FindComponentByClass<UArrowComponent>();
                 if (SpawnedArrow)
                 {
-                    // Get desired arrow direction from node
                     const FVector DesiredForward = PointArrow->GetForwardVector();
                     const FVector DesiredUp = PointArrow->GetUpVector();
-
-                    // Desired world transform for arrow
                     FRotator DesiredRotator = FRotationMatrix::MakeFromXZ(DesiredForward, DesiredUp).Rotator();
-
-                    // Arrow's relative rotation to actor
                     FRotator ArrowCompRelRot = SpawnedArrow->GetRelativeTransform().GetRotation().Rotator();
-
-                    // Final actor rotation: desired arrow rotation minus arrow's relative
                     FRotator FinalActorRotation = DesiredRotator - ArrowCompRelRot;
-
                     SpawnedActor->SetActorRotation(FinalActorRotation);
                 }
                 else
                 {
-                    // Fallback for no ArrowComponent
                     SpawnedActor->SetActorRotation(PointArrow->GetComponentRotation());
                 }
             }
@@ -367,13 +358,16 @@ void AProceduralLevelGenerator::HandlePastSpawns()
             for (int32 i = Order.Num() - 1; i > 0; --i)
                 Order.Swap(i, FMath::RandRange(0, i));
 
-            // Convert Order to comma-separated string
-            TArray<FString> OrderStrings;
+            // New: Build lever order string using location names
+            TArray<FString> OrderLocationNames;
             for (int32 Num : Order)
             {
-                OrderStrings.Add(FString::FromInt(Num));
+                if (Manager->PuzzleLevers.IsValidIndex(Num) && Manager->PuzzleLevers[Num])
+                    OrderLocationNames.Add(Manager->PuzzleLevers[Num]->SpawnLocationName);
+                else
+                    OrderLocationNames.Add(TEXT("Unknown"));
             }
-            PastLeverOrderString = FString::Join(OrderStrings, TEXT(","));
+            PastLeverOrderString = FString::Join(OrderLocationNames, TEXT(","));
 
             // Setup lever puzzle with randomized order
             Manager->SetupPuzzle(Order);

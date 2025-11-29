@@ -84,4 +84,5 @@ void ADisablingDeviceActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(ADisablingDeviceActor, bIsActive);
     DOREPLIFETIME(ADisablingDeviceActor, bIsSolo);
+    DOREPLIFETIME(ADisablingDeviceActor, SpawnLocationName);
 }

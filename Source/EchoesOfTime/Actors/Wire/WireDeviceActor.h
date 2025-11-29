@@ -32,9 +32,13 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     TArray<AWireActor*> WireActors;
 
+    UPROPERTY(BlueprintReadOnly, Replicated)
+    FString SpawnLocationName;
+
     UFUNCTION()
     void OnWireCut(AWireActor* CutWire);
 
 protected:
     virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

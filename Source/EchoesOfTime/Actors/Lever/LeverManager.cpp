@@ -21,11 +21,13 @@ void ALeverManager::SetupPuzzle(const TArray<int32>& OrderSeq)
         auto* Lever = PuzzleLevers[idx];
         if (Lever)
         {
-            Lever->OrderIndex = idx;
             Lever->bActivated = false;
-            // Bind manager to lever event
-            Lever->OnRep_OrderIndex();
-            Lever->OnLeverInteracted.AddDynamic(this, &ALeverManager::OnLeverInteracted);
+
+            // Only bind non-solo levers!
+            if (!Lever->bIsSolo)
+            {
+                Lever->OnLeverInteracted.AddDynamic(this, &ALeverManager::OnLeverInteracted);
+            }
         }
     }
 }
@@ -34,6 +36,10 @@ void ALeverManager::OnLeverInteracted(ALeverActor* Lever)
 {
     if (!HasAuthority() || bCompleted) return;
     if (!Lever) return;
+
+    // Only react to non-solo levers
+    if (Lever->bIsSolo) return;
+
     int32 LeverIdx = PuzzleLevers.IndexOfByKey(Lever);
     if (LeverIdx == INDEX_NONE) return;
 

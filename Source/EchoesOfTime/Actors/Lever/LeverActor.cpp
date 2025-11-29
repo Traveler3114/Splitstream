@@ -10,17 +10,12 @@ ALeverActor::ALeverActor()
     SceneRootComp = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
     SetRootComponent(SceneRootComp);
 
-    // Set up lever mesh
     LeverMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LeverMesh"));
     LeverMesh->SetupAttachment(SceneRootComp);
     LeverMesh->SetIsReplicated(true);
 
     LeverBaseMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LeverBaseMesh"));
     LeverBaseMesh->SetupAttachment(SceneRootComp);
-
-
-    TextRenderComp = CreateDefaultSubobject<UTextRenderComponent>(TEXT("TextRenderComp"));
-    TextRenderComp->SetupAttachment(SceneRootComp);
 
     ArrowComp = CreateDefaultSubobject<UArrowComponent>(TEXT("ArrowComp"));
     ArrowComp->SetupAttachment(RootComponent);
@@ -29,12 +24,12 @@ ALeverActor::ALeverActor()
 void ALeverActor::BeginPlay()
 {
     Super::BeginPlay();
-	TextRenderComp->SetText(FText::FromString(FString::Printf(TEXT("%d"), OrderIndex)));
 }
 
 void ALeverActor::Interact_Implementation(AActor* Interactor)
 {
-    if (OrderIndex < 0)
+    // Use solo flag
+    if (bIsSolo)
     {
         if (!bActivated)
         {
@@ -43,7 +38,7 @@ void ALeverActor::Interact_Implementation(AActor* Interactor)
         }
         return;
     }
-    OnLeverInteracted.Broadcast(this); // Broadcast the lever instance pointer!
+    OnLeverInteracted.Broadcast(this);
 }
 
 void ALeverActor::OnRep_Activated()
@@ -68,16 +63,10 @@ void ALeverActor::SetHighlighted_Implementation(bool bHighlight)
     }
 }
 
-void ALeverActor::OnRep_OrderIndex()
-{
-    // Update the text to show new OrderIndex
-    if (TextRenderComp)
-        TextRenderComp->SetText(FText::FromString(FString::Printf(TEXT("%d"), OrderIndex)));
-}
-
+// Remove OnRep_OrderIndex and references to OrderIndex, unless you still want to display something!
 void ALeverActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(ALeverActor, bActivated);
-    DOREPLIFETIME(ALeverActor, OrderIndex);
+    DOREPLIFETIME(ALeverActor, SpawnLocationName);
 }
