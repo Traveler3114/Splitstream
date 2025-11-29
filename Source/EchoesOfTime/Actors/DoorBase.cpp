@@ -2,6 +2,7 @@
 #include "ActorComponents/LockPickComponent.h"
 #include "Components/BoxComponent.h"
 #include "Characters/GuardCharacter.h"
+#include "Characters/CivilianCharacter.h"
 #include "Net/UnrealNetwork.h"
 
 ADoorBase::ADoorBase()
@@ -119,7 +120,7 @@ void ADoorBase::OnGuardOpenBeginOverlap(UPrimitiveComponent* OverlappedComp, AAc
 {
     if (!bAutoOpenForGuards)
         return;
-    if (OtherActor && OtherActor->IsA(AGuardCharacter::StaticClass()))
+    if (OtherActor && (OtherActor->IsA(AGuardCharacter::StaticClass()) || OtherActor->IsA(ACivilianCharacter::StaticClass())))
     {
         ForceOpenDoorForGuard();
     }
@@ -132,9 +133,10 @@ void ADoorBase::OnGuardOpenEndOverlap(UPrimitiveComponent* OverlappedComp, AActo
         return;
     if (OtherActor && OtherActor->IsA(AGuardCharacter::StaticClass()))
     {
-        // Check if any other guards are still overlapping
+        // Check if any other guards or civilians are still overlapping
         TArray<AActor*> Overlapping;
         GuardOpenTrigger->GetOverlappingActors(Overlapping, AGuardCharacter::StaticClass());
+        GuardOpenTrigger->GetOverlappingActors(Overlapping, ACivilianCharacter::StaticClass());
         if (Overlapping.Num() == 0)
         {
             ForceCloseDoorForGuard();
