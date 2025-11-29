@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-#include "DataAssets/Items/ItemBase.h"
+#include "DataAssets/ItemBase.h"
 #include "IRequiresItem.generated.h"
 
 // Unreal interface class

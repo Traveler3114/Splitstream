@@ -1,8 +1,7 @@
 #include "CupActor.h"
 #include "ActorComponents/SearchComponent.h"
 #include "ActorComponents/InventoryComponent.h"
-#include "DataAssets/Items/ItemBase.h"
-#include "DataAssets/Items/FingerprintItem.h"
+#include "DataAssets/ItemBase.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -50,8 +49,8 @@ void ACupActor::OnSearchComplete()
 
     UInventoryComponent* Inventory = LastInteractor->FindComponentByClass<UInventoryComponent>();
 
-    UFingerprintItem* Fingerprint = Cast<UFingerprintItem>(StaticLoadObject(
-        UFingerprintItem::StaticClass(),
+    UItemBase* Fingerprint = Cast<UItemBase>(StaticLoadObject(
+        UItemBase::StaticClass(),
         nullptr,
         TEXT("/Game/DataAssets/Items/DA_Fingerprint.DA_Fingerprint")
     ));

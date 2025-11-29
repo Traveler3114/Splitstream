@@ -14,18 +14,48 @@
 
 void UItemBase::OnEquipped(AActor* Instigator)
 {
-    IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(Instigator);
-    if (!AbilityInterface) return;
-
-    UAbilitySystemComponent* ASC = AbilityInterface->GetAbilitySystemComponent();
-    if (!ASC) return;
-
-    for (TSubclassOf<UGameplayEffect> EffectClass : GrantedGameplayEffects)
+    // --- Grant Gameplay Effects ---
+    if (GrantedGameplayEffects.Num() > 0)
     {
-        if (EffectClass)
+        IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(Instigator);
+        if (AbilityInterface)
         {
-            FActiveGameplayEffectHandle Handle = ASC->ApplyGameplayEffectToSelf(EffectClass->GetDefaultObject<UGameplayEffect>(), 1.0f, ASC->MakeEffectContext());
-            GrantedGameplayEffectHandles.Add(Handle);
+            UAbilitySystemComponent* ASC = AbilityInterface->GetAbilitySystemComponent();
+            if (ASC)
+            {
+                for (TSubclassOf<UGameplayEffect> EffectClass : GrantedGameplayEffects)
+                {
+                    if (EffectClass)
+                    {
+                        FActiveGameplayEffectHandle Handle =
+                            ASC->ApplyGameplayEffectToSelf(EffectClass->GetDefaultObject<UGameplayEffect>(), 1.0f, ASC->MakeEffectContext());
+                        GrantedGameplayEffectHandles.Add(Handle);
+                    }
+                }
+            }
+        }
+    }
+
+    // --- Grant Abilities if AbilitySet is present ---
+    if (AbilitySet)
+    {
+        IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(Instigator);
+        if (AbilityInterface)
+        {
+            UAbilitySystemComponent* ASC = AbilityInterface->GetAbilitySystemComponent();
+            if (ASC)
+            {
+                GrantedAbilityHandles.Empty();
+                for (const FAbilityInputSetEntry& Entry : AbilitySet->Abilities)
+                {
+                    if (!Entry.AbilityClass) continue;
+                    FGameplayAbilitySpec Spec(Entry.AbilityClass, Entry.AbilityLevel, 0);
+                    Spec.GetDynamicSpecSourceTags().AddTag(Entry.InputTag);
+
+                    FGameplayAbilitySpecHandle Handle = ASC->GiveAbility(Spec);
+                    GrantedAbilityHandles.Add(Handle);
+                }
+            }
         }
     }
 }
@@ -33,17 +63,18 @@ void UItemBase::OnEquipped(AActor* Instigator)
 void UItemBase::OnUnequipped(AActor* Instigator)
 {
     RemoveGrantedGameplayEffects(Instigator);
+    RemoveGrantedAbilities(Instigator);
 }
 
 void UItemBase::OnDropped(AActor* Instigator, FGuid ItemInstanceID, FVector DropLocation)
 {
     RemoveGrantedGameplayEffects(Instigator);
+    RemoveGrantedAbilities(Instigator);
 
     if (!Instigator) return;
     UWorld* World = Instigator->GetWorld();
     if (!World) return;
 
-    // Spawn at character location if physics is enabled, otherwise DropLocation
     FVector SpawnLocation = bEnablePhysicsOnDrop ? Instigator->GetActorLocation() : DropLocation;
     FRotator SpawnRotation = PickupMeshRotation;
     FTransform SpawnTransform = FTransform(SpawnRotation, SpawnLocation);
@@ -55,16 +86,11 @@ void UItemBase::OnDropped(AActor* Instigator, FGuid ItemInstanceID, FVector Drop
         Pickup->ItemInstanceID = ItemInstanceID;
         UGameplayStatics::FinishSpawningActor(Pickup, SpawnTransform);
 
-        // Physics and impulse if enabled
         if (bEnablePhysicsOnDrop && Pickup->OverrideMeshComp)
         {
-            // Just to ensure correct position
             Pickup->SetActorLocation(Instigator->GetActorLocation());
-
-            // Enable physics
             Pickup->OverrideMeshComp->SetSimulatePhysics(true);
 
-            // Add impulse in character's forward vector
             FVector ForwardVector = Instigator->GetActorForwardVector();
             FVector Impulse = ForwardVector * DropImpulseStrength;
             Pickup->OverrideMeshComp->AddImpulse(Impulse, NAME_None, true);
@@ -75,16 +101,17 @@ void UItemBase::OnDropped(AActor* Instigator, FGuid ItemInstanceID, FVector Drop
 void UItemBase::OnDroppedWithTeam(AActor* Instigator, FGuid ItemInstanceID, FGameplayTag TeamTag, FVector DropLocation)
 {
     RemoveGrantedGameplayEffects(Instigator);
+    RemoveGrantedAbilities(Instigator);
 
     if (!Instigator) return;
     UWorld* World = Instigator->GetWorld();
     if (!World) return;
 
-    // Spawn at character location if physics is enabled, otherwise DropLocation
     FVector SpawnLocation = bEnablePhysicsOnDrop ? Instigator->GetActorLocation() : DropLocation;
     FRotator SpawnRotation = PickupMeshRotation;
     SpawnLocation.Z = FMath::Max(SpawnLocation.Z, 0.0f); // Slightly raise the drop location
     FTransform SpawnTransform = FTransform(SpawnRotation, SpawnLocation);
+
     static FGameplayTag PastTag = FGameplayTag::RequestGameplayTag(TEXT("Team.Past"));
     static FGameplayTag FutureTag = FGameplayTag::RequestGameplayTag(TEXT("Team.Future"));
 
@@ -162,4 +189,19 @@ void UItemBase::RemoveGrantedGameplayEffects(AActor* Instigator)
         ASC->RemoveActiveGameplayEffect(Handle);
     }
     GrantedGameplayEffectHandles.Empty();
+}
+
+void UItemBase::RemoveGrantedAbilities(AActor* Instigator)
+{
+    IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(Instigator);
+    if (!AbilityInterface) return;
+
+    UAbilitySystemComponent* ASC = AbilityInterface->GetAbilitySystemComponent();
+    if (!ASC) return;
+
+    for (const FGameplayAbilitySpecHandle& Handle : GrantedAbilityHandles)
+    {
+        ASC->ClearAbility(Handle);
+    }
+    GrantedAbilityHandles.Empty();
 }

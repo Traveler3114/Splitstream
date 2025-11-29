@@ -4,8 +4,7 @@
 #include "Components/SceneComponent.h"
 #include "Components/TextRenderComponent.h"
 #include "Characters/CivilianCharacter.h"
-#include "DataAssets/Items/ItemBase.h"
-#include "DataAssets/Items/FingerprintItem.h"
+#include "DataAssets/ItemBase.h"
 #include "Net/UnrealNetwork.h"
 #include "ActorComponents/InventoryComponent.h"
 
@@ -45,7 +44,7 @@ void ACodeGenerator::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 bool ACodeGenerator::IsCorrectItem_Implementation(UItemBase* Item) const
 {
     // Accept only correct fingerprint for the assigned civilian
-    UFingerprintItem* FP = Cast<UFingerprintItem>(Item);
+    UItemBase* FP = Cast<UItemBase>(Item);
     return FP && FP->OwnerCivilian == TargetCivilian;
 }
 

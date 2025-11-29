@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
 #include "GameplayTagContainer.h"
+#include "DataAssets/AbilitySets/AbilityInputSet.h"
+#include "GameplayAbilitySpec.h"
 #include "ItemBase.generated.h"
 
 UENUM(BlueprintType)
@@ -24,9 +26,9 @@ class ECHOESOFTIME_API UItemBase : public UDataAsset
     GENERATED_BODY()
 public:
 
+    // --- Basic Item Data ---
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
     FText ItemName;
-
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
     int32 Value = 0;
@@ -53,24 +55,35 @@ public:
     bool bEnablePhysicsOnDrop = false;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
-    float DropImpulseStrength = 500.f; // Or whatever default!
+    float DropImpulseStrength = 500.f;
 
-    virtual void OnEquipped(class AActor* Instigator);
+    // --- Ownership (optional, e.g. for fingerprints) ---
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Ownership")
+    TSoftObjectPtr<class ACivilianCharacter> OwnerCivilian;
 
-    virtual void OnUnequipped(class AActor* Instigator);
-
-    virtual void OnUsed(class AActor* Instigator);
-
-    virtual void OnDropped(class AActor* Instigator, FGuid ItemInstanceID, FVector DropLocation);
-
-    virtual void OnDroppedWithTeam(AActor* Instigator, FGuid ItemInstanceID, FGameplayTag TeamTag, FVector DropLocation);
-
+    // --- Effects (optional) ---
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tags")
     TArray<TSubclassOf<class UGameplayEffect>> GrantedGameplayEffects;
 
     UPROPERTY(Transient)
     TArray<struct FActiveGameplayEffectHandle> GrantedGameplayEffectHandles;
 
+    // --- Abilities (optional) ---
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
+    UAbilityInputSet* AbilitySet;
+
+    UPROPERTY(Transient)
+    TArray<FGameplayAbilitySpecHandle> GrantedAbilityHandles;
+
+    // --- Core API ---
+    virtual void OnEquipped(class AActor* Instigator);
+    virtual void OnUnequipped(class AActor* Instigator);
+    virtual void OnUsed(class AActor* Instigator);
+
+    virtual void OnDropped(class AActor* Instigator, FGuid ItemInstanceID, FVector DropLocation);
+    virtual void OnDroppedWithTeam(class AActor* Instigator, FGuid ItemInstanceID, FGameplayTag TeamTag, FVector DropLocation);
+
 protected:
     void RemoveGrantedGameplayEffects(AActor* Instigator);
+    void RemoveGrantedAbilities(AActor* Instigator);
 };
