@@ -45,6 +45,9 @@ void ADefaultPlayerController::BeginPlay()
             GS->OnPreAlarmStarted.AddDynamic(this, &ADefaultPlayerController::HandlePreAlarmStarted);
             GS->OnPreAlarmCanceled.AddDynamic(this, &ADefaultPlayerController::HandlePreAlarmCanceled);
 
+            GS->OnMoneyCollectedChanged.AddDynamic(this, &ADefaultPlayerController::OnMoneyCollectedChanged);
+            OnMoneyCollectedChanged(GS->CurrentMoneyCollected, GS->TargetMoneyAmount);
+
             // If an alarm is already active by the time we join, initialize from the replicated values:
             if (GS->bAlarmActive && GS->AlarmEndTime > 0.f)
             {
@@ -62,6 +65,15 @@ void ADefaultPlayerController::BeginPlay()
         }
     }
 }
+
+void ADefaultPlayerController::OnMoneyCollectedChanged(int32 Current, int32 Target)
+{
+    if (CharacterHUD && CharacterHUD->CharacterOverlay)
+    {
+        CharacterHUD->CharacterOverlay->SetObjectiveText(Current, Target);
+    }
+}
+
 
 void ADefaultPlayerController::HandleAlarmStarted(float InAlarmEndTime)
 {

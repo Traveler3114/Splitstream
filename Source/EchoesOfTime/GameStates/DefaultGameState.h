@@ -13,6 +13,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAlarmCanceled);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnRestartRequested);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPreAlarmStarted, float, PreAlarmEndTime, AActor*, PreAlarmInstigator);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPreAlarmCanceled);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnMoneyCollectedChanged, int32, CurrentMoney, int32, TargetMoney);
 
 UCLASS()
 class ECHOESOFTIME_API ADefaultGameState : public AGameState
@@ -90,8 +91,14 @@ public:
 	int32 TargetMoneyAmount = 50000;
 
 	// Current progress (total money collected so far)
-	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Objective")
+	UPROPERTY(ReplicatedUsing = OnRep_CurrentMoneyCollected, BlueprintReadOnly, Category = "Objective")
 	int32 CurrentMoneyCollected = 0;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnMoneyCollectedChanged OnMoneyCollectedChanged;
+
+	UFUNCTION()
+	void OnRep_CurrentMoneyCollected();
 
 	UFUNCTION(BlueprintCallable)
 	void AddCollectedMoney(int32 Amount);

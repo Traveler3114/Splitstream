@@ -135,13 +135,17 @@ void ADefaultGameState::OnRep_PreAlarmActive()
 
 void ADefaultGameState::AddCollectedMoney(int32 Amount)
 {
-    if (!HasAuthority()) return;
-
-    CurrentMoneyCollected += Amount;
-    CurrentMoneyCollected = FMath::Min(CurrentMoneyCollected, TargetMoneyAmount);
-
-    // Optionally trigger completion logic here if CurrentMoneyCollected >= TargetMoneyAmount
+	if (!HasAuthority()) return;
+	CurrentMoneyCollected += Amount;
+	CurrentMoneyCollected = FMath::Min(CurrentMoneyCollected, TargetMoneyAmount);
+	OnMoneyCollectedChanged.Broadcast(CurrentMoneyCollected, TargetMoneyAmount);
 }
+
+void ADefaultGameState::OnRep_CurrentMoneyCollected()
+{
+	OnMoneyCollectedChanged.Broadcast(CurrentMoneyCollected, TargetMoneyAmount);
+}
+
 
 void ADefaultGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {

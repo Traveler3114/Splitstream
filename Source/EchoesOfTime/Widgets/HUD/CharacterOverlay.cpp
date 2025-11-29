@@ -58,6 +58,16 @@ void UCharacterOverlay::OnInventoryChanged(const TArray<FInventorySlot>& Items)
     }
 }
 
+void UCharacterOverlay::SetObjectiveText(int32 Current, int32 Target)
+{
+    if (objective_txt)
+    {
+        objective_txt->SetText(FText::FromString(
+            FString::Printf(TEXT("Collected money: %d/%d"), Current, Target)
+        ));
+    }
+}
+
 void UCharacterOverlay::SetHealthText(float NewHealth)
 {
     if (health_txt)

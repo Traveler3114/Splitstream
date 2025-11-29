@@ -58,6 +58,9 @@ public:
     UFUNCTION(Client, Reliable)
     void ClientShowLoadingScreen();
 
+    UFUNCTION()
+    void OnMoneyCollectedChanged(int32 Current, int32 Target);
+
 private:
     UPROPERTY()
     class ACharacterHUD* CharacterHUD;

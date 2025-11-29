@@ -50,6 +50,12 @@ public:
     UFUNCTION(BlueprintCallable)
     void SetStatusTextWithColor(const FString& NewStatus, const FLinearColor& Color);
 
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* objective_txt;
+
+    UFUNCTION(BlueprintCallable)
+    void SetObjectiveText(int32 Current, int32 Target);
+
     UPROPERTY()
     class UInventoryComponent* LinkedInventory;
 
