@@ -151,7 +151,8 @@ void UInventoryComponent::DropActiveItem(FVector DropLocation)
     FInventorySlot ActiveSlot = GetActiveItem();
     if (!ActiveSlot.ItemAsset) return;
     FGameplayTag TeamTag = GetTeamTag();
-    ActiveSlot.ItemAsset->OnDroppedWithTeam(GetOwner(), ActiveSlot.ItemInstanceID, TeamTag, DropLocation);
+    //ActiveSlot.ItemAsset->OnDroppedWithTeam(GetOwner(), ActiveSlot.ItemInstanceID, TeamTag, DropLocation);
+    ActiveSlot.ItemAsset->OnDropped(GetOwner(), ActiveSlot.ItemInstanceID, DropLocation);
     RemoveItem(ActiveSlotIndex);
 }
 
