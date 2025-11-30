@@ -47,10 +47,21 @@ This README documents how the systems are implemented in detail, with pointers t
 - [Characters](#characters)
   - [DefaultCharacter (player)](#defaultcharacter-player)
   - [GuardCharacter (AI)](#guardcharacter-ai)
+  - [CivilianCharacter (NPC)](#civiliancharacter-npc)
+  - [DronePawn](#dronepawn)
 - [Level Gadgets & World Actors](#level-gadgets--world-actors)
   - [Laser Sensors/Groups](#laser-sensorsgroups)
   - [Keypads & Code Generator](#keypads--code-generator)
+  - [Lever Puzzles](#lever-puzzles)
+  - [Wire Puzzles](#wire-puzzles)
+  - [Disabling Devices](#disabling-devices)
+  - [Metal Detector](#metal-detector)
+  - [Vents](#vents)
+  - [Alarm Button](#alarm-button)
   - [Desks, Computers, Newspapers, Nav Nodes, Spawn Points](#desks-computers-newspapers-nav-nodes-spawn-points)
+- [Procedural Level Generator](#procedural-level-generator)
+- [Money & Objective System](#money--objective-system)
+- [Puzzle Completion Interface](#puzzle-completion-interface)
 - [Project Structure](#project-structure)
 - [Setup Instructions](#setup-instructions)
 - [Extending & Contribution](#extending--contribution)
@@ -422,6 +433,27 @@ Time-link registration:
 - Health:
   - Damage via `UAbilitySystemComponent` health attribute; on 0 cancels alarms and destroys ghost and self.
 
+### CivilianCharacter (NPC)
+
+- `ACivilianCharacter`:
+  - NPC character with AI perception and ability system.
+  - `CivilianName` and `PortraitTexture` for identification/UI.
+  - `AssignedDesk` links civilian to their workspace.
+  - Implements `IDetectable` for player detection events.
+  - `AIPerceptionComponent` with `UAISenseConfig_Sight` for player awareness.
+  - `OnHealthChanged` callback via GAS attribute set.
+  - `TimelineEra` support for Past/Future variants.
+
+### DronePawn
+
+- `ADronePawn`:
+  - AI-controlled drone with cone-based detection.
+  - Server-side `DetectionUpdate()` runs on timer (`DetectionInterval`).
+  - `DetectionDistance` and `ViewConeAngle` configure detection cone.
+  - Replicated `DetectedActor` with `OnRep_DetectedActor` for visual feedback.
+  - `DroneSpotLight` component for visual detection indicator.
+  - Optional `bDrawDebugCone` for development visualization.
+
 ---
 
 ## Level Gadgets & World Actors
@@ -443,6 +475,84 @@ Time-link registration:
   - Takes a list of `AKeypadScanner`s and assigns random numeric codes with individual expiries, sets their display and server-replicated text UI.
   - Requires a matching `UFingerprintItem` for its `TargetCivilian` to interact successfully (`IRequiresItem::IsCorrectItem` returns true only when `OwnerCivilian` matches).
 
+### Lever Puzzles
+
+- `ALeverActor`:
+  - Interactive lever actor that can be part of a puzzle sequence.
+  - Supports `ETimelineEra` (Past/Future) and replicated `bActivated` state.
+  - `OnLeverInteracted` delegate fires when player interacts, allowing managers to track activation.
+  - Solo mode (`bIsSolo`) allows standalone levers without puzzle sequence.
+  - `SpawnLocationName` replicated for UI hints to players.
+
+- `ALeverManager`:
+  - Manages a sequence of `ALeverActor`s for ordered puzzle completion.
+  - Replicated `Order` array defines the correct activation sequence.
+  - `ProgressIndex` tracks current progress; incorrect activation resets puzzle.
+  - `OnLeverPuzzleCompleted` delegate and `CompletionTarget` (implements `IPuzzleCompletionReceiver`) for triggering effects on success.
+  - Server-authoritative with OnRep-driven client feedback.
+
+### Wire Puzzles
+
+- `EWireColor` enum: Red, Green, Blue, Yellow.
+
+- `AWireActor`:
+  - Colored wire that can be cut via `USearchComponent` interaction.
+  - Replicated `bIsCut` state with `OnRep_CutState` for visual updates.
+  - `OnWireCut` delegate notifies managers when cut.
+  - `WireColor` property determines puzzle validation.
+
+- `AWireDeviceActor`:
+  - Container for multiple `AWireActor`s at a single location.
+  - `WireActors` array holds child wires.
+  - `SpawnLocationName` replicated for UI hints.
+  - `TimelineEra` support for Past/Future placement.
+
+- `AWirePuzzleManager`:
+  - Manages wire puzzle sequence across multiple devices.
+  - Replicated `DeviceOrder` and `CorrectWireColors` arrays define the expected sequence.
+  - `ProgressIndex` tracks completion; cutting wrong wire/color resets puzzle.
+  - `OnWirePuzzleCompleted` delegate and `CompletionTarget` for success handling.
+  - Binds to all wires in `PuzzleDevices` on BeginPlay for unified event handling.
+
+### Disabling Devices
+
+- `ADisablingDeviceActor`:
+  - Device that can be disabled via `USearchComponent` interaction.
+  - Replicated `bIsActive` state (default true) with `OnRep_DeviceState`.
+  - `bIsSolo` mode for standalone devices; `OnSoloDeviceDisabled` delegate fires on disable.
+  - `OnDeviceStateChanged` delegate for manager notification.
+  - `SpawnLocationName` replicated for UI hints.
+
+- `ADevicesManagerActor`:
+  - Manages a group of `ADisablingDeviceActor`s.
+  - Puzzle completes when all devices in `Devices` array are disabled.
+  - Replicated `bPuzzleCompleted` with `OnRep_PuzzleCompleted`.
+  - `OnPuzzleCompleted` delegate and `CompletionTarget` for success handling.
+  - Server-side `CheckPuzzleState()` validates completion after each device change.
+
+### Metal Detector
+
+- `AMetalDetector`:
+  - Overlap-based detection that triggers alarm when enabled.
+  - Implements `IPuzzleCompletionReceiver` to disable via `OnPuzzleCompleted_Implementation()`.
+  - Replicated `bEnabled` with `OnRep_Enabled` for visual state.
+  - `TriggerBox` collision detects `ADefaultCharacter` overlap (server-only).
+
+### Vents
+
+- `AVent`:
+  - Searchable vent that opens after `USearchComponent` completes.
+  - Replicated `bIsOpen` with `OnRep_OpenState` calls `OpenVent()`/`CloseVent()` Blueprint events.
+  - `TimelineEra` support for Past/Future variants.
+  - Interaction triggers search ability flow.
+
+### Alarm Button
+
+- `AAlarmButton`:
+  - Simple interactable that triggers immediate alarm when used.
+  - `TimelineEra` support.
+  - `Interact_Implementation` calls `ADefaultGameState::StartAlarm()`.
+
 ### Desks, Computers, Newspapers, Nav Nodes, Spawn Points
 
 - `ADeskActor` replicates `StaffName` and owns references to desk computer and spawn points for searchable items.
@@ -453,56 +563,219 @@ Time-link registration:
 
 ---
 
+## Procedural Level Generator
+
+`AProceduralLevelGenerator` orchestrates runtime spawning and puzzle setup:
+
+### Date System
+- `FRandomDate` struct (Year, Month, Day) with comparison operators.
+- `PastDate` and `FutureDate` replicated; Future date always > Past date.
+- Used for newspaper text, calendar puzzle, and code generator timing.
+
+### Spawn Flow
+- `HandlePastSpawns()` and `HandleFutureSpawns()` run server-side on BeginPlay.
+- `HandleEraSpawns(ETimelineEra)` spawns civilians at `ACivilianSpawnPoint`s, pairs with `ADeskActor`s, generates unique names.
+- `SpawnCivilianDeskItems()` places searchable items (cups with fingerprints) at desk spawn points.
+
+### Puzzle Setup
+- Wire puzzles: Spawns `AWireDeviceActor`s at tagged `ARandomPointActor`s, adds to `AWirePuzzleManager`, generates random sequence stored in `PastWireDeviceSequence`.
+- Lever puzzles: Spawns `ALeverActor`s, adds to `ALeverManager`, shuffles order, stores in `PastLeverOrderString`.
+- Disabling devices: Spawns `ADisablingDeviceActor`s, adds to `ADevicesManagerActor`.
+- Keypad codes: Assigns random 4-digit code to one computer and matching `AKeypadScanner`s.
+- Newspapers: Spawns at random points with date text matching `PastDate`/`FutureDate`.
+
+### Helper Template
+```cpp
+SpawnActorsOnRandomPointsAndAddToManager<TSpawnActor, TManagerActor>(...)
+```
+Generic function to spawn actors at tagged points and register with managers.
+
+---
+
+## Money & Objective System
+
+`ADefaultGameState` includes a money collection objective:
+
+- `TargetMoneyAmount`: Goal amount players must collect.
+- `CurrentMoneyCollected`: Replicated progress with `OnRep_CurrentMoneyCollected`.
+- `OnMoneyCollectedChanged` delegate broadcasts (Current, Target) for UI updates.
+- `AddCollectedMoney(Amount)` server-callable to increment progress.
+
+---
+
+## Puzzle Completion Interface
+
+`IPuzzleCompletionReceiver` interface allows actors to respond to puzzle completion:
+
+```cpp
+UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+void OnPuzzleCompleted();
+```
+
+Implemented by `AMetalDetector`, laser managers, and other puzzle-gated actors. Managers call `Execute_OnPuzzleCompleted(CompletionTarget)` when puzzles are solved.
+
+---
+
 ## Project Structure
 
 ```
-/Source
-  /AbilitySystem
-    - EOTGameplayTags.*             // Tag declarations/definitions
-    - AttributeSets/PlayerAttributeSet.*  // Health attribute
-    - AbilityTasks/ (LockPick/Hack/Search tasks)
-    - Abilities/
-      - DefaultGALockPick.*, DefaultGAHack.*, DefaultGASearch.*
-      - FutureGAPastEcho.*
-      - Weapon/
-        - PistolGAAim.*, PistolGAFire.*
-    - DefaultAbilitySystemComponent.*
-  /Actors
-    - ItemPickup.*, CodeGenerator.*, Computer.*, KeycardScanner(s).*
-    - DoorBase.*, DoubleDoorBase.* + TimeObjects (Past/Future variants)
-    - SecurityCamera.*, GhostCharacterActor.*, GuardCharacter.*
-    - Keypad/
-      - KeypadButton.*, KeypadScanner.*
-    - TimeObjects/
-      - PastDoor.*, FutureDoor.*, PastDoubleDoor.*, FutureDoubleDoor.*
-      - PastItemPickup.*, FutureItemPickup.*
-    - PointActors/
-      - NavNode.*, RandomPointActor.*, RefPointActor.*
-      - SearchableItemSpawnPoint.*
-    - SearchableActor.*, CupActor.*
-    - Laser/
-      - LaserSensor.*, LaserGroup.*
-  /Components
-    - InventoryComponent.*, LockPickComponent.*, HackComponent.*, SearchComponent.*
-  /Controllers
-    - DefaultPlayerController.*, LobbyPlayerController.*, MainMenuPlayerController.*
-  /GameModes
-    - DefaultGameMode.*, LobbyGameMode.*
-  /GameStates
-    - DefaultGameState.*, LobbyGameState.*
-  /Interfaces
-    - IInteractable.*, IRequiresItem.*, IKeycardUnlockable.*, ICameraDetectable.*, IGhostMirrorSource.*, IGhostRevealable.*
-  /Widgets
-    - HUD/ (CharacterHUD/Overlay, LockPickWidget, HackWidget, SearchWidget, DetectionWidget)
-    - Lobby/ (LobbyUI, PlayerLobbyInfo, OpenFriendsListButton, FriendList, FriendWidget)
-    - MainMenu/MainMenuWidget.*
-    - Calendar/ (CalendarWidget, CalendarButtonWidget, CalendarResultWidget)
-  /DataAssets
-    - Items/ (ItemBase, FingerprintItem, ItemBaseWithAbilities)
-    - AbilitySets/ (AbilityInputSet, DefaultGASet)
-  /Misc
-    - InputMappingSet.*
-    - TimelineEra enum (header elsewhere)
+/Source/EchoesOfTime
+  │
+  ├── EchoesOfTime.h/cpp              // Module definition
+  ├── EchoesOfTime.Build.cs           // Build configuration with dependencies
+  ├── DefaultGameInstance.h/cpp       // Game instance extending UAdvancedFriendsGameInstance
+  ├── DefaultPlayerState.h/cpp        // Player state with team, ready, avatar, GAS integration
+  ├── ProceduralLevelGenerator.h/cpp  // Runtime level population and puzzle setup
+  ├── TimelineEra.h/cpp               // ETimelineEra enum (Past/Future)
+  │
+  ├── /AbilitySystem
+  │   ├── EOTGameplayTags.h/cpp              // Native gameplay tag declarations
+  │   ├── DefaultAbilitySystemComponent.h/cpp // Custom ASC
+  │   ├── /Abilities
+  │   │   ├── DefaultGALockPick.h/cpp        // Lockpicking ability
+  │   │   ├── DefaultGAHack.h/cpp            // Hacking ability
+  │   │   ├── DefaultGASearch.h/cpp          // Searching ability
+  │   │   ├── FutureGAPastEcho.h/cpp         // Past Echo toggle (Future team)
+  │   │   └── /Weapons
+  │   │       ├── PistolGAAim.h/cpp          // Pistol aim ability
+  │   │       └── PistolGAFire.h/cpp         // Pistol fire ability
+  │   ├── /AbilityTasks
+  │   │   ├── HackAbilityTask.h/cpp          // Hack UI task
+  │   │   ├── LockPickAbilityTask.h/cpp      // LockPick UI task
+  │   │   └── SearchAbilityTask.h/cpp        // Search UI task
+  │   ├── /AttributeSets
+  │   │   └── PlayerAttributeSet.h/cpp       // Health attribute
+  │   └── /GameplayCues
+  │       ├── GCN_PastEchoActivated.h/cpp    // Past Echo visual effect
+  │       └── GCN_PastEchoDeactivated.h/cpp  // Past Echo deactivation
+  │
+  ├── /ActorComponents
+  │   ├── InventoryComponent.h/cpp    // Player inventory management
+  │   ├── LockPickComponent.h/cpp     // Lock picking mini-game logic
+  │   ├── HackComponent.h/cpp         // Hacking progress logic
+  │   └── SearchComponent.h/cpp       // Search progress logic
+  │
+  ├── /Actors
+  │   ├── DoorBase.h/cpp              // Base door with lock/keycard
+  │   ├── DoubleDoorBase.h/cpp        // Double door variant
+  │   ├── ItemPickup.h/cpp            // Generic item pickup
+  │   ├── KeycardScanner.h/cpp        // Simple keycard reader
+  │   ├── SecurityCamera.h/cpp        // Detection camera with pan
+  │   ├── SearchableActor.h/cpp       // Searchable container
+  │   ├── CupActor.h/cpp              // Cup with fingerprint item
+  │   ├── DeskActor.h/cpp             // Desk with staff info
+  │   ├── NewspaperActor.h/cpp        // Date-display newspaper
+  │   ├── CodeGenerator.h/cpp         // Future code generator terminal
+  │   ├── AlarmButton.h/cpp           // Manual alarm trigger
+  │   ├── MetalDetector.h/cpp         // Player detection trigger
+  │   ├── Vent.h/cpp                  // Searchable vent
+  │   ├── LobbyPlatformActor.h/cpp    // Lobby player slot
+  │   │
+  │   ├── /Computers
+  │   │   ├── Computer.h/cpp           // Hackable computer
+  │   │   └── ArchiveComputer.h/cpp    // Calendar/archive access
+  │   │
+  │   ├── /DisablingDevice
+  │   │   ├── DisablingDeviceActor.h/cpp    // Device to disable
+  │   │   └── DevicesManagerActor.h/cpp     // Manages device puzzle
+  │   │
+  │   ├── /KeypadScanner
+  │   │   ├── KeypadButton.h/cpp       // Individual keypad button
+  │   │   └── KeypadScanner.h/cpp      // Full keypad panel
+  │   │
+  │   ├── /Laser
+  │   │   ├── LaserSensor.h/cpp        // Single laser beam
+  │   │   └── LaserManager.h/cpp       // Laser group controller
+  │   │
+  │   ├── /Lever
+  │   │   ├── LeverActor.h/cpp         // Interactive lever
+  │   │   └── LeverManager.h/cpp       // Lever sequence puzzle
+  │   │
+  │   ├── /PointActors
+  │   │   ├── NavNode.h/cpp            // Guard patrol node
+  │   │   ├── RefPointActor.h/cpp      // Reference offset point
+  │   │   ├── RandomPointActor.h/cpp   // Random spawn point
+  │   │   ├── CivilianSpawnPoint.h/cpp // Civilian spawn location
+  │   │   └── SearchableItemSpawnPoint.h/cpp // Item spawn location
+  │   │
+  │   ├── /Projectiles
+  │   │   └── Bullet.h/cpp             // Pistol projectile
+  │   │
+  │   ├── /TimeObjects
+  │   │   ├── PastDoor.h/cpp           // Past door (broadcasts state)
+  │   │   ├── FutureDoor.h/cpp         // Future door (listens to Past)
+  │   │   ├── PastDoubleDoor.h/cpp     // Past double door
+  │   │   ├── FutureDoubleDoor.h/cpp   // Future double door
+  │   │   ├── PastItemPickup.h/cpp     // Past item (spawns Future item)
+  │   │   ├── FutureItemPickup.h/cpp   // Future item (invalidated by Past)
+  │   │   └── GhostCharacterActor.h/cpp // Ghost mirror of guard
+  │   │
+  │   └── /Wire
+  │       ├── WireActor.h/cpp          // Cuttable wire
+  │       ├── WireDeviceActor.h/cpp    // Wire device container
+  │       └── WirePuzzleManager.h/cpp  // Wire puzzle controller
+  │
+  ├── /Characters
+  │   ├── DefaultCharacter.h/cpp      // Player character
+  │   ├── GuardCharacter.h/cpp        // AI guard with detection
+  │   ├── CivilianCharacter.h/cpp     // NPC civilian
+  │   └── DronePawn.h/cpp             // Detection drone
+  │
+  ├── /Controllers
+  │   ├── DefaultPlayerController.h/cpp    // Gameplay controller
+  │   ├── LobbyPlayerController.h/cpp      // Lobby controller
+  │   └── MainMenuPlayerController.h/cpp   // Menu controller
+  │
+  ├── /DataAssets
+  │   ├── ItemBase.h/cpp              // Base item data asset
+  │   ├── InputMappingSet.h/cpp       // Input action mappings
+  │   └── /AbilitySets
+  │       ├── AbilityInputSet.h/cpp   // Ability-to-input mappings
+  │       └── DefaultGASet.h/cpp      // Default granted abilities
+  │
+  ├── /GameModes
+  │   ├── DefaultGameMode.h/cpp       // Gameplay mode with alarm handling
+  │   └── LobbyGameMode.h/cpp         // Lobby management mode
+  │
+  ├── /GameStates
+  │   ├── DefaultGameState.h/cpp      // Alarm, pre-alarm, money tracking
+  │   └── LobbyGameState.h/cpp        // Lobby ready aggregation
+  │
+  ├── /Interfaces
+  │   ├── IInteractable.h/cpp         // Interaction interface
+  │   ├── IRequiresItem.h/cpp         // Item requirement check
+  │   ├── IKeycardUnlockable.h/cpp    // Keycard unlock action
+  │   ├── IDetectable.h/cpp           // Detection callbacks
+  │   ├── IGhostMirrorSource.h/cpp    // Ghost mesh source
+  │   ├── IGhostRevealable.h/cpp      // Ghost reveal toggle
+  │   └── IPuzzleCompletionReceiver.h/cpp // Puzzle completion callback
+  │
+  └── /Widgets
+      ├── DetectionWidget.h/cpp       // Per-guard detection indicator
+      ├── PauseMenuWidget.h/cpp       // Pause menu
+      ├── SettingsWidget.h/cpp        // Graphics/audio settings
+      │
+      ├── /HUD
+      │   ├── CharacterHUD.h/cpp      // Main HUD class
+      │   ├── CharacterOverlay.h/cpp  // Inventory/status overlay
+      │   ├── HackWidget.h/cpp        // Hack progress UI
+      │   ├── LockPickWidget.h/cpp    // LockPick mini-game UI
+      │   └── SearchWidget.h/cpp      // Search progress UI
+      │
+      ├── /Lobby
+      │   ├── LobbyUI.h/cpp           // Main lobby widget
+      │   ├── PlayerLobbyInfo.h/cpp   // Per-player info display
+      │   ├── FriendList.h/cpp        // Friends panel
+      │   ├── FriendWidget.h/cpp      // Single friend entry
+      │   └── OpenFriendsListButton.h/cpp // Friend list toggle
+      │
+      ├── /MainMenu
+      │   └── MainMenuWidget.h/cpp    // Main menu
+      │
+      └── /Calendar
+          ├── CalendarWidget.h/cpp       // Calendar navigation
+          ├── CalendarButtonWidget.h/cpp // Date button
+          └── CalendarResultWidget.h/cpp // Search results display
 ```
 
 ---
