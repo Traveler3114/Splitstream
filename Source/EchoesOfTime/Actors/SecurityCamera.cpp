@@ -66,10 +66,8 @@ void ASecurityCamera::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void ASecurityCamera::PanUpdate()
 {
-    // If camera shouldn't pan, early-out
     if (PanSpeed <= 0.0f) return;
 
-    // Use world delta seconds for smooth movement
     const float DeltaYaw = PanSpeed * PanInterval * (bPanningRight ? 1.0f : -1.0f);
     if (PauseTimer > 0.0f)
     {
@@ -80,7 +78,6 @@ void ASecurityCamera::PanUpdate()
     PanOffset += DeltaYaw;
     float NewYaw = CurrentYaw + PanOffset;
 
-    // Clamp between MinYaw and MaxYaw, handle direction change/pause at edges
     if (NewYaw > CurrentYaw + MaxYaw)
     {
         PanOffset = MaxYaw;
@@ -95,8 +92,6 @@ void ASecurityCamera::PanUpdate()
     }
 
     OnRep_PanOffset();
-
-    // Optionally, call MarkPackageDirty or replicate PanOffset (already handled via replication)
 }
 
 void ASecurityCamera::DetectionUpdate()
@@ -106,7 +101,6 @@ void ASecurityCamera::DetectionUpdate()
 
     FVector CamLoc = SceneCapture ? SceneCapture->GetComponentLocation() : GetActorLocation();
 
-    // Use Sphere Overlap for broad phase
     TArray<AActor*> OverlappedActors;
     TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
     ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn));
@@ -123,97 +117,56 @@ void ASecurityCamera::DetectionUpdate()
     );
 
     TSet<AActor*> DetectedThisFrame;
-    UWorld* World = GetWorld();
 
     for (AActor* Actor : OverlappedActors)
     {
         if (!Actor || !Actor->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
             continue;
 
-        UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(Actor->GetRootComponent());
-        TArray<FVector> TestPoints;
+        // --- FOV/Cone Math (just like in your working version) ---
+        FVector ToTarget = Actor->GetActorLocation() - CamLoc;
+        float Distance = ToTarget.Size();
+        if (Distance > DetectionDistance)
+            continue;
 
-        if (PrimComp)
+        ToTarget.Normalize();
+        FVector CameraForward = SceneCapture ? SceneCapture->GetForwardVector() : GetActorForwardVector();
+        float Dot = FVector::DotProduct(CameraForward, ToTarget);
+        float CosHalfFOV = FMath::Cos(FMath::DegreesToRadians(ViewConeAngle * 0.5f));
+        if (Dot < CosHalfFOV)
+            continue; // Not in cone, skip
+
+        // --- Now do a trace for occlusion ---
+        FHitResult HitResult;
+        FCollisionQueryParams Params;
+        Params.AddIgnoredActor(this);
+        Params.AddIgnoredActor(Actor);
+
+        bool bHit = GetWorld()->LineTraceSingleByChannel(
+            HitResult,
+            CamLoc,
+            Actor->GetActorLocation(),
+            ECC_Visibility,
+            Params
+        );
+
+        bool bVisible = false;
+        if (bHit)
         {
-            FBox Bounds = PrimComp->Bounds.GetBox();
-            TestPoints.Add(Bounds.Min);
-            TestPoints.Add(Bounds.Max);
-            TestPoints.Add(FVector(Bounds.Min.X, Bounds.Min.Y, Bounds.Max.Z));
-            TestPoints.Add(FVector(Bounds.Min.X, Bounds.Max.Y, Bounds.Min.Z));
-            TestPoints.Add(FVector(Bounds.Max.X, Bounds.Min.Y, Bounds.Min.Z));
-            TestPoints.Add(FVector(Bounds.Min.X, Bounds.Max.Y, Bounds.Max.Z));
-            TestPoints.Add(FVector(Bounds.Max.X, Bounds.Min.Y, Bounds.Max.Z));
-            TestPoints.Add(FVector(Bounds.Max.X, Bounds.Max.Y, Bounds.Min.Z));
+            // If hit actor is the detected actor or its owner, it's visible
+            if (HitResult.GetActor() == Actor || (HitResult.GetActor() && HitResult.GetActor()->GetOwner() == Actor))
+                bVisible = true;
         }
         else
         {
-            TestPoints.Add(Actor->GetActorLocation());
+            // No hit, nothing blocks vision (e.g. open air), so treat as visible
+            bVisible = true;
         }
 
-        bool bAnyPointDetected = false;
-        for (const FVector& Point : TestPoints)
-        {
-            FVector ToTarget = Point - CamLoc;
-            float Distance = ToTarget.Size();
-            if (Distance > DetectionDistance)
-                continue;
-
-            ToTarget.Normalize();
-            FVector CameraForward = SceneCapture ? SceneCapture->GetForwardVector() : GetActorForwardVector();
-            float Dot = FVector::DotProduct(CameraForward, ToTarget);
-            float CosHalfFOV = FMath::Cos(FMath::DegreesToRadians(ViewConeAngle * 0.5f));
-            if (Dot >= CosHalfFOV)
-            {
-                // === LINE TRACE FOR OBSTRUCTION ===
-                FHitResult HitResult;
-                FCollisionQueryParams Params;
-                Params.AddIgnoredActor(this);
-                Params.AddIgnoredActor(Actor); // ignore self (root) for multi-part meshes
-
-                bool bHit = World->LineTraceSingleByChannel(
-                    HitResult,
-                    CamLoc,
-                    Point,
-                    ECC_Visibility,
-                    Params
-                );
-
-                // Debug draw the test line
-                if (bDrawDebug)
-                {
-                    FColor LineColor = (bHit && HitResult.GetActor() == Actor) ? FColor::Green : FColor::Red;
-                    DrawDebugLine(World, CamLoc, Point, LineColor, false, 0.2f, 0, 2.0f);
-                }
-
-                // Only detect if the trace hits the actor first (not a wall etc)
-                if (bHit && HitResult.GetActor() == Actor)
-                {
-                    if (bDrawDebug)
-                        DrawDebugPoint(World, Point, 14.f, FColor::Green, false, 0.2f);
-
-                    bAnyPointDetected = true;
-
-                    // Log success
-                    UE_LOG(LogTemp, Verbose, TEXT("Camera [%s] CAN SEE [%s] at %s (distance %.1f)"),
-                        *GetName(), *Actor->GetName(), *HitResult.Location.ToString(), Distance);
-
-                    break;
-                }
-                else
-                {
-                    // Trace blocked, do NOT detect
-                    if (bDrawDebug)
-                        DrawDebugPoint(World, Point, 10.f, FColor::Red, false, 0.2f);
-
-                    // Optional log for blocked trace
-                    UE_LOG(LogTemp, VeryVerbose, TEXT("Camera [%s] LOS BLOCKED for [%s]"), *GetName(), *Actor->GetName());
-                }
-            }
-        }
-
-        if (bAnyPointDetected)
+        if (bVisible)
         {
             DetectedThisFrame.Add(Actor);
+
             bool bWasDetected = false;
             for (const TWeakObjectPtr<AActor>& WeakActor : LastDetectedActors)
             {
@@ -238,7 +191,6 @@ void ASecurityCamera::DetectionUpdate()
             IDetectable::Execute_OnLost(Actor, this);
     }
 
-    // Store for next frame
     LastDetectedActors.Empty();
     for (AActor* Actor : DetectedThisFrame)
         LastDetectedActors.Add(Actor);
@@ -307,6 +259,5 @@ void ASecurityCamera::OnRep_PanOffset()
 
 bool ASecurityCamera::IsActorAlreadyDetected_Implementation(AActor* DetectingActor) const
 {
-    // Return true if this camera is currently detecting that actor
     return LastDetectedActors.Contains(DetectingActor);
 }
