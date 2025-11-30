@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Actors/Wire/WireActor.h"
 #include "ProceduralLevelGenerator.generated.h"
 
 enum class ETimelineEra : uint8;
@@ -28,6 +29,18 @@ struct FRandomDate
         return Day < Other.Day;
     }
 };
+
+USTRUCT(BlueprintType)
+struct FWireSequenceStep
+{
+    GENERATED_BODY()
+
+    UPROPERTY(BlueprintReadOnly)
+    FString DeviceLocation;
+    UPROPERTY(BlueprintReadOnly)
+    EWireColor WireColor;
+};
+
 
 UCLASS()
 class ECHOESOFTIME_API AProceduralLevelGenerator : public AActor
@@ -66,10 +79,7 @@ public:
     FString PastLeverOrderString;
 
     UPROPERTY(Replicated, BlueprintReadOnly)
-    FString PastWireDeviceOrderString;
-
-    UPROPERTY(Replicated, BlueprintReadOnly)
-    FString PastWireCorrectColorString;
+    TArray<FWireSequenceStep> PastWireDeviceSequence;
 protected:
     virtual void BeginPlay() override;
     void SpawnCivilianDeskItems(const TArray<class ACivilianCharacter*>& Civilians, TSubclassOf<class ASearchableActor> ItemClass);

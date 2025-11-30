@@ -51,35 +51,31 @@ void AWirePuzzleManager::BeginPlay()
     Super::BeginPlay();
     if (HasAuthority())
     {
-        FString WireOrderString;
-        FString WireColorString;
-        // Obtain order string and color string from generator
+        // Obtain wire sequence steps from the generator (location + color per step)
+        TArray<FWireSequenceStep> DeviceSequence;
         for (TActorIterator<AProceduralLevelGenerator> It(GetWorld()); It; ++It)
         {
-            WireOrderString = It->PastWireDeviceOrderString;
-            WireColorString = It->PastWireCorrectColorString;
+            DeviceSequence = It->PastWireDeviceSequence;
             break; // Only need one generator
         }
-        TArray<FString> OrderStrs;
-        WireOrderString.ParseIntoArray(OrderStrs, TEXT(","));
-        DeviceOrder.SetNum(OrderStrs.Num());
-        for (int32 i = 0; i < OrderStrs.Num(); ++i)
-        {
-            DeviceOrder[i] = FCString::Atoi(*OrderStrs[i]);
-        }
 
-        // Parse colors
-        TArray<FString> ColorStrs;
-        WireColorString.ParseIntoArray(ColorStrs, TEXT(","));
-        CorrectWireColors.SetNum(ColorStrs.Num());
-        for (int32 i = 0; i < ColorStrs.Num(); ++i)
+        // Sync legacy arrays for existing code compatibility
+        DeviceOrder.SetNum(DeviceSequence.Num());
+        CorrectWireColors.SetNum(DeviceSequence.Num());
+        for (int32 i = 0; i < DeviceSequence.Num(); ++i)
         {
-            FString ColorStr = ColorStrs[i].Replace(TEXT("EWireColor::"), TEXT(""));
-            if (ColorStr == TEXT("Red")) CorrectWireColors[i] = EWireColor::Red;
-            else if (ColorStr == TEXT("Green")) CorrectWireColors[i] = EWireColor::Green;
-            else if (ColorStr == TEXT("Blue")) CorrectWireColors[i] = EWireColor::Blue;
-            else if (ColorStr == TEXT("Yellow")) CorrectWireColors[i] = EWireColor::Yellow;
-            else CorrectWireColors[i] = EWireColor::Red; // fallback
+            // Find index of device in PuzzleDevices by match of location name
+            int32 DeviceIdx = INDEX_NONE;
+            for (int32 d = 0; d < PuzzleDevices.Num(); ++d)
+            {
+                if (PuzzleDevices[d] && PuzzleDevices[d]->SpawnLocationName == DeviceSequence[i].DeviceLocation)
+                {
+                    DeviceIdx = d;
+                    break;
+                }
+            }
+            DeviceOrder[i] = DeviceIdx;
+            CorrectWireColors[i] = DeviceSequence[i].WireColor;
         }
 
         ProgressIndex = 0;

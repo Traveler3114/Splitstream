@@ -160,6 +160,18 @@ void UCalendarWidget::ShowResult()
             CalendarPanel->AddChildToUniformGrid(LeverOrderText, 0, Row++);
         }
 
+        if (Record->WireDeviceOrder.Num() > 0)
+        {
+            for (const FWireSequenceStep& Step : Record->WireDeviceOrder)
+            {
+                // Example string: "Kitchen - Red"
+                FString Label = FString::Printf(TEXT("%s - %s"), *Step.DeviceLocation, *UEnum::GetValueAsString(Step.WireColor));
+                UTextBlock* WireOrderText = NewObject<UTextBlock>(this);
+                WireOrderText->SetText(FText::FromString(Label));
+                CalendarPanel->AddChildToUniformGrid(WireOrderText, 0, Row++);
+            }
+        }
+
         // Add each civilian result widget
         for (const FCivilianCalendarEntry& Civ : Record->Civilians)
         {

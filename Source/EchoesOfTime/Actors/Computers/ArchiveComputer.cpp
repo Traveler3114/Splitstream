@@ -91,7 +91,8 @@ void AArchiveComputer::Interact_Implementation(AActor* Interactor)
         PastRec.Year = GeneratorRef->PastDate.Year;
         PastRec.Month = GeneratorRef->PastDate.Month;
         PastRec.Day = GeneratorRef->PastDate.Day;
-        PastRec.LeverOrderString = GeneratorRef->PastLeverOrderString; // <--- ADD THIS LINE
+        PastRec.LeverOrderString = GeneratorRef->PastLeverOrderString;
+        PastRec.WireDeviceOrder = GeneratorRef->PastWireDeviceSequence;
 
         for (AComputer* Comp : CodeComputers)
         {

@@ -5,9 +5,15 @@
 #include "WireActor.h"
 #include "WireDeviceActor.h"
 #include "TimelineEra.h"
+#include "ProceduralLevelGenerator.h" // Required for FWireSequenceStep usage
 #include "WirePuzzleManager.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWirePuzzleCompleted);
+
+/*
+* WirePuzzleManager manages the wire device puzzle sequence.
+* Uses order and correct color arrays for per-step validation, currently synced from FWireSequenceStep array in generator.
+*/
 
 UCLASS()
 class ECHOESOFTIME_API AWirePuzzleManager : public AActor
@@ -23,10 +29,10 @@ public:
     TArray<AWireDeviceActor*> PuzzleDevices;
 
     UPROPERTY(Replicated)
-    TArray<int32> DeviceOrder;
+    TArray<int32> DeviceOrder;  // Order of indices into PuzzleDevices to activate
 
     UPROPERTY(Replicated)
-    TArray<EWireColor> CorrectWireColors;
+    TArray<EWireColor> CorrectWireColors; // The expected wire color for each device in the sequence
 
     UPROPERTY(Replicated)
     int32 ProgressIndex = 0;
@@ -40,7 +46,7 @@ public:
     UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "WirePuzzle|Completion")
     AActor* CompletionTarget = nullptr;
 
-	virtual void BeginPlay() override;
+    virtual void BeginPlay() override;
 protected:
     UFUNCTION()
     void OnRep_PuzzleCompleted();
@@ -50,10 +56,6 @@ protected:
 
     void ResetPuzzle();
     void CompletePuzzle();
-
-
-
-    //void HighlightNextCorrectWire();
 
     int32 GetDeviceIndexForWire(AWireActor* Wire) const;
 

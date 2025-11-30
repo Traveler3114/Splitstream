@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "ProceduralLevelGenerator.h"
 #include "CalendarWidget.generated.h"
 
 class UUniformGridPanel;
@@ -37,6 +38,9 @@ struct FCalendarDateRecord
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString LeverOrderString;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TArray<FWireSequenceStep> WireDeviceOrder;
 };
 
 UENUM()

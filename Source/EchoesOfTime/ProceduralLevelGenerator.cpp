@@ -15,6 +15,8 @@
 #include "Actors/CodeGenerator.h"
 #include "Actors/Lever/LeverManager.h"
 #include "Actors/Wire/WirePuzzleManager.h"
+#include "Actors/Wire/WireDeviceActor.h"
+#include "Actors/Wire/WireActor.h"
 #include "Actors/DisablingDevice/DevicesManagerActor.h"
 #include "Actors/DisablingDevice/DisablingDeviceActor.h"
 
@@ -296,7 +298,7 @@ void AProceduralLevelGenerator::HandlePastSpawns()
     {
         // Gather device order
         auto* WireManager = Cast<AWirePuzzleManager>(FoundWireManagers[0]);
-        if (WireManager && WireManager->PuzzleDevices.Num() > 0 && WireManager->TimelineEra== ETimelineEra::Past)
+        if (WireManager && WireManager->PuzzleDevices.Num() > 0 && WireManager->TimelineEra == ETimelineEra::Past)
         {
             TArray<int32> Order;
             Order.SetNum(WireManager->PuzzleDevices.Num());
@@ -305,30 +307,27 @@ void AProceduralLevelGenerator::HandlePastSpawns()
             for (int32 i = Order.Num() - 1; i > 0; --i)
                 Order.Swap(i, FMath::RandRange(0, i));
 
-            TArray<FString> OrderStrings;
-            for (int32 Num : Order) OrderStrings.Add(FString::FromInt(Num));
-            PastWireDeviceOrderString = FString::Join(OrderStrings, TEXT(","));
-
-            // Gather correct colors
-            TArray<FString> ColorStrs;
-            for (int32 i = 0; i < WireManager->PuzzleDevices.Num(); ++i)
+            // NEW: Build sequence array of {location, color}
+            PastWireDeviceSequence.Empty();
+            for (int32 i = 0; i < Order.Num(); ++i)
             {
                 auto* Device = WireManager->PuzzleDevices[Order[i]];
+                FString Location = Device ? Device->SpawnLocationName : TEXT("Unknown");
+
+                EWireColor Color = EWireColor::Red;
                 if (Device && Device->WireActors.Num() > 0)
                 {
                     int32 WireIdx = FMath::RandRange(0, Device->WireActors.Num() - 1);
-                    auto WireColor = Device->WireActors[WireIdx]->WireColor;
-                    ColorStrs.Add(UEnum::GetValueAsString(WireColor));
+                    Color = Device->WireActors[WireIdx]->WireColor;
                 }
-                else
-                {
-                    ColorStrs.Add(UEnum::GetValueAsString(EWireColor::Red));
-                }
+
+                FWireSequenceStep Step;
+                Step.DeviceLocation = Location;
+                Step.WireColor = Color;
+                PastWireDeviceSequence.Add(Step);
             }
-            PastWireCorrectColorString = FString::Join(ColorStrs, TEXT(","));
         }
     }
-
 
 
 
@@ -568,4 +567,5 @@ void AProceduralLevelGenerator::GetLifetimeReplicatedProps(TArray<FLifetimePrope
     DOREPLIFETIME(AProceduralLevelGenerator, PastDate);
     DOREPLIFETIME(AProceduralLevelGenerator, FutureDate);
     DOREPLIFETIME(AProceduralLevelGenerator, PastLeverOrderString);
+    DOREPLIFETIME(AProceduralLevelGenerator, PastWireDeviceSequence);
 }
