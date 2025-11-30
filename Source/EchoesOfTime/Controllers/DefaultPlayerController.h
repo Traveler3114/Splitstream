@@ -20,8 +20,6 @@ public:
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
     void TogglePauseMenu();
-    void BindPauseMenuEsc();
-    void UnbindPauseMenuEsc();
 
     void BindAttributeDelegates();
     void BindGameplayTagDelegates();

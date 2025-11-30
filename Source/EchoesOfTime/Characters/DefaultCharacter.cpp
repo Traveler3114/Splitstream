@@ -15,6 +15,9 @@
 #include "Interfaces/IDetectable.h"
 #include "EngineUtils.h"
 #include "Controllers/DefaultPlayerController.h"
+#include "ActorComponents/HackComponent.h"
+#include "ActorComponents/SearchComponent.h"
+#include "ActorComponents/LockPickComponent.h"
 
 ADefaultCharacter::ADefaultCharacter()
 {
@@ -322,7 +325,9 @@ void ADefaultCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
         EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &ADefaultCharacter::StopCrouching);
         EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &ADefaultCharacter::ServerStartSprint);
         EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ADefaultCharacter::ServerStopSprint);
-        EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &ADefaultCharacter::HandleInteract);
+        EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ADefaultCharacter::HandleInteractHoldStart);
+        EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &ADefaultCharacter::HandleInteractHoldStop);
+        EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &ADefaultCharacter::HandleInteractInstant);
         EnhancedInputComponent->BindAction(DropItemAction, ETriggerEvent::Completed, this, &ADefaultCharacter::DropActiveItem);
 
         if (InputMappingSet)
@@ -482,89 +487,123 @@ void ADefaultCharacter::UpdateInteractHighlight()
     }
 }
 
-void ADefaultCharacter::HandleInteract()
-{
-    if (HasAuthority() && IsLocallyControlled())
-    {
-        FHitResult Hit;
-        FVector TraceEnd;
-        if (GetForwardTraceResult(300.f, Hit, TraceEnd))
-        {
-            AActor* HitActor = Hit.GetActor();
-            if (HitActor)
-            {
-                ServerHandleInteract(HitActor);
-            }
-        }
-        return;
-    }
+// --- FULL functions for progressive and instant interaction ---
+// Add these to your DefaultCharacter.cpp. This replaces HandleInteract and ServerHandleInteract_Implementation,
+// and adds proper handle for F hold/release for progressive, plus a helper to check progressive type.
 
+// Helper: Determine if an actor is progressive interact (hack, search, lockpick)
+bool ADefaultCharacter::IsProgressiveInteractActor(AActor* Actor) const
+{
+    if (!Actor)
+        return false;
+    return Actor->FindComponentByClass<UHackComponent>()
+        || Actor->FindComponentByClass<USearchComponent>()
+        || Actor->FindComponentByClass<ULockPickComponent>();
+}
+
+// Helper: Get the gameplay tag matching the progressive interact
+FGameplayTag ADefaultCharacter::GetProgressiveInteractTag(AActor* Actor) const
+{
+    if (!Actor)
+        return FGameplayTag();
+    if (Actor->FindComponentByClass<UHackComponent>())
+        return TAG_Character_Ability_Hack;
+    if (Actor->FindComponentByClass<USearchComponent>())
+        return TAG_Character_Ability_Search;
+    if (Actor->FindComponentByClass<ULockPickComponent>())
+        return TAG_Character_Ability_LockPick;
+    return FGameplayTag();
+}
+
+// Called when F is pressed (hold start)
+void ADefaultCharacter::HandleInteractHoldStart()
+{
     FHitResult Hit;
     FVector TraceEnd;
-    if (GetForwardTraceResult(300.f, Hit, TraceEnd))
+    if (!GetForwardTraceResult(300.f, Hit, TraceEnd))
+        return;
+
+    AActor* HitActor = Hit.GetActor();
+    if (!HitActor)
+        return;
+
+    if (IsProgressiveInteractActor(HitActor))
     {
-        AActor* HitActor = Hit.GetActor();
-        if (!HitActor)
-            return;
-
-        if (HitActor->GetClass()->ImplementsInterface(URequiresItem::StaticClass()))
+        // Activate corresponding ability by tag (client side, via GAS)
+        if (AbilitySystemComponent)
         {
-            UInventoryComponent* Inventory = FindComponentByClass<UInventoryComponent>();
-            UItemBase* ActiveItem = nullptr;
-            if (Inventory)
+            FGameplayTag Tag = GetProgressiveInteractTag(HitActor);
+            if (Tag.IsValid())
             {
-                FInventorySlot ActiveSlot = Inventory->GetActiveItem();
-                ActiveItem = ActiveSlot.ItemAsset;
-            }
-            if (HasAuthority() && !IRequiresItem::Execute_IsCorrectItem(HitActor, ActiveItem))
-            {
-                if (IsLocallyControlled() && GEngine)
-                {
-                    GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("You need the correct item to interact!"));
-                }
-                return;
-            }
-            if (ActiveItem)
-            {
-                ActiveItem->OnUsed(this);
+                FGameplayEventData TriggerEventData;
+                TriggerEventData.Instigator = this;
+                TriggerEventData.OptionalObject = HitActor;
+                AbilitySystemComponent->HandleGameplayEvent(Tag, &TriggerEventData);
             }
         }
+    }
+    // else: Do nothing here for instant interact
+    // (instant interact is only on F press, not hold)
+}
 
-        if (HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
-        {
-            IInteractable::Execute_Interact(HitActor, this);
-            ServerHandleInteract(HitActor);
-        }
+// Called when F is released (hold stop)
+void ADefaultCharacter::HandleInteractHoldStop()
+{
+    // Cancel any progressive ability using tags
+    if (!AbilitySystemComponent)
+        return;
+
+    FGameplayTagContainer CancelTags;
+    CancelTags.AddTag(TAG_Character_Ability_Hack);
+    CancelTags.AddTag(TAG_Character_Ability_Search);
+    CancelTags.AddTag(TAG_Character_Ability_LockPick);
+
+    AbilitySystemComponent->CancelAbilities(&CancelTags);
+}
+
+// Called when F is pressed (single tap, for instant actions)
+void ADefaultCharacter::HandleInteractInstant()
+{
+    FHitResult Hit;
+    FVector TraceEnd;
+    if (!GetForwardTraceResult(300.f, Hit, TraceEnd))
+        return;
+
+    AActor* HitActor = Hit.GetActor();
+    if (!HitActor)
+        return;
+
+    if (IsProgressiveInteractActor(HitActor))
+    {
+        // Do nothing: progressive interactions are handled by hold logic.
+        return;
+    }
+    else
+    {
+        // Instant, send to server for validation and execution
+        ServerHandleInteract(HitActor);
     }
 }
 
+// Server: Actually executes instant or progressive checks (only instant will do anything here)
 void ADefaultCharacter::ServerHandleInteract_Implementation(AActor* TargetActor)
 {
     if (!TargetActor)
         return;
 
-    if (TargetActor->GetClass()->ImplementsInterface(URequiresItem::StaticClass()))
+    if (IsProgressiveInteractActor(TargetActor))
     {
-        UInventoryComponent* Inventory = FindComponentByClass<UInventoryComponent>();
-        UItemBase* ActiveItem = nullptr;
-        if (Inventory)
-        {
-            FInventorySlot ActiveSlot = Inventory->GetActiveItem();
-            ActiveItem = ActiveSlot.ItemAsset;
-        }
-        if (!IRequiresItem::Execute_IsCorrectItem(TargetActor, ActiveItem))
-        {
-            return;
-        }
-        if (ActiveItem)
-        {
-            ActiveItem->OnUsed(this);
-        }
+        // For progressive types, don't run instant code here.
     }
-
-    if (TargetActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
+    else
     {
-        IInteractable::Execute_Interact(TargetActor, this);
+        // Instant logic (pickup, open, use, etc)
+        // Example: Use Interactable interface
+        if (TargetActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
+        {
+            IInteractable::Execute_Interact(TargetActor, this);
+        }
+        // (Add other instant interactions here if needed)
     }
 }
 

@@ -215,30 +215,6 @@ void ADefaultPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void ADefaultPlayerController::SetupInputComponent()
 {
     Super::SetupInputComponent();
-    BindPauseMenuEsc();
-}
-
-void ADefaultPlayerController::BindPauseMenuEsc()
-{
-    if (InputComponent)
-    {
-        InputComponent->BindKey(EKeys::Escape, IE_Pressed, this, &ADefaultPlayerController::TogglePauseMenu);
-    }
-}
-
-void ADefaultPlayerController::UnbindPauseMenuEsc()
-{
-    if (InputComponent)
-    {
-        for (int32 i = InputComponent->KeyBindings.Num() - 1; i >= 0; --i)
-        {
-            const FInputKeyBinding& KeyBinding = InputComponent->KeyBindings[i];
-            if (KeyBinding.Chord.Key == EKeys::Escape && KeyBinding.KeyEvent == IE_Pressed)
-            {
-                InputComponent->KeyBindings.RemoveAt(i);
-            }
-        }
-    }
 }
 
 void ADefaultPlayerController::TogglePauseMenu()

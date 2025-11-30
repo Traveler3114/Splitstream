@@ -39,10 +39,6 @@ void USearchAbilityTask::Activate()
                 }
             }
         }
-        if (ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(PC))
-        {
-            MyPC->UnbindPauseMenuEsc();
-        }
     }
 
     bIsSearching = true;
@@ -55,14 +51,6 @@ void USearchAbilityTask::OnDestroy(bool bInOwnerFinished)
     UnbindInput();
     bTickingTask = false;
     bIsSearching = false;
-
-    if (APlayerController* PC = Cast<APlayerController>(GetAvatarActor()->GetInstigatorController()))
-    {
-        if (ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(PC))
-        {
-            MyPC->BindPauseMenuEsc();
-        }
-    }
 
     if (SearchWidget)
     {

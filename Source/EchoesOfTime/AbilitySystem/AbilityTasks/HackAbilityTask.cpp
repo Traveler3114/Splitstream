@@ -39,10 +39,6 @@ void UHackAbilityTask::Activate()
                 }
             }
         }
-        if (ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(PC))
-        {
-            MyPC->UnbindPauseMenuEsc();
-        }
     }
 
     bIsHacking = true;
@@ -55,14 +51,6 @@ void UHackAbilityTask::OnDestroy(bool bInOwnerFinished)
     UnbindInput();
     bTickingTask = false;
     bIsHacking = false;
-
-    if (APlayerController* PC = Cast<APlayerController>(GetAvatarActor()->GetInstigatorController()))
-    {
-        if (ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(PC))
-        {
-            MyPC->BindPauseMenuEsc();
-        }
-    }
 
     if (HackWidget)
     {

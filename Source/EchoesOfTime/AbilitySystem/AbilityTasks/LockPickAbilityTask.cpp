@@ -35,10 +35,6 @@ void ULockPickAbilityTask::Activate()
                 }
             }
         }
-        if (ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(PC))
-        {
-            MyPC->UnbindPauseMenuEsc();
-        }
     }
 
     LockPickInputVector = FVector2D::ZeroVector;
@@ -56,13 +52,6 @@ void ULockPickAbilityTask::OnDestroy(bool bInOwnerFinished)
     bTickingTask = false;
     bIsLockPicking = false;
 
-    if (APlayerController* PC = Cast<APlayerController>(GetAvatarActor()->GetInstigatorController()))
-    {
-        if (ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(PC))
-        {
-            MyPC->BindPauseMenuEsc();
-        }
-    }
 
     if (LockPickWidget)
     {

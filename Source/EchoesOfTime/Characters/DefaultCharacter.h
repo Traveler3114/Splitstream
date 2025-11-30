@@ -136,9 +136,27 @@ public:
     UInventoryComponent* InventoryComponent;
 
     // Interaction system
-    void HandleInteract();
+    UFUNCTION(BlueprintCallable, Category = "Interaction")
+    bool IsProgressiveInteractActor(AActor* Actor) const;
+
+    UFUNCTION(BlueprintCallable, Category = "Interaction")
+    FGameplayTag GetProgressiveInteractTag(AActor* Actor) const;
+
+    // Input handlers for interaction
+    UFUNCTION()
+    void HandleInteractHoldStart();
+
+    UFUNCTION()
+    void HandleInteractHoldStop();
+
+    UFUNCTION()
+    void HandleInteractInstant();
+
+    // Server-side implementation
     UFUNCTION(Server, Reliable)
     void ServerHandleInteract(AActor* TargetActor);
+
+    virtual void ServerHandleInteract_Implementation(AActor* TargetActor);
 
     UPROPERTY()
     AActor* HighlightedActor = nullptr;
