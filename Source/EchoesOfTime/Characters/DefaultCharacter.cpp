@@ -80,11 +80,7 @@ void ADefaultCharacter::BeginPlay()
 
     UpdateEquippedItemMesh();
 
-    // In BeginPlay or similar (after AbilitySystemComponent is valid):
-    AbilitySystemComponent->RegisterGameplayTagEvent(
-        FGameplayTag::RequestGameplayTag("Character.Status.Illegal"),
-        EGameplayTagEventType::NewOrRemoved
-    ).AddUObject(this, &ADefaultCharacter::OnIllegalTagChanged);
+
 }
 
 void ADefaultCharacter::Tick(float DeltaTime)
@@ -131,21 +127,18 @@ void ADefaultCharacter::Tick(float DeltaTime)
 
         if (APlayerController* PC = Cast<APlayerController>(GetController()))
         {
-            if (PC->IsLocalController())
+            if (ADefaultPlayerController* DefPC = Cast<ADefaultPlayerController>(PC))
             {
-                if (ADefaultPlayerController* DefPC = Cast<ADefaultPlayerController>(PC))
-                {
-                    float Angle = CalculateDetectionAngle(
-                        Detector->GetActorLocation(),
-                        PC->PlayerCameraManager->GetCameraRotation(),
-                        GetActorLocation());
-                    DefPC->ClientUpdateDetectionWidget(
-                        Detector,
-                        Progress,
-                        Progress >= 1.0f,
-                        Angle
-                    );
-                }
+                float Angle = CalculateDetectionAngle(
+                    Detector->GetActorLocation(),
+                    PC->PlayerCameraManager->GetCameraRotation(),
+                    GetActorLocation());
+                DefPC->ClientUpdateDetectionWidget(
+                    Detector,
+                    Progress,
+                    Progress >= 1.0f,
+                    Angle
+                );
             }
         }
 
@@ -171,6 +164,10 @@ void ADefaultCharacter::InitializeAbilitySystem()
         if (AbilitySystemComponent)
         {
             AbilitySystemComponent->InitAbilityActorInfo(PS, this);
+            AbilitySystemComponent->RegisterGameplayTagEvent(
+                FGameplayTag::RequestGameplayTag("Character.Status.Illegal"),
+                EGameplayTagEventType::NewOrRemoved
+            ).AddUObject(this, &ADefaultCharacter::OnIllegalTagChanged);
         }
     }
     if (HasAuthority() && AttributeInitGE)
@@ -496,9 +493,10 @@ bool ADefaultCharacter::IsProgressiveInteractActor(AActor* Actor) const
 {
     if (!Actor)
         return false;
-    return Actor->FindComponentByClass<UHackComponent>()
-        || Actor->FindComponentByClass<USearchComponent>()
-        || Actor->FindComponentByClass<ULockPickComponent>();
+    bool bIsProgressive =
+        Actor->FindComponentByClass<UHackComponent>() ||
+        Actor->FindComponentByClass<USearchComponent>() ||
+        Actor->FindComponentByClass<ULockPickComponent>();
 }
 
 // Helper: Get the gameplay tag matching the progressive interact
@@ -507,11 +505,17 @@ FGameplayTag ADefaultCharacter::GetProgressiveInteractTag(AActor* Actor) const
     if (!Actor)
         return FGameplayTag();
     if (Actor->FindComponentByClass<UHackComponent>())
+    {
         return TAG_Character_Ability_Hack;
+    }
     if (Actor->FindComponentByClass<USearchComponent>())
+    {
         return TAG_Character_Ability_Search;
+    }
     if (Actor->FindComponentByClass<ULockPickComponent>())
+    {
         return TAG_Character_Ability_LockPick;
+    }
     return FGameplayTag();
 }
 
@@ -521,7 +525,9 @@ void ADefaultCharacter::HandleInteractHoldStart()
     FHitResult Hit;
     FVector TraceEnd;
     if (!GetForwardTraceResult(300.f, Hit, TraceEnd))
+    {
         return;
+    }
 
     AActor* HitActor = Hit.GetActor();
     if (!HitActor)
@@ -529,7 +535,6 @@ void ADefaultCharacter::HandleInteractHoldStart()
 
     if (IsProgressiveInteractActor(HitActor))
     {
-        // Activate corresponding ability by tag (client side, via GAS)
         if (AbilitySystemComponent)
         {
             FGameplayTag Tag = GetProgressiveInteractTag(HitActor);
@@ -542,14 +547,11 @@ void ADefaultCharacter::HandleInteractHoldStart()
             }
         }
     }
-    // else: Do nothing here for instant interact
-    // (instant interact is only on F press, not hold)
 }
 
 // Called when F is released (hold stop)
 void ADefaultCharacter::HandleInteractHoldStop()
 {
-    // Cancel any progressive ability using tags
     if (!AbilitySystemComponent)
         return;
 
@@ -564,10 +566,13 @@ void ADefaultCharacter::HandleInteractHoldStop()
 // Called when F is pressed (single tap, for instant actions)
 void ADefaultCharacter::HandleInteractInstant()
 {
+
     FHitResult Hit;
     FVector TraceEnd;
     if (!GetForwardTraceResult(300.f, Hit, TraceEnd))
+    {
         return;
+    }
 
     AActor* HitActor = Hit.GetActor();
     if (!HitActor)
@@ -575,12 +580,10 @@ void ADefaultCharacter::HandleInteractInstant()
 
     if (IsProgressiveInteractActor(HitActor))
     {
-        // Do nothing: progressive interactions are handled by hold logic.
         return;
     }
     else
     {
-        // Instant, send to server for validation and execution
         ServerHandleInteract(HitActor);
     }
 }
@@ -593,12 +596,9 @@ void ADefaultCharacter::ServerHandleInteract_Implementation(AActor* TargetActor)
 
     if (IsProgressiveInteractActor(TargetActor))
     {
-        // For progressive types, don't run instant code here.
     }
     else
     {
-        // Instant logic (pickup, open, use, etc)
-        // Example: Use Interactable interface
         if (TargetActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
         {
             IInteractable::Execute_Interact(TargetActor, this);
