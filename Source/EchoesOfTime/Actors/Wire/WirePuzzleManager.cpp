@@ -13,39 +13,6 @@ AWirePuzzleManager::AWirePuzzleManager()
     bReplicates = true;
 }
 
-//void AWirePuzzleManager::HighlightNextCorrectWire()
-//{
-//   // Remove highlight from all wires first
-//   for (auto* Device : PuzzleDevices)
-//   {
-//       if (Device)
-//       {
-//           for (auto* Wire : Device->WireActors)
-//           {
-//               if (Wire)
-//                   Wire->SetHighlighted_Implementation(false);
-//           }
-//       }
-//   }
-//   // Highlight the next correct wire (if not completed)
-//   if (!bCompleted && DeviceOrder.IsValidIndex(ProgressIndex) && CorrectWireColors.IsValidIndex(DeviceOrder[ProgressIndex]))
-//   {
-//       int32 NextIdx = DeviceOrder[ProgressIndex];
-//       AWireDeviceActor* NextDevice = PuzzleDevices.IsValidIndex(NextIdx) ? PuzzleDevices[NextIdx] : nullptr;
-//       if (NextDevice)
-//       {
-//           for (AWireActor* Wire : NextDevice->WireActors)
-//           {
-//               if (Wire && Wire->WireColor == CorrectWireColors[NextIdx] && !Wire->bIsCut)
-//               {
-//                   Wire->SetHighlighted_Implementation(true);
-//                   break; // Only highlight one wire
-//               }
-//           }
-//       }
-//   }
-//}
-
 void AWirePuzzleManager::BeginPlay()
 {
     Super::BeginPlay();
@@ -59,12 +26,11 @@ void AWirePuzzleManager::BeginPlay()
             break; // Only need one generator
         }
 
-        // Sync legacy arrays for existing code compatibility
+        // Sync arrays; add robust logging if device mapping fails!
         DeviceOrder.SetNum(DeviceSequence.Num());
         CorrectWireColors.SetNum(DeviceSequence.Num());
         for (int32 i = 0; i < DeviceSequence.Num(); ++i)
         {
-            // Find index of device in PuzzleDevices by match of location name
             int32 DeviceIdx = INDEX_NONE;
             for (int32 d = 0; d < PuzzleDevices.Num(); ++d)
             {
@@ -76,6 +42,11 @@ void AWirePuzzleManager::BeginPlay()
             }
             DeviceOrder[i] = DeviceIdx;
             CorrectWireColors[i] = DeviceSequence[i].WireColor;
+
+            if (DeviceIdx == INDEX_NONE)
+            {
+                UE_LOG(LogTemp, Error, TEXT("WirePuzzleManager: Device for sequence location '%s' not found! This step will FAIL!"), *DeviceSequence[i].DeviceLocation);
+            }
         }
 
         ProgressIndex = 0;
@@ -95,51 +66,90 @@ void AWirePuzzleManager::BeginPlay()
     //HighlightNextCorrectWire();
 }
 
+// void AWirePuzzleManager::HighlightNextCorrectWire()
+// {
+//     // Remove highlight from all wires first
+//     for (AWireDeviceActor* Device : PuzzleDevices)
+//     {
+//         if (Device)
+//         {
+//             for (AWireActor* Wire : Device->WireActors)
+//             {
+//                 if (Wire)
+//                     Wire->SetHighlighted_Implementation(false);
+//             }
+//         }
+//     }
+
+//     // Safety checks for completion and order arrays
+//     if (bCompleted || !DeviceOrder.IsValidIndex(ProgressIndex) || !CorrectWireColors.IsValidIndex(ProgressIndex))
+//         return;
+
+//     int32 NextDeviceIdx = DeviceOrder[ProgressIndex];
+//     EWireColor ExpectedColor = CorrectWireColors[ProgressIndex];
+
+//     // Make sure index is valid
+//     if (NextDeviceIdx == INDEX_NONE || !PuzzleDevices.IsValidIndex(NextDeviceIdx))
+//         return;
+
+//     AWireDeviceActor* NextDevice = PuzzleDevices[NextDeviceIdx];
+//     if (!NextDevice)
+//         return;
+
+//     for (AWireActor* Wire : NextDevice->WireActors)
+//     {
+//         if (Wire && Wire->WireColor == ExpectedColor && !Wire->bIsCut)
+//         {
+//             Wire->SetHighlighted_Implementation(true);
+//             break; // Only highlight one wire
+//         }
+//     }
+// }
 
 void AWirePuzzleManager::OnWireCut(AWireActor* CutWire)
 {
     if (!HasAuthority() || bCompleted || !CutWire) return;
 
     int32 DeviceIdx = GetDeviceIndexForWire(CutWire);
-    int32 ExpectedDeviceIdx = DeviceOrder.IsValidIndex(ProgressIndex) ? DeviceOrder[ProgressIndex] : -1;
+
+    // Check if sequence is valid for current ProgressIndex
+    if (!DeviceOrder.IsValidIndex(ProgressIndex) || !CorrectWireColors.IsValidIndex(ProgressIndex))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("WirePuzzleManager: Sequence arrays out of bounds!"));
+        return;
+    }
+
+    int32 ExpectedDeviceIdx = DeviceOrder[ProgressIndex];
+    EWireColor ExpectedColor = CorrectWireColors[ProgressIndex];
+
+    if (ExpectedDeviceIdx == INDEX_NONE || !PuzzleDevices.IsValidIndex(ExpectedDeviceIdx))
+    {
+        UE_LOG(LogTemp, Error, TEXT("WirePuzzleManager: Sequence is broken! Device step points to INDEX_NONE or invalid device."));
+        // Optionally: alarm or skip, but safest is to do nothing
+        return;
+    }
 
     // Evaluate correct wire sequence
     if (DeviceIdx == ExpectedDeviceIdx &&
-        CorrectWireColors.IsValidIndex(DeviceIdx) &&
-        CutWire->WireColor == CorrectWireColors[DeviceIdx])
+        CutWire->WireColor == ExpectedColor)
     {
-        /*if (GEngine)
-            GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green,
-                FString::Printf(TEXT("Wire puzzle: Correct wire cut on device %d -- %s"),
-                    DeviceIdx + 1,
-                    *UEnum::GetValueAsString(CutWire->WireColor)));*/
+        // CORRECT cut: advance the puzzle
         ++ProgressIndex;
+        //HighlightNextCorrectWire();
+
         if (ProgressIndex >= DeviceOrder.Num())
         {
-            //if (GEngine)
-            //    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("Wire puzzle COMPLETED!"));
             CompletePuzzle();
         }
     }
     else
     {
-        //FString debugMsg;
-        //if (DeviceIdx != ExpectedDeviceIdx)
-        //    debugMsg = FString::Printf(TEXT("Wire puzzle: Wrong device! Expected Device %d"), ExpectedDeviceIdx + 1);
-        //else
-        //    debugMsg = FString::Printf(TEXT("Wire puzzle: Wrong wire on device %d! Expected: %s"),
-        //        DeviceIdx + 1, *UEnum::GetValueAsString(CorrectWireColors[DeviceIdx]));
-        //if (GEngine)
-        //    GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, debugMsg);
-
-        // Trigger alarm
+        // Incorrect wire/device: start alarm!
         ADefaultGameState* GS = GetWorld() ? GetWorld()->GetGameState<ADefaultGameState>() : nullptr;
         if (GS) GS->StartAlarm();
 
-        // Optionally reset puzzle, comment if you don't want auto-reset:
-        // ResetPuzzle();
+        //HighlightNextCorrectWire();
     }
-    //HighlightNextCorrectWire();
 }
 
 void AWirePuzzleManager::ResetPuzzle()

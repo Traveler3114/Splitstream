@@ -139,17 +139,31 @@ void UCalendarWidget::ShowResult()
     CalendarStage = ECalendarStage::Results;
     CalendarPanel->ClearChildren();
 
-    // FIXED: Use FCalendarDateRecord (the new name), not FCalendarCivilianRecord
     const FCalendarDateRecord* Record = CalendarDateRecords.FindByPredicate(
         [this](const FCalendarDateRecord& Rec)
         {
             return Rec.Year == SelectedYear && Rec.Month == SelectedMonth && Rec.Day == SelectedDay;
         });
 
-    int32 Row = 0; // Row index for grid
+    // Track row indexes per section
+    int CivRow = 0;
+    int LeverRow = 0;
+    int WireRow = 0;
+
     if (Record && CalendarResultWidgetClass)
     {
-        // Show lever order ONLY if present (i.e., for past records)
+        // --- Civilians/Results: Column 0 ---
+        for (const FCivilianCalendarEntry& Civ : Record->Civilians)
+        {
+            UCalendarResultWidget* ResultWidget = CreateWidget<UCalendarResultWidget>(GetWorld(), CalendarResultWidgetClass);
+            if (ResultWidget)
+            {
+                ResultWidget->SetupResult(Civ.Name, Civ.Portrait);
+                CalendarPanel->AddChildToUniformGrid(ResultWidget, 0, CivRow++); // Col 0: Civilians
+            }
+        }
+
+        // --- Levers: Column 1 ---
         if (!Record->LeverOrderString.IsEmpty())
         {
             UTextBlock* LeverOrderText = NewObject<UTextBlock>(this);
@@ -157,29 +171,33 @@ void UCalendarWidget::ShowResult()
                 FText::FromString("Lever Order: {0}"),
                 FText::FromString(Record->LeverOrderString))
             );
-            CalendarPanel->AddChildToUniformGrid(LeverOrderText, 0, Row++);
-        }
+            CalendarPanel->AddChildToUniformGrid(LeverOrderText, 1, LeverRow++); // Col 1: Levers
 
-        if (Record->WireDeviceOrder.Num() > 0)
-        {
-            for (const FWireSequenceStep& Step : Record->WireDeviceOrder)
+            // You can split the LeverOrderString by comma and display each?
+            // If you want each lever individually in its own row:
+            TArray<FString> LeverNames;
+            Record->LeverOrderString.ParseIntoArray(LeverNames, TEXT(","), true);
+            for (const FString& LeverName : LeverNames)
             {
-                // Example string: "Kitchen - Red"
-                FString Label = FString::Printf(TEXT("%s - %s"), *Step.DeviceLocation, *UEnum::GetValueAsString(Step.WireColor));
-                UTextBlock* WireOrderText = NewObject<UTextBlock>(this);
-                WireOrderText->SetText(FText::FromString(Label));
-                CalendarPanel->AddChildToUniformGrid(WireOrderText, 0, Row++);
+                UTextBlock* LeverText = NewObject<UTextBlock>(this);
+                LeverText->SetText(FText::Format(FText::FromString("Lever: {0}"), FText::FromString(LeverName)));
+                CalendarPanel->AddChildToUniformGrid(LeverText, 1, LeverRow++); // Col 1: Levers
             }
         }
 
-        // Add each civilian result widget
-        for (const FCivilianCalendarEntry& Civ : Record->Civilians)
+        // --- Wires: Column 2 ---
+        if (Record->WireDeviceOrder.Num() > 0)
         {
-            UCalendarResultWidget* ResultWidget = CreateWidget<UCalendarResultWidget>(GetWorld(), CalendarResultWidgetClass);
-            if (ResultWidget)
+            UTextBlock* WireOrderHeader = NewObject<UTextBlock>(this);
+            WireOrderHeader->SetText(FText::FromString("Wire Sequence:"));
+            CalendarPanel->AddChildToUniformGrid(WireOrderHeader, 2, WireRow++);
+
+            for (const FWireSequenceStep& Step : Record->WireDeviceOrder)
             {
-                ResultWidget->SetupResult(Civ.Name, Civ.Portrait);
-                CalendarPanel->AddChildToUniformGrid(ResultWidget, 0, Row++);
+                FString WireLabel = FString::Printf(TEXT("%s - %s"), *Step.DeviceLocation, *UEnum::GetValueAsString(Step.WireColor));
+                UTextBlock* WireOrderText = NewObject<UTextBlock>(this);
+                WireOrderText->SetText(FText::FromString(WireLabel));
+                CalendarPanel->AddChildToUniformGrid(WireOrderText, 2, WireRow++); // Col 2: Wires
             }
         }
     }

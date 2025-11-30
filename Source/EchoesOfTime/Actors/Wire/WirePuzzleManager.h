@@ -47,6 +47,7 @@ public:
     AActor* CompletionTarget = nullptr;
 
     virtual void BeginPlay() override;
+    //void HighlightNextCorrectWire();
 protected:
     UFUNCTION()
     void OnRep_PuzzleCompleted();
