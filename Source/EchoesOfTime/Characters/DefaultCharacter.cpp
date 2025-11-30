@@ -497,7 +497,7 @@ bool ADefaultCharacter::IsProgressiveInteractActor(AActor* Actor) const
         Actor->FindComponentByClass<UHackComponent>() ||
         Actor->FindComponentByClass<USearchComponent>() ||
         Actor->FindComponentByClass<ULockPickComponent>();
-    bool bIsProgressive;
+    return bIsProgressive;
 }
 
 // Helper: Get the gameplay tag matching the progressive interact
