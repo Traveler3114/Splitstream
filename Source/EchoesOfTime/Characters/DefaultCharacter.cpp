@@ -322,9 +322,9 @@ void ADefaultCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
         EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &ADefaultCharacter::StopCrouching);
         EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &ADefaultCharacter::ServerStartSprint);
         EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ADefaultCharacter::ServerStopSprint);
-        EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ADefaultCharacter::HandleInteractHoldStart);
+        EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &ADefaultCharacter::HandleInteractHoldStart);
         EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &ADefaultCharacter::HandleInteractHoldStop);
-        EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &ADefaultCharacter::HandleInteractInstant);
+        EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ADefaultCharacter::HandleInteractInstant);
         EnhancedInputComponent->BindAction(DropItemAction, ETriggerEvent::Completed, this, &ADefaultCharacter::DropActiveItem);
 
         if (InputMappingSet)
@@ -493,7 +493,8 @@ bool ADefaultCharacter::IsProgressiveInteractActor(AActor* Actor) const
 {
     if (!Actor)
         return false;
-    bool bIsProgressive =
+	bool bIsProgressive = false;
+    bIsProgressive =
         Actor->FindComponentByClass<UHackComponent>() ||
         Actor->FindComponentByClass<USearchComponent>() ||
         Actor->FindComponentByClass<ULockPickComponent>();

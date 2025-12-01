@@ -23,7 +23,10 @@ void UHackComponent::BeginPlay()
 void UHackComponent::StartHacking()
 {
     if (bHackingInProgress || bHacked) return;
-    HackElapsed = 0.f;  // Always reset!
+    if (GetOwnerRole() == ROLE_Authority)
+    {
+        MulticastResetHackElapsed();
+    }
     bHackingInProgress = true;
     SetComponentTickEnabled(true);
 }
@@ -31,7 +34,10 @@ void UHackComponent::CancelHacking()
 {
     bHackingInProgress = false;
     SetComponentTickEnabled(false);
-    HackElapsed = 0.f;  // Always reset!
+    if (GetOwnerRole() == ROLE_Authority)
+    {
+        MulticastResetHackElapsed();
+    }
 }
 float UHackComponent::GetHackProgress() const
 {
@@ -63,6 +69,10 @@ void UHackComponent::OnRep_Hacked()
     }
 }
 
+void UHackComponent::MulticastResetHackElapsed_Implementation()
+{
+    HackElapsed = 0.f;
+}
 
 void UHackComponent::Interact(AActor* Interactor)
 {

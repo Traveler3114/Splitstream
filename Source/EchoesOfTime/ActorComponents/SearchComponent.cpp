@@ -26,7 +26,10 @@ void USearchComponent::StartSearching()
     if (bSearched && !bAllowMultipleSearches) return; // only block if already searched AND only one search allowed
 
     bSearchingInProgress = true;
-    SearchElapsed = 0.f;
+    if (GetOwner()->HasAuthority())
+    {
+        MulticastResetSearchElapsed();
+    }
     SetComponentTickEnabled(true);
 
     if (bAllowMultipleSearches)
@@ -38,7 +41,15 @@ void USearchComponent::CancelSearching()
 {
     bSearchingInProgress = false;
     SetComponentTickEnabled(false);
+    if (GetOwner()->HasAuthority())
+    {
+        MulticastResetSearchElapsed();
+    }
+}
 
+void USearchComponent::MulticastResetSearchElapsed_Implementation()
+{
+    SearchElapsed = 0.f;
 }
 
 float USearchComponent::GetSearchProgress() const

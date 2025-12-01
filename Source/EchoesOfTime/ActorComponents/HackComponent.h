@@ -33,6 +33,8 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Hacking")
     void StartHacking();
 
+    UFUNCTION(NetMulticast, Reliable)
+    void MulticastResetHackElapsed();
 
     UFUNCTION(BlueprintCallable, Category = "Hacking")
     void CancelHacking();
