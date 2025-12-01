@@ -46,7 +46,13 @@ void UInventoryComponent::BeginPlay()
 
 void UInventoryComponent::SetActiveSlot(int32 Index)
 {
-    if (Index >= 0 && Index < Slots.Num())
+    UE_LOG(LogTemp, Warning, TEXT("SetActiveSlot called on %s with index %d. Owner: %s"),
+        GetOwner() && GetOwner()->HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT"),
+        Index,
+        *GetNameSafe(GetOwner())
+    );
+
+    if (GetOwner()->HasAuthority())
     {
         // Unequip previous item, if any and if it's different from new
         if (ActiveSlotIndex != Index && Slots.IsValidIndex(ActiveSlotIndex))
@@ -54,6 +60,8 @@ void UInventoryComponent::SetActiveSlot(int32 Index)
             FInventorySlot& OldSlot = Slots[ActiveSlotIndex];
             if (OldSlot.ItemAsset)
             {
+                UE_LOG(LogTemp, Warning, TEXT("Calling OnUnequipped for slot %d on %s"), ActiveSlotIndex,
+                    GetOwner() && GetOwner()->HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT"));
                 OldSlot.ItemAsset->OnUnequipped(GetOwner());
             }
         }
@@ -62,6 +70,8 @@ void UInventoryComponent::SetActiveSlot(int32 Index)
         FInventorySlot& NewSlot = Slots[Index];
         if (NewSlot.ItemAsset)
         {
+            UE_LOG(LogTemp, Warning, TEXT("Calling OnEquipped for slot %d on %s"), Index,
+                GetOwner() && GetOwner()->HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT"));
             NewSlot.ItemAsset->OnEquipped(GetOwner());
         }
         OnRep_ActiveSlotIndex();
@@ -70,6 +80,12 @@ void UInventoryComponent::SetActiveSlot(int32 Index)
 
 bool UInventoryComponent::AddItem(UItemBase* ItemAsset, FGuid InstanceID)
 {
+    UE_LOG(LogTemp, Warning, TEXT("AddItem called on %s. Item: %s, Owner: %s"),
+        GetOwner() && GetOwner()->HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT"),
+        *GetNameSafe(ItemAsset),
+        *GetNameSafe(GetOwner())
+    );
+
     for (int32 i = 0; i < Slots.Num(); ++i)
     {
         if (!Slots[i].ItemAsset)
@@ -78,7 +94,6 @@ bool UInventoryComponent::AddItem(UItemBase* ItemAsset, FGuid InstanceID)
             Slots[i].ItemInstanceID = InstanceID;
             OnInventoryChanged.Broadcast(Slots);
 
-            // If this is the first item added to inventory, auto-equip it
             bool bWasInventoryEmpty = true;
             for (const FInventorySlot& Slot : Slots)
             {
@@ -100,8 +115,21 @@ bool UInventoryComponent::AddItem(UItemBase* ItemAsset, FGuid InstanceID)
 
 void UInventoryComponent::RemoveItem(int32 Index)
 {
+    UE_LOG(LogTemp, Warning, TEXT("RemoveItem called on %s. Index: %d, Owner: %s"),
+        GetOwner() && GetOwner()->HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT"),
+        Index,
+        *GetNameSafe(GetOwner())
+    );
+
     if (Slots.IsValidIndex(Index))
     {
+        if (Slots[Index].ItemAsset)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Calling OnUnequipped for removed slot %d on %s"), Index,
+                GetOwner() && GetOwner()->HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT"));
+            Slots[Index].ItemAsset->OnUnequipped(GetOwner());
+        }
+
         // Shift all items after Index down by one
         for (int32 i = Index; i < Slots.Num() - 1; ++i)
         {
@@ -122,7 +150,7 @@ void UInventoryComponent::RemoveItem(int32 Index)
         }
         else if (ActiveSlotIndex == Index)
         {
-            ActiveSlotIndex = INDEX_NONE; // Or auto-select first item if you prefer
+            ActiveSlotIndex = INDEX_NONE;
         }
 
         OnInventoryChanged.Broadcast(Slots);

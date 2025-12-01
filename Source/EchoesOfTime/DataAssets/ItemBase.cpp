@@ -14,7 +14,12 @@
 
 void UItemBase::OnEquipped(AActor* Instigator)
 {
-    // --- Grant Gameplay Effects ---
+    UE_LOG(LogTemp, Warning, TEXT("OnEquipped called %s. Instigator: %s"),
+        Instigator && Instigator->HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT"),
+        *GetNameSafe(Instigator)
+    );
+    if (!Instigator || !Instigator->HasAuthority()) return;
+
     if (GrantedGameplayEffects.Num() > 0)
     {
         IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(Instigator);
@@ -30,13 +35,13 @@ void UItemBase::OnEquipped(AActor* Instigator)
                         FActiveGameplayEffectHandle Handle =
                             ASC->ApplyGameplayEffectToSelf(EffectClass->GetDefaultObject<UGameplayEffect>(), 1.0f, ASC->MakeEffectContext());
                         GrantedGameplayEffectHandles.Add(Handle);
+                        UE_LOG(LogTemp, Warning, TEXT("Granted GameplayEffect %s to %s"), *EffectClass->GetName(), *ASC->GetName());
                     }
                 }
             }
         }
     }
 
-    // --- Grant Abilities if AbilitySet is present ---
     if (AbilitySet)
     {
         IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(Instigator);
@@ -54,6 +59,8 @@ void UItemBase::OnEquipped(AActor* Instigator)
 
                     FGameplayAbilitySpecHandle Handle = ASC->GiveAbility(Spec);
                     GrantedAbilityHandles.Add(Handle);
+
+                    UE_LOG(LogTemp, Warning, TEXT("Granted Ability %s to %s"), *Entry.AbilityClass->GetName(), *ASC->GetName());
                 }
             }
         }
@@ -62,6 +69,12 @@ void UItemBase::OnEquipped(AActor* Instigator)
 
 void UItemBase::OnUnequipped(AActor* Instigator)
 {
+    UE_LOG(LogTemp, Warning, TEXT("OnUnequipped called %s. Instigator: %s"),
+        Instigator && Instigator->HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT"),
+        *GetNameSafe(Instigator)
+    );
+    if (!Instigator || !Instigator->HasAuthority()) return;
+
     RemoveGrantedGameplayEffects(Instigator);
     RemoveGrantedAbilities(Instigator);
 }
