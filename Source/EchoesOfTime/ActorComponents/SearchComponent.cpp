@@ -38,6 +38,7 @@ void USearchComponent::CancelSearching()
 {
     bSearchingInProgress = false;
     SetComponentTickEnabled(false);
+
 }
 
 float USearchComponent::GetSearchProgress() const
@@ -94,6 +95,26 @@ void USearchComponent::Interact(AActor* Interactor)
                 TAG_Character_Ability_Search,
                 &EventData
             );
+        }
+    }
+}
+
+void USearchComponent::CancelInteract(AActor* Interactor)
+{
+    CancelSearching();
+    if (Interactor)
+    {
+        // Get AbilitySystemComponent from the interactor
+        if (IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(Interactor))
+        {
+            if (UAbilitySystemComponent* ASC = AbilityInterface->GetAbilitySystemComponent())
+            {
+                FGameplayTagContainer CancelTags;
+                CancelTags.AddTag(TAG_Character_Ability_Search);
+                ASC->CancelAbilities(&CancelTags);
+
+                UE_LOG(LogTemp, Log, TEXT("SearchComponent: Cancelled GAS search ability for %s"), *Interactor->GetName());
+            }
         }
     }
 }

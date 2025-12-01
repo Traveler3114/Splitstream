@@ -59,6 +59,12 @@ void ADisablingDeviceActor::Interact_Implementation(AActor* Interactor)
         SearchComponent->Interact(Interactor);
 }
 
+void ADisablingDeviceActor::CancelInteract_Implementation(AActor* Interactor)
+{
+    if(SearchComponent)
+		SearchComponent->CancelInteract(Interactor);
+}
+
 void ADisablingDeviceActor::SetHighlighted_Implementation(bool bHighlight)
 {
     if (DeviceMesh && SearchComponent)

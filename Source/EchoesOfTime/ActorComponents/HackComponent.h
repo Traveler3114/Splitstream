@@ -43,6 +43,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Hacking")
     void Interact(AActor* Interactor);
 
+    UFUNCTION(BlueprintCallable, Category = "Hacking")
+    void CancelInteract(AActor* Interactor);
+
 protected:
     virtual void BeginPlay() override;
     virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;

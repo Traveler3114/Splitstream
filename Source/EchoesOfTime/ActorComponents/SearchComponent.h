@@ -46,6 +46,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Searching")
     void Interact(AActor* Interactor);
 
+    UFUNCTION(BlueprintCallable, Category = "Searching")
+    void CancelInteract(AActor* Interactor);
+
     TWeakObjectPtr<AActor> LastInteractor;
 
 protected:

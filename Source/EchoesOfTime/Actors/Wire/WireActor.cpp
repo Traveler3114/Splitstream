@@ -46,6 +46,12 @@ void AWireActor::Interact_Implementation(AActor* Interactor)
         SearchComponent->Interact(Interactor);
 }
 
+void AWireActor::CancelInteract_Implementation(AActor* Interactor)
+{
+    if (SearchComponent)
+        SearchComponent->CancelInteract(Interactor);
+}
+
 void AWireActor::SetHighlighted_Implementation(bool bHighlight)
 {
     if (WireMesh && !bIsCut)

@@ -23,18 +23,16 @@ void UHackComponent::BeginPlay()
 void UHackComponent::StartHacking()
 {
     if (bHackingInProgress || bHacked) return;
+    HackElapsed = 0.f;  // Always reset!
     bHackingInProgress = true;
-    HackElapsed = 0.f;
     SetComponentTickEnabled(true);
 }
-
-
 void UHackComponent::CancelHacking()
 {
     bHackingInProgress = false;
     SetComponentTickEnabled(false);
+    HackElapsed = 0.f;  // Always reset!
 }
-
 float UHackComponent::GetHackProgress() const
 {
     if (!bHackingInProgress || HackDuration <= 0.f) return 0.f;
@@ -83,6 +81,25 @@ void UHackComponent::Interact(AActor* Interactor)
                 TAG_Character_Ability_Hack,
                 &EventData
             );
+        }
+    }
+}
+void UHackComponent::CancelInteract(AActor* Interactor)
+{
+    CancelHacking();
+    if (Interactor)
+    {
+        // Get AbilitySystemComponent from the interactor
+        if (IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(Interactor))
+        {
+            if (UAbilitySystemComponent* ASC = AbilityInterface->GetAbilitySystemComponent())
+            {
+                FGameplayTagContainer CancelTags;
+                CancelTags.AddTag(TAG_Character_Ability_Hack);
+                ASC->CancelAbilities(&CancelTags);
+
+                UE_LOG(LogTemp, Log, TEXT("SearchComponent: Cancelled GAS search ability for %s"), *Interactor->GetName());
+            }
         }
     }
 }

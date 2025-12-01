@@ -44,6 +44,14 @@ void AComputer::Interact_Implementation(AActor* Interactor)
     }
 }
 
+void AComputer::CancelInteract_Implementation(AActor* Interactor)
+{
+    if (HackComponent)
+    {
+        HackComponent->CancelInteract(Interactor);
+    }
+}
+
 void AComputer::SetHighlighted_Implementation(bool bHighlight)
 {
     if (ComputerMesh && HackComponent)

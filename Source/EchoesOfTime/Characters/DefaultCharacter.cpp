@@ -525,86 +525,108 @@ void ADefaultCharacter::HandleInteractHoldStart()
 {
     FHitResult Hit;
     FVector TraceEnd;
-    if (!GetForwardTraceResult(300.f, Hit, TraceEnd))
-    {
-        return;
-    }
-
+    if (!GetForwardTraceResult(300.f, Hit, TraceEnd)) return;
     AActor* HitActor = Hit.GetActor();
-    if (!HitActor)
-        return;
+    if (!HitActor) return;
 
-    if (IsProgressiveInteractActor(HitActor))
-    {
-        if (AbilitySystemComponent)
-        {
-            FGameplayTag Tag = GetProgressiveInteractTag(HitActor);
-            if (Tag.IsValid())
-            {
-                FGameplayEventData TriggerEventData;
-                TriggerEventData.Instigator = this;
-                TriggerEventData.OptionalObject = HitActor;
-                AbilitySystemComponent->HandleGameplayEvent(Tag, &TriggerEventData);
-            }
-        }
+    // Instead of directly calling AbilitySystem event/tag:
+    // Always call Interact on the actor
+    if (IsProgressiveInteractActor(HitActor)) {
+        // This is the old reliable pattern!
+        IInteractable::Execute_Interact(HitActor, this);
+		ProgressiveActor = HitActor;
     }
 }
 
-// Called when F is released (hold stop)
 void ADefaultCharacter::HandleInteractHoldStop()
 {
-    if (!AbilitySystemComponent)
-        return;
-
-    FGameplayTagContainer CancelTags;
-    CancelTags.AddTag(TAG_Character_Ability_Hack);
-    CancelTags.AddTag(TAG_Character_Ability_Search);
-    CancelTags.AddTag(TAG_Character_Ability_LockPick);
-
-    AbilitySystemComponent->CancelAbilities(&CancelTags);
+    IInteractable::Execute_CancelInteract(ProgressiveActor, this);
 }
 
 // Called when F is pressed (single tap, for instant actions)
 void ADefaultCharacter::HandleInteractInstant()
 {
+    if (HasAuthority() && IsLocallyControlled())
+    {
+        FHitResult Hit;
+        FVector TraceEnd;
+        if (GetForwardTraceResult(300.f, Hit, TraceEnd))
+        {
+            AActor* HitActor = Hit.GetActor();
+            if (HitActor)
+            {
+                ServerHandleInteract(HitActor);
+            }
+        }
+        return;
+    }
 
     FHitResult Hit;
     FVector TraceEnd;
-    if (!GetForwardTraceResult(300.f, Hit, TraceEnd))
+    if (GetForwardTraceResult(300.f, Hit, TraceEnd))
     {
-        return;
-    }
+        AActor* HitActor = Hit.GetActor();
+        if (!HitActor)
+            return;
 
-    AActor* HitActor = Hit.GetActor();
-    if (!HitActor)
-        return;
+        if (HitActor->GetClass()->ImplementsInterface(URequiresItem::StaticClass()))
+        {
+            UInventoryComponent* Inventory = FindComponentByClass<UInventoryComponent>();
+            UItemBase* ActiveItem = nullptr;
+            if (Inventory)
+            {
+                FInventorySlot ActiveSlot = Inventory->GetActiveItem();
+                ActiveItem = ActiveSlot.ItemAsset;
+            }
+            if (HasAuthority() && !IRequiresItem::Execute_IsCorrectItem(HitActor, ActiveItem))
+            {
+                if (IsLocallyControlled() && GEngine)
+                {
+                    GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("You need the correct item to interact!"));
+                }
+                return;
+            }
+            if (ActiveItem)
+            {
+                ActiveItem->OnUsed(this);
+            }
+        }
 
-    if (IsProgressiveInteractActor(HitActor))
-    {
-        return;
-    }
-    else
-    {
-        ServerHandleInteract(HitActor);
+        if (HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
+        {
+            IInteractable::Execute_Interact(HitActor, this);
+            ServerHandleInteract(HitActor);
+        }
     }
 }
 
-// Server: Actually executes instant or progressive checks (only instant will do anything here)
 void ADefaultCharacter::ServerHandleInteract_Implementation(AActor* TargetActor)
 {
     if (!TargetActor)
         return;
 
-    if (IsProgressiveInteractActor(TargetActor))
+    if (TargetActor->GetClass()->ImplementsInterface(URequiresItem::StaticClass()))
     {
-    }
-    else
-    {
-        if (TargetActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
+        UInventoryComponent* Inventory = FindComponentByClass<UInventoryComponent>();
+        UItemBase* ActiveItem = nullptr;
+        if (Inventory)
         {
-            IInteractable::Execute_Interact(TargetActor, this);
+            FInventorySlot ActiveSlot = Inventory->GetActiveItem();
+            ActiveItem = ActiveSlot.ItemAsset;
         }
-        // (Add other instant interactions here if needed)
+        if (!IRequiresItem::Execute_IsCorrectItem(TargetActor, ActiveItem))
+        {
+            return;
+        }
+        if (ActiveItem)
+        {
+            ActiveItem->OnUsed(this);
+        }
+    }
+
+    if (TargetActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
+    {
+        IInteractable::Execute_Interact(TargetActor, this);
     }
 }
 

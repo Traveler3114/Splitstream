@@ -17,6 +17,9 @@ public:
     // Use BlueprintNativeEvent so you can implement in C++ or Blueprint
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interactable")
     void Interact(AActor* Interactor);
+
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interactable")
+    void CancelInteract(AActor* Interactor);
     // You do NOT need to add "=0" or implement this in the header.
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interactable")
     void SetHighlighted(bool bHighlight);

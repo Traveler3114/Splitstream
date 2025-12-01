@@ -104,6 +104,9 @@ public:
     // Add to public section:
     UFUNCTION(BlueprintCallable, Category = "LockPick")
     void Interact(AActor* Interactor);
+
+    UFUNCTION(BlueprintCallable, Category = "Searching")
+    void CancelInteract(AActor* Interactor);
 protected:
     virtual void BeginPlay() override;
     virtual void OnComponentCreated() override;

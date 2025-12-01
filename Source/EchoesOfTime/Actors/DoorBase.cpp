@@ -68,6 +68,15 @@ void ADoorBase::Interact_Implementation(AActor* Interactor)
     }
 }
 
+
+void ADoorBase::CancelInteract_Implementation(AActor* Interactor)
+{
+    if (bIsLocked && LockPickComponent)
+    {
+        LockPickComponent->CancelInteract(Interactor);
+    }
+}
+
 void ADoorBase::OnLockUnlocked()
 {
     bIsLocked = false;

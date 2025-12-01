@@ -38,6 +38,12 @@ void AVent::Interact_Implementation(AActor* Interactor)
         SearchComponent->Interact(Interactor);
 }
 
+void AVent::CancelInteract_Implementation(AActor* Interactor)
+{
+    if (SearchComponent)
+        SearchComponent->CancelInteract(Interactor);
+}
+
 void AVent::SetHighlighted_Implementation(bool bHighlight)
 {
     if (VentMesh)

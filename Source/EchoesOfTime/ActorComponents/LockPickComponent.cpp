@@ -141,6 +141,26 @@ void ULockPickComponent::Interact(AActor* Interactor)
     }
 }
 
+void ULockPickComponent::CancelInteract(AActor* Interactor)
+{
+    EndLockPicking();
+    if (Interactor)
+    {
+        // Get AbilitySystemComponent from the interactor
+        if (IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(Interactor))
+        {
+            if (UAbilitySystemComponent* ASC = AbilityInterface->GetAbilitySystemComponent())
+            {
+                FGameplayTagContainer CancelTags;
+                CancelTags.AddTag(TAG_Character_Ability_LockPick);
+                ASC->CancelAbilities(&CancelTags);
+
+                UE_LOG(LogTemp, Log, TEXT("SearchComponent: Cancelled GAS search ability for %s"), *Interactor->GetName());
+            }
+        }
+    }
+}
+
 bool ULockPickComponent::TrySetCurrentPin(float InputAngle)
 {
     if (!bPickingInProgress || bUnlocked) return false;
