@@ -30,7 +30,7 @@ class ECHOESOFTIME_API ADefaultCharacter : public ACharacter, public IInteractab
 public:
     ADefaultCharacter();
 
-    AActor* ProgressiveActor;
+    AActor* ProgressiveActor=nullptr;
 
     virtual void PostInitializeComponents() override;
     virtual void BeginPlay() override;

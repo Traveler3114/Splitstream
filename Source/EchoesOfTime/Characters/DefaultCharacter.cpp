@@ -540,7 +540,14 @@ void ADefaultCharacter::HandleInteractHoldStart()
 
 void ADefaultCharacter::HandleInteractHoldStop()
 {
-    IInteractable::Execute_CancelInteract(ProgressiveActor, this);
+    void ADefaultCharacter::HandleInteractHoldStop()
+{
+    if (ProgressiveActor)
+    {
+        IInteractable::Execute_CancelInteract(ProgressiveActor, this);
+        ProgressiveActor = nullptr; // reset for next interaction
+    }
+}
 }
 
 // Called when F is pressed (single tap, for instant actions)
