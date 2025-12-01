@@ -538,9 +538,8 @@ void ADefaultCharacter::HandleInteractHoldStart()
     }
 }
 
+
 void ADefaultCharacter::HandleInteractHoldStop()
-{
-    void ADefaultCharacter::HandleInteractHoldStop()
 {
     if (ProgressiveActor)
     {
@@ -548,7 +547,7 @@ void ADefaultCharacter::HandleInteractHoldStop()
         ProgressiveActor = nullptr; // reset for next interaction
     }
 }
-}
+
 
 // Called when F is pressed (single tap, for instant actions)
 void ADefaultCharacter::HandleInteractInstant()
