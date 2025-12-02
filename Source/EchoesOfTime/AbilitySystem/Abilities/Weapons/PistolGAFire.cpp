@@ -26,38 +26,54 @@ void UPistolGAFire::ActivateAbility(
 {
     Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-    // Local prediction window for responsive input
-    if (IsLocallyControlled() && ActorInfo && ActorInfo->AbilitySystemComponent.IsValid())
+    ADefaultCharacter* Character = Cast<ADefaultCharacter>(ActorInfo->AvatarActor.Get());
+    if (Character && Character->EquippedItemMeshComp && ProjectileClass)
     {
-        FScopedPredictionWindow ScopedPrediction(ActorInfo->AbilitySystemComponent.Get(), true);
-
-        ADefaultCharacter* Character = Cast<ADefaultCharacter>(ActorInfo->AvatarActor.Get());
-        if (Character && Character->EquippedItemMeshComp && ProjectileClass)
+        FVector MuzzleLocation = Character->EquippedItemMeshComp->GetSocketLocation(FName("Muzzle"));
+        FRotator MuzzleRotation = Character->EquippedItemMeshComp->GetSocketRotation(FName("Muzzle"));
+        UWorld* World = Character->GetWorld();
+        if (World)
         {
-            FVector MuzzleLocation = Character->EquippedItemMeshComp->GetSocketLocation(FName("Muzzle"));
-            FRotator MuzzleRotation = Character->EquippedItemMeshComp->GetSocketRotation(FName("Muzzle"));
-            UWorld* World = Character->GetWorld();
-            if (World)
-            {
-                FActorSpawnParameters SpawnParams;
-                SpawnParams.Owner = Character;
-                SpawnParams.Instigator = Character;
+            FActorSpawnParameters SpawnParams;
+            SpawnParams.Owner = Character;
+            SpawnParams.Instigator = Character;
 
-                ABullet* SpawnedBullet = World->SpawnActor<ABullet>(
+            // --- Local Prediction: Client spawns its own bullet for instant feedback ---
+            if (IsLocallyControlled()&&!HasAuthority(&ActivationInfo))
+            {
+                FScopedPredictionWindow ScopedPrediction(ActorInfo->AbilitySystemComponent.Get(), true);
+
+                // Spawn predicted bullet
+                ABullet* PredictedBullet = World->SpawnActor<ABullet>(
                     ProjectileClass,
                     MuzzleLocation,
                     MuzzleRotation,
                     SpawnParams
                 );
-
-                if (SpawnedBullet)
+                if (PredictedBullet)
                 {
-                    SpawnedBullet->SetIgnoreActorsAndComponents(Character, Character->EquippedItemMeshComp);
+                    PredictedBullet->SetIgnoreActorsAndComponents(Character, Character->EquippedItemMeshComp);
+                    // Mark as predicted (optional, up to you)
+                }
+            }
+
+            // --- Server Authority: Server spawns real bullet, gets replicated ---
+            if (HasAuthority(&ActivationInfo))
+            {
+                ABullet* ServerBullet = World->SpawnActor<ABullet>(
+                    ProjectileClass,
+                    MuzzleLocation,
+                    MuzzleRotation,
+                    SpawnParams
+                );
+                if (ServerBullet)
+                {
+                    ServerBullet->SetIgnoreActorsAndComponents(Character, Character->EquippedItemMeshComp);
+                    // Server-side only: set for replication, etc.
                 }
             }
         }
     }
 
-    // End ability immediately (predicted and server)
     EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 }
