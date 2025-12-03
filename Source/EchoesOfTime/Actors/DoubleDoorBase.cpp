@@ -72,6 +72,15 @@ void ADoubleDoorBase::Interact_Implementation(AActor* Interactor)
     }
 }
 
+
+void ADoubleDoorBase::CancelInteract_Implementation(AActor* Interactor)
+{
+    if (bIsLocked && LockPickComponent)
+    {
+        LockPickComponent->CancelInteract(Interactor);
+    }
+}
+
 void ADoubleDoorBase::OnLockUnlocked()
 {
     bIsLocked = false;
