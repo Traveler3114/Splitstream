@@ -215,6 +215,10 @@ void ADefaultPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void ADefaultPlayerController::SetupInputComponent()
 {
     Super::SetupInputComponent();
+    if (InputComponent)
+    {
+        InputComponent->BindKey(EKeys::Escape, IE_Pressed, this, &ADefaultPlayerController::TogglePauseMenu);
+    }
 }
 
 void ADefaultPlayerController::TogglePauseMenu()
