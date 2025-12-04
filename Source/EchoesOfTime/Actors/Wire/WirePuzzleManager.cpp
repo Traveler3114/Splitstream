@@ -7,6 +7,7 @@
 #include "WireDeviceActor.h"
 #include "EngineUtils.h"
 #include "GameStates/DefaultGameState.h"
+#include "Sound/SoundBase.h"
 
 AWirePuzzleManager::AWirePuzzleManager()
 {
@@ -49,6 +50,21 @@ void AWirePuzzleManager::BeginPlay()
             }
         }
 
+        // Assign sounds to devices based on DeviceOrder:
+        // WireDeviceSounds[index] -> device at DeviceOrder[index]
+        if (WireDeviceSounds.Num() > 0 && DeviceOrder.Num() > 0)
+        {
+            for (int32 i = 0; i < DeviceOrder.Num(); ++i)
+            {
+                int32 DeviceIdx = DeviceOrder[i];
+                if (DeviceIdx != INDEX_NONE && PuzzleDevices.IsValidIndex(DeviceIdx) && PuzzleDevices[DeviceIdx])
+                {
+                    USoundBase* AssignedSound = WireDeviceSounds.IsValidIndex(i) ? WireDeviceSounds[i] : nullptr;
+                    PuzzleDevices[DeviceIdx]->WireDeviceSound = AssignedSound;
+                }
+            }
+        }
+
         ProgressIndex = 0;
         bCompleted = false;
         for (AWireDeviceActor* Device : PuzzleDevices)
@@ -65,6 +81,7 @@ void AWirePuzzleManager::BeginPlay()
     }
     //HighlightNextCorrectWire();
 }
+
 
 // void AWirePuzzleManager::HighlightNextCorrectWire()
 // {

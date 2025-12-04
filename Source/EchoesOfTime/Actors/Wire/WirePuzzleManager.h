@@ -34,6 +34,9 @@ public:
     UPROPERTY(Replicated)
     TArray<EWireColor> CorrectWireColors; // The expected wire color for each device in the sequence
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "WirePuzzle|Audio")
+    TArray<class USoundBase*> WireDeviceSounds;
+
     UPROPERTY(Replicated)
     int32 ProgressIndex = 0;
 
@@ -48,6 +51,7 @@ public:
 
     virtual void BeginPlay() override;
     //void HighlightNextCorrectWire();
+
 protected:
     UFUNCTION()
     void OnRep_PuzzleCompleted();
