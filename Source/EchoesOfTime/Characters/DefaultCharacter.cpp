@@ -87,12 +87,30 @@ void ADefaultCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    if (IsLocallyControlled())
+    // Throttle interaction highlight updates to 100ms (10Hz)
+    InteractHighlightAccumulator += DeltaTime;
+    if (InteractHighlightAccumulator >= 0.1f && IsLocallyControlled())
     {
         UpdateInteractHighlight();
+        InteractHighlightAccumulator = 0.f;
     }
 
+    // Throttle detection progress updates to 100ms (10Hz)
+    DetectionProgressAccumulator += DeltaTime;
+    if (DetectionProgressAccumulator >= 0.1f)
+    {
+        UpdateDetectionProgress(DetectionProgressAccumulator);
+        DetectionProgressAccumulator = 0.f;
+    }
+}
+
+void ADefaultCharacter::UpdateDetectionProgress(float DeltaTime)
+{
+    // Cache gameplay tag to avoid repeated lookups
+    static const FGameplayTag IllegalTag = FGameplayTag::RequestGameplayTag("Character.Status.Illegal");
+    
     TArray<AActor*> ToRemove;
+    bool bIsIllegal = AbilitySystemComponent && AbilitySystemComponent->HasMatchingGameplayTag(IllegalTag);
 
     for (auto& Elem : DetectionProgressMap)
     {
@@ -101,8 +119,6 @@ void ADefaultCharacter::Tick(float DeltaTime)
 
         bool bInVision = Detector && Detector->GetClass()->ImplementsInterface(UDetectable::StaticClass())
             && IDetectable::Execute_IsActorAlreadyDetected(Detector, this);
-
-        bool bIsIllegal = AbilitySystemComponent && AbilitySystemComponent->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("Character.Status.Illegal"));
 
         float Rate = DeltaTime * 0.5f;
 
@@ -320,8 +336,8 @@ void ADefaultCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
         EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ADefaultCharacter::StopJumping);
         EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &ADefaultCharacter::StartCrouch);
         EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &ADefaultCharacter::StopCrouching);
-        EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &ADefaultCharacter::ServerStartSprint);
-        EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ADefaultCharacter::ServerStopSprint);
+        EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &ADefaultCharacter::StartSprint);
+        EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ADefaultCharacter::StopSprint);
         EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &ADefaultCharacter::HandleInteractHoldStart);
         EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &ADefaultCharacter::HandleInteractHoldStop);
         EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ADefaultCharacter::HandleInteractInstant);
@@ -383,21 +399,24 @@ void ADefaultCharacter::HandleAbilityInputReleased(const FInputActionInstance& I
 
 void ADefaultCharacter::HandleNumberKey(FKey PressedKey)
 {
-    int32 SlotIndex = -1;
-    if (PressedKey == EKeys::One) SlotIndex = 0;
-    else if (PressedKey == EKeys::Two) SlotIndex = 1;
-    else if (PressedKey == EKeys::Three) SlotIndex = 2;
-    else if (PressedKey == EKeys::Four) SlotIndex = 3;
-    else if (PressedKey == EKeys::Five) SlotIndex = 4;
-    else if (PressedKey == EKeys::Six) SlotIndex = 5;
-    else if (PressedKey == EKeys::Seven) SlotIndex = 6;
-    else if (PressedKey == EKeys::Eight) SlotIndex = 7;
-    else if (PressedKey == EKeys::Nine) SlotIndex = 8;
-    else if (PressedKey == EKeys::Zero) SlotIndex = 9;
+    // Use static TMap for O(1) lookup instead of if-else chain
+    static const TMap<FKey, int32> KeyToSlotMap = {
+        {EKeys::One, 0},
+        {EKeys::Two, 1},
+        {EKeys::Three, 2},
+        {EKeys::Four, 3},
+        {EKeys::Five, 4},
+        {EKeys::Six, 5},
+        {EKeys::Seven, 6},
+        {EKeys::Eight, 7},
+        {EKeys::Nine, 8},
+        {EKeys::Zero, 9}
+    };
 
-    if (SlotIndex != -1 && InventoryComponent)
+    const int32* SlotIndex = KeyToSlotMap.Find(PressedKey);
+    if (SlotIndex && InventoryComponent)
     {
-        InventoryComponent->ServerSetActiveSlot(SlotIndex);
+        InventoryComponent->ServerSetActiveSlot(*SlotIndex);
     }
 }
 

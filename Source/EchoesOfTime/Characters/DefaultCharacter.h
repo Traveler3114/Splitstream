@@ -192,4 +192,9 @@ public:
 private:
     void GrantAbilitiesFromInputSet();
     void GrantAbilitiesFromDefaultSet();
+    void UpdateDetectionProgress(float DeltaTime);
+    
+    // Throttling accumulators for Tick updates
+    float InteractHighlightAccumulator = 0.f;
+    float DetectionProgressAccumulator = 0.f;
 };
