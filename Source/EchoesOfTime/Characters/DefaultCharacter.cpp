@@ -541,50 +541,15 @@ void ADefaultCharacter::DropActiveItem()
 }
 
 // ------------ INTERACT MECHANICS -----------
-void ADefaultCharacter::UpdateInteractHighlight()
-{
-    if (!IsLocallyControlled())
-        return;
+// Note: UpdateInteractHighlight moved to UpdateInteractHighlightTimer for performance
 
-    FHitResult Hit;
-    FVector TraceEnd;
-    bool bHit = GetForwardTraceResult(300.f, Hit, TraceEnd);
-
-    AActor* HitActor = bHit ? Hit.GetActor() : nullptr;
-
-    if (HighlightedActor && HighlightedActor != HitActor)
-    {
-        IInteractable::Execute_SetHighlighted(HighlightedActor, false);
-        HighlightedActor = nullptr;
-    }
-
-    if (HitActor && HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
-    {
-        if (HitActor != HighlightedActor)
-        {
-            IInteractable::Execute_SetHighlighted(HitActor, true);
-            HighlightedActor = HitActor;
-        }
-    }
-}
-
-// Progressive Interact Type helpers - PERFORMANCE: Single component search with early returns
+// Progressive Interact Type helpers - PERFORMANCE: Optimized component searches
 bool ADefaultCharacter::IsProgressiveInteractActor(AActor* Actor) const
 {
     if (!Actor)
         return false;
     
-    // Single pass through components instead of multiple FindComponentByClass calls
-    TArray<UActorComponent*> Components = Actor->GetComponentsByInterface(UInterface::StaticClass());
-    for (UActorComponent* Comp : Components)
-    {
-        if (Cast<UHackComponent>(Comp) || Cast<USearchComponent>(Comp) || Cast<ULockPickComponent>(Comp))
-        {
-            return true;
-        }
-    }
-    
-    // Fallback to individual checks if interface check fails
+    // Direct component checks - simple and efficient
     return Actor->FindComponentByClass<UHackComponent>() ||
            Actor->FindComponentByClass<USearchComponent>() ||
            Actor->FindComponentByClass<ULockPickComponent>();
@@ -595,16 +560,16 @@ FGameplayTag ADefaultCharacter::GetProgressiveInteractTag(AActor* Actor) const
     if (!Actor)
         return FGameplayTag();
     
-    // PERFORMANCE: Single pass through components to avoid multiple FindComponentByClass calls
-    if (UHackComponent* HackComp = Actor->FindComponentByClass<UHackComponent>())
+    // PERFORMANCE: Early returns avoid checking all component types
+    if (Actor->FindComponentByClass<UHackComponent>())
     {
         return TAG_Character_Ability_Hack;
     }
-    if (USearchComponent* SearchComp = Actor->FindComponentByClass<USearchComponent>())
+    if (Actor->FindComponentByClass<USearchComponent>())
     {
         return TAG_Character_Ability_Search;
     }
-    if (ULockPickComponent* LockPickComp = Actor->FindComponentByClass<ULockPickComponent>())
+    if (Actor->FindComponentByClass<ULockPickComponent>())
     {
         return TAG_Character_Ability_LockPick;
     }
