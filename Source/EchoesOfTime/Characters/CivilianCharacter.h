@@ -20,12 +20,31 @@ class ECHOESOFTIME_API ACivilianCharacter : public ACharacter, public IAbilitySy
 
 public:
     ACivilianCharacter();
+
+    // ============================================
+    // Unreal Engine Overrides
+    // ============================================
     virtual void BeginPlay() override;
+
+    // ============================================
+    // Ability System Interface
+    // ============================================
+    virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    UAbilitySystemComponent* AbilitySystemComponent;
+
+    UPROPERTY()
+    UPlayerAttributeSet* AttributeSet;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
+    TSubclassOf<UGameplayEffect> AttributeInitGE;
 
     void OnHealthChanged(const struct FOnAttributeChangeData& Data);
 
-    
-
+    // ============================================
+    // Civilian Identity
+    // ============================================
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Civilian")
     FString CivilianName;
 
@@ -35,20 +54,15 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Civilian")
     ADeskActor* AssignedDesk = nullptr;
 
+    // ============================================
+    // Timeline & Spawn
+    // ============================================
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
     ETimelineEra TimelineEra = ETimelineEra::Past;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-    UAbilitySystemComponent* AbilitySystemComponent;
-
-    UPROPERTY()
-    UPlayerAttributeSet* AttributeSet;
-
-    virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
-
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
-    TSubclassOf<UGameplayEffect> AttributeInitGE;
-
+    // ============================================
+    // AI & Detection
+    // ============================================
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
     UAIPerceptionComponent* AIPerceptionComponent;
 
@@ -60,12 +74,13 @@ public:
 
     AActor* DetectedActor = nullptr;
 
-
     virtual void OnFullyDetected_Implementation(AActor* DetectingActor) override;
-
     virtual bool IsActorAlreadyDetected_Implementation(AActor* DetectingActor) const override;
 
 protected:
+    // ============================================
+    // AI Perception
+    // ============================================
     UFUNCTION()
     void OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors);
 };

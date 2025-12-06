@@ -46,17 +46,19 @@ UCLASS()
 class ECHOESOFTIME_API AProceduralLevelGenerator : public AActor
 {
     GENERATED_BODY()
+
 public:
     AProceduralLevelGenerator();
-    void HandlePastSpawns();
-    void HandleFutureSpawns();
 
-    UPROPERTY(Replicated, BlueprintReadOnly)
-    FRandomDate PastDate;
+    // ============================================
+    // Unreal Engine Overrides
+    // ============================================
+    virtual void BeginPlay() override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-    UPROPERTY(Replicated, BlueprintReadOnly)
-    FRandomDate FutureDate;
-
+    // ============================================
+    // Spawn Asset Classes
+    // ============================================
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Civilian")
     TSubclassOf<class ACivilianCharacter> CivilianBPClass;
 
@@ -66,35 +68,43 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Items")
     TSubclassOf<class ASearchableActor> SearchableItemBPClass;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Disabling Device")
-	TSubclassOf<class ADisablingDeviceActor> DisablingDeviceBPClass;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Disabling Device")
+    TSubclassOf<class ADisablingDeviceActor> DisablingDeviceBPClass;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Levers")
-	TSubclassOf<class ALeverActor> LeverBPClass;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wires")
-	TSubclassOf<class AWireDeviceActor> WireDeviceBPClass;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Levers")
+    TSubclassOf<class ALeverActor> LeverBPClass;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wires")
-	TSubclassOf<AActor> SecurityDocumentBPClass;
+    TSubclassOf<class AWireDeviceActor> WireDeviceBPClass;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wires")
+    TSubclassOf<AActor> SecurityDocumentBPClass;
+
+    // ============================================
+    // Generated Level Data
+    // ============================================
+    UPROPERTY(Replicated, BlueprintReadOnly)
+    FRandomDate PastDate;
+
+    UPROPERTY(Replicated, BlueprintReadOnly)
+    FRandomDate FutureDate;
 
     UPROPERTY(Replicated, BlueprintReadOnly)
     FString PastLeverOrderString;
 
     UPROPERTY(Replicated, BlueprintReadOnly)
     TArray<FWireSequenceStep> PastWireDeviceSequence;
+
+    // ============================================
+    // Era Spawning
+    // ============================================
+    void HandlePastSpawns();
+    void HandleFutureSpawns();
+
 protected:
-    virtual void BeginPlay() override;
-    void SpawnCivilianDeskItems(const TArray<class ACivilianCharacter*>& Civilians, TSubclassOf<class ASearchableActor> ItemClass);
-    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-    FString GenerateRandomCode(int Length = 4) const;
-
-    FRandomDate GeneratePastDate() const;
-    FRandomDate GenerateFutureDate(const FRandomDate& MinDate) const;
-    FRandomDate GenerateRandomDate() const;
-
-    // --- Helper for era-based spawning ---
+    // ============================================
+    // Spawning Helpers
+    // ============================================
     void HandleEraSpawns(
         ETimelineEra Era,
         TArray<class ACivilianCharacter*>& OutSpawnedCivilians,
@@ -102,5 +112,16 @@ protected:
         TArray<class AGuardCharacter*>& OutEraGuards,
         TArray<class ALockerActor*>& OutEraLockers
     );
+
+    void SpawnCivilianDeskItems(const TArray<class ACivilianCharacter*>& Civilians, TSubclassOf<class ASearchableActor> ItemClass);
+
+    // ============================================
+    // Generation Helpers
+    // ============================================
+    FString GenerateRandomCode(int Length = 4) const;
     FString GenerateUniqueName(const TArray<FString>& FirstNames, const TArray<FString>& Surnames, TSet<FString>& UsedNames) const;
+
+    FRandomDate GeneratePastDate() const;
+    FRandomDate GenerateFutureDate(const FRandomDate& MinDate) const;
+    FRandomDate GenerateRandomDate() const;
 };
