@@ -87,10 +87,11 @@ void ADefaultCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
+    const float CurrentTime = GetWorld()->GetTimeSeconds();
+
     // Throttle interact highlight updates to 100ms intervals
     if (IsLocallyControlled())
     {
-        const float CurrentTime = GetWorld()->GetTimeSeconds();
         if (CurrentTime - LastInteractHighlightUpdateTime >= InteractHighlightUpdateInterval)
         {
             UpdateInteractHighlight();
@@ -105,7 +106,6 @@ void ADefaultCharacter::Tick(float DeltaTime)
     }
 
     // Throttle detection updates to 100ms intervals
-    const float CurrentTime = GetWorld()->GetTimeSeconds();
     if (CurrentTime - LastDetectionUpdateTime < DetectionUpdateInterval)
     {
         return;
