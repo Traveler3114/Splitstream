@@ -79,6 +79,7 @@ protected:
 
 private:
     // Timer-based update instead of Tick for better performance
+    static constexpr float CodeCheckInterval = 0.5f;
     FTimerHandle CodeUpdateTimerHandle;
     void CheckExpiredCodes();
 };

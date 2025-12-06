@@ -36,7 +36,6 @@ void ACodeGenerator::BeginPlay()
     // Set up timer to check for expired codes at regular intervals instead of every tick
     if (HasAuthority())
     {
-        static constexpr float CodeCheckInterval = 0.5f;
         GetWorldTimerManager().SetTimer(CodeUpdateTimerHandle, this, &ACodeGenerator::CheckExpiredCodes, CodeCheckInterval, true);
     }
 }
