@@ -6,6 +6,7 @@
 ADisablingDeviceActor::ADisablingDeviceActor()
 {
     bReplicates = true;
+    NetUpdateFrequency = 10.f; // Devices change only when disabled
 
     // Create and set root component
     SceneRootComp = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));

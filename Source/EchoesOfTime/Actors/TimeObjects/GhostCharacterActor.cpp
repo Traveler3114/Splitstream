@@ -22,6 +22,7 @@ AGhostCharacterActor::AGhostCharacterActor()
 
     bReplicates = true;
     SetReplicateMovement(false); // We manually replicate target location/rotation
+    NetUpdateFrequency = 20.f; // 20Hz is sufficient for smooth ghost movement
 
     Tags.AddUnique(TEXT("Ghost"));
 }
@@ -51,13 +52,35 @@ void AGhostCharacterActor::BeginPlay()
         GhostMesh->bOnlyOwnerSee = false;
         GhostMesh->bOwnerNoSee = false;
     }
+
+    // Start mesh/material update timer (50ms = 20Hz) for performance
+    GetWorldTimerManager().SetTimer(MeshMaterialUpdateTimerHandle, this, &AGhostCharacterActor::UpdateMeshMaterialTimer, 0.05f, true);
 }
 
 void AGhostCharacterActor::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    // Always update mesh/pose/material on ALL instances, not just server!
+    // PERFORMANCE: Keep smooth interpolation every frame, mesh/material updates are throttled to timer
+    ACharacter* CharacterToMirror = Cast<ACharacter>(GetOwner());
+    if (!CharacterToMirror)
+        return;
+
+    if (HasAuthority())
+    {
+        GhostTargetLocation = CharacterToMirror->GetActorLocation() + GhostOffset;
+        GhostTargetRotation = CharacterToMirror->GetActorRotation();
+    }
+
+    // Smoothly interpolate toward replicated target every frame for smooth movement
+    float InterpSpeed = 5.f;
+    SetActorLocation(FMath::VInterpTo(GetActorLocation(), GhostTargetLocation, DeltaTime, InterpSpeed));
+    SetActorRotation(FMath::RInterpTo(GetActorRotation(), GhostTargetRotation, DeltaTime, InterpSpeed));
+}
+
+// PERFORMANCE: Mesh and material updates throttled to 20Hz (50ms)
+void AGhostCharacterActor::UpdateMeshMaterialTimer()
+{
     ACharacter* CharacterToMirror = Cast<ACharacter>(GetOwner());
     if (!CharacterToMirror || !GhostMesh)
         return;
@@ -96,17 +119,6 @@ void AGhostCharacterActor::Tick(float DeltaTime)
             GhostMesh->SetMaterial(i, GhostMaterial);
         }
     }
-
-    if (HasAuthority())
-    {
-        GhostTargetLocation = CharacterToMirror->GetActorLocation() + GhostOffset;
-        GhostTargetRotation = CharacterToMirror->GetActorRotation();
-    }
-
-    // Smoothly interpolate toward replicated target
-    float InterpSpeed = 5.f;
-    SetActorLocation(FMath::VInterpTo(GetActorLocation(), GhostTargetLocation, DeltaTime, InterpSpeed));
-    SetActorRotation(FMath::RInterpTo(GetActorRotation(), GhostTargetRotation, DeltaTime, InterpSpeed));
 }
 
 void AGhostCharacterActor::OnRep_GhostTargetLocation()

@@ -5,6 +5,7 @@
 AWireActor::AWireActor()
 {
     bReplicates = true;
+    NetUpdateFrequency = 10.f; // Wires change only when cut
     SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
     SetRootComponent(SceneRoot);
 

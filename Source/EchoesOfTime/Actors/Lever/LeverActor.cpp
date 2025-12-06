@@ -6,6 +6,7 @@
 ALeverActor::ALeverActor()
 {
     bReplicates = true;
+    NetUpdateFrequency = 10.f; // Levers change infrequently
 
     SceneRootComp = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
     SetRootComponent(SceneRootComp);

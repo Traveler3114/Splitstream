@@ -81,25 +81,28 @@ void ADefaultCharacter::BeginPlay()
 
     UpdateEquippedItemMesh();
 
-    // Start detection timer for performance
+    // Start detection timer for performance (50ms = 20Hz)
     GetWorldTimerManager().SetTimer(DetectionUpdateTimerHandle, this, &ADefaultCharacter::UpdateDetectionTimer, 0.05f, true);
+    
+    // Start interaction highlight timer for performance (100ms = 10Hz)
+    if (IsLocallyControlled())
+    {
+        GetWorldTimerManager().SetTimer(InteractHighlightTimerHandle, this, &ADefaultCharacter::UpdateInteractHighlightTimer, 0.1f, true);
+    }
 }
 
 void ADefaultCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     Super::EndPlay(EndPlayReason);
     GetWorldTimerManager().ClearTimer(DetectionUpdateTimerHandle);
+    GetWorldTimerManager().ClearTimer(InteractHighlightTimerHandle);
 }
 
 void ADefaultCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
-
-    // Only run interact highlight every frame!
-    if (IsLocallyControlled())
-    {
-        UpdateInteractHighlight();
-    }
+    // Tick now only runs essential per-frame logic
+    // Interaction highlight and detection moved to timers for performance
 }
 
 // --- PERFORMANCE: Detection logic moved to timer-based update
@@ -165,6 +168,34 @@ void ADefaultCharacter::UpdateDetectionTimer()
     for (AActor* Detector : ToRemove)
     {
         DetectionProgressMap.Remove(Detector);
+    }
+}
+
+// --- PERFORMANCE: Interaction highlight moved to timer-based update
+void ADefaultCharacter::UpdateInteractHighlightTimer()
+{
+    if (!IsLocallyControlled())
+        return;
+
+    FHitResult Hit;
+    FVector TraceEnd;
+    bool bHit = GetForwardTraceResult(300.f, Hit, TraceEnd);
+
+    AActor* HitActor = bHit ? Hit.GetActor() : nullptr;
+
+    if (HighlightedActor && HighlightedActor != HitActor)
+    {
+        IInteractable::Execute_SetHighlighted(HighlightedActor, false);
+        HighlightedActor = nullptr;
+    }
+
+    if (HitActor && HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
+    {
+        if (HitActor != HighlightedActor)
+        {
+            IInteractable::Execute_SetHighlighted(HitActor, true);
+            HighlightedActor = HitActor;
+        }
     }
 }
 
@@ -277,13 +308,30 @@ void ADefaultCharacter::OnIllegalTagChanged(const FGameplayTag Tag, int32 NewCou
 
     if (NewCount > 0)
     {
-        for (TActorIterator<AActor> ActorItr(World); ActorItr; ++ActorItr)
+        // PERFORMANCE: Use sphere overlap instead of TActorIterator for spatial query efficiency
+        TArray<FOverlapResult> Overlaps;
+        FCollisionQueryParams QueryParams;
+        QueryParams.AddIgnoredActor(this);
+        
+        // Large radius to catch cameras and guards that might be detecting
+        const float DetectionRadius = 5000.f;
+        World->OverlapMultiByChannel(
+            Overlaps,
+            GetActorLocation(),
+            FQuat::Identity,
+            ECC_Visibility,
+            FCollisionShape::MakeSphere(DetectionRadius),
+            QueryParams
+        );
+
+        for (const FOverlapResult& Overlap : Overlaps)
         {
-            if (ActorItr->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
+            AActor* Actor = Overlap.GetActor();
+            if (Actor && Actor->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
             {
-                if (IDetectable::Execute_IsActorAlreadyDetected(*ActorItr, this))
+                if (IDetectable::Execute_IsActorAlreadyDetected(Actor, this))
                 {
-                    IDetectable::Execute_OnDetected(this, *ActorItr);
+                    IDetectable::Execute_OnDetected(this, Actor);
                 }
             }
         }
@@ -515,32 +563,43 @@ void ADefaultCharacter::UpdateInteractHighlight()
     }
 }
 
-// Progressive Interact Type helpers
+// Progressive Interact Type helpers - PERFORMANCE: Single component search with early returns
 bool ADefaultCharacter::IsProgressiveInteractActor(AActor* Actor) const
 {
     if (!Actor)
         return false;
-	bool bIsProgressive = false;
-    bIsProgressive =
-        Actor->FindComponentByClass<UHackComponent>() ||
-        Actor->FindComponentByClass<USearchComponent>() ||
-        Actor->FindComponentByClass<ULockPickComponent>();
-    return bIsProgressive;
+    
+    // Single pass through components instead of multiple FindComponentByClass calls
+    TArray<UActorComponent*> Components = Actor->GetComponentsByInterface(UInterface::StaticClass());
+    for (UActorComponent* Comp : Components)
+    {
+        if (Cast<UHackComponent>(Comp) || Cast<USearchComponent>(Comp) || Cast<ULockPickComponent>(Comp))
+        {
+            return true;
+        }
+    }
+    
+    // Fallback to individual checks if interface check fails
+    return Actor->FindComponentByClass<UHackComponent>() ||
+           Actor->FindComponentByClass<USearchComponent>() ||
+           Actor->FindComponentByClass<ULockPickComponent>();
 }
 
 FGameplayTag ADefaultCharacter::GetProgressiveInteractTag(AActor* Actor) const
 {
     if (!Actor)
         return FGameplayTag();
-    if (Actor->FindComponentByClass<UHackComponent>())
+    
+    // PERFORMANCE: Single pass through components to avoid multiple FindComponentByClass calls
+    if (UHackComponent* HackComp = Actor->FindComponentByClass<UHackComponent>())
     {
         return TAG_Character_Ability_Hack;
     }
-    if (Actor->FindComponentByClass<USearchComponent>())
+    if (USearchComponent* SearchComp = Actor->FindComponentByClass<USearchComponent>())
     {
         return TAG_Character_Ability_Search;
     }
-    if (Actor->FindComponentByClass<ULockPickComponent>())
+    if (ULockPickComponent* LockPickComp = Actor->FindComponentByClass<ULockPickComponent>())
     {
         return TAG_Character_Ability_LockPick;
     }

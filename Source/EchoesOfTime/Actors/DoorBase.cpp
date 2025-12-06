@@ -9,6 +9,7 @@ ADoorBase::ADoorBase()
 {
     bReplicates = true;
     SetReplicateMovement(true);
+    NetUpdateFrequency = 10.f; // Doors don't change often, reduce from default 100Hz
 
     SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
     RootComponent = SceneRoot;

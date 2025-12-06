@@ -54,4 +54,10 @@ public:
     void OnRep_GhostTargetLocation();
     UFUNCTION()
     void OnRep_GhostTargetRotation();
+
+private:
+    // --- Performance: Throttle expensive mesh/material updates
+    FTimerHandle MeshMaterialUpdateTimerHandle;
+    void UpdateMeshMaterialTimer();
+    float MeshMaterialUpdateAccumulator = 0.f;
 };

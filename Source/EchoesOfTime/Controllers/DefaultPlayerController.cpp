@@ -15,7 +15,7 @@
 
 ADefaultPlayerController::ADefaultPlayerController()
 {
-    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bCanEverTick = false; // No Tick function, disable for performance
     CharacterHUD = nullptr;
     PauseMenuWidget = nullptr;
 }

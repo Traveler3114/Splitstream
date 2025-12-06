@@ -194,7 +194,10 @@ private:
     void GrantAbilitiesFromInputSet();
     void GrantAbilitiesFromDefaultSet();
 
-    // --- Performance: Timer-driven detection instead of Tick
+    // --- Performance: Timer-driven detection and interaction highlight
     FTimerHandle DetectionUpdateTimerHandle;
     void UpdateDetectionTimer();
+    
+    FTimerHandle InteractHighlightTimerHandle;
+    void UpdateInteractHighlightTimer();
 };

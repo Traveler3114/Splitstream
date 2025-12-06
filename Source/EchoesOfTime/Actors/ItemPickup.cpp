@@ -8,6 +8,7 @@ AItemPickup::AItemPickup()
 {
     bReplicates = true;
     SetReplicateMovement(true);
+    NetUpdateFrequency = 10.f; // Static pickups don't change often
 
     USceneComponent* SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
     RootComponent = SceneRoot;
