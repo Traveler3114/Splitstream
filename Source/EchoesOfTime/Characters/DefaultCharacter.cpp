@@ -110,13 +110,14 @@ void ADefaultCharacter::Tick(float DeltaTime)
     {
         return;
     }
+
+    // Store the actual time since last update for accurate progress calculation
+    const float ActualDelta = (LastDetectionUpdateTime == 0.0f) ? DetectionUpdateInterval : (CurrentTime - LastDetectionUpdateTime);
     LastDetectionUpdateTime = CurrentTime;
 
     // Cache commonly used values outside the loop
     static const FGameplayTag IllegalTag = FGameplayTag::RequestGameplayTag("Character.Status.Illegal");
     const bool bIsIllegal = AbilitySystemComponent && AbilitySystemComponent->HasMatchingGameplayTag(IllegalTag);
-    // Use the actual time delta since last update for accurate progress calculation
-    const float ActualDelta = CurrentTime - (LastDetectionUpdateTime - DetectionUpdateInterval);
     const float Rate = ActualDelta * 0.5f;
     
     // Cache player controller if needed for UI updates
