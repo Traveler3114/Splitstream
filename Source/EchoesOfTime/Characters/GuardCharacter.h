@@ -20,32 +20,17 @@ class ECHOESOFTIME_API AGuardCharacter : public ACharacter, public IDetectable, 
 
 public:
     AGuardCharacter();
+
+    // ============================================
+    // Unreal Engine Overrides
+    // ============================================
     virtual void BeginPlay() override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-    void OnHealthChanged(const struct FOnAttributeChangeData& Data);
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard")
-    bool bIsSecurityChief = false;
-
-    UPROPERTY(ReplicatedUsing = OnRep_GuardName, EditAnywhere, BlueprintReadWrite, Category = "Guard")
-    FString GuardName;
-
-    UFUNCTION()
-    void OnRep_GuardName();
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard")
-    UTexture2D* PortraitTexture;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Guard")
-    class UTextRenderComponent* NameText;
-
-    // Assigned Locker
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard")
-    class ALockerActor* AssignedLocker = nullptr;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
-    ETimelineEra TimelineEra = ETimelineEra::Past;
+    // ============================================
+    // Ability System Interface
+    // ============================================
+    virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     class UAbilitySystemComponent* AbilitySystemComponent;
@@ -53,10 +38,49 @@ public:
     UPROPERTY()
     class UPlayerAttributeSet* AttributeSet;
 
-    virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
-
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
     TSubclassOf<UGameplayEffect> AttributeInitGE;
+
+    void OnHealthChanged(const struct FOnAttributeChangeData& Data);
+
+    // ============================================
+    // Guard Identity
+    // ============================================
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard")
+    bool bIsSecurityChief = false;
+
+    UPROPERTY(ReplicatedUsing = OnRep_GuardName, EditAnywhere, BlueprintReadWrite, Category = "Guard")
+    FString GuardName;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard")
+    UTexture2D* PortraitTexture;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Guard")
+    class UTextRenderComponent* NameText;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard")
+    class ALockerActor* AssignedLocker = nullptr;
+
+    UFUNCTION()
+    void OnRep_GuardName();
+
+    // ============================================
+    // Timeline & Spawn
+    // ============================================
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
+    ETimelineEra TimelineEra = ETimelineEra::Past;
+
+    // ============================================
+    // Navigation & Patrol
+    // ============================================
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Nodes")
+    ANavNode* CurrentNode = nullptr;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Nodes")
+    ANavNode* PreviousNode = nullptr;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Nodes")
+    ANavNode* NextNode = nullptr;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Idle")
     float BaseStayChance = 0.5f;
@@ -70,42 +94,44 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Idle")
     bool bOnlyStayOnMarkedNodes = true;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Nodes")
-    ANavNode* CurrentNode = nullptr;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Nodes")
-    ANavNode* PreviousNode = nullptr;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Nodes")
-    ANavNode* NextNode = nullptr;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ghost")
-    TSubclassOf<class AGhostCharacterActor> GhostClass;
-
-    UPROPERTY(ReplicatedUsing = OnRep_IsInCameraView, EditAnywhere, BlueprintReadWrite, Category = "Ghost")
-    bool bIsInCameraView = false;
-
-    UFUNCTION()
-    void OnRep_IsInCameraView();
-
+    // ============================================
+    // AI & Detection
+    // ============================================
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
     AActor* TargetActor = nullptr;
 
     AActor* DetectedActor = nullptr;
 
-    UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Ghost", meta = (AllowPrivateAccess = "true"))
-    class AGhostCharacterActor* SpawnedGhost = nullptr;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Alarm")
+    float PreAlarmDuration = 3.0f;
 
     virtual void OnDetected_Implementation(AActor* Detector) override;
     virtual void OnLost_Implementation(AActor* Detector) override;
     virtual void OnFullyDetected_Implementation(AActor* DetectingActor) override;
     virtual bool IsActorAlreadyDetected_Implementation(AActor* DetectingActor) const override;
 
-    // IGhostMirrorSource implementation
+    // ============================================
+    // Ghost System
+    // ============================================
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ghost")
+    TSubclassOf<class AGhostCharacterActor> GhostClass;
+
+    UPROPERTY(ReplicatedUsing = OnRep_IsInCameraView, EditAnywhere, BlueprintReadWrite, Category = "Ghost")
+    bool bIsInCameraView = false;
+
+    UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Ghost", meta = (AllowPrivateAccess = "true"))
+    class AGhostCharacterActor* SpawnedGhost = nullptr;
+
+    UFUNCTION()
+    void OnRep_IsInCameraView();
+
     virtual bool ShouldGhostBeVisible_Implementation() const override;
     virtual USkeletalMeshComponent* GetMirrorMesh_Implementation() const override;
 
 protected:
+    // ============================================
+    // AI Perception
+    // ============================================
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
     class UAIPerceptionComponent* AIPerceptionComponent;
 
@@ -114,8 +140,4 @@ protected:
 
     UFUNCTION()
     void OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors);
-
-    // PRE-ALARM duration for this guard
-    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Alarm")
-    float PreAlarmDuration = 3.0f;
 };
