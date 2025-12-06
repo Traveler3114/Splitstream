@@ -111,7 +111,8 @@ void ADefaultCharacter::Tick(float DeltaTime)
     }
 
     TArray<AActor*> ToRemove;
-    ToRemove.Reserve(DetectionProgressMap.Num() / 4); // Reserve space to avoid reallocations
+    // Reserve space assuming ~25% of detectors will be removed (progress == 0)
+    ToRemove.Reserve(FMath::Max(1, DetectionProgressMap.Num() / 4));
 
     for (auto& Elem : DetectionProgressMap)
     {
@@ -274,14 +275,14 @@ void ADefaultCharacter::OnIllegalTagChanged(const FGameplayTag Tag, int32 NewCou
 
     if (NewCount > 0)
     {
-        // Performance optimization: Only check interface implementation once per class
-        TSet<const UClass*> CachedDetectableClasses;
+        // Performance optimization: Cache interface check results per class type across calls
+        static TSet<const UClass*> CachedDetectableClasses;
         
         for (TActorIterator<AActor> ActorItr(World); ActorItr; ++ActorItr)
         {
             const UClass* ActorClass = ActorItr->GetClass();
             
-            // Cache interface check results per class type
+            // Use cached results if available
             bool bImplementsInterface = false;
             if (CachedDetectableClasses.Contains(ActorClass))
             {
