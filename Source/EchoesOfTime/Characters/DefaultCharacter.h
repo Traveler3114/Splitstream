@@ -228,4 +228,13 @@ public:
 private:
     void GrantAbilitiesFromInputSet();
     void GrantAbilitiesFromDefaultSet();
+
+    // ============================================
+    // Performance Optimization - Tick Throttling
+    // ============================================
+    float InteractHighlightUpdateInterval = 0.1f; // 100ms between interact highlight checks
+    float LastInteractHighlightUpdateTime = 0.0f;
+    
+    float DetectionUpdateInterval = 0.1f; // 100ms between detection progress updates
+    float LastDetectionUpdateTime = 0.0f;
 };

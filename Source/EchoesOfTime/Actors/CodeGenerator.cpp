@@ -7,10 +7,11 @@
 #include "DataAssets/ItemBase.h"
 #include "Net/UnrealNetwork.h"
 #include "ActorComponents/InventoryComponent.h"
+#include "TimerManager.h"
 
 ACodeGenerator::ACodeGenerator()
 {
-    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bCanEverTick = false; // Use timer instead of Tick for better performance
 
     DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
     RootComponent = DefaultSceneRoot;
@@ -32,6 +33,11 @@ void ACodeGenerator::BeginPlay()
     Super::BeginPlay();
     UpdateDisplayText();
 
+    // Set up timer to check for expired codes every 0.5 seconds instead of every tick
+    if (HasAuthority())
+    {
+        GetWorldTimerManager().SetTimer(CodeUpdateTimerHandle, this, &ACodeGenerator::CheckExpiredCodes, 0.5f, true);
+    }
 }
 
 void ACodeGenerator::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -84,9 +90,10 @@ void ACodeGenerator::Interact_Implementation(AActor* Interactor)
     UpdateDisplayText();
 }
 
-void ACodeGenerator::Tick(float DeltaTime)
+void ACodeGenerator::CheckExpiredCodes()
 {
-    Super::Tick(DeltaTime);
+    if (!HasAuthority())
+        return;
 
     bool bChanged = false;
     float Now = GetWorld()->GetTimeSeconds();
@@ -100,11 +107,8 @@ void ACodeGenerator::Tick(float DeltaTime)
         }
     }
 
-    if (bChanged)
-    {
-        UpdateDisplayText();
-    }
-    else if (StatusArray.Num() > 0)
+    // Always update display text when codes are active to show countdown
+    if (bChanged || StatusArray.Num() > 0)
     {
         UpdateDisplayText();
     }

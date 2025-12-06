@@ -54,4 +54,9 @@ public:
     void OnRep_GhostTargetLocation();
     UFUNCTION()
     void OnRep_GhostTargetRotation();
+
+private:
+    // Performance Optimization - Throttle mesh/material updates
+    float MeshUpdateInterval = 0.05f; // 50ms between mesh/material checks
+    float LastMeshUpdateTime = 0.0f;
 };

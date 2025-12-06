@@ -8,6 +8,8 @@ USearchComponent::USearchComponent()
 {
     SetIsReplicatedByDefault(true);
     PrimaryComponentTick.bCanEverTick = true;
+    // Set tick interval to 50ms (20Hz) instead of every frame for better performance
+    PrimaryComponentTick.TickInterval = 0.05f;
     bSearchingInProgress = false;
     bSearched = false;
     SearchDuration = 10.f;

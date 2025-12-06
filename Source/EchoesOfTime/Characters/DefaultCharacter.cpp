@@ -87,9 +87,15 @@ void ADefaultCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
+    // Throttle interact highlight updates to 100ms intervals
     if (IsLocallyControlled())
     {
-        UpdateInteractHighlight();
+        const float CurrentTime = GetWorld()->GetTimeSeconds();
+        if (CurrentTime - LastInteractHighlightUpdateTime >= InteractHighlightUpdateInterval)
+        {
+            UpdateInteractHighlight();
+            LastInteractHighlightUpdateTime = CurrentTime;
+        }
     }
 
     // Early exit if no detectors to process
@@ -98,10 +104,20 @@ void ADefaultCharacter::Tick(float DeltaTime)
         return;
     }
 
+    // Throttle detection updates to 100ms intervals
+    const float CurrentTime = GetWorld()->GetTimeSeconds();
+    if (CurrentTime - LastDetectionUpdateTime < DetectionUpdateInterval)
+    {
+        return;
+    }
+    LastDetectionUpdateTime = CurrentTime;
+
     // Cache commonly used values outside the loop
     static const FGameplayTag IllegalTag = FGameplayTag::RequestGameplayTag("Character.Status.Illegal");
     const bool bIsIllegal = AbilitySystemComponent && AbilitySystemComponent->HasMatchingGameplayTag(IllegalTag);
-    const float Rate = DeltaTime * 0.5f;
+    // Use the actual time delta since last update for accurate progress calculation
+    const float ActualDelta = CurrentTime - (LastDetectionUpdateTime - DetectionUpdateInterval);
+    const float Rate = ActualDelta * 0.5f;
     
     // Cache player controller if needed for UI updates
     ADefaultPlayerController* DefPC = nullptr;

@@ -9,6 +9,8 @@ UHackComponent::UHackComponent()
     SetIsReplicatedByDefault(true);
     PrimaryComponentTick.bCanEverTick = true;
     PrimaryComponentTick.SetTickFunctionEnable(true);
+    // Set tick interval to 50ms (20Hz) instead of every frame for better performance
+    PrimaryComponentTick.TickInterval = 0.05f;
     bHackingInProgress = false;
     bHacked = false;
     HackDuration = 10.f;
