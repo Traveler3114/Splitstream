@@ -8,6 +8,7 @@ ALaserManager::ALaserManager()
 {
     PrimaryActorTick.bCanEverTick = false;
     bReplicates = true;
+    NetUpdateFrequency = 10.f; // Manager updates infrequently
 }
 
 void ALaserManager::OnPuzzleCompleted_Implementation()

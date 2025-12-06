@@ -11,6 +11,7 @@
 ACivilianCharacter::ACivilianCharacter()
 {
     PrimaryActorTick.bCanEverTick = false; // No Tick function, disable for performance
+    NetUpdateFrequency = 30.f; // AI characters need less frequent updates than players
 
     // AI Perception setup
     AIPerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerceptionComponent"));

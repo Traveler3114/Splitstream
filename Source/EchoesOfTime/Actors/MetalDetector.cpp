@@ -22,6 +22,7 @@ AMetalDetector::AMetalDetector()
 	TriggerBox->SetCollisionProfileName(TEXT("Trigger"));
 	TriggerBox->SetBoxExtent(FVector(100.0f, 50.0f, 200.0f)); // Example size
 	bReplicates = true;
+	NetUpdateFrequency = 10.f; // Metal detector state changes infrequently
 }
 
 void AMetalDetector::BeginPlay()

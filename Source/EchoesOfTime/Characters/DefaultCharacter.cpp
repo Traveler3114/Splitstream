@@ -38,9 +38,14 @@ ADefaultCharacter::ADefaultCharacter()
     GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
     GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
     GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
+    
+    // PERFORMANCE: Character movement network optimization
+    GetCharacterMovement()->NetworkMaxSmoothUpdateDistance = 256.f; // Reduce from default 512
+    GetCharacterMovement()->NetworkNoSmoothUpdateDistance = 512.f; // Reduce from default 1024
 
     bReplicates = true;
     SetReplicateMovement(true);
+    NetUpdateFrequency = 60.f; // Balanced player character replication (reduced from default 100Hz)
 
     bIsSprinting = false;
     InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));

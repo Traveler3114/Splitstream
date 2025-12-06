@@ -33,6 +33,7 @@ AArchiveComputer::AArchiveComputer()
 {
     PrimaryActorTick.bCanEverTick = false;
     bReplicates = true;
+    NetUpdateFrequency = 10.f; // Archive computer changes infrequently
     DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
     RootComponent = DefaultSceneRoot;
 

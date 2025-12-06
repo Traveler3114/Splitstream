@@ -23,6 +23,7 @@
 AGuardCharacter::AGuardCharacter()
 {
     PrimaryActorTick.bCanEverTick = false; // No Tick function, disable for performance
+    NetUpdateFrequency = 30.f; // AI characters need less frequent updates than players
 
     AIPerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerceptionComponent"));
     SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));

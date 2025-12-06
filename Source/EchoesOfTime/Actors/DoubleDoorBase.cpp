@@ -8,6 +8,7 @@ ADoubleDoorBase::ADoubleDoorBase()
 {
     bReplicates = true;
     SetReplicateMovement(true);
+    NetUpdateFrequency = 10.f; // Double doors don't change often
 
     SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
     RootComponent = SceneRoot;

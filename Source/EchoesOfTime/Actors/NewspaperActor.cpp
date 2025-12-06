@@ -21,6 +21,7 @@ ANewspaperActor::ANewspaperActor()
     DateText->SetupAttachment(NewspaperMesh);
 
     bReplicates = true;
+    NetUpdateFrequency = 1.f; // Newspapers never change after spawn
 }
 
 void ANewspaperActor::BeginPlay()

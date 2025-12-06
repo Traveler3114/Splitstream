@@ -15,6 +15,7 @@ ASecurityCamera::ASecurityCamera()
 {
     PrimaryActorTick.bCanEverTick = false; // No Tick!
     bReplicates = true;
+    NetUpdateFrequency = 20.f; // Camera pans and detects frequently but not every frame
 
     DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
     RootComponent = DefaultSceneRoot;

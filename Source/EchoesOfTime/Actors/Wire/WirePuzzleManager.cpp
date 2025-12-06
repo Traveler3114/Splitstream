@@ -12,6 +12,7 @@
 AWirePuzzleManager::AWirePuzzleManager()
 {
     bReplicates = true;
+    NetUpdateFrequency = 10.f; // Manager updates infrequently
 }
 
 void AWirePuzzleManager::BeginPlay()

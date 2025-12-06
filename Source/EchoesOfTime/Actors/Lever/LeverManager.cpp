@@ -6,6 +6,7 @@
 ALeverManager::ALeverManager()
 {
     bReplicates = true;
+    NetUpdateFrequency = 10.f; // Manager updates infrequently
 }
 
 void ALeverManager::SetupPuzzle(const TArray<int32>& OrderSeq)

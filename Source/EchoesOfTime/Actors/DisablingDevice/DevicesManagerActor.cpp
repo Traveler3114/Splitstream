@@ -5,6 +5,7 @@
 ADevicesManagerActor::ADevicesManagerActor()
 {
     bReplicates = true;
+    NetUpdateFrequency = 10.f; // Manager updates infrequently
 }
 
 void ADevicesManagerActor::BeginPlay()

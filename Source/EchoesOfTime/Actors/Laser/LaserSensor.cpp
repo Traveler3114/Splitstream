@@ -11,6 +11,7 @@
 ALaserSensor::ALaserSensor()
 {
     bReplicates = true;
+    NetUpdateFrequency = 10.f; // Lasers toggle infrequently
 
     DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
     RootComponent = DefaultSceneRoot;
