@@ -85,14 +85,19 @@ void AGhostCharacterActor::Tick(float DeltaTime)
             {
                 GhostMesh->SetSkeletalMeshAsset(SourceMesh->GetSkeletalMeshAsset());
             }
-            SourceMesh->RefreshBoneTransforms();
-            SourceMesh->UpdateComponentToWorld();
-            GhostMesh->SetLeaderPoseComponent(SourceMesh, true, true);
+            // SetLeaderPoseComponent handles bone sync automatically - no need for explicit refresh
+            if (GhostMesh->LeaderPoseComponent != SourceMesh)
+            {
+                GhostMesh->SetLeaderPoseComponent(SourceMesh, true, true);
+            }
         }
         else
         {
             // If no source mesh, reset leader pose
-            GhostMesh->SetLeaderPoseComponent(nullptr, true, true);
+            if (GhostMesh->LeaderPoseComponent != nullptr)
+            {
+                GhostMesh->SetLeaderPoseComponent(nullptr, true, true);
+            }
         }
 
         if (GhostMaterial && GhostMesh->GetMaterial(0) != GhostMaterial)

@@ -112,6 +112,7 @@ void ADefaultCharacter::Tick(float DeltaTime)
     }
 
     // Store the actual time since last update for accurate progress calculation
+    // On first update (LastDetectionUpdateTime == 0), use DetectionUpdateInterval to avoid large delta
     const float ActualDelta = (LastDetectionUpdateTime == 0.0f) ? DetectionUpdateInterval : (CurrentTime - LastDetectionUpdateTime);
     LastDetectionUpdateTime = CurrentTime;
 
