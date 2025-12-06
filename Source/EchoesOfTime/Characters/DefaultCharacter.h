@@ -27,40 +27,29 @@ UCLASS()
 class ECHOESOFTIME_API ADefaultCharacter : public ACharacter, public IInteractable, public IRequiresItem, public IAbilitySystemInterface, public IDetectable
 {
     GENERATED_BODY()
+    
 public:
     ADefaultCharacter();
 
-    AActor* ProgressiveActor=nullptr;
-
+    // ========================================
+    // Unreal Engine Overrides
+    // ========================================
     virtual void PostInitializeComponents() override;
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaTime) override;
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
     virtual void OnRep_PlayerState() override;
     virtual void PossessedBy(AController* NewController) override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-    // Inventory Functions
-    UFUNCTION(BlueprintCallable, Category = "Inventory")
-    void UpdateEquippedItemMesh();
-
-    UFUNCTION()
-    void OnInventoryChanged(const TArray<FInventorySlot>& Slots);
-
-    void DropActiveItem();
-    void SelectInventorySlot(int32 SlotNumber);
-    UFUNCTION()
-    void HandleNumberKey(FKey PressedKey);
-
+    // ========================================
     // Ability System
+    // ========================================
     void InitializeAbilitySystem();
     virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+    
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ASC")
     UAbilitySystemComponent* AbilitySystemComponent;
-
-    UFUNCTION()
-    void HandleAbilityInput(const FInputActionInstance& Instance, FGameplayTag InputTag);
-    UFUNCTION()
-    void HandleAbilityInputReleased(const FInputActionInstance& Instance, FGameplayTag InputTag);
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Abilities")
     UAbilityInputSet* AbilityInputSet;
@@ -71,27 +60,45 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
     TSubclassOf<UGameplayEffect> AttributeInitGE;
 
-    // Input Actions
+    UFUNCTION()
+    void HandleAbilityInput(const FInputActionInstance& Instance, FGameplayTag InputTag);
+    
+    UFUNCTION()
+    void HandleAbilityInputReleased(const FInputActionInstance& Instance, FGameplayTag InputTag);
+
+    // ========================================
+    // Input System
+    // ========================================
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
     UInputMappingSet* InputMappingSet;
+    
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     UInputMappingContext* DefaultMappingContext;
+    
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     UInputAction* MoveAction;
+    
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     UInputAction* LookAction;
+    
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     UInputAction* SprintAction;
+    
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     UInputAction* JumpAction;
+    
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     UInputAction* CrouchAction;
+    
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     UInputAction* InteractAction;
+    
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     UInputAction* DropItemAction;
 
-    // Movement Functions
+    // ========================================
+    // Movement
+    // ========================================
     void Move(const FInputActionValue& Value);
     void Look(const FInputActionValue& Value);
     virtual void Jump() override;
@@ -102,18 +109,25 @@ public:
 
     UFUNCTION(Server, Reliable)
     void ServerStartSprint();
+    
     UFUNCTION(Server, Reliable)
     void ServerStopSprint();
+    
     UPROPERTY(ReplicatedUsing = OnRep_SprintState)
     bool bIsSprinting;
+    
     UFUNCTION()
     void OnRep_SprintState();
 
-    // Camera (and Aim Camera Blueprint Events)
+    // ========================================
+    // Camera
+    // ========================================
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
     UCameraComponent* CameraComponent;
+    
     UPROPERTY(BlueprintReadOnly, Category = "Camera")
     FVector CameraDefaultLocation;
+    
     UPROPERTY(BlueprintReadOnly, Category = "Camera")
     FRotator CameraDefaultRotation;
 
@@ -125,26 +139,49 @@ public:
 
     UFUNCTION(Server, Reliable)
     void ServerCameraRotationUpdate(float NewPitch);
+    
     UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Pitch)
     float Pitch = 0.0f;
+    
     UFUNCTION()
     void OnRep_Pitch();
 
-    // Inventory/Item Mesh references
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
-    UStaticMeshComponent* EquippedItemMeshComp;
-
+    // ========================================
+    // Inventory
+    // ========================================
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
     UInventoryComponent* InventoryComponent;
 
-    // Interaction system
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
+    UStaticMeshComponent* EquippedItemMeshComp;
+
+    UFUNCTION(BlueprintCallable, Category = "Inventory")
+    void UpdateEquippedItemMesh();
+
+    UFUNCTION()
+    void OnInventoryChanged(const TArray<FInventorySlot>& Slots);
+
+    void DropActiveItem();
+    void SelectInventorySlot(int32 SlotNumber);
+    
+    UFUNCTION()
+    void HandleNumberKey(FKey PressedKey);
+
+    // ========================================
+    // Interaction System
+    // ========================================
+    UPROPERTY()
+    AActor* ProgressiveActor = nullptr;
+
+    UPROPERTY()
+    AActor* HighlightedActor = nullptr;
+
     UFUNCTION(BlueprintCallable, Category = "Interaction")
     bool IsProgressiveInteractActor(AActor* Actor) const;
 
     UFUNCTION(BlueprintCallable, Category = "Interaction")
     FGameplayTag GetProgressiveInteractTag(AActor* Actor) const;
 
-    // Input handlers for interaction
     UFUNCTION()
     void HandleInteractHoldStart();
 
@@ -154,31 +191,34 @@ public:
     UFUNCTION()
     void HandleInteractInstant();
 
-    // Server-side implementation
     UFUNCTION(Server, Reliable)
     void ServerHandleInteract(AActor* TargetActor);
 
     virtual void ServerHandleInteract_Implementation(AActor* TargetActor);
 
-    UPROPERTY()
-    AActor* HighlightedActor = nullptr;
     void UpdateInteractHighlight();
 
-    // Detection system
+    // ========================================
+    // Detection System
+    // ========================================
     UPROPERTY(BlueprintReadOnly)
     TMap<AActor*, float> DetectionProgressMap;
 
     UFUNCTION(BlueprintCallable)
     virtual void OnDetected_Implementation(AActor* Detector) override;
+    
     UFUNCTION(BlueprintCallable)
     virtual void OnLost_Implementation(AActor* Detector) override;
+    
     UFUNCTION(BlueprintCallable)
     virtual void OnFullyDetected_Implementation(AActor* Detector) override;
 
     UFUNCTION()
     void OnIllegalTagChanged(const FGameplayTag CallbackTag, int32 NewCount);
 
-    // Utility/Helpers
+    // ========================================
+    // Utility Functions
+    // ========================================
     bool GetForwardTraceResult(float TraceDistance, FHitResult& OutHit, FVector& OutTraceEnd) const;
 
     UFUNCTION(BlueprintPure, Category = "Detection")
@@ -187,14 +227,15 @@ public:
         const FRotator& PlayerCameraRotation,
         const FVector& SelfLocation);
 
-    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
 private:
+    // ========================================
+    // Internal State
+    // ========================================
     void GrantAbilitiesFromInputSet();
     void GrantAbilitiesFromDefaultSet();
     void UpdateDetectionProgress(float DeltaTime);
     
-    // Throttling accumulators for Tick updates
+    // Throttling accumulators for Tick updates (100ms intervals for 10Hz updates)
     float InteractHighlightAccumulator = 0.f;
     float DetectionProgressAccumulator = 0.f;
 };

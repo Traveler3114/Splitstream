@@ -170,7 +170,10 @@ void ADefaultCharacter::UpdateDetectionProgress(float DeltaTime)
     }
 }
 
-// ---------------- ABILITY SYSTEM ------------------
+// ========================================
+// ABILITY SYSTEM
+// ========================================
+
 void ADefaultCharacter::InitializeAbilitySystem()
 {
     ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
@@ -241,7 +244,10 @@ UAbilitySystemComponent* ADefaultCharacter::GetAbilitySystemComponent() const
     return AbilitySystemComponent;
 }
 
-// ---------------- DETECTION MECHANICS ------------------
+// ========================================
+// DETECTION SYSTEM
+// ========================================
+
 void ADefaultCharacter::OnDetected_Implementation(AActor* Detector)
 {
     if (!Detector) return;
@@ -296,7 +302,10 @@ void ADefaultCharacter::OnIllegalTagChanged(const FGameplayTag Tag, int32 NewCou
     }
 }
 
-// ---------------- INVENTORY HANDLING ------------------
+// ========================================
+// INVENTORY SYSTEM
+// ========================================
+
 void ADefaultCharacter::OnInventoryChanged(const TArray<FInventorySlot>& Slots)
 {
     UpdateEquippedItemMesh();
@@ -323,7 +332,10 @@ void ADefaultCharacter::UpdateEquippedItemMesh()
     }
 }
 
-// ---------------- INPUT ------------------
+// ========================================
+// INPUT SETUP
+// ========================================
+
 void ADefaultCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -368,7 +380,10 @@ void ADefaultCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
     PlayerInputComponent->BindKey(EKeys::Zero, IE_Pressed, this, &ADefaultCharacter::HandleNumberKey);
 }
 
-// ------------- INPUT HANDLING ---------------
+// ========================================
+// INPUT HANDLERS
+// ========================================
+
 void ADefaultCharacter::HandleAbilityInput(const FInputActionInstance& Instance, FGameplayTag InputTag)
 {
     if (AbilitySystemComponent)
@@ -429,7 +444,10 @@ void ADefaultCharacter::SelectInventorySlot(int32 SlotNumber)
     }
 }
 
-// ----------- CONTROLLED TRACE ---------------
+// ========================================
+// UTILITY FUNCTIONS
+// ========================================
+
 bool ADefaultCharacter::GetForwardTraceResult(float TraceDistance, FHitResult& OutHit, FVector& OutTraceEnd) const
 {
     if (!CameraComponent) return false;
@@ -442,7 +460,6 @@ bool ADefaultCharacter::GetForwardTraceResult(float TraceDistance, FHitResult& O
     return GetWorld()->LineTraceSingleByChannel(OutHit, Start, End, ECC_Visibility, Params);
 }
 
-// ----------- INVENTORY ACTIONS --------------
 void ADefaultCharacter::DropActiveItem()
 {
     if (!InventoryComponent) return;
@@ -475,7 +492,10 @@ void ADefaultCharacter::DropActiveItem()
     InventoryComponent->ServerDropActiveItem(DropLocation);
 }
 
-// ------------ INTERACT MECHANICS -----------
+// ========================================
+// INTERACTION SYSTEM
+// ========================================
+
 void ADefaultCharacter::UpdateInteractHighlight()
 {
     if (!IsLocallyControlled())
@@ -503,11 +523,6 @@ void ADefaultCharacter::UpdateInteractHighlight()
     }
 }
 
-// --- FULL functions for progressive and instant interaction ---
-// Add these to your DefaultCharacter.cpp. This replaces HandleInteract and ServerHandleInteract_Implementation,
-// and adds proper handle for F hold/release for progressive, plus a helper to check progressive type.
-
-// Helper: Determine if an actor is progressive interact (hack, search, lockpick)
 bool ADefaultCharacter::IsProgressiveInteractActor(AActor* Actor) const
 {
     if (!Actor)
@@ -520,7 +535,6 @@ bool ADefaultCharacter::IsProgressiveInteractActor(AActor* Actor) const
     return bIsProgressive;
 }
 
-// Helper: Get the gameplay tag matching the progressive interact
 FGameplayTag ADefaultCharacter::GetProgressiveInteractTag(AActor* Actor) const
 {
     if (!Actor)
@@ -540,7 +554,6 @@ FGameplayTag ADefaultCharacter::GetProgressiveInteractTag(AActor* Actor) const
     return FGameplayTag();
 }
 
-// Called when F is pressed (hold start)
 void ADefaultCharacter::HandleInteractHoldStart()
 {
     FHitResult Hit;
@@ -569,7 +582,6 @@ void ADefaultCharacter::HandleInteractHoldStop()
 }
 
 
-// Called when F is pressed (single tap, for instant actions)
 void ADefaultCharacter::HandleInteractInstant()
 {
     if (HasAuthority() && IsLocallyControlled())
@@ -656,7 +668,10 @@ void ADefaultCharacter::ServerHandleInteract_Implementation(AActor* TargetActor)
     }
 }
 
-// ---------------- MOVEMENT --------------
+// ========================================
+// MOVEMENT
+// ========================================
+
 void ADefaultCharacter::Move(const FInputActionValue& Value)
 {
     if (!IsValid(this)) return;
@@ -717,7 +732,6 @@ void ADefaultCharacter::StopCrouching()
     UnCrouch();
 }
 
-// ----------- SPRINT & CAMERA ROTATION -----------
 void ADefaultCharacter::StartSprint()
 {
     if (!GetCharacterMovement()->IsCrouching() && GetCharacterMovement()->Velocity.Size() > 0)
@@ -770,7 +784,10 @@ void ADefaultCharacter::OnRep_Pitch()
     }
 }
 
-// ---------------- REPLICATION ------------------
+// ========================================
+// NETWORK REPLICATION
+// ========================================
+
 void ADefaultCharacter::PossessedBy(AController* NewController)
 {
     Super::PossessedBy(NewController);
@@ -794,7 +811,6 @@ void ADefaultCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
     DOREPLIFETIME(ADefaultCharacter, Pitch);
 }
 
-// ------------- BlueprintPure (Detection Angle) -------------
 float ADefaultCharacter::CalculateDetectionAngle(const FVector& CameraLocation, const FRotator& PlayerCameraRotation, const FVector& SelfLocation)
 {
     FVector ToDetector = CameraLocation - SelfLocation;
