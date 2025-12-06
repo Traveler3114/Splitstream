@@ -111,15 +111,21 @@ void ACodeGenerator::CheckExpiredCodes()
         }
     }
 
-    if (bChanged || StatusArray.Num() > 0)
+    // Only update display when something changed or when codes are active (for countdown)
+    if (bChanged)
     {
         UpdateDisplayText();
+        
+        // Stop the timer if no codes are active
+        if (StatusArray.Num() == 0)
+        {
+            GetWorldTimerManager().ClearTimer(DisplayUpdateTimerHandle);
+        }
     }
-    
-    // Stop the timer if no codes are active
-    if (StatusArray.Num() == 0)
+    else if (StatusArray.Num() > 0)
     {
-        GetWorldTimerManager().ClearTimer(DisplayUpdateTimerHandle);
+        // Update display for countdown even when no codes expired
+        UpdateDisplayText();
     }
 }
 
