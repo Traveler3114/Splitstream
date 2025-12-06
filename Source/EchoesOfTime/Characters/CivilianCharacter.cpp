@@ -10,7 +10,7 @@
 
 ACivilianCharacter::ACivilianCharacter()
 {
-    PrimaryActorTick.bCanEverTick = false;
+    PrimaryActorTick.bCanEverTick = true;
 
     // AI Perception setup
     AIPerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerceptionComponent"));

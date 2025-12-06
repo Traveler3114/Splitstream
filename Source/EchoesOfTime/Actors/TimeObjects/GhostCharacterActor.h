@@ -54,9 +54,4 @@ public:
     void OnRep_GhostTargetLocation();
     UFUNCTION()
     void OnRep_GhostTargetRotation();
-
-private:
-    // Cached time accumulator for reducing update frequency
-    float TimeSinceLastUpdate = 0.0f;
-    static constexpr float UpdateInterval = 0.05f; // Update every 50ms instead of every frame
 };

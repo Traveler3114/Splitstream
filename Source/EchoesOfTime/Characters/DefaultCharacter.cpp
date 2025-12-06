@@ -87,12 +87,9 @@ void ADefaultCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    // Throttle interaction highlight checks to reduce performance impact
-    TimeSinceLastInteractCheck += DeltaTime;
-    if (IsLocallyControlled() && TimeSinceLastInteractCheck >= InteractCheckInterval)
+    if (IsLocallyControlled())
     {
         UpdateInteractHighlight();
-        TimeSinceLastInteractCheck = 0.0f;
     }
 
     // Early exit if no detectors to process
@@ -101,20 +98,10 @@ void ADefaultCharacter::Tick(float DeltaTime)
         return;
     }
 
-    // Throttle detection updates to reduce performance impact
-    TimeSinceLastDetectionUpdate += DeltaTime;
-    if (TimeSinceLastDetectionUpdate < DetectionUpdateInterval)
-    {
-        return;
-    }
-    
-    const float ActualDeltaTime = TimeSinceLastDetectionUpdate;
-    TimeSinceLastDetectionUpdate = 0.0f;
-
-    // Cache commonly used values outside the loop - tag is cached statically for performance
-    static const FGameplayTag IllegalTag = FGameplayTag::RequestGameplayTag(TEXT("Character.Status.Illegal"));
+    // Cache commonly used values outside the loop
+    static const FGameplayTag IllegalTag = FGameplayTag::RequestGameplayTag("Character.Status.Illegal");
     const bool bIsIllegal = AbilitySystemComponent && AbilitySystemComponent->HasMatchingGameplayTag(IllegalTag);
-    const float Rate = ActualDeltaTime * 0.5f;
+    const float Rate = DeltaTime * 0.5f;
     
     // Cache player controller if needed for UI updates
     ADefaultPlayerController* DefPC = nullptr;
