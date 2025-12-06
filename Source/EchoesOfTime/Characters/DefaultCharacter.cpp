@@ -112,7 +112,7 @@ void ADefaultCharacter::Tick(float DeltaTime)
     TimeSinceLastDetectionUpdate = 0.0f;
 
     // Cache commonly used values outside the loop - tag is cached statically for performance
-    static const FGameplayTag IllegalTag = []() { return FGameplayTag::RequestGameplayTag("Character.Status.Illegal"); }();
+    static const FGameplayTag IllegalTag = FGameplayTag::RequestGameplayTag(TEXT("Character.Status.Illegal"));
     const bool bIsIllegal = AbilitySystemComponent && AbilitySystemComponent->HasMatchingGameplayTag(IllegalTag);
     const float Rate = ActualDeltaTime * 0.5f;
     
