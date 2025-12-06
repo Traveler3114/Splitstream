@@ -7,10 +7,11 @@
 #include "DataAssets/ItemBase.h"
 #include "Net/UnrealNetwork.h"
 #include "ActorComponents/InventoryComponent.h"
+#include "TimerManager.h"
 
 ACodeGenerator::ACodeGenerator()
 {
-    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bCanEverTick = false; // Disable Tick for performance!
 
     DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
     RootComponent = DefaultSceneRoot;
@@ -32,6 +33,17 @@ void ACodeGenerator::BeginPlay()
     Super::BeginPlay();
     UpdateDisplayText();
 
+    if (HasAuthority())
+    {
+        // Check every 0.1s; adjust interval for your desired "responsiveness"
+        GetWorldTimerManager().SetTimer(ExpireTimerHandle, this, &ACodeGenerator::ExpireOldCodes, 0.1f, true);
+    }
+}
+
+void ACodeGenerator::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    Super::EndPlay(EndPlayReason);
+    GetWorldTimerManager().ClearTimer(ExpireTimerHandle);
 }
 
 void ACodeGenerator::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -43,7 +55,6 @@ void ACodeGenerator::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 
 bool ACodeGenerator::IsCorrectItem_Implementation(UItemBase* Item) const
 {
-    // Accept only correct fingerprint for the assigned civilian
     UItemBase* FP = Cast<UItemBase>(Item);
     return FP && FP->OwnerCivilian == TargetCivilian;
 }
@@ -51,15 +62,15 @@ bool ACodeGenerator::IsCorrectItem_Implementation(UItemBase* Item) const
 void ACodeGenerator::Interact_Implementation(AActor* Interactor)
 {
     if (!HasAuthority()) return;
-
     if (!Interactor || !TargetCivilian)
         return;
 
-
+#if UE_BUILD_DEBUG || UE_BUILD_DEVELOPMENT
     if (GEngine)
     {
         GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, TEXT("Correct fingerprint!"));
     }
+#endif
 
     StatusArray.Empty();
 
@@ -84,9 +95,10 @@ void ACodeGenerator::Interact_Implementation(AActor* Interactor)
     UpdateDisplayText();
 }
 
-void ACodeGenerator::Tick(float DeltaTime)
+void ACodeGenerator::ExpireOldCodes()
 {
-    Super::Tick(DeltaTime);
+    if (!HasAuthority())
+        return;
 
     bool bChanged = false;
     float Now = GetWorld()->GetTimeSeconds();
@@ -104,10 +116,6 @@ void ACodeGenerator::Tick(float DeltaTime)
     {
         UpdateDisplayText();
     }
-    else if (StatusArray.Num() > 0)
-    {
-        UpdateDisplayText();
-    }
 }
 
 void ACodeGenerator::UpdateDisplayText()
@@ -122,13 +130,15 @@ void ACodeGenerator::UpdateDisplayText()
             *KeypadName, *Status.Code, TimeLeft);
     }
 
-    // Always update the replicated string (server sets, clients receive)
-    CodesDisplayText = DisplayText;
-
-    // Only server should set the actual text component directly
-    if (CodesTextComp && HasAuthority())
+    // Only update/replicate if changed
+    if (CodesDisplayText != DisplayText)
     {
-        CodesTextComp->SetText(FText::FromString(CodesDisplayText));
+        CodesDisplayText = DisplayText;
+
+        if (CodesTextComp && HasAuthority())
+        {
+            CodesTextComp->SetText(FText::FromString(CodesDisplayText));
+        }
     }
 }
 

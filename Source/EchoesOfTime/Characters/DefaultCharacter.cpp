@@ -18,6 +18,7 @@
 #include "ActorComponents/HackComponent.h"
 #include "ActorComponents/SearchComponent.h"
 #include "ActorComponents/LockPickComponent.h"
+#include "TimerManager.h"
 
 ADefaultCharacter::ADefaultCharacter()
 {
@@ -80,18 +81,31 @@ void ADefaultCharacter::BeginPlay()
 
     UpdateEquippedItemMesh();
 
+    // Start detection timer for performance
+    GetWorldTimerManager().SetTimer(DetectionUpdateTimerHandle, this, &ADefaultCharacter::UpdateDetectionTimer, 0.05f, true);
+}
 
+void ADefaultCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    Super::EndPlay(EndPlayReason);
+    GetWorldTimerManager().ClearTimer(DetectionUpdateTimerHandle);
 }
 
 void ADefaultCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
+    // Only run interact highlight every frame!
     if (IsLocallyControlled())
     {
         UpdateInteractHighlight();
     }
+}
 
+// --- PERFORMANCE: Detection logic moved to timer-based update
+void ADefaultCharacter::UpdateDetectionTimer()
+{
+    float DeltaTime = 0.05f; // Matches timer interval
     TArray<AActor*> ToRemove;
 
     for (auto& Elem : DetectionProgressMap)
@@ -276,7 +290,7 @@ void ADefaultCharacter::OnIllegalTagChanged(const FGameplayTag Tag, int32 NewCou
     }
     else
     {
-        // Don't remove detectors instantly; handled in Tick().
+        // Don't remove detectors instantly; handled in detection timer.
     }
 }
 
@@ -383,19 +397,36 @@ void ADefaultCharacter::HandleAbilityInputReleased(const FInputActionInstance& I
 
 void ADefaultCharacter::HandleNumberKey(FKey PressedKey)
 {
+    FString KeyNameStr = PressedKey.GetFName().ToString();
     int32 SlotIndex = -1;
-    if (PressedKey == EKeys::One) SlotIndex = 0;
-    else if (PressedKey == EKeys::Two) SlotIndex = 1;
-    else if (PressedKey == EKeys::Three) SlotIndex = 2;
-    else if (PressedKey == EKeys::Four) SlotIndex = 3;
-    else if (PressedKey == EKeys::Five) SlotIndex = 4;
-    else if (PressedKey == EKeys::Six) SlotIndex = 5;
-    else if (PressedKey == EKeys::Seven) SlotIndex = 6;
-    else if (PressedKey == EKeys::Eight) SlotIndex = 7;
-    else if (PressedKey == EKeys::Nine) SlotIndex = 8;
-    else if (PressedKey == EKeys::Zero) SlotIndex = 9;
 
-    if (SlotIndex != -1 && InventoryComponent)
+    if (KeyNameStr.Len() == 1 && FChar::IsDigit(KeyNameStr[0]))
+    {
+        if (KeyNameStr[0] == '0')
+            SlotIndex = 9;
+        else
+            SlotIndex = KeyNameStr[0] - '1'; // '1' is 0, '2' is 1, ..., '9' is 8
+    }
+    else
+    {
+        static const TMap<FName, int32> KeyToSlot {
+            {EKeys::One.GetFName(), 0},
+            {EKeys::Two.GetFName(), 1},
+            {EKeys::Three.GetFName(), 2},
+            {EKeys::Four.GetFName(), 3},
+            {EKeys::Five.GetFName(), 4},
+            {EKeys::Six.GetFName(), 5},
+            {EKeys::Seven.GetFName(), 6},
+            {EKeys::Eight.GetFName(), 7},
+            {EKeys::Nine.GetFName(), 8},
+            {EKeys::Zero.GetFName(), 9}
+        };
+        const int32* Found = KeyToSlot.Find(PressedKey.GetFName());
+        if (Found)
+            SlotIndex = *Found;
+    }
+
+    if (SlotIndex >= 0 && SlotIndex < 10 && InventoryComponent)
     {
         InventoryComponent->ServerSetActiveSlot(SlotIndex);
     }
@@ -484,11 +515,7 @@ void ADefaultCharacter::UpdateInteractHighlight()
     }
 }
 
-// --- FULL functions for progressive and instant interaction ---
-// Add these to your DefaultCharacter.cpp. This replaces HandleInteract and ServerHandleInteract_Implementation,
-// and adds proper handle for F hold/release for progressive, plus a helper to check progressive type.
-
-// Helper: Determine if an actor is progressive interact (hack, search, lockpick)
+// Progressive Interact Type helpers
 bool ADefaultCharacter::IsProgressiveInteractActor(AActor* Actor) const
 {
     if (!Actor)
@@ -501,7 +528,6 @@ bool ADefaultCharacter::IsProgressiveInteractActor(AActor* Actor) const
     return bIsProgressive;
 }
 
-// Helper: Get the gameplay tag matching the progressive interact
 FGameplayTag ADefaultCharacter::GetProgressiveInteractTag(AActor* Actor) const
 {
     if (!Actor)
@@ -521,7 +547,6 @@ FGameplayTag ADefaultCharacter::GetProgressiveInteractTag(AActor* Actor) const
     return FGameplayTag();
 }
 
-// Called when F is pressed (hold start)
 void ADefaultCharacter::HandleInteractHoldStart()
 {
     FHitResult Hit;
@@ -530,27 +555,21 @@ void ADefaultCharacter::HandleInteractHoldStart()
     AActor* HitActor = Hit.GetActor();
     if (!HitActor) return;
 
-    // Instead of directly calling AbilitySystem event/tag:
-    // Always call Interact on the actor
     if (IsProgressiveInteractActor(HitActor)) {
-        // This is the old reliable pattern!
         IInteractable::Execute_Interact(HitActor, this);
 		ProgressiveActor = HitActor;
     }
 }
-
 
 void ADefaultCharacter::HandleInteractHoldStop()
 {
     if (ProgressiveActor)
     {
         IInteractable::Execute_CancelInteract(ProgressiveActor, this);
-        ProgressiveActor = nullptr; // reset for next interaction
+        ProgressiveActor = nullptr;
     }
 }
 
-
-// Called when F is pressed (single tap, for instant actions)
 void ADefaultCharacter::HandleInteractInstant()
 {
     if (HasAuthority() && IsLocallyControlled())

@@ -42,7 +42,4 @@ public:
     // Interactable interface implementation
     virtual void Interact_Implementation(AActor* Interactor) override;
 	virtual void SetHighlighted_Implementation(bool bHighlight) override;
-
-    // Called every frame
-    virtual void Tick(float DeltaTime) override;
 };

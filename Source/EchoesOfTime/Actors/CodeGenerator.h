@@ -26,8 +26,7 @@ struct FKeypadCodeStatus
 
     FKeypadCodeStatus() : Code(TEXT("")), ExpiryTime(0.f), Keypad(nullptr) {}
     FKeypadCodeStatus(const FString& InCode, float InExpiry, AKeypadScanner* InKeypad)
-        : Code(InCode), ExpiryTime(InExpiry), Keypad(InKeypad) {
-    }
+        : Code(InCode), ExpiryTime(InExpiry), Keypad(InKeypad) {}
 };
 
 UCLASS()
@@ -70,11 +69,14 @@ public:
 
 protected:
     virtual void BeginPlay() override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
     virtual void Interact_Implementation(AActor* Interactor) override;
     virtual void SetHighlighted_Implementation(bool bHighlight) override;
     virtual bool IsCorrectItem_Implementation(UItemBase* Item) const override;
-    virtual void Tick(float DeltaTime) override;
 
     void UpdateDisplayText();
+    void ExpireOldCodes();
+
+    FTimerHandle ExpireTimerHandle;
 };

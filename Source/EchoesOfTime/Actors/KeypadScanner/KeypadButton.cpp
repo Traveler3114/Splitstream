@@ -4,7 +4,7 @@
 
 AKeypadButton::AKeypadButton()
 {
-    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bCanEverTick = false;
 
     DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
     RootComponent = DefaultSceneRoot;
@@ -21,11 +21,6 @@ AKeypadButton::AKeypadButton()
 void AKeypadButton::BeginPlay()
 {
     Super::BeginPlay();
-}
-
-void AKeypadButton::Tick(float DeltaTime)
-{
-    Super::Tick(DeltaTime);
 }
 
 void AKeypadButton::Interact_Implementation(AActor* Interactor)

@@ -34,6 +34,7 @@ public:
 
     virtual void PostInitializeComponents() override;
     virtual void BeginPlay() override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     virtual void Tick(float DeltaTime) override;
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
     virtual void OnRep_PlayerState() override;
@@ -192,4 +193,8 @@ public:
 private:
     void GrantAbilitiesFromInputSet();
     void GrantAbilitiesFromDefaultSet();
+
+    // --- Performance: Timer-driven detection instead of Tick
+    FTimerHandle DetectionUpdateTimerHandle;
+    void UpdateDetectionTimer();
 };
