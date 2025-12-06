@@ -749,10 +749,12 @@ void ADefaultCharacter::StartSprint()
 {
     if (!GetCharacterMovement()->IsCrouching() && GetCharacterMovement()->Velocity.Size() > 0)
     {
-        bIsSprinting = true;
-        OnRep_SprintState();
-        
-        if (!HasAuthority())
+        if (HasAuthority())
+        {
+            bIsSprinting = true;
+            OnRep_SprintState();
+        }
+        else
         {
             ServerStartSprint();
         }
@@ -761,10 +763,12 @@ void ADefaultCharacter::StartSprint()
 
 void ADefaultCharacter::StopSprint()
 {
-    bIsSprinting = false;
-    OnRep_SprintState();
-    
-    if (!HasAuthority())
+    if (HasAuthority())
+    {
+        bIsSprinting = false;
+        OnRep_SprintState();
+    }
+    else
     {
         ServerStopSprint();
     }
@@ -772,12 +776,17 @@ void ADefaultCharacter::StopSprint()
 
 void ADefaultCharacter::ServerStartSprint_Implementation()
 {
-    StartSprint();
+    if (!GetCharacterMovement()->IsCrouching() && GetCharacterMovement()->Velocity.Size() > 0)
+    {
+        bIsSprinting = true;
+        OnRep_SprintState();
+    }
 }
 
 void ADefaultCharacter::ServerStopSprint_Implementation()
 {
-    StopSprint();
+    bIsSprinting = false;
+    OnRep_SprintState();
 }
 
 void ADefaultCharacter::OnRep_SprintState()
