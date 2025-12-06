@@ -235,7 +235,8 @@ private:
     void GrantAbilitiesFromDefaultSet();
     void UpdateDetectionProgress(float DeltaTime);
     
-    // Throttling accumulators for Tick updates (100ms intervals for 10Hz updates)
+    // Throttling accumulators for specific update functions in Tick
+    // Used to run UpdateInteractHighlight and UpdateDetectionProgress at 10Hz (100ms intervals) instead of every frame
     float InteractHighlightAccumulator = 0.f;
     float DetectionProgressAccumulator = 0.f;
 };

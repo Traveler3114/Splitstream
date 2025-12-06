@@ -105,6 +105,7 @@ void ACodeGenerator::CheckExpiredCodes()
         }
     }
 
+    // Update display if codes were removed OR if we have active codes (to refresh countdown timers)
     if (bChanged || StatusArray.Num() > 0)
     {
         UpdateDisplayText();

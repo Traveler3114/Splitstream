@@ -92,7 +92,7 @@ void ADefaultCharacter::Tick(float DeltaTime)
     if (InteractHighlightAccumulator >= 0.1f && IsLocallyControlled())
     {
         UpdateInteractHighlight();
-        InteractHighlightAccumulator = 0.f;
+        InteractHighlightAccumulator -= 0.1f; // Preserve excess time to avoid drift
     }
 
     // Throttle detection progress updates to 100ms (10Hz)
@@ -100,7 +100,7 @@ void ADefaultCharacter::Tick(float DeltaTime)
     if (DetectionProgressAccumulator >= 0.1f)
     {
         UpdateDetectionProgress(DetectionProgressAccumulator);
-        DetectionProgressAccumulator = 0.f;
+        DetectionProgressAccumulator -= 0.1f; // Preserve excess time to avoid drift
     }
 }
 
@@ -734,6 +734,12 @@ void ADefaultCharacter::StopCrouching()
 
 void ADefaultCharacter::StartSprint()
 {
+    if (!HasAuthority())
+    {
+        ServerStartSprint();
+        return;
+    }
+    
     if (!GetCharacterMovement()->IsCrouching() && GetCharacterMovement()->Velocity.Size() > 0)
     {
         bIsSprinting = true;
@@ -743,6 +749,12 @@ void ADefaultCharacter::StartSprint()
 
 void ADefaultCharacter::StopSprint()
 {
+    if (!HasAuthority())
+    {
+        ServerStopSprint();
+        return;
+    }
+    
     bIsSprinting = false;
     OnRep_SprintState();
 }
