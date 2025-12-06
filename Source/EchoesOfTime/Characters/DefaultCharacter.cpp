@@ -92,54 +92,64 @@ void ADefaultCharacter::Tick(float DeltaTime)
         UpdateInteractHighlight();
     }
 
+    // Early exit if no detectors to process
+    if (DetectionProgressMap.Num() == 0)
+    {
+        return;
+    }
+
+    // Cache commonly used values outside the loop
+    static const FGameplayTag IllegalTag = FGameplayTag::RequestGameplayTag("Character.Status.Illegal");
+    const bool bIsIllegal = AbilitySystemComponent && AbilitySystemComponent->HasMatchingGameplayTag(IllegalTag);
+    const float Rate = DeltaTime * 0.5f;
+    
+    // Cache player controller if needed for UI updates
+    ADefaultPlayerController* DefPC = nullptr;
+    if (IsLocallyControlled())
+    {
+        DefPC = Cast<ADefaultPlayerController>(GetController());
+    }
+
     TArray<AActor*> ToRemove;
+    ToRemove.Reserve(DetectionProgressMap.Num() / 4); // Reserve space to avoid reallocations
 
     for (auto& Elem : DetectionProgressMap)
     {
         AActor* Detector = Elem.Key;
+        if (!Detector)
+        {
+            ToRemove.Add(Detector);
+            continue;
+        }
+
         float& Progress = Elem.Value;
 
-        bool bInVision = Detector && Detector->GetClass()->ImplementsInterface(UDetectable::StaticClass())
+        const bool bInVision = Detector->GetClass()->ImplementsInterface(UDetectable::StaticClass())
             && IDetectable::Execute_IsActorAlreadyDetected(Detector, this);
-
-        bool bIsIllegal = AbilitySystemComponent && AbilitySystemComponent->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("Character.Status.Illegal"));
-
-        float Rate = DeltaTime * 0.5f;
 
         if (bInVision && bIsIllegal)
         {
-            Progress += Rate;
+            Progress = FMath::Min(Progress + Rate, 1.f);
+            
             if (Progress >= 1.f)
             {
-                Progress = 1.f;
-                if (Detector && Detector->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
-                {
-                    IDetectable::Execute_OnFullyDetected(Detector, this);
-                }
+                IDetectable::Execute_OnFullyDetected(Detector, this);
                 OnFullyDetected_Implementation(Detector);
             }
         }
         else
         {
-            Progress -= Rate;
-            if (Progress <= 0.f) Progress = 0.f;
+            Progress = FMath::Max(Progress - Rate, 0.f);
         }
 
-        if (APlayerController* PC = Cast<APlayerController>(GetController()))
+        // Update UI widget if this is the locally controlled character
+        if (DefPC)
         {
-            if (ADefaultPlayerController* DefPC = Cast<ADefaultPlayerController>(PC))
-            {
-                float Angle = CalculateDetectionAngle(
-                    Detector->GetActorLocation(),
-                    PC->PlayerCameraManager->GetCameraRotation(),
-                    GetActorLocation());
-                DefPC->ClientUpdateDetectionWidget(
-                    Detector,
-                    Progress,
-                    Progress >= 1.0f,
-                    Angle
-                );
-            }
+            const float Angle = CalculateDetectionAngle(
+                Detector->GetActorLocation(),
+                DefPC->PlayerCameraManager->GetCameraRotation(),
+                GetActorLocation());
+            DefPC->ClientUpdateDetectionWidget(Detector, Progress, Progress >= 1.0f, Angle);
         }
 
         if (Progress == 0.f)
@@ -148,6 +158,7 @@ void ADefaultCharacter::Tick(float DeltaTime)
         }
     }
 
+    // Remove detectors with zero progress
     for (AActor* Detector : ToRemove)
     {
         DetectionProgressMap.Remove(Detector);
@@ -263,9 +274,26 @@ void ADefaultCharacter::OnIllegalTagChanged(const FGameplayTag Tag, int32 NewCou
 
     if (NewCount > 0)
     {
+        // Performance optimization: Only check interface implementation once per class
+        TSet<const UClass*> CachedDetectableClasses;
+        
         for (TActorIterator<AActor> ActorItr(World); ActorItr; ++ActorItr)
         {
-            if (ActorItr->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
+            const UClass* ActorClass = ActorItr->GetClass();
+            
+            // Cache interface check results per class type
+            bool bImplementsInterface = false;
+            if (CachedDetectableClasses.Contains(ActorClass))
+            {
+                bImplementsInterface = true;
+            }
+            else if (ActorClass->ImplementsInterface(UDetectable::StaticClass()))
+            {
+                bImplementsInterface = true;
+                CachedDetectableClasses.Add(ActorClass);
+            }
+            
+            if (bImplementsInterface)
             {
                 if (IDetectable::Execute_IsActorAlreadyDetected(*ActorItr, this))
                 {
@@ -383,21 +411,25 @@ void ADefaultCharacter::HandleAbilityInputReleased(const FInputActionInstance& I
 
 void ADefaultCharacter::HandleNumberKey(FKey PressedKey)
 {
-    int32 SlotIndex = -1;
-    if (PressedKey == EKeys::One) SlotIndex = 0;
-    else if (PressedKey == EKeys::Two) SlotIndex = 1;
-    else if (PressedKey == EKeys::Three) SlotIndex = 2;
-    else if (PressedKey == EKeys::Four) SlotIndex = 3;
-    else if (PressedKey == EKeys::Five) SlotIndex = 4;
-    else if (PressedKey == EKeys::Six) SlotIndex = 5;
-    else if (PressedKey == EKeys::Seven) SlotIndex = 6;
-    else if (PressedKey == EKeys::Eight) SlotIndex = 7;
-    else if (PressedKey == EKeys::Nine) SlotIndex = 8;
-    else if (PressedKey == EKeys::Zero) SlotIndex = 9;
+    if (!InventoryComponent) return;
 
-    if (SlotIndex != -1 && InventoryComponent)
+    // Use static map for O(1) lookup instead of if-else chain
+    static const TMap<FKey, int32> KeyToSlotMap = {
+        {EKeys::One, 0},
+        {EKeys::Two, 1},
+        {EKeys::Three, 2},
+        {EKeys::Four, 3},
+        {EKeys::Five, 4},
+        {EKeys::Six, 5},
+        {EKeys::Seven, 6},
+        {EKeys::Eight, 7},
+        {EKeys::Nine, 8},
+        {EKeys::Zero, 9}
+    };
+
+    if (const int32* SlotIndex = KeyToSlotMap.Find(PressedKey))
     {
-        InventoryComponent->ServerSetActiveSlot(SlotIndex);
+        InventoryComponent->ServerSetActiveSlot(*SlotIndex);
     }
 }
 

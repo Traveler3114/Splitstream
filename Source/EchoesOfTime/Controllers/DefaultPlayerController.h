@@ -11,22 +11,21 @@ UCLASS()
 class ECHOESOFTIME_API ADefaultPlayerController : public APlayerController
 {
     GENERATED_BODY()
+
 public:
     ADefaultPlayerController();
 
+    // ============================================
+    // Unreal Engine Overrides
+    // ============================================
     virtual void BeginPlay() override;
     virtual void SetupInputComponent() override;
     virtual void OnRep_PlayerState() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-    void TogglePauseMenu();
-
-    void BindAttributeDelegates();
-    void BindGameplayTagDelegates();
-
-    void OnHealthChanged(const struct FOnAttributeChangeData& Data);
-    void OnIllegalTagChanged(const struct FGameplayTag Tag, int32 NewCount);
-
+    // ============================================
+    // UI Widget Classes
+    // ============================================
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
     TSubclassOf<UPauseMenuWidget> PauseMenuWidgetClass;
 
@@ -42,7 +41,12 @@ public:
     UPROPERTY(BlueprintReadWrite)
     UCalendarWidget* CalendarWidgetInstance;
 
+    // ============================================
+    // UI Management
+    // ============================================
     bool bIsPauseMenuOpen = false;
+
+    void TogglePauseMenu();
 
     UFUNCTION(Client, Reliable)
     void ClientShowCalendarWidget(const TArray<FCalendarDateRecord>& CivilianDateRecords);
@@ -50,16 +54,28 @@ public:
     UFUNCTION(Client, Reliable, BlueprintCallable)
     void ClientUpdateDetectionWidget(AActor* DetectorActor, float Progress, bool bIsLocked = false, float AngleDegrees = 0.0f);
 
-    UFUNCTION(Server, Reliable)
-    void ServerTryLockPick(AActor* TargetDoor, float Angle);
-
     UFUNCTION(Client, Reliable)
     void ClientShowLoadingScreen();
 
+    // ============================================
+    // Game Event Handlers
+    // ============================================
     UFUNCTION()
     void OnMoneyCollectedChanged(int32 Current, int32 Target);
 
+    void OnHealthChanged(const struct FOnAttributeChangeData& Data);
+    void OnIllegalTagChanged(const struct FGameplayTag Tag, int32 NewCount);
+
+    // ============================================
+    // Server RPCs
+    // ============================================
+    UFUNCTION(Server, Reliable)
+    void ServerTryLockPick(AActor* TargetDoor, float Angle);
+
 private:
+    // ============================================
+    // Internal State
+    // ============================================
     UPROPERTY()
     class ACharacterHUD* CharacterHUD;
 
@@ -68,12 +84,27 @@ private:
 
     FDelegateHandle IllegalTagDelegateHandle;
 
+    // ============================================
+    // Initialization & Binding
+    // ============================================
+    void BindAttributeDelegates();
+    void BindGameplayTagDelegates();
+
+    // ============================================
+    // Pause Menu
+    // ============================================
     UFUNCTION()
     void HandlePauseMenuResumed();
 
+    // ============================================
+    // Ping Update
+    // ============================================
     FTimerHandle PingUpdateTimerHandle;
     void UpdatePingOnOverlay();
 
+    // ============================================
+    // Alarm System
+    // ============================================
     UPROPERTY()
     float AlarmEndTime = 0.f;
 
@@ -87,6 +118,9 @@ private:
 
     void UpdateAlarmUI();
 
+    // ============================================
+    // Pre-Alarm System
+    // ============================================
     UPROPERTY()
     float PreAlarmEndTime = 0.f;
 

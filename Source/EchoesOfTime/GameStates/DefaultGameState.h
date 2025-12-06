@@ -23,6 +23,14 @@ class ECHOESOFTIME_API ADefaultGameState : public AGameState
 public:
 	ADefaultGameState();
 
+	// ============================================
+	// Unreal Engine Overrides
+	// ============================================
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	// ============================================
+	// Alarm System
+	// ============================================
 	UPROPERTY(ReplicatedUsing = OnRep_AlarmStarted, BlueprintReadOnly, Category = "Alarm")
 	float AlarmEndTime;
 
@@ -41,10 +49,18 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnAlarmCanceled OnAlarmCanceled;
 
-	UPROPERTY(BlueprintAssignable)
-	FOnRestartRequested OnRestartRequested;
+	UFUNCTION(BlueprintCallable)
+	void StartAlarm(AActor* InAlarmInstigator = nullptr);
 
-	// --- PRE-ALARM ---
+	UFUNCTION(BlueprintCallable)
+	void CancelAlarm(AActor* InAlarmInstigator = nullptr);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	float GetRemainingAlarmTime() const;
+
+	// ============================================
+	// Pre-Alarm System
+	// ============================================
 	UPROPERTY(ReplicatedUsing = OnRep_PreAlarmStarted, BlueprintReadOnly, Category = "Alarm")
 	float PreAlarmEndTime;
 
@@ -63,20 +79,6 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnPreAlarmCanceled OnPreAlarmCanceled;
 
-	// ALARM
-	UFUNCTION(BlueprintCallable)
-	void StartAlarm(AActor* InAlarmInstigator = nullptr);
-
-	UFUNCTION(BlueprintCallable)
-	void CancelAlarm(AActor* InAlarmInstigator = nullptr);
-
-	UFUNCTION(BlueprintCallable, BlueprintPure)
-	float GetRemainingAlarmTime() const;
-
-	UFUNCTION(BlueprintCallable)
-	void RequestRestart();
-
-	// PRE-ALARM
 	UFUNCTION(BlueprintCallable)
 	void StartPreAlarm(AActor* InPreAlarmInstigator, float Duration);
 
@@ -86,24 +88,37 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	float GetRemainingPreAlarmTime() const;
 
-	// Amount of money players need to collect to complete the objective
+	// ============================================
+	// Objective System
+	// ============================================
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Objective")
 	int32 TargetMoneyAmount = 50000;
 
-	// Current progress (total money collected so far)
 	UPROPERTY(ReplicatedUsing = OnRep_CurrentMoneyCollected, BlueprintReadOnly, Category = "Objective")
 	int32 CurrentMoneyCollected = 0;
 
 	UPROPERTY(BlueprintAssignable)
 	FOnMoneyCollectedChanged OnMoneyCollectedChanged;
 
-	UFUNCTION()
-	void OnRep_CurrentMoneyCollected();
-
 	UFUNCTION(BlueprintCallable)
 	void AddCollectedMoney(int32 Amount);
 
+	UFUNCTION()
+	void OnRep_CurrentMoneyCollected();
+
+	// ============================================
+	// Game Control
+	// ============================================
+	UPROPERTY(BlueprintAssignable)
+	FOnRestartRequested OnRestartRequested;
+
+	UFUNCTION(BlueprintCallable)
+	void RequestRestart();
+
 protected:
+	// ============================================
+	// Replication Callbacks
+	// ============================================
 	UFUNCTION()
 	void OnRep_AlarmStarted();
 
@@ -115,6 +130,4 @@ protected:
 
 	UFUNCTION()
 	void OnRep_PreAlarmActive();
-
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
