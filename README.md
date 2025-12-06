@@ -1,12 +1,59 @@
 # Echoes of Time
 
-A co-op multiplayer Unreal Engine 5 project featuring time-travel mechanics, team-based gameplay, inventory systems, lockpicking/hacking/searching via Gameplay Ability System (GAS), stealth/detection, and a robust lobby/online session UX. The codebase emphasizes clean separation of Gameplay, UI, and Networking, authoritative server logic with client-side prediction for responsive input, and extensibility for new mechanics and content.
+[![Unreal Engine](https://img.shields.io/badge/Unreal%20Engine-5.7-blue.svg)](https://www.unrealengine.com/)
+[![C++](https://img.shields.io/badge/C%2B%2B-17-blue.svg)](https://isocpp.org/)
+[![License](https://img.shields.io/badge/license-See%20LICENSE-green.svg)](#license)
 
-This README documents how the systems are implemented in detail, with pointers to the relevant classes and flows. It goes well beyond a feature list to explain how and why things work.
+## Overview
+
+**Echoes of Time** is an advanced co-op multiplayer stealth game built with Unreal Engine 5 that features innovative time-travel mechanics and team-based gameplay. Players work together across two timelines (Past and Future) to complete objectives while navigating complex puzzles, avoiding detection, and managing shared temporal consequences.
+
+### Key Features
+
+- 🕰️ **Time-Travel Mechanics**: Past actions directly affect the Future timeline in real-time
+- 👥 **Cooperative Multiplayer**: Team-based gameplay with specialized roles for Past and Future teams
+- 🎮 **Gameplay Ability System (GAS)**: Advanced ability framework for lockpicking, hacking, and searching
+- 👻 **Ghost/Echo System**: Future team can see echoes of Past team's actions
+- 🎯 **Stealth & Detection**: Sophisticated AI with cameras, guards, and progressive alarm states
+- 🔓 **Interactive Puzzles**: Wire cutting, lever sequences, keypad codes, and device disabling
+- 🎨 **Rich Inventory System**: Time-aware item management with cross-timeline invalidation
+- 🌐 **Robust Networking**: Server-authoritative with client-side prediction for responsive gameplay
+- 🎪 **Complete Lobby System**: Full session management with player readiness and team selection
+
+### What Makes This Project Special
+
+This README documents how the systems are implemented in detail, with pointers to the relevant classes and flows. It goes well beyond a feature list to explain how and why things work. The codebase emphasizes:
+
+- **Clean Separation**: Gameplay, UI, and Networking are isolated into distinct systems
+- **Authoritative Server Logic**: All gameplay state mutations are server-controlled
+- **Client-Side Prediction**: Responsive input with prediction windows for smooth UX
+- **Extensibility**: Designed for easy addition of new mechanics and content
+- **Professional Architecture**: Production-ready patterns and best practices throughout
+
+---
+
+## Quick Start
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/Traveler3114/Echoes-of-Time.git
+
+# 2. Open the project in Unreal Engine 5.7+
+# Double-click EchoesOfTime.uproject
+
+# 3. Build from the editor or with Visual Studio
+# File → Generate Visual Studio project files
+# Build Solution in Visual Studio 2022
+```
+
+For detailed setup instructions, see [Setup Instructions](#setup-instructions).
 
 ---
 
 ## Table of Contents
+
+- [Overview](#overview)
+- [Quick Start](#quick-start)
 
 - [High-Level Architecture](#high-level-architecture)
 - [Networking & Replication Model](#networking--replication-model)
@@ -64,22 +111,109 @@ This README documents how the systems are implemented in detail, with pointers t
 - [Puzzle Completion Interface](#puzzle-completion-interface)
 - [Project Structure](#project-structure)
 - [Setup Instructions](#setup-instructions)
+- [Development Workflow](#development-workflow)
+- [Configuration Guide](#configuration-guide)
+- [Gameplay Overview](#gameplay-overview)
+- [Troubleshooting](#troubleshooting)
+- [Performance Optimization](#performance-optimization)
+- [FAQ](#faq)
 - [Extending & Contribution](#extending--contribution)
+- [Credits & Acknowledgments](#credits--acknowledgments)
 - [License](#license)
 
 ---
 
 ## High-Level Architecture
 
-- Server-authoritative multiplayer with client QoL:
-  - Client-side prediction for some abilities (e.g., Aim/Fire, Hacking, Lockpick, Search) using GAS and scoped prediction windows.
-  - UI-only elements render client-side but are driven by replicated state or predicted tasks.
-- Core systems are isolated:
-  - Gameplay/Actors (Doors, Items, Scanners, Cameras, Guards, etc.)
-  - Components (Inventory, LockPick, Hack, Search)
-  - AbilitySystem (Abilities, AbilityTasks, Attribute sets, Gameplay tags)
-  - UI Widgets (HUD, Lobby, Minigames)
-  - GameMode/GameState/PlayerState for flow and replicated meta.
+### System Overview
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Client Layer                             │
+├─────────────────────────────────────────────────────────────────┤
+│  UI Layer (UMG Widgets)                                         │
+│  ├─ CharacterOverlay (HUD, Inventory, Status)                  │
+│  ├─ Minigame Widgets (Lockpick, Hack, Search)                 │
+│  ├─ Lobby Widgets (Team Selection, Ready State)               │
+│  └─ Menus (Pause, Settings, Main Menu)                        │
+├─────────────────────────────────────────────────────────────────┤
+│  Input Layer (Enhanced Input System)                            │
+│  └─ Input Contexts → Gameplay Ability System                   │
+├─────────────────────────────────────────────────────────────────┤
+│  Prediction Layer (Client-Side Prediction)                      │
+│  └─ GAS Prediction Windows for Responsive Abilities            │
+└─────────────────────────────────────────────────────────────────┘
+                            ↕ RPC / Replication
+┌─────────────────────────────────────────────────────────────────┐
+│                        Server Layer                              │
+├─────────────────────────────────────────────────────────────────┤
+│  Game Flow (GameMode/GameState/PlayerState)                     │
+│  ├─ Session Management (Lobby → Match transitions)             │
+│  ├─ Alarm System (Pre-Alarm → Alarm → Level Restart)          │
+│  ├─ Objective Tracking (Money collection, Puzzle completion)   │
+│  └─ Team Management (Past/Future assignment)                   │
+├─────────────────────────────────────────────────────────────────┤
+│  Gameplay Systems                                               │
+│  ├─ Ability System (GAS)                                       │
+│  │   ├─ Abilities (Lockpick, Hack, Search, Aim, Fire)        │
+│  │   ├─ Ability Tasks (UI integration)                        │
+│  │   ├─ Gameplay Effects (Health, Status)                     │
+│  │   └─ Gameplay Tags (Status, Team, Abilities)              │
+│  ├─ Interaction System (IInteractable interfaces)             │
+│  ├─ Detection System (Cameras, Guards, Lasers)                │
+│  ├─ Time-Link System (Past → Future invalidation)             │
+│  └─ Inventory System (Item management, Equipping)             │
+├─────────────────────────────────────────────────────────────────┤
+│  Actor Layer                                                     │
+│  ├─ Characters (Player, Guard, Civilian, Drone)               │
+│  ├─ Interactive Actors (Doors, Computers, Scanners)           │
+│  ├─ Puzzle Actors (Levers, Wires, Devices, Keypads)          │
+│  ├─ Items (Pickups, Past/Future variants)                     │
+│  └─ Detection Actors (Cameras, Lasers, Metal Detectors)       │
+├─────────────────────────────────────────────────────────────────┤
+│  Component Layer                                                 │
+│  ├─ InventoryComponent (Item storage and management)          │
+│  ├─ AbilitySystemComponent (GAS integration)                  │
+│  ├─ LockPickComponent (Lockpicking logic)                     │
+│  ├─ HackComponent (Hacking progress)                          │
+│  └─ SearchComponent (Search progress)                         │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Architecture Principles
+
+**Server-Authoritative Multiplayer with Client QoL**:
+- Client-side prediction for abilities (Aim/Fire, Hacking, Lockpick, Search) using GAS scoped prediction windows
+- UI-only elements render client-side but are driven by replicated state or predicted tasks
+- All gameplay state mutations happen on server, then replicate to clients
+- Client predictions are validated and corrected by server if needed
+
+**Core Systems Isolation**:
+- **Gameplay/Actors**: Doors, Items, Scanners, Cameras, Guards, Puzzles
+- **Components**: Inventory, LockPick, Hack, Search (reusable functionality)
+- **Ability System**: Abilities, AbilityTasks, Attribute sets, Gameplay tags
+- **UI Widgets**: HUD, Lobby, Minigames (clean separation from logic)
+- **GameMode/GameState/PlayerState**: Flow control and replicated meta data
+
+**Data Flow Pattern**:
+1. **Input** → Enhanced Input System → Ability Activation
+2. **Client Prediction** → Immediate UI response
+3. **Server RPC** → Authority validates and executes
+4. **Replication** → State changes propagate to all clients
+5. **OnRep Functions** → Clients update visuals and UI
+
+### Module Dependencies
+
+```
+EchoesOfTime (Runtime)
+├─ Engine (Core UE functionality)
+├─ UMG (UI widgets)
+├─ GameplayAbilities (GAS framework)
+├─ AdvancedSessions (Multiplayer session management)
+├─ Niagara (VFX for lasers, effects)
+├─ OnlineSubsystem (Steam/EOS integration)
+└─ AIModule (Guard and Civilian AI)
+```
 
 ---
 
@@ -782,36 +916,813 @@ Implemented by `AMetalDetector`, laser managers, and other puzzle-gated actors. 
 
 ## Setup Instructions
 
-1. Requirements
-   - Unreal Engine 5.x
-   - Visual Studio 2022 (or equivalent toolchain)
-   - Plugins:
-     - GameplayAbilities (GAS)
-     - Online Subsystem (for sessions) and Advanced Sessions/Friends if using `UAdvancedFriendsGameInstance`
-     - Niagara (for laser effects)
+### Prerequisites
 
-2. Clone and Build
-   - `git clone <repo-url>`
-   - Open `EchoesOfTime.uproject` in Unreal Editor and build.
+#### System Requirements
 
-3. Configure Plugins/Subsystems
-   - Enable GameplayAbilities, Niagara, OnlineSubsystem (Steam/EOS, etc.).
-   - Configure OSS in `DefaultEngine.ini` if using sessions.
+**Minimum**:
+- **OS**: Windows 10 64-bit / Ubuntu 20.04 / macOS 12.0+
+- **CPU**: Quad-core Intel or AMD, 2.5 GHz or faster
+- **RAM**: 16 GB
+- **GPU**: NVIDIA GTX 1060 / AMD RX 580 or better
+- **Storage**: 50 GB available space (SSD recommended)
+- **Network**: Broadband internet connection for multiplayer
 
-4. Editor Setup
-   - Maps:
-     - `/Game/Maps/MainMenuMap` for main menu.
-     - `/Game/Maps/LobbyMap` for lobby.
-     - `/Game/Maps/TestMap` for gameplay (configurable: `ALobbyGameMode::MatchMapPath`).
-   - Set DefaultGameMode per map (Lobby vs Match).
-   - Player Controllers:
-     - `AMainMenuPlayerController` on Main Menu.
-     - `ALobbyPlayerController` on Lobby.
-     - `ADefaultPlayerController` on gameplay.
+**Recommended**:
+- **CPU**: 8-core Intel i7 / AMD Ryzen 7, 3.0 GHz or faster
+- **RAM**: 32 GB
+- **GPU**: NVIDIA RTX 3070 / AMD RX 6800 or better
+- **Storage**: 100 GB SSD
 
-5. Online Session Wiring (optional)
-   - Implement `UDefaultGameInstance::CreateSession` in Blueprint to create/join sessions.
-   - `UMainMenuWidget` calls `CreateSession()` on button click.
+#### Software Requirements
+
+- **Unreal Engine**: 5.7 or higher ([Download](https://www.unrealengine.com/download))
+- **IDE**: Visual Studio 2022 Community or Professional with:
+  - Game Development with C++ workload
+  - Unreal Engine installer (optional)
+  - Windows 10 SDK (10.0.18362 or newer)
+- **Git**: For version control ([Download](https://git-scm.com/downloads))
+- **Git LFS**: For large binary files ([Download](https://git-lfs.github.com/))
+
+### Installation Steps
+
+#### 1. Install Unreal Engine
+
+```bash
+# Via Epic Games Launcher (Recommended)
+1. Install Epic Games Launcher
+2. Navigate to Unreal Engine tab
+3. Install Unreal Engine 5.7+
+
+# Via Source (Advanced)
+git clone https://github.com/EpicGames/UnrealEngine.git
+cd UnrealEngine
+./Setup.bat  # Windows
+./Setup.sh   # Linux/Mac
+./GenerateProjectFiles.bat  # Windows
+```
+
+#### 2. Clone Repository
+
+```bash
+# Clone with Git LFS support
+git lfs install
+git clone https://github.com/Traveler3114/Echoes-of-Time.git
+cd Echoes-of-Time
+
+# Verify LFS files are downloaded
+git lfs pull
+```
+
+#### 3. Enable Required Plugins
+
+The project requires these plugins (most are already configured in `.uproject`):
+
+**Built-in Plugins**:
+- ✅ GameplayAbilities (GAS)
+- ✅ Enhanced Input
+- ✅ Niagara
+- ✅ OnlineSubsystem
+- ✅ StateTree
+- ✅ GameplayStateTree
+
+**Third-Party Plugins**:
+- ✅ Advanced Sessions (included)
+- ⚠️ OnlineSubsystemEOS (configure for production)
+- ⚠️ OnlineSubsystemSteam (configure for Steam)
+
+To verify plugins:
+1. Open `EchoesOfTime.uproject` in text editor
+2. Check `Plugins` section
+3. Or use Editor: Edit → Plugins → Search for plugin name
+
+#### 4. Generate Project Files
+
+```bash
+# Windows
+Right-click EchoesOfTime.uproject → "Generate Visual Studio project files"
+
+# Or via command line:
+"C:\Program Files\Epic Games\UE_5.7\Engine\Build\BatchFiles\GenerateProjectFiles.bat" -project="EchoesOfTime.uproject" -game -engine
+
+# Linux
+Engine/Build/BatchFiles/Linux/GenerateMakefile.sh -project="EchoesOfTime.uproject"
+
+# Mac
+Engine/Build/BatchFiles/Mac/GenerateProjectFiles.sh -project="EchoesOfTime.uproject"
+```
+
+#### 5. Build the Project
+
+**Option A: From Unreal Editor** (Recommended for first build)
+```
+1. Double-click EchoesOfTime.uproject
+2. Editor will prompt: "Project is out of date, would you like to rebuild?"
+3. Click "Yes"
+4. Wait for compilation (5-15 minutes on first build)
+```
+
+**Option B: From Visual Studio**
+```
+1. Open EchoesOfTime.sln
+2. Set configuration to "Development Editor"
+3. Set platform to "Win64"
+4. Build → Build Solution (Ctrl+Shift+B)
+```
+
+**Option C: Command Line**
+```bash
+# Windows
+"C:\Program Files\Epic Games\UE_5.7\Engine\Build\BatchFiles\Build.bat" ^
+  EchoesOfTimeEditor Win64 Development ^
+  -Project="EchoesOfTime.uproject"
+
+# Linux
+Engine/Build/BatchFiles/Linux/Build.sh ^
+  EchoesOfTimeEditor Linux Development ^
+  -Project="EchoesOfTime.uproject"
+```
+
+### Configure Online Subsystem
+
+#### For Local Testing (Default)
+
+Use NULL subsystem (no configuration needed):
+
+```ini
+# Config/DefaultEngine.ini
+[OnlineSubsystem]
+DefaultPlatformService=NULL
+```
+
+#### For Steam Integration
+
+1. Install Steam SDK or use Steamworks plugin
+2. Configure `DefaultEngine.ini`:
+
+```ini
+[OnlineSubsystem]
+DefaultPlatformService=Steam
+
+[OnlineSubsystemSteam]
+bEnabled=true
+SteamDevAppId=480  ; Use 480 for testing, replace with your App ID
+bInitServerOnClient=true
+bVACEnabled=0  ; Enable VAC in production
+
+[/Script/Engine.GameEngine]
++NetDriverDefinitions=(DefName="GameNetDriver",DriverClassName="OnlineSubsystemSteam.SteamNetDriver",DriverClassNameFallback="OnlineSubsystemUtils.IpNetDriver")
+```
+
+3. Restart editor after configuration changes
+
+#### For Epic Online Services (EOS)
+
+1. Create EOS application at [Epic Developer Portal](https://dev.epicgames.com/)
+2. Get Product ID, Sandbox ID, Deployment ID
+3. Configure `DefaultEngine.ini`:
+
+```ini
+[OnlineSubsystem]
+DefaultPlatformService=EOS
+
+[OnlineSubsystemEOS]
+bEnabled=true
+ProductId=YOUR_PRODUCT_ID_HERE
+SandboxId=YOUR_SANDBOX_ID_HERE
+DeploymentId=YOUR_DEPLOYMENT_ID_HERE
+ClientId=YOUR_CLIENT_ID_HERE
+ClientSecret=YOUR_CLIENT_SECRET_HERE
+```
+
+4. Configure additional EOS settings as per Epic's documentation
+
+### Editor Setup
+
+#### Map Configuration
+
+Ensure these maps exist and are properly configured:
+
+1. **Main Menu Map**: `/Content/Maps/MainMenuMap.umap`
+   - **Game Mode**: Default (will use MainMenuPlayerController)
+   - **Purpose**: Session creation, settings
+   
+2. **Lobby Map**: `/Content/Maps/LobbyMap.umap`
+   - **Game Mode**: `BP_LobbyGameMode`
+   - **Player Controller**: `BP_LobbyPlayerController`
+   - **Purpose**: Team selection, readiness, session management
+
+3. **Gameplay Map**: `/Content/Maps/TestMap.umap` (or custom map)
+   - **Game Mode**: `BP_DefaultGameMode`
+   - **Player Controller**: `BP_DefaultPlayerController`
+   - **Game State**: `BP_DefaultGameState`
+   - **Player State**: `BP_DefaultPlayerState`
+   - **Purpose**: Main gameplay
+
+#### Set Default Maps
+
+In Project Settings → Maps & Modes:
+- **Editor Startup Map**: MainMenuMap
+- **Game Default Map**: MainMenuMap
+- **Server Default Map**: MainMenuMap
+
+#### Configure Game Modes Per Map
+
+```
+World Settings (each map):
+├─ MainMenuMap → No specific GameMode override
+├─ LobbyMap → BP_LobbyGameMode
+└─ TestMap → BP_DefaultGameMode
+```
+
+### Verify Installation
+
+#### Run Quick Test
+
+1. **Open Editor**: Launch `EchoesOfTime.uproject`
+2. **Check Compilation**: Verify no errors in Output Log
+3. **Test Main Menu**: Press Play (PIE) in MainMenuMap
+4. **Test Multiplayer**:
+   - Edit → Editor Preferences → Play
+   - Set "Number of Players" to 2
+   - Set "Net Mode" to "Play As Listen Server"
+   - Press Play
+   - Verify both clients spawn
+
+#### Verify Plugins
+
+```
+Editor → Edit → Plugins → Search:
+✓ Gameplay Abilities (Enabled, Built-in)
+✓ Enhanced Input (Enabled, Built-in)
+✓ Advanced Sessions (Enabled, Project)
+✓ Niagara (Enabled, Built-in)
+```
+
+#### Check Console for Errors
+
+```
+Window → Developer Tools → Output Log
+Look for:
+❌ LogAbilitySystem: Error - Fix GAS setup
+❌ LogOnline: Error - Fix Online Subsystem
+❌ LogNet: Error - Fix networking setup
+✅ LogInit: Display: Game Engine Initialized - All good!
+```
+
+### Post-Installation Configuration
+
+#### Input Bindings
+
+Enhanced Input is configured in:
+- Input Mapping Context: `Content/Input/IMC_Default`
+- Input Actions: `Content/Input/Actions/`
+
+Verify bindings in **Edit → Project Settings → Input**
+
+#### Gameplay Tags
+
+Verify tags are loaded:
+- **Project Settings → Gameplay Tags**
+- Should see tags from `Config/DefaultGameplayTags.ini`
+- Tags like `Team.Past`, `Team.Future`, `Ability.LockPick`, etc.
+
+#### Network Settings
+
+For optimal multiplayer:
+```ini
+# Config/DefaultEngine.ini
+[/Script/Engine.GameNetworkManager]
+TotalNetBandwidth=32000
+MaxDynamicBandwidth=7000
+MinDynamicBandwidth=4000
+
+[/Script/OnlineSubsystemUtils.IpNetDriver]
+NetServerMaxTickRate=60
+MaxClientRate=25000
+MaxInternetClientRate=10000
+```
+
+### Optional: Blueprint Implementation
+
+Some features require Blueprint implementation:
+
+#### Game Instance Session Creation
+
+1. Open `BP_DefaultGameInstance` (Blueprint child of `UDefaultGameInstance`)
+2. Implement `CreateSession` event (marked as BlueprintImplementableEvent)
+3. Use Advanced Sessions plugin nodes:
+   - Create Advanced Session
+   - Find Sessions
+   - Join Session
+
+#### UI Widget Bindings
+
+Verify UI widgets are properly bound in:
+- `Content/UI/` - Widget blueprints
+- Check event bindings connect to C++ functions
+
+### Troubleshooting Setup
+
+**"Missing DLL" on first launch?**
+```
+Solution: Rebuild from Visual Studio or let editor rebuild
+```
+
+**"Plugin 'GameplayAbilities' failed to load"?**
+```
+Solution: Verify plugin enabled in .uproject and editor
+Regenerate project files
+```
+
+**"Cannot open project with current engine version"?**
+```
+Solution: Update to UE 5.7+, or right-click .uproject → 
+"Switch Unreal Engine version"
+```
+
+**Compilation errors about missing headers?**
+```
+Solution: Check all plugins are enabled
+Verify engine installation is complete
+Clean build (delete Binaries, Intermediate, Saved)
+```
+
+For more troubleshooting, see [Troubleshooting](#troubleshooting) section.
+
+---
+
+## Development Workflow
+
+### Building the Project
+
+#### From Unreal Editor
+1. Open `EchoesOfTime.uproject` in Unreal Engine 5.7+
+2. Editor will prompt to rebuild modules if needed
+3. Click "Yes" to compile C++ code
+
+#### From Visual Studio
+1. Right-click `EchoesOfTime.uproject` → "Generate Visual Studio project files"
+2. Open `EchoesOfTime.sln` in Visual Studio 2022
+3. Set configuration to `Development Editor` or `DebugGame Editor`
+4. Build Solution (Ctrl+Shift+B)
+
+#### Command Line Build
+```bash
+# Windows
+"C:\Program Files\Epic Games\UE_5.7\Engine\Build\BatchFiles\Build.bat" EchoesOfTimeEditor Win64 Development -Project="Path\To\EchoesOfTime.uproject"
+
+# Linux
+/path/to/UE_5.7/Engine/Build/BatchFiles/Linux/Build.sh EchoesOfTimeEditor Linux Development -Project="/path/to/EchoesOfTime.uproject"
+```
+
+### Running and Testing
+
+#### PIE (Play In Editor)
+- **Single Player**: Click "Play" button (Alt+P)
+- **Multiplayer Test**: 
+  - Set Number of Players: Edit → Editor Preferences → Play → Multiplayer Options
+  - Recommended: 2-4 players for testing Past/Future team mechanics
+  - Use "New Editor Window (PIE)" for dedicated server testing
+
+#### Standalone Game
+- Play → Standalone Game (Alt+F11)
+- Use command line arguments for networking:
+  ```bash
+  # Host session
+  EchoesOfTime.exe /Game/Maps/LobbyMap?listen
+  
+  # Join session
+  EchoesOfTime.exe 127.0.0.1
+  ```
+
+### Debugging
+
+#### C++ Debugging
+1. Set Visual Studio as debugger: Editor Preferences → General → Source Code → Source Code Editor
+2. Attach to process: Debug → Attach to Process → UE4Editor.exe
+3. Set breakpoints in .cpp files
+4. Use `UE_LOG` macros for runtime logging:
+   ```cpp
+   UE_LOG(LogTemp, Warning, TEXT("Your message: %s"), *YourString);
+   ```
+
+#### Blueprint Debugging
+- Set breakpoints in Blueprint nodes
+- Use Print String nodes for quick debugging
+- Enable Blueprint debugging: Debug → Enable Blueprint Debugging
+
+#### Network Debugging
+- Console commands:
+  ```
+  stat net          // Show network statistics
+  net pktlag 100    // Simulate 100ms lag
+  net pktloss 10    // Simulate 10% packet loss
+  ShowDebug NET     // Display network debug info
+  ```
+
+### Code Style and Conventions
+
+- **Naming**: Follow [Unreal Engine Coding Standard](https://docs.unrealengine.com/5.7/en-US/epic-cplusplus-coding-standard-for-unreal-engine/)
+  - Classes: `AMyActor`, `UMyComponent`, `FMyStruct`, `EMyEnum`, `IMyInterface`
+  - Variables: `bIsActive`, `PlayerCount`, `CurrentHealth`
+- **Headers**: Use forward declarations where possible
+- **Replication**: Always use `DOREPLIFETIME` macros and OnRep functions
+- **Memory**: Use UE smart pointers (`TSharedPtr`, `TWeakPtr`) for non-UObject types
+- **Comments**: Document public APIs and complex logic
+
+### Version Control
+
+- **Branch Strategy**: Feature branches from main
+- **Commit Messages**: Use descriptive messages explaining "why" not just "what"
+- **Binary Files**: Large assets committed using Git LFS
+- **Ignored Files**: Build artifacts, intermediate files, saved folders
+
+---
+
+## Configuration Guide
+
+### Engine Configuration (`DefaultEngine.ini`)
+
+Key sections to configure:
+
+#### Online Subsystem
+```ini
+[OnlineSubsystem]
+DefaultPlatformService=Steam  ; or EOS, NULL for local testing
+
+[OnlineSubsystemSteam]
+bEnabled=true
+SteamDevAppId=480  ; Replace with your Steam App ID
+bInitServerOnClient=true
+
+[OnlineSubsystemEOS]
+bEnabled=false
+ProductId=YourProductId
+SandboxId=YourSandboxId
+DeploymentId=YourDeploymentId
+```
+
+#### Network Settings
+```ini
+[/Script/Engine.GameNetworkManager]
+TotalNetBandwidth=32000
+MaxDynamicBandwidth=7000
+MinDynamicBandwidth=4000
+
+[/Script/OnlineSubsystemUtils.IpNetDriver]
+MaxClientRate=25000
+MaxInternetClientRate=10000
+```
+
+### Game Configuration (`DefaultGame.ini`)
+
+Project settings and gameplay tags are defined here:
+
+```ini
+[/Script/EngineSettings.GeneralProjectSettings]
+ProjectID=YourProjectGUID
+ProjectName=Echoes of Time
+CompanyName=YourCompany
+
+[/Script/GameplayTags.GameplayTagsSettings]
+ImportTagsFromConfig=True
+```
+
+### Input Configuration (`DefaultInput.ini`)
+
+Enhanced Input System mappings are defined here. Key input contexts:
+- `IMC_Default`: Main gameplay input context
+- `IMC_UI`: UI navigation context
+
+### Gameplay Tags Configuration (`DefaultGameplayTags.ini`)
+
+All gameplay tags are defined here. See [Gameplay Tags](#gameplay-tags) section for details on tag usage.
+
+### Editor Preferences (`DefaultEditor.ini`)
+
+Editor-specific settings including:
+- Asset editor layouts
+- Content browser settings
+- Blueprint editor preferences
+
+---
+
+## Gameplay Overview
+
+### Game Modes
+
+#### Main Menu
+- **Map**: `MainMenuMap`
+- **Controller**: `AMainMenuPlayerController`
+- **Purpose**: Session creation/joining, settings configuration
+
+#### Lobby
+- **Map**: `LobbyMap`
+- **Game Mode**: `ALobbyGameMode`
+- **Controller**: `ALobbyPlayerController`
+- **Features**:
+  - Player seating and visualization
+  - Team selection (Past/Future)
+  - Readiness system
+  - Host controls (start game, kick players)
+  - Friend list integration
+
+#### Gameplay Match
+- **Map**: `TestMap` (configurable)
+- **Game Mode**: `ADefaultGameMode`
+- **Controller**: `ADefaultPlayerController`
+- **Game State**: `ADefaultGameState`
+- **Player State**: `ADefaultPlayerState`
+
+### Core Gameplay Loop
+
+1. **Lobby Phase**
+   - Players join session and select seats
+   - Choose team (Past or Future)
+   - Mark ready when team is formed
+   - Host starts match when requirements met
+
+2. **Match Initialization**
+   - Seamless travel to gameplay map
+   - Players spawn at team-specific spawn points
+   - Procedural level generator populates puzzles
+   - Objectives and timers initialized
+
+3. **Gameplay Phase**
+   - **Past Team**: Collects items, solves puzzles, creates timeline
+   - **Future Team**: Sees echoes of Past actions, adapts strategy
+   - **Both Teams**: Avoid detection, coordinate across timelines
+
+4. **Objective Completion**
+   - Collect target money amount
+   - Complete required puzzles
+   - Escape before alarm countdown expires
+
+5. **Match End**
+   - Victory/defeat conditions evaluated
+   - Session cleanup and return to lobby
+
+### Player Abilities
+
+| Ability | Team | Description | Input |
+|---------|------|-------------|-------|
+| **Lockpicking** | Both | Mini-game to unlock doors | E on locked door |
+| **Hacking** | Both | Timed progress to access computers | E on computer |
+| **Searching** | Both | Timed search of containers | E on searchable object |
+| **Aim/Fire** | Both | Weapon combat | Right Mouse / Left Mouse |
+| **Past Echo** | Future | Toggle visibility of Past team echoes | G (configurable) |
+| **Sprint** | Both | Increased movement speed | Shift |
+| **Crouch** | Both | Reduced detection profile | Ctrl |
+
+### Puzzle Types
+
+1. **Lever Puzzles**: Activate levers in correct sequence
+2. **Wire Puzzles**: Cut specific colored wires in order across multiple devices
+3. **Keypad Codes**: Enter correct numeric codes from hacked computers
+4. **Fingerprint Matching**: Use fingerprints from cups to access code generators
+5. **Device Disabling**: Search and disable multiple security devices
+
+### Detection and Alarm System
+
+#### Detection Levels
+1. **Undetected**: Green/no indicator
+2. **Suspicious**: Yellow, detection ring filling
+3. **Pre-Alarm**: Orange, countdown starts
+4. **Full Alarm**: Red, level restart countdown
+
+#### Detection Sources
+- **Security Cameras**: Pan in fixed patterns, FOV-based detection
+- **Guards**: AI perception with sight sense, investigate suspicious activity
+- **Laser Sensors**: Instant alarm on contact
+- **Metal Detectors**: Alarm when carrying metal items
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+#### Build Errors
+
+**Problem**: "Missing modules" error when opening project
+```
+Solution:
+1. Right-click .uproject → "Generate Visual Studio project files"
+2. Build in Visual Studio
+3. Reopen project in editor
+```
+
+**Problem**: "Failed to load DLL" errors
+```
+Solution:
+- Check that all required plugins are enabled
+- Verify engine version (5.7+)
+- Clean build: Delete Binaries, Intermediate, Saved folders
+- Regenerate project files
+```
+
+#### Runtime Issues
+
+**Problem**: Multiplayer desync or replication issues
+```
+Solution:
+- Verify all gameplay state is replicated
+- Check OnRep functions are called
+- Use `net.SimulateLatency X` to test with lag
+- Review server logs for RPC failures
+```
+
+**Problem**: Abilities not activating
+```
+Solution:
+- Verify GameplayAbilitySystemComponent is initialized
+- Check ability tags match input tags
+- Ensure ASC is on PlayerState (not Character) for seamless travel
+- Debug with `showdebug abilitysystem` console command
+```
+
+**Problem**: Items disappearing or not spawning
+```
+Solution:
+- Verify ItemInstanceID uniqueness
+- Check Past/Future team assignment
+- Review `IsNetRelevantFor` implementation
+- Ensure proper replication settings on pickup actors
+```
+
+#### Performance Issues
+
+**Problem**: Low FPS in multiplayer
+```
+Solution:
+- Reduce number of replicated actors
+- Use relevancy optimization (IsNetRelevantFor)
+- Enable network culling
+- Profile with `stat fps`, `stat unit`, `stat game`
+```
+
+#### Network/Session Issues
+
+**Problem**: Cannot create or join sessions
+```
+Solution:
+- Verify OnlineSubsystem configuration
+- Check firewall settings (ports 7777, 7778 for testing)
+- Test with NULL subsystem first
+- Review logs: Window → Developer Tools → Output Log
+```
+
+### Debug Console Commands
+
+```cpp
+// Networking
+stat net                    // Network statistics
+net.PackageMap.DebugObject  // Debug specific actor replication
+net.Relevancy               // Show relevancy debugging
+
+// Performance
+stat fps                    // Frame rate
+stat unit                   // Frame time breakdown
+stat game                   // Game thread stats
+stat scenerendering         // Rendering stats
+
+// Gameplay
+showdebug abilitysystem     // GAS debugging
+showdebug ai                // AI debugging
+displayall ADefaultCharacter bIsSprinting  // Show variable on all instances
+
+// Logging
+log LogNet All              // Enable all network logging
+log LogAbilitySystem Verbose // Detailed GAS logs
+log LogTemp Warning         // Default logging category
+```
+
+### Logs Location
+
+- **Windows**: `%LOCALAPPDATA%\EchoesOfTime\Saved\Logs`
+- **Linux**: `~/.config/EchoesOfTime/Saved/Logs`
+- **Log File**: `EchoesOfTime.log`
+
+---
+
+## Performance Optimization
+
+### Network Optimization
+
+#### Replication Strategy
+- Use `IsNetRelevantFor()` to limit replication scope (Future items only to Future team)
+- Set appropriate `NetUpdateFrequency` on actors (default 100, reduce for less critical actors)
+- Use conditional replication with `DOREPLIFETIME_CONDITION`
+- Batch RPCs where possible to reduce overhead
+
+#### Bandwidth Management
+```cpp
+// Example: Conditional replication
+void AMyActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    
+    DOREPLIFETIME_CONDITION(AMyActor, LowPriorityData, COND_SkipOwner);
+    DOREPLIFETIME_CONDITION(AMyActor, OwnerOnlyData, COND_OwnerOnly);
+}
+```
+
+### Rendering Optimization
+
+#### LOD (Level of Detail)
+- Use LOD groups for skeletal meshes
+- Set appropriate screen sizes for LOD transitions
+- Enable HLOD for static geometry in large levels
+
+#### Culling
+- Use occlusion culling for indoor environments
+- Set appropriate cull distances on actors
+- Enable distance culling for effects (Niagara systems)
+
+### Memory Optimization
+
+#### Asset Management
+- Use asset streaming for large levels
+- Implement soft object references for optional content
+- Unload unused assets with garbage collection hints
+
+#### Actor Pooling
+Consider pooling for frequently spawned/destroyed actors:
+- Pickups
+- Projectiles (bullets)
+- Effect actors
+
+### CPU Optimization
+
+#### Tick Management
+- Disable tick on actors that don't need it
+- Use timers instead of tick for infrequent updates
+- Set appropriate tick intervals with `PrimaryActorTick.TickInterval`
+
+#### Profiling Tools
+- Unreal Insights: In-depth profiling system
+- GPU Visualizer: Rendering performance analysis  
+- Network Profiler: Replication analysis
+- CPU Profiler: Game thread analysis
+
+---
+
+## FAQ
+
+### General Questions
+
+**Q: What version of Unreal Engine is required?**  
+A: Unreal Engine 5.7 or higher. The project uses features introduced in UE5.
+
+**Q: Does this support cross-platform multiplayer?**  
+A: The architecture supports it, but requires proper Online Subsystem configuration (EOS recommended for cross-platform).
+
+**Q: How many players can play simultaneously?**  
+A: Designed for 2-8 players, with optimal experience at 4 players (2 Past, 2 Future).
+
+### Technical Questions
+
+**Q: Why use PlayerState for AbilitySystemComponent?**  
+A: PlayerState persists across seamless travel, maintaining abilities and attributes between level transitions (Lobby → Match).
+
+**Q: How does time invalidation work?**  
+A: Each item has a unique `ItemInstanceID` (GUID). When Past item is destroyed, it broadcasts invalidation. Future items and inventories subscribe to this and remove/destroy matching instances.
+
+**Q: Can I add new team types beyond Past/Future?**  
+A: Yes, extend the team system by:
+1. Add new gameplay tag (e.g., `Team.Present`)
+2. Update spawn logic in ProceduralLevelGenerator
+3. Modify relevancy checks in time-specific actors
+4. Update lobby UI for team selection
+
+**Q: How do I add a new ability?**  
+A: See [Extending & Contribution → New Abilities](#extending--contribution).
+
+### Gameplay Questions
+
+**Q: What happens if Past team gets detected?**  
+A: Pre-alarm starts with countdown. If not canceled, full alarm triggers and level restarts after timer expires.
+
+**Q: Can Future team affect Past timeline?**  
+A: No, the causality is one-way: Past → Future. This prevents temporal paradoxes and maintains consistent gameplay.
+
+**Q: How do puzzles reset?**  
+A: Most puzzles auto-reset on incorrect input (wires, levers). Some require full alarm reset.
+
+### Development Questions
+
+**Q: How do I test multiplayer locally?**  
+A: Use PIE with "Number of Players" > 1, or run multiple standalone instances with `-log` flag.
+
+**Q: Where should I put custom content?**  
+A: 
+- C++ code: `/Source/EchoesOfTime/`
+- Blueprints: `/Content/Blueprints/`
+- Assets: `/Content/` with organized subdirectories
+
+**Q: How do I contribute?**  
+A: See [Extending & Contribution](#extending--contribution) section below.
 
 ---
 
@@ -835,10 +1746,152 @@ Implemented by `AMetalDetector`, laser managers, and other puzzle-gated actors. 
   - Extend `UCharacterOverlay` for additional status or effect bars.
   - Wire computers/desks to display codes and hints via UMG instead of on-screen debug.
 
-Please follow code style and PR guidelines (see CONTRIBUTING.md if provided). This project aims for clean server-authoritative gameplay with thoughtful client prediction and robust UI patterns.
+### Contributing Guidelines
+
+We welcome contributions! Please follow these guidelines:
+
+#### Code Contributions
+
+1. **Fork and Branch**
+   - Fork the repository
+   - Create a feature branch: `git checkout -b feature/your-feature-name`
+   - Make your changes following the code style
+
+2. **Commit Standards**
+   - Write clear, descriptive commit messages
+   - Explain the "why" behind changes
+   - Reference issues if applicable: `Fixes #123`
+
+3. **Testing**
+   - Test your changes in both single-player and multiplayer
+   - Verify no replication issues
+   - Check performance impact
+
+4. **Pull Request**
+   - Update documentation if needed
+   - Describe what your PR does and why
+   - Link related issues
+   - Ensure CI passes (if configured)
+
+#### Code Review Process
+
+- PRs require review from maintainers
+- Address feedback promptly
+- Keep PRs focused on single features/fixes
+- Maintain backward compatibility where possible
+
+#### Reporting Issues
+
+When reporting bugs, include:
+- Unreal Engine version
+- Steps to reproduce
+- Expected vs actual behavior
+- Relevant logs or screenshots
+- System specifications
+
+#### Feature Requests
+
+- Describe the feature clearly
+- Explain use cases and benefits
+- Consider implementation complexity
+- Discuss on issues before major work
+
+Please follow code style and PR guidelines mentioned above. This project aims for clean server-authoritative gameplay with thoughtful client prediction and robust UI patterns.
+
+---
+
+## Credits & Acknowledgments
+
+### Core Technologies
+
+- **[Unreal Engine 5](https://www.unrealengine.com/)** - Epic Games
+- **[Gameplay Ability System (GAS)](https://docs.unrealengine.com/5.7/en-US/gameplay-ability-system-for-unreal-engine/)** - Epic Games
+- **[Advanced Sessions Plugin](https://github.com/mordentral/AdvancedSessionsPlugin)** - mordentral
+- **[Enhanced Input System](https://docs.unrealengine.com/5.7/en-US/enhanced-input-in-unreal-engine/)** - Epic Games
+
+### Development Team
+
+See the [Contributors](https://github.com/Traveler3114/Echoes-of-Time/graphs/contributors) page for a full list of project contributors.
+
+### Special Thanks
+
+- Unreal Engine community for extensive documentation and examples
+- Online subsystem developers for multiplayer infrastructure
+- GAS community for ability system patterns and best practices
+
+### Third-Party Assets
+
+List any third-party assets, plugins, or libraries used in the project with proper attribution.
 
 ---
 
 ## License
 
-Specify your license here (e.g., MIT, Apache 2.0) or link to a LICENSE file.
+This project is licensed under the terms specified in the [LICENSE](LICENSE) file.
+
+**Summary**: [Specify your license type here - e.g., MIT, Apache 2.0, GPL, or Proprietary]
+
+### Additional Terms
+
+- This project uses Unreal Engine 5, which is subject to Epic Games' license agreement
+- Some plugins may have their own licenses - check individual plugin documentation
+- Ensure compliance with all applicable licenses when contributing or using this code
+
+For full license details, see the [LICENSE](LICENSE) file in the repository root.
+
+---
+
+## Additional Resources
+
+### Documentation
+
+- [Unreal Engine Documentation](https://docs.unrealengine.com/5.7/en-US/)
+- [Gameplay Ability System Documentation](https://docs.unrealengine.com/5.7/en-US/gameplay-ability-system-for-unreal-engine/)
+- [Networking Overview](https://docs.unrealengine.com/5.7/en-US/networking-overview-for-unreal-engine/)
+- [Multiplayer Programming](https://docs.unrealengine.com/5.7/en-US/multiplayer-programming-quick-start-for-unreal-engine/)
+
+### Community
+
+- [Unreal Engine Forums](https://forums.unrealengine.com/)
+- [Unreal Slackers Discord](https://unrealslackers.org/)
+- [r/unrealengine](https://www.reddit.com/r/unrealengine/)
+
+### Tutorials
+
+- [GAS Documentation by Tranek](https://github.com/tranek/GASDocumentation)
+- [Multiplayer in UE5 by CodeLikeMe](https://www.youtube.com/c/CodeLikeMe)
+
+---
+
+## Project Status
+
+**Current Version**: Development  
+**Status**: Active Development  
+**Last Updated**: 2025-12-06
+
+### Roadmap
+
+Planned features and improvements:
+- [ ] Enhanced AI behavior patterns
+- [ ] Additional puzzle types
+- [ ] More time-travel mechanics
+- [ ] Expanded level generation
+- [ ] Performance optimizations
+- [ ] UI/UX improvements
+- [ ] Additional game modes
+
+For detailed progress and milestones, see [Issues](https://github.com/Traveler3114/Echoes-of-Time/issues) and [Projects](https://github.com/Traveler3114/Echoes-of-Time/projects).
+
+---
+
+## Contact & Support
+
+For questions, issues, or contributions:
+
+- **GitHub Issues**: [Report bugs or request features](https://github.com/Traveler3114/Echoes-of-Time/issues)
+- **Discussions**: [Join community discussions](https://github.com/Traveler3114/Echoes-of-Time/discussions)
+- **Email**: [Specify contact email if desired]
+
+---
+
+**[⬆ Back to Top](#echoes-of-time)**
