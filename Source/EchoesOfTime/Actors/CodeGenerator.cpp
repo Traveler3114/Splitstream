@@ -107,7 +107,8 @@ void ACodeGenerator::CheckExpiredCodes()
         }
     }
 
-    // Always update display text when codes are active to show countdown
+    // Update display text when codes are active to show countdown timer
+    // Timer interval of 0.5s provides smooth countdown updates without per-frame overhead
     if (bChanged || StatusArray.Num() > 0)
     {
         UpdateDisplayText();
