@@ -10,7 +10,7 @@
 
 ACodeGenerator::ACodeGenerator()
 {
-    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bCanEverTick = false;
 
     DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
     RootComponent = DefaultSceneRoot;
@@ -31,7 +31,12 @@ void ACodeGenerator::BeginPlay()
 {
     Super::BeginPlay();
     UpdateDisplayText();
-
+    
+    // Start timer to check for expired codes and update display (0.5 second intervals)
+    if (HasAuthority())
+    {
+        GetWorldTimerManager().SetTimer(DisplayUpdateTimerHandle, this, &ACodeGenerator::CheckExpiredCodes, 0.5f, true);
+    }
 }
 
 void ACodeGenerator::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -82,11 +87,17 @@ void ACodeGenerator::Interact_Implementation(AActor* Interactor)
     }
 
     UpdateDisplayText();
+    
+    // Start/restart the timer when new codes are generated
+    if (!GetWorldTimerManager().IsTimerActive(DisplayUpdateTimerHandle))
+    {
+        GetWorldTimerManager().SetTimer(DisplayUpdateTimerHandle, this, &ACodeGenerator::CheckExpiredCodes, 0.5f, true);
+    }
 }
 
-void ACodeGenerator::Tick(float DeltaTime)
+void ACodeGenerator::CheckExpiredCodes()
 {
-    Super::Tick(DeltaTime);
+    if (!HasAuthority()) return;
 
     bool bChanged = false;
     float Now = GetWorld()->GetTimeSeconds();
@@ -100,12 +111,20 @@ void ACodeGenerator::Tick(float DeltaTime)
         }
     }
 
+    // Only update display when something changed or when codes are active (for countdown)
     if (bChanged)
     {
         UpdateDisplayText();
+        
+        // Stop the timer if no codes are active
+        if (StatusArray.Num() == 0)
+        {
+            GetWorldTimerManager().ClearTimer(DisplayUpdateTimerHandle);
+        }
     }
     else if (StatusArray.Num() > 0)
     {
+        // Update display for countdown even when no codes expired
         UpdateDisplayText();
     }
 }

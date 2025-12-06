@@ -74,7 +74,10 @@ protected:
     virtual void Interact_Implementation(AActor* Interactor) override;
     virtual void SetHighlighted_Implementation(bool bHighlight) override;
     virtual bool IsCorrectItem_Implementation(UItemBase* Item) const override;
-    virtual void Tick(float DeltaTime) override;
 
     void UpdateDisplayText();
+    void CheckExpiredCodes();
+
+private:
+    FTimerHandle DisplayUpdateTimerHandle;
 };
