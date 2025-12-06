@@ -7,7 +7,7 @@
 
 AKeypadScanner::AKeypadScanner()
 {
-    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bCanEverTick = false;
     bReplicates = true;
 
     DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
@@ -202,10 +202,7 @@ void AKeypadScanner::Interact_Implementation(AActor* Interactor)
     TryUnlock(Interactor);
 }
 
-void AKeypadScanner::Tick(float DeltaTime)
-{
-    Super::Tick(DeltaTime);
-}
+
 
 void AKeypadScanner::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {

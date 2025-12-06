@@ -228,4 +228,10 @@ public:
 private:
     void GrantAbilitiesFromInputSet();
     void GrantAbilitiesFromDefaultSet();
+    
+    // Performance optimization: Reduce update frequency
+    float TimeSinceLastInteractCheck = 0.0f;
+    float TimeSinceLastDetectionUpdate = 0.0f;
+    static constexpr float InteractCheckInterval = 0.1f; // Check for interactions every 100ms
+    static constexpr float DetectionUpdateInterval = 0.1f; // Update detection every 100ms
 };

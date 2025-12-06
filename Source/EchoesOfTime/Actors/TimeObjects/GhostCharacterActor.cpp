@@ -57,11 +57,24 @@ void AGhostCharacterActor::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    // Always update mesh/pose/material on ALL instances, not just server!
     ACharacter* CharacterToMirror = Cast<ACharacter>(GetOwner());
     if (!CharacterToMirror || !GhostMesh)
         return;
 
+    // Always interpolate smoothly - this is critical for visual quality
+    float InterpSpeed = 5.f;
+    SetActorLocation(FMath::VInterpTo(GetActorLocation(), GhostTargetLocation, DeltaTime, InterpSpeed));
+    SetActorRotation(FMath::RInterpTo(GetActorRotation(), GhostTargetRotation, DeltaTime, InterpSpeed));
+
+    // Throttle expensive mesh/material updates to reduce CPU load
+    TimeSinceLastUpdate += DeltaTime;
+    if (TimeSinceLastUpdate < UpdateInterval)
+    {
+        return;
+    }
+    TimeSinceLastUpdate = 0.0f;
+
+    // Update mesh/pose/material at reduced frequency
     USkeletalMeshComponent* SourceMesh = nullptr;
     if (CharacterToMirror->GetClass()->ImplementsInterface(UGhostMirrorSource::StaticClass()))
     {
@@ -102,11 +115,6 @@ void AGhostCharacterActor::Tick(float DeltaTime)
         GhostTargetLocation = CharacterToMirror->GetActorLocation() + GhostOffset;
         GhostTargetRotation = CharacterToMirror->GetActorRotation();
     }
-
-    // Smoothly interpolate toward replicated target
-    float InterpSpeed = 5.f;
-    SetActorLocation(FMath::VInterpTo(GetActorLocation(), GhostTargetLocation, DeltaTime, InterpSpeed));
-    SetActorRotation(FMath::RInterpTo(GetActorRotation(), GhostTargetRotation, DeltaTime, InterpSpeed));
 }
 
 void AGhostCharacterActor::OnRep_GhostTargetLocation()
