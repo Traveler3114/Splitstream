@@ -9,6 +9,7 @@ AKeypadScanner::AKeypadScanner()
 {
     PrimaryActorTick.bCanEverTick = false;
     bReplicates = true;
+    NetUpdateFrequency = 10.f; // Keypad code changes infrequently
 
     DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
     RootComponent = DefaultSceneRoot;

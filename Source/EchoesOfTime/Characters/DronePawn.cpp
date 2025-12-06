@@ -14,6 +14,7 @@ ADronePawn::ADronePawn()
 {
     PrimaryActorTick.bCanEverTick = false;
     bReplicates = true;
+    NetUpdateFrequency = 20.f; // Drone detection updates moderately fast
 
     USceneComponent* DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
     RootComponent = DefaultSceneRoot;

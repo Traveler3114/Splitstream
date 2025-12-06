@@ -19,6 +19,7 @@ ALobbyPlatformActor::ALobbyPlatformActor()
 {
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
+	NetUpdateFrequency = 10.f; // Lobby platforms change infrequently
 
 	RootScene = CreateDefaultSubobject<USceneComponent>(TEXT("RootScene"));
 	RootComponent = RootScene;
