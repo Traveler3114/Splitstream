@@ -1,6 +1,8 @@
 #include "ProceduralLevelGenerator.h"
 #include "Actors/PointActors/CivilianSpawnPoint.h"
 #include "Characters/CivilianCharacter.h"
+#include "Characters/GuardCharacter.h"
+#include "Actors/LockerActor.h"
 #include "Actors/Computers/Computer.h"
 #include "Actors/KeypadScanner/KeypadScanner.h"
 #include "Actors/NewspaperActor.h"
@@ -19,6 +21,7 @@
 #include "Actors/Wire/WireActor.h"
 #include "Actors/DisablingDevice/DevicesManagerActor.h"
 #include "Actors/DisablingDevice/DisablingDeviceActor.h"
+#include "Components/ArrowComponent.h"
 
 template<typename TSpawnActor, typename TManagerActor>
 void SpawnActorsOnRandomPointsAndAddToManager(
@@ -203,8 +206,10 @@ FString AProceduralLevelGenerator::GenerateUniqueName(const TArray<FString>& Fir
 
 void AProceduralLevelGenerator::HandleEraSpawns(
     ETimelineEra Era,
-    TArray<ACivilianCharacter*>& OutSpawnedCivilians,
-    TArray<ADeskActor*>& OutDesks
+    TArray<class ACivilianCharacter*>& OutSpawnedCivilians,
+    TArray<class ADeskActor*>& OutDesks,
+    TArray<class AGuardCharacter*>& OutEraGuards,
+    TArray<class ALockerActor*>& OutEraLockers
 )
 {
     // ---- CIVILIAN SPAWN ----
@@ -274,6 +279,62 @@ void AProceduralLevelGenerator::HandleEraSpawns(
         Civ->AssignedDesk = Desk;
         Desk->SetStaffName(Civ->CivilianName);
     }
+
+    OutEraGuards.Empty();
+    OutEraLockers.Empty();
+    TArray<AActor*> AllGuards;
+    TArray<AActor*> AllLockers;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGuardCharacter::StaticClass(), AllGuards);
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ALockerActor::StaticClass(), AllLockers);
+
+    // Subset by era
+    for (AActor* GuardActor : AllGuards)
+    {
+        AGuardCharacter* Guard = Cast<AGuardCharacter>(GuardActor);
+        if (Guard && Guard->TimelineEra == Era)
+        {
+            OutEraGuards.Add(Guard);
+        }
+    }
+    for (AActor* LockerActor : AllLockers)
+    {
+        ALockerActor* Locker = Cast<ALockerActor>(LockerActor);
+        if (Locker && Locker->TimelineEra == Era)
+        {
+            OutEraLockers.Add(Locker);
+        }
+    }
+
+    // Guard name assignment
+    TSet<FString> UsedGuardNames;
+    TArray<FString> GuardFirstNames = {
+        TEXT("Alex"), TEXT("Blake"), TEXT("Morgan"), TEXT("Pat"), TEXT("Jordan"),
+        TEXT("Sam"), TEXT("Quinn"), TEXT("Taylor"), TEXT("Casey"), TEXT("Robin"),
+        TEXT("Max"), TEXT("Jesse"), TEXT("Corey"), TEXT("Jamie"), TEXT("Cameron"),
+        TEXT("Lee"), TEXT("Drew"), TEXT("Avery"), TEXT("Riley"), TEXT("Devon")
+    };
+    TArray<FString> GuardSurnames = {
+        TEXT("Stone"), TEXT("Parker"), TEXT("Mills"), TEXT("Ford"), TEXT("King"),
+        TEXT("Hunter"), TEXT("Knight"), TEXT("Brooks"), TEXT("Cole"), TEXT("West"),
+        TEXT("Reed"), TEXT("Ray"), TEXT("Grant"), TEXT("Chase"), TEXT("Boone"),
+        TEXT("Frost"), TEXT("Wells"), TEXT("Rhodes"), TEXT("Cross"), TEXT("Bishop")
+    };
+
+    // Shuffle guards and lockers for random assignment
+    for (int32 i = OutEraGuards.Num() - 1; i > 0; --i)
+        OutEraGuards.Swap(i, FMath::RandRange(0, i));
+    for (int32 i = OutEraLockers.Num() - 1; i > 0; --i)
+        OutEraLockers.Swap(i, FMath::RandRange(0, i));
+
+    int32 GuardPairCount = FMath::Min(OutEraGuards.Num(), OutEraLockers.Num());
+    for (int32 i = 0; i < GuardPairCount; ++i)
+    {
+        AGuardCharacter* Guard = OutEraGuards[i];
+        ALockerActor* Locker = OutEraLockers[i];
+        Guard->GuardName = GenerateUniqueName(GuardFirstNames, GuardSurnames, UsedGuardNames);
+        Guard->AssignedLocker = Locker;
+        Locker->SetStaffName(Guard->GuardName);
+    }
 }
 
 void AProceduralLevelGenerator::HandlePastSpawns()
@@ -327,6 +388,7 @@ void AProceduralLevelGenerator::HandlePastSpawns()
                 PastWireDeviceSequence.Add(Step);
             }
         }
+		WireManager->SetupPuzzle();
     }
 
 
@@ -377,9 +439,11 @@ void AProceduralLevelGenerator::HandlePastSpawns()
 
 
 
-    TArray<ACivilianCharacter*> SpawnedCivilians;
+    TArray<ACivilianCharacter*> PastCivilians;
     TArray<ADeskActor*> PastDesks;
-    HandleEraSpawns(ETimelineEra::Past, SpawnedCivilians, PastDesks);
+    TArray<AGuardCharacter*> PastGuards;
+    TArray<ALockerActor*> PastLockers;
+    HandleEraSpawns(ETimelineEra::Past, PastCivilians, PastDesks, PastGuards, PastLockers);
 
     // ---- VAULT KEYPAD & COMPUTER CODE ASSIGNMENT ----
     TArray<ADeskActor*> DesksWithComputer;
@@ -469,21 +533,96 @@ void AProceduralLevelGenerator::HandlePastSpawns()
         }
     }
 
-    SpawnCivilianDeskItems(SpawnedCivilians, SearchableItemBPClass);
+    SpawnCivilianDeskItems(PastCivilians, SearchableItemBPClass);
     HandleFutureSpawns();
+
+    AGuardCharacter* SecurityChief = nullptr;
+    ALockerActor* SecurityChiefLocker = nullptr;
+    for (AGuardCharacter* Guard : PastGuards)
+    {
+        if (Guard && Guard->bIsSecurityChief)
+        {
+            SecurityChief = Guard;
+            SecurityChiefLocker = Guard->AssignedLocker;
+            break;
+        }
+    }
+
+    // Find the child RandomPointActor of the locker
+    ARandomPointActor* LockerPoint = nullptr;
+    if (SecurityChiefLocker)
+    {
+        TArray<UChildActorComponent*> ChildComps;
+        SecurityChiefLocker->GetComponents(ChildComps);
+        for (UChildActorComponent* Child : ChildComps)
+        {
+            ARandomPointActor* RP = Cast<ARandomPointActor>(Child->GetChildActor());
+            if (RP)
+            {
+                LockerPoint = RP;
+                break;
+            }
+        }
+    }
+
+    if (LockerPoint && SecurityDocumentBPClass)
+    {
+        // Get ArrowComp of the target point and the document class default
+        UArrowComponent* PointArrow = LockerPoint->FindComponentByClass<UArrowComponent>();
+
+        // Step 1: Spawn at location, initial rotation
+        FVector SpawnLocation = LockerPoint->GetActorLocation();
+        FRotator SpawnRotation = PointArrow ? PointArrow->GetComponentRotation() : LockerPoint->GetActorRotation();
+
+        FActorSpawnParameters DocSpawnParams;
+        DocSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        DocSpawnParams.Owner = SecurityChiefLocker;
+
+        AActor* DocActor = GetWorld()->SpawnActor<AActor>(
+            SecurityDocumentBPClass,
+            SpawnLocation,
+            SpawnRotation,
+            DocSpawnParams);
+
+        // Step 2: Adjust rotation so arrows match, if both ArrowComps exist
+        if (DocActor && PointArrow)
+        {
+            UArrowComponent* DocArrow = DocActor->FindComponentByClass<UArrowComponent>();
+            if (DocArrow)
+            {
+                const FVector DesiredForward = PointArrow->GetForwardVector();
+                const FVector DesiredUp = PointArrow->GetUpVector();
+                FRotator DesiredRotator = FRotationMatrix::MakeFromXZ(DesiredForward, DesiredUp).Rotator();
+
+                // Compute local ArrowComp relative rotation in the document actor
+                FRotator ArrowCompRelRot = DocArrow->GetRelativeTransform().GetRotation().Rotator();
+
+                // Correction: set actor rotation so that ArrowComp and point arrows align
+                FRotator FinalActorRotation = DesiredRotator - ArrowCompRelRot;
+                DocActor->SetActorRotation(FinalActorRotation);
+            }
+            else
+            {
+                // Fallback: just set actor rotation to point ArrowComp rotation
+                DocActor->SetActorRotation(PointArrow->GetComponentRotation());
+            }
+        }
+    }
 }
 
 void AProceduralLevelGenerator::HandleFutureSpawns()
 {
-    TArray<ACivilianCharacter*> SpawnedCivilians;
+    TArray<ACivilianCharacter*> FutureCivilians;
     TArray<ADeskActor*> FutureDesks;
-    HandleEraSpawns(ETimelineEra::Future, SpawnedCivilians, FutureDesks);
+    TArray<AGuardCharacter*> FutureGuards;
+    TArray<ALockerActor*> FutureLockers;
+    HandleEraSpawns(ETimelineEra::Future, FutureCivilians, FutureDesks, FutureGuards, FutureLockers);
 
     ACivilianCharacter* TargetCivilian = nullptr;
-    if (SpawnedCivilians.Num() > 0)
+    if (FutureCivilians.Num() > 0)
     {
-        int32 VaultIdx = FMath::RandRange(0, SpawnedCivilians.Num() - 1);
-        TargetCivilian = SpawnedCivilians[VaultIdx];
+        int32 VaultIdx = FMath::RandRange(0, FutureCivilians.Num() - 1);
+        TargetCivilian = FutureCivilians[VaultIdx];
     }
 
     // ---- ASSIGN TO CODE GENERATOR(S) ----
@@ -527,7 +666,7 @@ void AProceduralLevelGenerator::HandleFutureSpawns()
             Newspaper->SetDateText(DateStr);
         }
     }
-    SpawnCivilianDeskItems(SpawnedCivilians, SearchableItemBPClass);
+    SpawnCivilianDeskItems(FutureCivilians, SearchableItemBPClass);
 }
 
 FString AProceduralLevelGenerator::GenerateRandomCode(int Length) const
@@ -559,6 +698,9 @@ FRandomDate AProceduralLevelGenerator::GenerateRandomDate() const
     }
     Date.Day = FMath::RandRange(1, DaysInMonth);
     return Date;
+
+
+
 }
 
 void AProceduralLevelGenerator::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

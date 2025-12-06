@@ -17,6 +17,11 @@ AWirePuzzleManager::AWirePuzzleManager()
 void AWirePuzzleManager::BeginPlay()
 {
     Super::BeginPlay();
+	SetupPuzzle();
+}
+
+void AWirePuzzleManager::SetupPuzzle() 
+{
     if (HasAuthority())
     {
         // Obtain wire sequence steps from the generator (location + color per step)
@@ -73,15 +78,17 @@ void AWirePuzzleManager::BeginPlay()
             {
                 for (AWireActor* Wire : Device->WireActors)
                 {
-                    if (Wire)
+                    if (Wire) 
+                    {
+                        Wire->OnWireCut.RemoveDynamic(this, &AWirePuzzleManager::OnWireCut);
                         Wire->OnWireCut.AddDynamic(this, &AWirePuzzleManager::OnWireCut);
+                    }
                 }
             }
         }
     }
     //HighlightNextCorrectWire();
 }
-
 
 // void AWirePuzzleManager::HighlightNextCorrectWire()
 // {

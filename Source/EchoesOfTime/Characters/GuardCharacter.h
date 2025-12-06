@@ -25,6 +25,25 @@ public:
 
     void OnHealthChanged(const struct FOnAttributeChangeData& Data);
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard")
+    bool bIsSecurityChief = false;
+
+    UPROPERTY(ReplicatedUsing = OnRep_GuardName, EditAnywhere, BlueprintReadWrite, Category = "Guard")
+    FString GuardName;
+
+    UFUNCTION()
+    void OnRep_GuardName();
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard")
+    UTexture2D* PortraitTexture;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Guard")
+    class UTextRenderComponent* NameText;
+
+    // Assigned Locker
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard")
+    class ALockerActor* AssignedLocker = nullptr;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
     ETimelineEra TimelineEra = ETimelineEra::Past;
 

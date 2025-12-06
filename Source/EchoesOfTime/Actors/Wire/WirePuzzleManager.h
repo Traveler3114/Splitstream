@@ -50,6 +50,7 @@ public:
     AActor* CompletionTarget = nullptr;
 
     virtual void BeginPlay() override;
+    void SetupPuzzle();
     //void HighlightNextCorrectWire();
 
 protected:

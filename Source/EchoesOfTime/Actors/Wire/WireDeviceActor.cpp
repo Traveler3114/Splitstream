@@ -22,7 +22,7 @@ AWireDeviceActor::AWireDeviceActor()
     ArrowComp = CreateDefaultSubobject<UArrowComponent>(TEXT("ArrowComp"));
     ArrowComp->SetupAttachment(RootComponent);
 
-	SetReplicates(true);
+	bReplicates = true;
 }
 
 void AWireDeviceActor::BeginPlay()

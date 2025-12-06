@@ -75,6 +75,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wires")
 	TSubclassOf<class AWireDeviceActor> WireDeviceBPClass;
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wires")
+	TSubclassOf<AActor> SecurityDocumentBPClass;
+
     UPROPERTY(Replicated, BlueprintReadOnly)
     FString PastLeverOrderString;
 
@@ -94,8 +97,10 @@ protected:
     // --- Helper for era-based spawning ---
     void HandleEraSpawns(
         ETimelineEra Era,
-        TArray<ACivilianCharacter*>& OutSpawnedCivilians,
-        TArray<class ADeskActor*>& OutDesks
+        TArray<class ACivilianCharacter*>& OutSpawnedCivilians,
+        TArray<class ADeskActor*>& OutDesks,
+        TArray<class AGuardCharacter*>& OutEraGuards,
+        TArray<class ALockerActor*>& OutEraLockers
     );
     FString GenerateUniqueName(const TArray<FString>& FirstNames, const TArray<FString>& Surnames, TSet<FString>& UsedNames) const;
 };

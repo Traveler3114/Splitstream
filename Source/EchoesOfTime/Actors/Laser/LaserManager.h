@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Interfaces/IPuzzleCompletionReceiver.h"
+#include "TimelineEra.h"
 #include "LaserManager.generated.h"
 
 class ALaserSensor;
@@ -21,6 +22,9 @@ protected:
     // List of sensors (assign in editor per-instance or via Blueprint)
     UPROPERTY(EditInstanceOnly, Category = "Laser Group")
     TArray<ALaserSensor*> LaserSensors;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
+    ETimelineEra TimelineEra = ETimelineEra::Past;
 
     // If true the group will randomly show 'NumToShow' lasers every RandomInterval seconds (server only)
     UPROPERTY(EditAnywhere, Category = "Laser Group")

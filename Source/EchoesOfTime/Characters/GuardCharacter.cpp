@@ -4,6 +4,7 @@
 #include "Actors/PointActors/NavNode.h"
 #include "Engine/Engine.h"
 #include "Characters/DefaultCharacter.h"
+#include "Components/TextRenderComponent.h"
 #include "Actors/PointActors/RefPointActor.h"
 #include "Net/UnrealNetwork.h"
 #include "AbilitySystemComponent.h"
@@ -17,6 +18,7 @@
 #include "GameplayEffectTypes.h"
 #include "Interfaces/IDetectable.h"
 #include "TimerManager.h"
+#include "Actors/LockerActor.h"
 
 AGuardCharacter::AGuardCharacter()
 {
@@ -38,6 +40,10 @@ AGuardCharacter::AGuardCharacter()
 
     AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
     AttributeSet = CreateDefaultSubobject<UPlayerAttributeSet>(TEXT("AttributeSet"));
+
+
+    NameText = CreateDefaultSubobject<UTextRenderComponent>(TEXT("NameText"));
+    NameText->SetupAttachment(GetMesh());
 }
 
 void AGuardCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
@@ -77,9 +83,19 @@ void AGuardCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
     }
 }
 
+void AGuardCharacter::OnRep_GuardName()
+{
+    if (NameText)
+        NameText->SetText(FText::FromString(GuardName));
+}
+
 void AGuardCharacter::BeginPlay()
 {
     Super::BeginPlay();
+    if (NameText)
+    {
+        NameText->SetText(FText::FromString(GuardName));
+    }
 
     if (HasAuthority() && AttributeInitGE)
     {
@@ -219,6 +235,7 @@ void AGuardCharacter::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
 void AGuardCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(AGuardCharacter, GuardName);
     DOREPLIFETIME(AGuardCharacter, bIsInCameraView);
 }
 

@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "TimelineEra.h"
 #include "LaserSensor.generated.h"
 
 class UBoxComponent;
@@ -23,6 +24,9 @@ public:
     // Server RPC to set active state (authoritative)
     UFUNCTION(Server, Reliable)
     void ServerSetActive(bool bNewActive);
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
+    ETimelineEra TimelineEra = ETimelineEra::Past;
 
 protected:
     virtual void BeginPlay() override;

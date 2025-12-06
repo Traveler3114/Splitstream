@@ -12,7 +12,6 @@ ALeverActor::ALeverActor()
 
     LeverMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LeverMesh"));
     LeverMesh->SetupAttachment(SceneRootComp);
-    LeverMesh->SetIsReplicated(true);
 
     LeverBaseMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LeverBaseMesh"));
     LeverBaseMesh->SetupAttachment(SceneRootComp);
