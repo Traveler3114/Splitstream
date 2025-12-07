@@ -1,24 +1,18 @@
 // GuardCharacter.cpp
 #include "GuardCharacter.h"
 #include "Actors/TimeObjects/GhostCharacterActor.h"
-#include "Actors/PointActors/NavNode.h"
 #include "Engine/Engine.h"
-#include "Characters/DefaultCharacter.h"
 #include "Components/TextRenderComponent.h"
 #include "Actors/PointActors/RefPointActor.h"
 #include "Net/UnrealNetwork.h"
 #include "AbilitySystemComponent.h"
-#include "AbilitySystem/EOTGameplayTags.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
-#include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "AbilitySystem/AttributeSets/PlayerAttributeSet.h"
-#include "Controllers/DefaultPlayerController.h"
 #include "GameStates/DefaultGameState.h"
 #include "GameplayEffectTypes.h"
 #include "Interfaces/IDetectable.h"
-#include "TimerManager.h"
-#include "Actors/LockerActor.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 AGuardCharacter::AGuardCharacter()
 {
@@ -79,7 +73,29 @@ void AGuardCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
             SpawnedGhost = nullptr;
         }
 
-        Destroy();
+        //Destroy();
+        DetachFromControllerPendingDestroy();
+
+        // Stop movement
+        GetCharacterMovement()->DisableMovement();
+
+        // Disable capsule collision so body doesn't "pop"
+        GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+        // Enable physics, i.e. ragdoll, on the mesh
+        USkeletalMeshComponent* SkelMesh = GetMesh();
+        if (SkelMesh)
+        {
+            SkelMesh->SetCollisionProfileName(TEXT("Ragdoll"));
+            SkelMesh->SetSimulatePhysics(true);
+        }
+
+        // Optionally: mark actor as dead, stop logic/timers
+        // Hide other components if you wish (e.g. NameText)
+        if (NameText)
+        {
+            NameText->SetVisibility(false);
+        }
     }
 }
 

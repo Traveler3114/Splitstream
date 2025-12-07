@@ -3,10 +3,10 @@
 #include "Perception/AISenseConfig_Sight.h"
 #include "AbilitySystem/AttributeSets/PlayerAttributeSet.h"
 #include "AbilitySystemComponent.h"
-#include "AbilitySystem/EOTGameplayTags.h"
 #include "GameplayEffectTypes.h"
 #include "Interfaces/IDetectable.h"
-#include "TimerManager.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Components/CapsuleComponent.h"
 
 ACivilianCharacter::ACivilianCharacter()
 {
@@ -61,7 +61,22 @@ void ACivilianCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
 {
     if (Data.NewValue <= 0.f)
     {
-        Destroy();
+        //Destroy();
+        DetachFromControllerPendingDestroy();
+
+        // Stop movement
+        GetCharacterMovement()->DisableMovement();
+
+        // Disable capsule collision so body doesn't "pop"
+        GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+        // Enable physics, i.e. ragdoll, on the mesh
+        USkeletalMeshComponent* SkelMesh = GetMesh();
+        if (SkelMesh)
+        {
+            SkelMesh->SetCollisionProfileName(TEXT("Ragdoll"));
+            SkelMesh->SetSimulatePhysics(true);
+        }
     }
 }
 

@@ -8,6 +8,7 @@
 #include "TimerManager.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "DrawDebugHelpers.h"
+#include "GameStates/DefaultGameState.h" 
 #include "Net/UnrealNetwork.h"
 
 ADronePawn::ADronePawn()
@@ -153,6 +154,16 @@ void ADronePawn::DetectionUpdate()
     {
         DetectedActor = NewlyDetected;
         OnRep_DetectedActor();
+        if (HasAuthority())
+        {
+            if (ADefaultGameState* GS = Cast<ADefaultGameState>(GetWorld()->GetGameState()))
+            {
+                // You may or may not want PreAlarm or direct Alarm:
+                // GS->StartPreAlarm(this, 3.0f); // if you want a delay/timer
+                GS->CancelPreAlarm(this); // Guards usually do this if needed
+                GS->StartAlarm(this);     // Directly trigger alarm
+            }
+        }
     }
 }
 
