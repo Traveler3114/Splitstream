@@ -1,11 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Vent.h"
+#include "VentBase.h"
 #include "ActorComponents/SearchComponent.h"
 
 // Sets default values
-AVent::AVent()
+AVentBase::AVentBase()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
@@ -14,46 +14,46 @@ AVent::AVent()
 	SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
 	SetRootComponent(SceneRoot);
 
-	VentMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VentMesh"));
-	VentMesh->SetupAttachment(SceneRoot);
+	VentBaseMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VentBaseMesh"));
+	VentBaseMesh->SetupAttachment(SceneRoot);
 
     SearchComponent = CreateDefaultSubobject<USearchComponent>(TEXT("SearchComponent"));
     SearchComponent->SetIsReplicated(true);
 }
 
 // Called when the game starts or when spawned
-void AVent::BeginPlay()
+void AVentBase::BeginPlay()
 {
 	Super::BeginPlay();
     if (SearchComponent)
     {
-        SearchComponent->OnSearchComplete.AddDynamic(this, &AVent::OnSearchComplete);
+        SearchComponent->OnSearchComplete.AddDynamic(this, &AVentBase::OnSearchComplete);
 	}
 	
 }
 
-void AVent::Interact_Implementation(AActor* Interactor)
+void AVentBase::Interact_Implementation(AActor* Interactor)
 {
     if (SearchComponent)
         SearchComponent->Interact(Interactor);
 }
 
-void AVent::CancelInteract_Implementation(AActor* Interactor)
+void AVentBase::CancelInteract_Implementation(AActor* Interactor)
 {
     if (SearchComponent)
         SearchComponent->CancelInteract(Interactor);
 }
 
-void AVent::SetHighlighted_Implementation(bool bHighlight)
+void AVentBase::SetHighlighted_Implementation(bool bHighlight)
 {
-    if (VentMesh)
+    if (VentBaseMesh)
     {
-        VentMesh->SetRenderCustomDepth(bHighlight);
-        VentMesh->CustomDepthStencilValue = bHighlight ? 1 : 0;
+        VentBaseMesh->SetRenderCustomDepth(bHighlight);
+        VentBaseMesh->CustomDepthStencilValue = bHighlight ? 1 : 0;
     }
 }
 
-void AVent::OnSearchComplete()
+void AVentBase::OnSearchComplete()
 {
     if (HasAuthority())
     {
@@ -62,7 +62,7 @@ void AVent::OnSearchComplete()
     }
 }
 
-void AVent::OnRep_OpenState()
+void AVentBase::OnRep_OpenState()
 {
     if (bIsOpen)
     {
@@ -74,10 +74,10 @@ void AVent::OnRep_OpenState()
     }
 }
 
-void AVent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+void AVentBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-    DOREPLIFETIME(AVent, bIsOpen);
+    DOREPLIFETIME(AVentBase, bIsOpen);
 }
 
 

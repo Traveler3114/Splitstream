@@ -5,26 +5,22 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Interfaces/IInteractable.h"
-#include "TimelineEra.h"
-#include "Vent.generated.h"
+#include "VentBase.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API AVent : public AActor, public IInteractable
+class ECHOESOFTIME_API AVentBase : public AActor, public IInteractable
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	AVent();
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
-	ETimelineEra TimelineEra = ETimelineEra::Past;
+	AVentBase();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	USceneComponent* SceneRoot;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UStaticMeshComponent* VentMesh;
+	UStaticMeshComponent* VentBaseMesh;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Device")
 	class USearchComponent* SearchComponent;
@@ -34,10 +30,10 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Door")
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Vent")
 	void OpenVent();
 
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Door")
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Vent")
 	void CloseVent();
 
 
@@ -52,6 +48,6 @@ protected:
 	bool bIsOpen = false;
 
 	UFUNCTION()
-	void OnRep_OpenState();
+	virtual void OnRep_OpenState();
 
 };
