@@ -85,6 +85,8 @@ public:
     UPROPERTY(ReplicatedUsing = OnRep_IsInCameraView, EditAnywhere, BlueprintReadWrite, Category = "Ghost")
     bool bIsInCameraView = false;
 
+	bool bIsDead = false;
+
     UFUNCTION()
     void OnRep_IsInCameraView();
 

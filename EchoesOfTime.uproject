@@ -13,7 +13,8 @@
 				"UMG",
 				"AdvancedSessions",
 				"GameplayAbilities",
-				"CoreUObject"
+				"CoreUObject",
+				"AIModule"
 			]
 		}
 	],

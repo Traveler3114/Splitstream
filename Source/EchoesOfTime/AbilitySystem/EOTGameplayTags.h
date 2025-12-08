@@ -28,4 +28,6 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_PastEcho_Deactivated);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Weapon_Ability_Pistol_Fire);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Weapon_Ability_Pistol_Aim);
 
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_StateTree_Event_FullyDetected);
+
 

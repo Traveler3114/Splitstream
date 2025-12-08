@@ -12,6 +12,8 @@
 #include "GameStates/DefaultGameState.h"
 #include "GameplayEffectTypes.h"
 #include "Interfaces/IDetectable.h"
+#include "Components/StateTreeComponent.h"
+#include "AbilitySystem/EOTGameplayTags.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 AGuardCharacter::AGuardCharacter()
@@ -48,41 +50,40 @@ void AGuardCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
         GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, DebugMsg);
     }
 
+    // If guard has died, fully disable ALL logic and leave only the ragdoll
     if (Data.NewValue <= 0.f)
     {
+        bIsDead = true;
+        if (HasAuthority())
+        {
+            if (ADefaultGameState* GS = Cast<ADefaultGameState>(GetWorld()->GetGameState()))
+            {
+                GS->CancelPreAlarm(nullptr);
+            }
+        }
+
+
         if (GEngine)
         {
             GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Health is ZERO!"));
         }
 
-        if (HasAuthority())
-        {
-            if (ADefaultGameState* GS = Cast<ADefaultGameState>(GetWorld()->GetGameState()))
-            {
-                GS->CancelPreAlarm(this);
-                if (!GS->bAlarmActive)
-                {
-                    GS->CancelAlarm(this);
-                }
-            }
-        }
-
-        if (SpawnedGhost)
-        {
-            SpawnedGhost->Destroy();
-            SpawnedGhost = nullptr;
-        }
-
-        //Destroy();
+        // Detach/Destroy controller (blocks AI/possession/BT/StateTree logic)
         DetachFromControllerPendingDestroy();
 
         // Stop movement
-        GetCharacterMovement()->DisableMovement();
+        if (GetCharacterMovement())
+        {
+            GetCharacterMovement()->DisableMovement();
+        }
 
-        // Disable capsule collision so body doesn't "pop"
-        GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        // Disable capsule collision
+        if (GetCapsuleComponent())
+        {
+            GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        }
 
-        // Enable physics, i.e. ragdoll, on the mesh
+        // Enable ragdoll physics on mesh
         USkeletalMeshComponent* SkelMesh = GetMesh();
         if (SkelMesh)
         {
@@ -90,11 +91,32 @@ void AGuardCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
             SkelMesh->SetSimulatePhysics(true);
         }
 
-        // Optionally: mark actor as dead, stop logic/timers
-        // Hide other components if you wish (e.g. NameText)
+        // Hide text/name or other visible extras
         if (NameText)
         {
             NameText->SetVisibility(false);
+        }
+
+        // Destroy spawned ghost
+        if (SpawnedGhost)
+        {
+            SpawnedGhost->Destroy();
+            SpawnedGhost = nullptr;
+        }
+
+        // Disable AI Perception
+        if (AIPerceptionComponent)
+        {
+            AIPerceptionComponent->Deactivate();            // Hides/disables sensing, perception updates, callbacks
+            AIPerceptionComponent->OnPerceptionUpdated.Clear(); // Remove all bound events
+            // AIPerceptionComponent->DestroyComponent();    // alternatively, fully remove component
+        }
+
+        // Remove attribute change delegates
+        if (AbilitySystemComponent && AttributeSet)
+        {
+            AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute())
+                .RemoveAll(this);
         }
     }
 }
@@ -179,10 +201,23 @@ void AGuardCharacter::OnLost_Implementation(AActor* Detector)
     }
 }
 
-// Called by detected actors when their own detection timeline is finished
 void AGuardCharacter::OnFullyDetected_Implementation(AActor* DetectingActor)
 {
-    TargetActor = DetectingActor; // The actor that is now fully detected
+
+    if (bIsDead) return;
+    TargetActor = DetectingActor;
+
+    AController* GuardController = GetController();
+    if (GuardController)
+    {
+        UStateTreeComponent* StateTreeComp = GuardController->FindComponentByClass<UStateTreeComponent>();
+        if (StateTreeComp)
+        {
+            FStateTreeEvent MyEvent(TAG_StateTree_Event_FullyDetected);
+            StateTreeComp->SendStateTreeEvent(MyEvent);
+        }
+    }
+   
     if (HasAuthority())
     {
         if (ADefaultGameState* GS = Cast<ADefaultGameState>(GetWorld()->GetGameState()))

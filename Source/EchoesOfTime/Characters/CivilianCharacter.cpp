@@ -7,6 +7,8 @@
 #include "Interfaces/IDetectable.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/StateTreeComponent.h"
+#include "AbilitySystem/EOTGameplayTags.h"
 
 ACivilianCharacter::ACivilianCharacter()
 {
@@ -59,23 +61,56 @@ void ACivilianCharacter::BeginPlay()
 
 void ACivilianCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
 {
+    // Optional: Debug message (can remove if not needed)
+    if (GEngine)
+    {
+        FString DebugMsg = FString::Printf(TEXT("Civilian Health changed: %.1f"), Data.NewValue);
+        GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, DebugMsg);
+    }
+
     if (Data.NewValue <= 0.f)
     {
-        //Destroy();
+        // OPTIONAL: Log/notify
+        if (GEngine)
+        {
+            GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Civilian is DEAD!"));
+        }
+
+        // Detach/Destroy controller—removes AI or Player control and all brain logic
         DetachFromControllerPendingDestroy();
 
         // Stop movement
-        GetCharacterMovement()->DisableMovement();
+        if (GetCharacterMovement())
+        {
+            GetCharacterMovement()->DisableMovement();
+        }
 
         // Disable capsule collision so body doesn't "pop"
-        GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        if (GetCapsuleComponent())
+        {
+            GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        }
 
-        // Enable physics, i.e. ragdoll, on the mesh
+        // Enable physics, i.e., ragdoll, on the mesh
         USkeletalMeshComponent* SkelMesh = GetMesh();
         if (SkelMesh)
         {
             SkelMesh->SetCollisionProfileName(TEXT("Ragdoll"));
             SkelMesh->SetSimulatePhysics(true);
+        }
+
+        // Deactivate perception (stops further sensing, disables related events)
+        if (AIPerceptionComponent)
+        {
+            AIPerceptionComponent->Deactivate();
+            AIPerceptionComponent->OnPerceptionUpdated.Clear();
+        }
+
+        // Remove attribute change delegates
+        if (AbilitySystemComponent && AttributeSet)
+        {
+            AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute())
+                .RemoveAll(this);
         }
     }
 }
@@ -119,12 +154,21 @@ void ACivilianCharacter::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActor
 // Called by detected actors when their detection timeline is finished
 void ACivilianCharacter::OnFullyDetected_Implementation(AActor* DetectingActor)
 {
-    TargetActor = DetectingActor; // The actor that is now fully detected
+    TargetActor = DetectingActor;
+    AController* CivilianController = GetController();
+    if (CivilianController)
+    {
+        UStateTreeComponent* StateTreeComp = CivilianController->FindComponentByClass<UStateTreeComponent>();
+        if (StateTreeComp)
+        {
+            FStateTreeEvent MyEvent(TAG_StateTree_Event_FullyDetected);
+            StateTreeComp->SendStateTreeEvent(MyEvent);
+        }
+    }
 }
 
 bool ACivilianCharacter::IsActorAlreadyDetected_Implementation(AActor* DetectingActor) const
 {
-    // Example for player character - returns true if this guard is currently perceiving DetectingActor
     if (!AIPerceptionComponent)
         return false;
 
