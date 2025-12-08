@@ -9,6 +9,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "DrawDebugHelpers.h"
 #include "GameStates/DefaultGameState.h" 
+#include "Actors/PointActors/NavNode.h"
 #include "Net/UnrealNetwork.h"
 
 ADronePawn::ADronePawn()

@@ -48,4 +48,26 @@ protected:
     void DetectionUpdate();
 
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Idle")
+    float BaseStayChance = 0.5f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Idle")
+    float MinIdleTime = 1.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Idle")
+    float MaxIdleTime = 3.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Idle")
+    bool bOnlyStayOnMarkedNodes = true;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Nodes")
+    class ANavNode* CurrentNode = nullptr;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Nodes")
+    ANavNode* PreviousNode = nullptr;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Nodes")
+    ANavNode* NextNode = nullptr;
 };
