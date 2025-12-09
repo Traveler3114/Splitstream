@@ -17,7 +17,7 @@ public:
 protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-
+	virtual void OnFullyDetected_Implementation(AActor* DetectingActor) override;
     virtual bool IsActorAlreadyDetected_Implementation(AActor* DetectingActor) const override;
 
     // Timer handles

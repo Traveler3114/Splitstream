@@ -10,6 +10,7 @@
 #include "Interfaces/IDetectable.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "GameStates/DefaultGameState.h"
 
 ASecurityCamera::ASecurityCamera()
 {
@@ -260,4 +261,15 @@ void ASecurityCamera::OnRep_PanOffset()
 bool ASecurityCamera::IsActorAlreadyDetected_Implementation(AActor* DetectingActor) const
 {
     return LastDetectedActors.Contains(DetectingActor);
+}
+
+void ASecurityCamera::OnFullyDetected_Implementation(AActor* Detector)
+{
+    if (HasAuthority())
+    {
+        if (ADefaultGameState* GS = Cast<ADefaultGameState>(GetWorld()->GetGameState()))
+        {
+            GS->StartAlarm(this);
+        }
+    }
 }
