@@ -32,6 +32,35 @@ namespace ProceduralGenConstants
     constexpr int32 NumWireDevices = 3;
     constexpr int32 NumLevers = 3;
     constexpr int32 NumDisablingDevices = 3;
+
+    // Name pools for procedurally generated NPCs
+    static const TArray<FString> CivilianFirstNames = {
+        TEXT("John"), TEXT("Laura"), TEXT("Michael"), TEXT("Sarah"), TEXT("David"),
+        TEXT("Emily"), TEXT("James"), TEXT("Olivia"), TEXT("Daniel"), TEXT("Sophia"),
+        TEXT("Chris"), TEXT("Jessica"), TEXT("Ethan"), TEXT("Anna"), TEXT("Ryan"),
+        TEXT("Megan"), TEXT("Luke"), TEXT("Chloe"), TEXT("Nathan"), TEXT("Grace")
+    };
+    
+    static const TArray<FString> CivilianSurnames = {
+        TEXT("Smith"), TEXT("Morgan"), TEXT("Davis"), TEXT("Lee"), TEXT("Clark"),
+        TEXT("Turner"), TEXT("Harris"), TEXT("Bennett"), TEXT("Evans"), TEXT("Carter"),
+        TEXT("Adams"), TEXT("Wright"), TEXT("Green"), TEXT("Hill"), TEXT("Cook"),
+        TEXT("Lewis"), TEXT("Roberts"), TEXT("Walker"), TEXT("Young"), TEXT("King")
+    };
+
+    static const TArray<FString> GuardFirstNames = {
+        TEXT("Alex"), TEXT("Blake"), TEXT("Morgan"), TEXT("Pat"), TEXT("Jordan"),
+        TEXT("Sam"), TEXT("Quinn"), TEXT("Taylor"), TEXT("Casey"), TEXT("Robin"),
+        TEXT("Max"), TEXT("Jesse"), TEXT("Corey"), TEXT("Jamie"), TEXT("Cameron"),
+        TEXT("Lee"), TEXT("Drew"), TEXT("Avery"), TEXT("Riley"), TEXT("Devon")
+    };
+    
+    static const TArray<FString> GuardSurnames = {
+        TEXT("Stone"), TEXT("Parker"), TEXT("Mills"), TEXT("Ford"), TEXT("King"),
+        TEXT("Hunter"), TEXT("Knight"), TEXT("Brooks"), TEXT("Cole"), TEXT("West"),
+        TEXT("Reed"), TEXT("Ray"), TEXT("Grant"), TEXT("Chase"), TEXT("Boone"),
+        TEXT("Frost"), TEXT("Wells"), TEXT("Rhodes"), TEXT("Cross"), TEXT("Bishop")
+    };
 }
 
 // ============================================================
@@ -182,13 +211,13 @@ FString AProceduralLevelGenerator::GenerateUniqueName(const TArray<FString>& Fir
     return Name;
 }
 
-FString AProceduralLevelGenerator::GenerateRandomCode(int Length) const
+FString AProceduralLevelGenerator::GenerateRandomCode(int32 Length) const
 {
     static const FString Digits = TEXT("0123456789");
     FString Code;
     Code.Reserve(Length);
     
-    for (int i = 0; i < Length; ++i)
+    for (int32 i = 0; i < Length; ++i)
     {
         int32 Index = FMath::RandRange(0, Digits.Len() - 1);
         Code += Digits.Mid(Index, 1);
@@ -615,20 +644,6 @@ void AProceduralLevelGenerator::SpawnCiviliansForEra(ETimelineEra Era, TArray<AC
     TArray<AActor*> AllSpawnPoints;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACivilianSpawnPoint::StaticClass(), AllSpawnPoints);
 
-    // Name pools for civilians
-    static const TArray<FString> FirstNames = {
-        TEXT("John"), TEXT("Laura"), TEXT("Michael"), TEXT("Sarah"), TEXT("David"),
-        TEXT("Emily"), TEXT("James"), TEXT("Olivia"), TEXT("Daniel"), TEXT("Sophia"),
-        TEXT("Chris"), TEXT("Jessica"), TEXT("Ethan"), TEXT("Anna"), TEXT("Ryan"),
-        TEXT("Megan"), TEXT("Luke"), TEXT("Chloe"), TEXT("Nathan"), TEXT("Grace")
-    };
-    static const TArray<FString> Surnames = {
-        TEXT("Smith"), TEXT("Morgan"), TEXT("Davis"), TEXT("Lee"), TEXT("Clark"),
-        TEXT("Turner"), TEXT("Harris"), TEXT("Bennett"), TEXT("Evans"), TEXT("Carter"),
-        TEXT("Adams"), TEXT("Wright"), TEXT("Green"), TEXT("Hill"), TEXT("Cook"),
-        TEXT("Lewis"), TEXT("Roberts"), TEXT("Walker"), TEXT("Young"), TEXT("King")
-    };
-
     TSet<FString> UsedNames;
 
     for (AActor* Actor : AllSpawnPoints)
@@ -649,7 +664,11 @@ void AProceduralLevelGenerator::SpawnCiviliansForEra(ETimelineEra Era, TArray<AC
             if (Civilian)
             {
                 Civilian->TimelineEra = Era;
-                Civilian->CivilianName = GenerateUniqueName(FirstNames, Surnames, UsedNames);
+                Civilian->CivilianName = GenerateUniqueName(
+                    ProceduralGenConstants::CivilianFirstNames, 
+                    ProceduralGenConstants::CivilianSurnames, 
+                    UsedNames
+                );
                 OutCivilians.Add(Civilian);
             }
         }
@@ -716,20 +735,6 @@ void AProceduralLevelGenerator::SetupGuardsAndLockers(ETimelineEra Era, TArray<A
         }
     }
 
-    // Name pools for guards
-    static const TArray<FString> GuardFirstNames = {
-        TEXT("Alex"), TEXT("Blake"), TEXT("Morgan"), TEXT("Pat"), TEXT("Jordan"),
-        TEXT("Sam"), TEXT("Quinn"), TEXT("Taylor"), TEXT("Casey"), TEXT("Robin"),
-        TEXT("Max"), TEXT("Jesse"), TEXT("Corey"), TEXT("Jamie"), TEXT("Cameron"),
-        TEXT("Lee"), TEXT("Drew"), TEXT("Avery"), TEXT("Riley"), TEXT("Devon")
-    };
-    static const TArray<FString> GuardSurnames = {
-        TEXT("Stone"), TEXT("Parker"), TEXT("Mills"), TEXT("Ford"), TEXT("King"),
-        TEXT("Hunter"), TEXT("Knight"), TEXT("Brooks"), TEXT("Cole"), TEXT("West"),
-        TEXT("Reed"), TEXT("Ray"), TEXT("Grant"), TEXT("Chase"), TEXT("Boone"),
-        TEXT("Frost"), TEXT("Wells"), TEXT("Rhodes"), TEXT("Cross"), TEXT("Bishop")
-    };
-
     // Shuffle guards and lockers for random pairing
     for (int32 i = OutGuards.Num() - 1; i > 0; --i)
     {
@@ -749,7 +754,11 @@ void AProceduralLevelGenerator::SetupGuardsAndLockers(ETimelineEra Era, TArray<A
         AGuardCharacter* Guard = OutGuards[i];
         ALockerActor* Locker = OutLockers[i];
         
-        Guard->GuardName = GenerateUniqueName(GuardFirstNames, GuardSurnames, UsedGuardNames);
+        Guard->GuardName = GenerateUniqueName(
+            ProceduralGenConstants::GuardFirstNames, 
+            ProceduralGenConstants::GuardSurnames, 
+            UsedGuardNames
+        );
         Guard->AssignedLocker = Locker;
         Locker->SetStaffName(Guard->GuardName);
     }

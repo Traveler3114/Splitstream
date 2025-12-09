@@ -88,7 +88,7 @@ protected:
     void SpawnCivilianDeskItems(const TArray<class ACivilianCharacter*>& Civilians, TSubclassOf<class ASearchableActor> ItemClass);
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-    FString GenerateRandomCode(int Length = 4) const;
+    FString GenerateRandomCode(int32 Length = 4) const;
 
     FRandomDate GeneratePastDate() const;
     FRandomDate GenerateFutureDate(const FRandomDate& MinDate) const;
