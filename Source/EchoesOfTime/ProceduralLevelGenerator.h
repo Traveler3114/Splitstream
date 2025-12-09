@@ -88,13 +88,15 @@ protected:
     void SpawnCivilianDeskItems(const TArray<class ACivilianCharacter*>& Civilians, TSubclassOf<class ASearchableActor> ItemClass);
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-    FString GenerateRandomCode(int Length = 4) const;
+    FString GenerateRandomCode(int32 Length = 4) const;
 
     FRandomDate GeneratePastDate() const;
     FRandomDate GenerateFutureDate(const FRandomDate& MinDate) const;
     FRandomDate GenerateRandomDate() const;
 
-    // --- Helper for era-based spawning ---
+    // ============================================================
+    // Era-Based Spawning Helpers
+    // ============================================================
     void HandleEraSpawns(
         ETimelineEra Era,
         TArray<class ACivilianCharacter*>& OutSpawnedCivilians,
@@ -102,5 +104,28 @@ protected:
         TArray<class AGuardCharacter*>& OutEraGuards,
         TArray<class ALockerActor*>& OutEraLockers
     );
+
+    void SpawnCiviliansForEra(ETimelineEra Era, TArray<class ACivilianCharacter*>& OutCivilians);
+    void GatherDesksForEra(ETimelineEra Era, TArray<class ADeskActor*>& OutDesks);
+    void AssignCiviliansToDesks(const TArray<class ACivilianCharacter*>& Civilians, const TArray<class ADeskActor*>& Desks);
+    void SetupGuardsAndLockers(ETimelineEra Era, TArray<class AGuardCharacter*>& OutGuards, TArray<class ALockerActor*>& OutLockers);
+
+    // ============================================================
+    // Puzzle Setup Helpers
+    // ============================================================
+    void SetupWirePuzzle();
+    void SetupLeverPuzzle();
+    void SetupDisablingDevices();
+    void SetupKeypadAndComputerCodes(const TArray<class ADeskActor*>& Desks);
+    
+    // ============================================================
+    // Spawning Helpers
+    // ============================================================
+    void SpawnNewspaper(ETimelineEra Era, const FRandomDate& Date);
+    void SpawnSecurityDocument(const TArray<class AGuardCharacter*>& Guards);
+    
+    // ============================================================
+    // Utility Helpers
+    // ============================================================
     FString GenerateUniqueName(const TArray<FString>& FirstNames, const TArray<FString>& Surnames, TSet<FString>& UsedNames) const;
 };
