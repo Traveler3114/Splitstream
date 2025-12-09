@@ -28,9 +28,16 @@
 // ============================================================
 namespace ProceduralGenConstants
 {
+    // Number of digits in keypad security codes
     constexpr int32 DefaultCodeLength = 4;
+    
+    // Number of wire devices to spawn for the wire puzzle
     constexpr int32 NumWireDevices = 3;
+    
+    // Number of levers to spawn for the lever puzzle
     constexpr int32 NumLevers = 3;
+    
+    // Number of disabling devices to spawn for metal detector puzzle
     constexpr int32 NumDisablingDevices = 3;
 
     // Name pools for procedurally generated NPCs
@@ -220,7 +227,7 @@ FString AProceduralLevelGenerator::GenerateRandomCode(int32 Length) const
     for (int32 i = 0; i < Length; ++i)
     {
         int32 Index = FMath::RandRange(0, Digits.Len() - 1);
-        Code += Digits.Mid(Index, 1);
+        Code.AppendChar(Digits[Index]);
     }
     
     return Code;
