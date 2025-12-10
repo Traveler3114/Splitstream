@@ -20,6 +20,7 @@
 #include "ActorComponents/LockPickComponent.h"
 #include "TimerManager.h"
 
+
 ADefaultCharacter::ADefaultCharacter()
 {
     PrimaryActorTick.bCanEverTick = true;
@@ -314,6 +315,15 @@ void ADefaultCharacter::UpdateEquippedItemMesh()
         EquippedItemMeshComp->SetRelativeRotation(ItemAsset->PickupMeshRotation);
         EquippedItemMeshComp->SetRelativeLocation(FVector(-0.000000, 0.500000, 2.208336));
         EquippedItemMeshComp->SetRelativeRotation(FRotator(0.528160, -3.449450, 8.694707));
+
+        // Find ADS socket on the equipped mesh and set aim location/rotation
+        FName ADSSocket = TEXT("ADS");
+        if (EquippedItemMeshComp->DoesSocketExist(ADSSocket))
+        {
+            FTransform SocketTransform = EquippedItemMeshComp->GetSocketTransform(ADSSocket, ERelativeTransformSpace::RTS_Component);
+            CameraAimLocation = SocketTransform.GetLocation();
+            CameraAimRotation = SocketTransform.Rotator();
+        }
     }
     else
     {

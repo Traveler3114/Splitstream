@@ -118,6 +118,12 @@ public:
     UPROPERTY(BlueprintReadOnly, Category = "Camera")
     FRotator CameraDefaultRotation;
 
+    UPROPERTY(BlueprintReadOnly, Category = "Aim")
+    FVector CameraAimLocation;
+
+    UPROPERTY(BlueprintReadOnly, Category = "Aim")
+    FRotator CameraAimRotation;
+
     UFUNCTION(BlueprintImplementableEvent, Category = "Aim")
     void StartAimCamera(FVector AimLocation, FRotator AimRotation);
 

@@ -22,4 +22,7 @@ public:
 		const FGameplayAbilityActivationInfo ActivationInfo,
 		bool bReplicateEndAbility = true,
 		bool bWasCancelled = false) override;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Aim")
+	FVector AimOffset;
 };
