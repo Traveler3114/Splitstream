@@ -14,6 +14,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Ability_Search, "Character.Ability.Search")
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_PastEcho, "Character.Status.PastEcho");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_LockPicking, "Character.Status.LockPicking");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Hacking, "Character.Status.Hacking");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_ProximityHacking, "Character.Status.ProximityHacking");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Searching, "Character.Status.Searching");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Illegal, "Character.Status.Illegal");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Aiming, "Character.Status.Aiming");
