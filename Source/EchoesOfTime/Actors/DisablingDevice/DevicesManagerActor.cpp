@@ -14,7 +14,20 @@ void ADevicesManagerActor::BeginPlay()
     for (ADisablingDeviceActor* Device : Devices)
     {
         if (Device)
-            Device->OnDeviceStateChanged.AddDynamic(this, &ADevicesManagerActor::OnDeviceStateChanged);
+			RegisterDevice(Device);
+    }
+}
+
+void ADevicesManagerActor::RegisterDevice(ADisablingDeviceActor* Device)
+{
+    if (!Device) return;
+
+    Devices.Add(Device);
+    // Bind on server only
+    if (HasAuthority())
+    {
+        Device->OnDeviceStateChanged.RemoveDynamic(this, &ADevicesManagerActor::OnDeviceStateChanged);
+        Device->OnDeviceStateChanged.AddDynamic(this, &ADevicesManagerActor::OnDeviceStateChanged);
     }
 }
 

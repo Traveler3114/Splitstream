@@ -31,7 +31,10 @@ public:
     UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "WirePuzzle|Completion")
     AActor* CompletionTarget = nullptr;
 
+    UFUNCTION()
+    void RegisterDevice(ADisablingDeviceActor* Device);
 protected:
+
     virtual void BeginPlay() override;
 
     UFUNCTION()

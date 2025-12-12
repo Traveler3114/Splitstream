@@ -457,7 +457,10 @@ void AProceduralLevelGenerator::SetupDisablingDevices()
         ADevicesManagerActor::StaticClass(),
         "MetalDetectorTarget",
         ProceduralGenConstants::NumDisablingDevices,
-        [](ADevicesManagerActor* Manager, ADisablingDeviceActor* Device) { Manager->Devices.Add(Device); }
+        [](ADevicesManagerActor* Manager, ADisablingDeviceActor* Device)
+        {
+            Manager->RegisterDevice(Device);
+        }
     );
 }
 
