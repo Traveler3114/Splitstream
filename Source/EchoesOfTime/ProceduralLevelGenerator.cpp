@@ -768,6 +768,8 @@ void AProceduralLevelGenerator::SetupGuardsAndLockers(ETimelineEra Era, TArray<A
         );
         Guard->AssignedLocker = Locker;
         Locker->SetStaffName(Guard->GuardName);
+
+        Guard->OnRep_GuardName();
     }
 }
 
