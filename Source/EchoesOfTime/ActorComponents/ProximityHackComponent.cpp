@@ -16,9 +16,6 @@
 UProximityHackComponent::UProximityHackComponent()
 {
     SetIsReplicatedByDefault(true);
-
-    // Base UHackComponent handles HackElapsed / completion.
-    // We tick as well only to update the widget & run server proximity logic.
     PrimaryComponentTick.bCanEverTick = true;
     PrimaryComponentTick.SetTickFunctionEnable(true);
 
@@ -28,14 +25,16 @@ UProximityHackComponent::UProximityHackComponent()
 void UProximityHackComponent::BeginPlay()
 {
     Super::BeginPlay();
+
     OnHackComplete.AddDynamic(this, &UProximityHackComponent::HandleHackComplete);
+
     AActor* Owner = GetOwner();
     if (!Owner)
     {
         return;
     }
 
-    // --- Detection sphere (server authoritative) ---
+    // Detection sphere (server only)
     if (GetOwnerRole() == ROLE_Authority)
     {
         DetectionSphere = NewObject<USphereComponent>(Owner, TEXT("ProximityHackDetectionSphere"));
@@ -44,8 +43,6 @@ void UProximityHackComponent::BeginPlay()
             DetectionSphere->InitSphereRadius(ProximityRadius);
             DetectionSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
             DetectionSphere->SetCollisionObjectType(ECC_WorldDynamic);
-
-            // Adjust these channels to match your project (here we overlap pawns only).
             DetectionSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
             DetectionSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 
@@ -57,7 +54,7 @@ void UProximityHackComponent::BeginPlay()
         }
     }
 
-    // --- World-space widget (cosmetic, exists on all machines but is visible only to hacker) ---
+    // World-space widget on all machines
     if (ProximityHackWidgetClass)
     {
         ProximityWidgetComponent = NewObject<UWidgetComponent>(Owner);
@@ -68,12 +65,10 @@ void UProximityHackComponent::BeginPlay()
             ProximityWidgetComponent->SetDrawAtDesiredSize(true);
             ProximityWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, 150.f));
 
-            // Set class BEFORE register, then init so widget instance is created.
             ProximityWidgetComponent->SetWidgetClass(ProximityHackWidgetClass);
             ProximityWidgetComponent->RegisterComponent();
             ProximityWidgetComponent->InitWidget();
 
-            // Start hidden; TickComponent will decide visibility per-machine.
             ProximityWidgetComponent->SetVisibility(false, true);
 
             if (UUserWidget* Widget = ProximityWidgetComponent->GetUserWidgetObject())
@@ -87,8 +82,8 @@ void UProximityHackComponent::BeginPlay()
 void UProximityHackComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
     DOREPLIFETIME(UProximityHackComponent, ActiveHacker);
+    DOREPLIFETIME(UProximityHackComponent, bDrainingHack);
 }
 
 bool UProximityHackComponent::IsLocallyViewedByActiveHacker() const
@@ -98,7 +93,6 @@ bool UProximityHackComponent::IsLocallyViewedByActiveHacker() const
         return false;
     }
 
-    // This assumes one local player per process (typical listen server / client).
     if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
     {
         APawn* LocalPawn = PC->GetPawn();
@@ -108,28 +102,22 @@ bool UProximityHackComponent::IsLocallyViewedByActiveHacker() const
     return false;
 }
 
-
-
-
 void UProximityHackComponent::HandleHackComplete()
 {
-    // SERVER: give reward to the hacker if configured
+    // Server: reward hacker
     if (GetOwnerRole() == ROLE_Authority)
     {
         if (RewardItem && ActiveHacker)
         {
-            // Only characters are expected to hack; adjust if you support other pawns.
-            ACharacter* HackerCharacter = ActiveHacker;
-            if (UInventoryComponent* Inventory = HackerCharacter->FindComponentByClass<UInventoryComponent>())
+            if (UInventoryComponent* Inventory = ActiveHacker->FindComponentByClass<UInventoryComponent>())
             {
-                // New unique instance ID for this reward
                 const FGuid NewInstanceID = FGuid::NewGuid();
                 Inventory->AddItem(RewardItem, NewInstanceID);
             }
         }
     }
 
-    // UI / cosmetic cleanup runs on all machines
+    // Hide widget everywhere
     if (ProximityWidgetComponent)
     {
         ProximityWidgetComponent->SetVisibility(false, true);
@@ -137,10 +125,9 @@ void UProximityHackComponent::HandleHackComplete()
 
     if (ProximityHackWidgetInstance)
     {
-        ProximityHackWidgetInstance->SetHackProgress(1.0f); // optional: show full once
+        ProximityHackWidgetInstance->SetHackProgress(1.0f);
     }
 
-    // Clear tag from hacker
     RemoveProximityTagFrom(ActiveHacker);
 }
 
@@ -148,7 +135,7 @@ void UProximityHackComponent::TickComponent(float DeltaTime, ELevelTick TickType
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-    // Ensure we have a widget instance (in case it was created slightly later).
+    // Ensure widget instance
     if (!ProximityHackWidgetInstance && ProximityWidgetComponent)
     {
         if (UUserWidget* Widget = ProximityWidgetComponent->GetUserWidgetObject())
@@ -157,50 +144,81 @@ void UProximityHackComponent::TickComponent(float DeltaTime, ELevelTick TickType
         }
     }
 
-    // Server: maintain ActiveHacker from PlayersInRange.
-    if (GetOwnerRole() == ROLE_Authority && !bHacked)
+    const bool bIsServer = (GetOwnerRole() == ROLE_Authority);
+
+    // Server updates ActiveHacker selection (who is allowed to fill/drain)
+    if (bIsServer && !bHacked)
     {
         Server_UpdateProximity();
     }
 
-    // Only show the widget if this machine's local pawn is the active hacker AND hacking is in progress.
-    const bool bShouldShowWidget = (bHackingInProgress && IsLocallyViewedByActiveHacker());
+    // --- DRAINING LOGIC: opposite of filling, runs on any machine with this component ---
+    if (bDrainingHack && HackDuration > 0.f)
+    {
+        // Filling is HackElapsed += DeltaTime (in UHackComponent::TickComponent when bHackingInProgress).
+        // Here we do the opposite.
+        HackElapsed = FMath::Max(0.f, HackElapsed - DeltaTime);
+
+        if (HackElapsed <= 0.f)
+        {
+            HackElapsed = 0.f;
+            bDrainingHack = false;
+            bHackingInProgress = false;
+            bHacked = false; // make sure it's not marked completed
+
+            RemoveProximityTagFrom(ActiveHacker);
+            ActiveHacker = nullptr;
+
+            if (ProximityHackWidgetInstance)
+            {
+                ProximityHackWidgetInstance->SetHackProgress(0.0f);
+            }
+            if (ProximityWidgetComponent)
+            {
+                ProximityWidgetComponent->SetVisibility(false, true);
+            }
+        }
+    }
+
+    // Compute local progress from HackElapsed instead of GetHackProgress()
+    float Progress = 0.f;
+    if (HackDuration > 0.f)
+    {
+        Progress = FMath::Clamp(HackElapsed / HackDuration, 0.f, 1.f);
+    }
+
+    const bool bShouldShowWidget =
+        ActiveHacker &&
+        IsLocallyViewedByActiveHacker() &&
+        (bHackingInProgress || bDrainingHack) &&
+        (Progress > 0.f);
 
     if (ProximityWidgetComponent)
     {
         ProximityWidgetComponent->SetVisibility(bShouldShowWidget, true);
     }
 
-    // Only the hacker's local machine updates the widget.
     if (bShouldShowWidget && ProximityHackWidgetInstance)
     {
-        ProximityHackWidgetInstance->SetHackProgress(GetHackProgress());
+        ProximityHackWidgetInstance->SetHackProgress(Progress);
     }
 }
 
-// ------------------------------------------------------------------
 // Overlap events (server only)
-// ------------------------------------------------------------------
 
 void UProximityHackComponent::OnDetectionBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
     bool bFromSweep, const FHitResult& SweepResult)
 {
     if (GetOwnerRole() != ROLE_Authority || !OtherActor)
-    {
         return;
-    }
 
     ACharacter* Character = Cast<ACharacter>(OtherActor);
     if (!Character || !Character->IsPlayerControlled())
-    {
         return;
-    }
 
-    // Add to PlayersInRange if not already there.
     PlayersInRange.AddUnique(Character);
 
-    // If nobody hacking yet and guard not already hacked, start with this one.
     if (!ActiveHacker && !bHacked)
     {
         StartHackingForPlayer(Character);
@@ -211,73 +229,67 @@ void UProximityHackComponent::OnDetectionEndOverlap(UPrimitiveComponent* Overlap
     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
     if (GetOwnerRole() != ROLE_Authority || !OtherActor)
-    {
         return;
-    }
 
     ACharacter* Character = Cast<ACharacter>(OtherActor);
     if (!Character)
-    {
         return;
-    }
 
     PlayersInRange.RemoveSwap(Character);
 
-    // If the leaving character was the active hacker, cancel and choose a new one if possible.
     if (Character == ActiveHacker)
     {
-        CancelHackingForPlayer();
-
-        if (!bHacked)
-        {
-            ACharacter* NewHacker = FindFirstPlayerInRange();
-            if (NewHacker)
-            {
-                StartHackingForPlayer(NewHacker);
-            }
-        }
+        // Start draining instead of hard reset
+        BeginDrainForActiveHacker();
     }
 }
 
-// ------------------------------------------------------------------
 // Proximity logic (server)
-// ------------------------------------------------------------------
 
 void UProximityHackComponent::Server_UpdateProximity()
 {
-    // Clean up invalid players (e.g., destroyed).
     PlayersInRange.RemoveAll([](const TWeakObjectPtr<ACharacter>& Ptr)
-    {
-        return !Ptr.IsValid();
-    });
+        {
+            return !Ptr.IsValid();
+        });
 
-    // If there is an active hacker, ensure they are still in PlayersInRange.
     if (ActiveHacker)
     {
         const bool bStillInRange = PlayersInRange.Contains(ActiveHacker);
-        if (!bStillInRange)
-        {
-            CancelHackingForPlayer();
 
-            if (!bHacked)
+        if (bStillInRange)
+        {
+            // If they were draining but came back into range, resume forward fill
+            if (bDrainingHack)
             {
-                ACharacter* NewHacker = FindFirstPlayerInRange();
-                if (NewHacker)
-                {
-                    StartHackingForPlayer(NewHacker);
-                }
+                bDrainingHack = false;
+                bHackingInProgress = true;
+                SetComponentTickEnabled(true);
             }
         }
-        // else: still in range; base UHackComponent is progressing the hack.
+        else
+        {
+            // ActiveHacker is out of range. See if we have someone else who should take over.
+            ACharacter* NewHacker = FindFirstPlayerInRange();
+            if (NewHacker && NewHacker != ActiveHacker)
+            {
+                // New player in range while old one is draining -> throw away old progress and start fresh.
+                FullyCancelAndReset();
+                StartHackingForPlayer(NewHacker);
+            }
+            // If no one else, we just keep draining until HackElapsed hits 0.
+        }
+
         return;
     }
 
-    // No active hacker: see if any players are still in range.
+    // No ActiveHacker: pick first available player and start from 0
     if (!bHacked)
     {
         ACharacter* First = FindFirstPlayerInRange();
         if (First)
         {
+            FullyCancelAndReset();
             StartHackingForPlayer(First);
         }
     }
@@ -300,48 +312,41 @@ ACharacter* UProximityHackComponent::FindFirstPlayerInRange() const
 
 void UProximityHackComponent::StartHackingForPlayer(ACharacter* NewHacker)
 {
-    if (!NewHacker || bHacked) return;
-
-    // Only one hacker at a time. If someone is already hacking, ignore new player.
-    if (ActiveHacker && ActiveHacker != NewHacker)
-    {
+    if (!NewHacker || bHacked)
         return;
-    }
+
+    // Only one hacker at a time unless we explicitly stole it in Server_UpdateProximity
+    if (ActiveHacker && ActiveHacker != NewHacker)
+        return;
 
     ActiveHacker = NewHacker;
 
-    // Apply ProximityHacking tag if desired.
     ApplyProximityTagTo(ActiveHacker);
 
-    // Reuse parent logic: clears HackElapsed via multicast + sets bHackingInProgress and ticking.
-    StartHacking();
+    // Stop any drain and start forward fill
+    bDrainingHack = false;
+    bHackingInProgress = true;
+    SetComponentTickEnabled(true);
+
+    // IMPORTANT: do NOT call StartHacking() here, because that would reset HackElapsed to 0 on all machines.
+    // We either already reset via FullyCancelAndReset, or we continue from current HackElapsed.
 }
 
-void UProximityHackComponent::CancelHackingForPlayer()
+void UProximityHackComponent::BeginDrainForActiveHacker()
 {
-    // Remove tag from the active hacker.
+    // Switch from forward fill to drain, keep current HackElapsed
+    bHackingInProgress = false;
+    bDrainingHack = true;
+    SetComponentTickEnabled(true);
+}
+
+void UProximityHackComponent::FullyCancelAndReset()
+{
+    bDrainingHack = false;
     RemoveProximityTagFrom(ActiveHacker);
     ActiveHacker = nullptr;
-
-    // Use parent CancelHacking to stop ticking and reset elapsed.
-    CancelHacking();
-
-    // Explicitly reset the widget so the bar shows 0 after cancel.
-    if (ProximityHackWidgetInstance)
-    {
-        ProximityHackWidgetInstance->SetHackProgress(0.0f);
-    }
-
-    // Hide widget.
-    if (ProximityWidgetComponent)
-    {
-        ProximityWidgetComponent->SetVisibility(false, true);
-    }
+    CancelHacking(); // this calls MulticastResetHackElapsed and stops UHackComponent tick
 }
-
-// ------------------------------------------------------------------
-// GAS Tag helpers
-// ------------------------------------------------------------------
 
 void UProximityHackComponent::ApplyProximityTagTo(ACharacter* Player)
 {
