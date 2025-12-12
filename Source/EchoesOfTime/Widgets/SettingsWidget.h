@@ -7,6 +7,7 @@
 class UTextBlock;
 class UButton;
 class USlider;
+class UCheckBox;
 
 UCLASS()
 class ECHOESOFTIME_API USettingsWidget : public UUserWidget
@@ -50,6 +51,7 @@ protected:
     UPROPERTY(meta = (BindWidget))
     UTextBlock* RenderScaleValueText;
 
+    // --- Shadows ---
     UPROPERTY(meta = (BindWidget))
     UButton* ShadowsLeftButton;
 
@@ -59,6 +61,7 @@ protected:
     UPROPERTY(meta = (BindWidget))
     UTextBlock* ShadowsValueText;
 
+    // --- Textures ---
     UPROPERTY(meta = (BindWidget))
     UButton* TexturesLeftButton;
 
@@ -68,6 +71,7 @@ protected:
     UPROPERTY(meta = (BindWidget))
     UTextBlock* TexturesValueText;
 
+    // --- Anti-Aliasing ---
     UPROPERTY(meta = (BindWidget))
     UButton* AALeftButton;
 
@@ -77,6 +81,7 @@ protected:
     UPROPERTY(meta = (BindWidget))
     UTextBlock* AAValueText;
 
+    // --- Post Processing ---
     UPROPERTY(meta = (BindWidget))
     UButton* PPLeftButton;
 
@@ -85,6 +90,17 @@ protected:
 
     UPROPERTY(meta = (BindWidget))
     UTextBlock* PPValueText;
+
+    // --- VSync ---
+    UPROPERTY(meta = (BindWidget))
+    UCheckBox* VSyncCheckBox;
+
+    // --- FPS Limit ---
+    UPROPERTY(meta = (BindWidget))
+    USlider* FPSLimitSlider;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* FPSLimitValueText;
 
     // Option data
     int32 ResolutionIndex;
@@ -101,6 +117,7 @@ protected:
     float RenderScaleMin;
     float RenderScaleMax;
 
+    // --- Quality ---
     int32 ShadowsIndex;
     TArray<FString> ShadowsOptions;
 
@@ -112,6 +129,15 @@ protected:
 
     int32 PPIndex;
     TArray<FString> PPOptions;
+
+    // --- VSync / FPS Limit Data ---
+    bool bVSyncEnabled;
+
+    // FPS limit in frames per second
+    float FPSLimit;
+    float FPSMin;
+    float FPSMax;      // Slider max; if slider == FPSMax => unlimited
+    bool bFPSUnlimited;
 
     // Handlers
     UFUNCTION()
@@ -133,9 +159,11 @@ protected:
     UFUNCTION()
     void OnWindowModeRight();
 
+    // --- Render Scale ---
     UFUNCTION()
     void OnRenderScaleChanged(float Value);
 
+    // --- Quality ---
     UFUNCTION()
     void OnShadowsLeft();
 
@@ -159,6 +187,13 @@ protected:
 
     UFUNCTION()
     void OnPPRight();
+
+    // --- VSync / FPS ---
+    UFUNCTION()
+    void OnVSyncChanged(bool bIsChecked);
+
+    UFUNCTION()
+    void OnFPSLimitChanged(float Value);
 
     void UpdateTexts();
     void ApplySettings();
