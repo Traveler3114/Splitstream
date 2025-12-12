@@ -303,31 +303,44 @@ void ADefaultCharacter::OnInventoryChanged(const TArray<FInventorySlot>& Slots)
 
 void ADefaultCharacter::UpdateEquippedItemMesh()
 {
-    if (!InventoryComponent || !EquippedItemMeshComp || !HasAuthority()) return;
+    if (!InventoryComponent || !EquippedItemMeshComp)
+    {
+        return;
+    }
 
     FInventorySlot ActiveSlot = InventoryComponent->GetActiveItem();
     UItemBase* ItemAsset = ActiveSlot.ItemAsset;
 
-    if (ItemAsset && ItemAsset->ItemMesh)
+    // 1) SERVER: set mesh & transforms (replicated to clients)
+    if (HasAuthority())
     {
-        EquippedItemMeshComp->SetStaticMesh(ItemAsset->ItemMesh);
-        EquippedItemMeshComp->SetWorldScale3D(ItemAsset->PickupMeshScale);
-        EquippedItemMeshComp->SetRelativeRotation(ItemAsset->PickupMeshRotation);
-        EquippedItemMeshComp->SetRelativeLocation(FVector(-0.000000, 0.500000, 2.208336));
-        EquippedItemMeshComp->SetRelativeRotation(FRotator(0.528160, -3.449450, 8.694707));
+        if (ItemAsset && ItemAsset->ItemMesh)
+        {
+            EquippedItemMeshComp->SetStaticMesh(ItemAsset->ItemMesh);
+            EquippedItemMeshComp->SetWorldScale3D(ItemAsset->PickupMeshScale);
+            EquippedItemMeshComp->SetRelativeRotation(ItemAsset->PickupMeshRotation);
+            EquippedItemMeshComp->SetRelativeLocation(FVector(-0.000000, 0.500000, 2.208336));
+            EquippedItemMeshComp->SetRelativeRotation(FRotator(0.528160, -3.449450, 8.694707));
+        }
+        else
+        {
+            EquippedItemMeshComp->SetStaticMesh(nullptr);
+        }
+    }
 
-        // Find ADS socket on the equipped mesh and set aim location/rotation
-        FName ADSSocket = TEXT("ADS");
+    // 2) ALL (server + clients): compute ADS socket -> aim coordinates
+    //    (by the time this runs on clients, the mesh from the server should have replicated)
+    if (EquippedItemMeshComp->GetStaticMesh()) // defend against nullptr mesh on client
+    {
+        static const FName ADSSocket(TEXT("ADS"));
         if (EquippedItemMeshComp->DoesSocketExist(ADSSocket))
         {
-            FTransform SocketTransform = EquippedItemMeshComp->GetSocketTransform(ADSSocket, ERelativeTransformSpace::RTS_Component);
+            const FTransform SocketTransform =
+                EquippedItemMeshComp->GetSocketTransform(ADSSocket, ERelativeTransformSpace::RTS_Component);
+
             CameraAimLocation = SocketTransform.GetLocation();
             CameraAimRotation = SocketTransform.Rotator();
         }
-    }
-    else
-    {
-        EquippedItemMeshComp->SetStaticMesh(nullptr);
     }
 }
 
