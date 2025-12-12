@@ -20,7 +20,7 @@ void USettingsWidget::NativeConstruct()
 
     RenderScaleMin = 0.25f;
     RenderScaleMax = 1.0f;
-    RenderScale = 1.0f;
+    RenderScale = RenderScaleMax; // default to 1.0
 
     ShadowsOptions = { TEXT("Low"), TEXT("Medium"), TEXT("High"), TEXT("Epic") };
     ShadowsIndex = 2;
@@ -54,14 +54,20 @@ void USettingsWidget::NativeConstruct()
         // Window Mode
         WindowModeIndex = WindowModeOptions.IndexOfByKey(Settings->GetFullscreenMode());
 
-        // Render Scale
-        RenderScale = Settings->GetResolutionScaleNormalized();
+        // Render Scale (clamped + fallback)
+        RenderScale = FMath::Clamp(
+            Settings->GetResolutionScaleNormalized(),
+            RenderScaleMin,
+            RenderScaleMax
+        );
+        if (RenderScale <= 0.0f)
+            RenderScale = RenderScaleMax; // 1.0f
 
         // Quality settings
-        ShadowsIndex  = FMath::Clamp(Settings->GetShadowQuality(), 0, ShadowsOptions.Num() - 1);
+        ShadowsIndex = FMath::Clamp(Settings->GetShadowQuality(), 0, ShadowsOptions.Num() - 1);
         TexturesIndex = FMath::Clamp(Settings->GetTextureQuality(), 0, TexturesOptions.Num() - 1);
-        AAIndex       = FMath::Clamp(Settings->GetAntiAliasingQuality(), 0, AAOptions.Num() - 1);
-        PPIndex       = FMath::Clamp(Settings->GetPostProcessingQuality(), 0, PPOptions.Num() - 1);
+        AAIndex = FMath::Clamp(Settings->GetAntiAliasingQuality(), 0, AAOptions.Num() - 1);
+        PPIndex = FMath::Clamp(Settings->GetPostProcessingQuality(), 0, PPOptions.Num() - 1);
     }
 
     // ----- Bind buttons -----
