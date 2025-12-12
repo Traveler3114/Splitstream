@@ -5,6 +5,7 @@
 #include "Components/CheckBox.h"
 #include "GameFramework/GameUserSettings.h"
 #include "Misc/EnumRange.h"
+#include "HAL/IConsoleManager.h"   // for console variable t.MaxFPS
 
 void USettingsWidget::NativeConstruct()
 {
@@ -69,7 +70,9 @@ void USettingsWidget::NativeConstruct()
             RenderScaleMax
         );
         if (RenderScale <= 0.0f)
+        {
             RenderScale = RenderScaleMax; // 1.0f
+        }
 
         // Quality settings
         ShadowsIndex = FMath::Clamp(Settings->GetShadowQuality(), 0, ShadowsOptions.Num() - 1);
@@ -78,28 +81,25 @@ void USettingsWidget::NativeConstruct()
         PPIndex = FMath::Clamp(Settings->GetPostProcessingQuality(), 0, PPOptions.Num() - 1);
 
         // --- VSync / FPS from settings ---
-        // VSync
+        // VSync (stored by GameUserSettings)
         bVSyncEnabled = Settings->IsVSyncEnabled();
 
-        // FPS limit:
-        // We'll use GEngine->GetMaxFPS() as the current cap.
+        // FPS limit from console variable t.MaxFPS
+        // FPS limit from console variable t.MaxFPS
         {
-            float CurrentMaxFPS = 0.0f;
-            if (GEngine)
-            {
-                CurrentMaxFPS = GEngine->GetMaxFPS();
-            }
+            IConsoleVariable* MaxFPSVar = IConsoleManager::Get().FindConsoleVariable(TEXT("t.MaxFPS"));
+            float CurrentMaxFPS = MaxFPSVar ? MaxFPSVar->GetFloat() : 0.0f;
 
+            // If the game has no limit (0 or negative): treat as Unlimited.
             if (CurrentMaxFPS <= 0.0f)
             {
-                // No limit -> slider at max
-                FPSLimit = FPSMax;
                 bFPSUnlimited = true;
+                FPSLimit = FPSMax;  // slider to max for "Unlimited"
             }
             else
             {
+                bFPSUnlimited = false;
                 FPSLimit = FMath::Clamp(CurrentMaxFPS, FPSMin, FPSMax);
-                bFPSUnlimited = (FPSLimit >= FPSMax);
             }
         }
     }
@@ -375,27 +375,32 @@ void USettingsWidget::ApplySettings()
     Settings->SetVSyncEnabled(bVSyncEnabled);
 
     // --- FPS Limit with VSync override ---
-    if (GEngine)
     {
-        if (bVSyncEnabled)
+        IConsoleVariable* MaxFPSVar = IConsoleManager::Get().FindConsoleVariable(TEXT("t.MaxFPS"));
+        if (MaxFPSVar)
         {
-            // VSync overrides FPS limiter; let engine run free,
-            // monitor refresh + vsync will be the real cap.
-            GEngine->SetMaxFPS(0.0f);   // 0 or <=0 usually = unlimited
-        }
-        else
-        {
-            if (bFPSUnlimited)
+            if (bVSyncEnabled)
             {
-                GEngine->SetMaxFPS(0.0f); // unlimited
+                // VSync overrides FPS limiter; let engine run free,
+                // monitor refresh + vsync will be the real cap.
+                MaxFPSVar->Set(0.0f); // 0 => unlimited
             }
             else
             {
-                float ClampedFPS = FMath::Clamp(FPSLimit, FPSMin, FPSMax);
-                GEngine->SetMaxFPS(ClampedFPS);
+                if (bFPSUnlimited)
+                {
+                    MaxFPSVar->Set(0.0f); // unlimited
+                }
+                else
+                {
+                    float ClampedFPS = FMath::Clamp(FPSLimit, FPSMin, FPSMax);
+                    MaxFPSVar->Set(ClampedFPS);
+                }
             }
         }
     }
 
+    // Save and apply
+    Settings->SaveSettings();
     Settings->ApplySettings(false);
 }

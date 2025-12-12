@@ -13,6 +13,7 @@
 #include "GameplayEffectTypes.h"
 #include "Interfaces/IDetectable.h"
 #include "Components/StateTreeComponent.h"
+#include "ActorComponents/ProximityHackComponent.h"
 #include "AbilitySystem/EOTGameplayTags.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -81,6 +82,13 @@ void AGuardCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
         if (GetCapsuleComponent())
         {
             GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        }
+        if (HasAuthority())
+        {
+            if (UProximityHackComponent* ProxComp = FindComponentByClass<UProximityHackComponent>())
+            {
+                ProxComp->DestroyComponent();
+            }
         }
 
         // Enable ragdoll physics on mesh
