@@ -63,7 +63,9 @@ void UProximityHackComponent::BeginPlay()
             ProximityWidgetComponent->SetupAttachment(Owner->GetRootComponent());
             ProximityWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
             ProximityWidgetComponent->SetDrawAtDesiredSize(true);
-            ProximityWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, 150.f));
+            //ProximityWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, HalfHeight/2.f));
+            ProximityWidgetComponent->SetRelativeLocation(FVector::ZeroVector);
+            ProximityWidgetComponent->SetRelativeRotation(FRotator(90.f, 0.f, 0.f));
 
             ProximityWidgetComponent->SetWidgetClass(ProximityHackWidgetClass);
             ProximityWidgetComponent->RegisterComponent();
