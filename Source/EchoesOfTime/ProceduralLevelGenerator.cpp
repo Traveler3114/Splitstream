@@ -22,6 +22,9 @@
 #include "Actors/DisablingDevice/DevicesManagerActor.h"
 #include "Actors/DisablingDevice/DisablingDeviceActor.h"
 #include "Components/ArrowComponent.h"
+#include "Actors/SecurityDocumentActor.h"
+#include "Widgets/SecurityDocumentWidget.h"
+#include "Components/WidgetComponent.h"
 
 // ============================================================
 // Constants
@@ -69,6 +72,7 @@ namespace ProceduralGenConstants
         TEXT("Frost"), TEXT("Wells"), TEXT("Rhodes"), TEXT("Cross"), TEXT("Bishop")
     };
 }
+
 
 // ============================================================
 // Template Helper Functions
@@ -192,7 +196,10 @@ void AProceduralLevelGenerator::BeginPlay()
 {
     Super::BeginPlay();
 
-    // Only server handles procedural generation
+    UE_LOG(LogTemp, Warning, TEXT("Gen BeginPlay on %s (%s)"),
+        HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT"),
+        *GetName());
+
     if (HasAuthority())
     {
         HandlePastSpawns();
@@ -202,6 +209,69 @@ void AProceduralLevelGenerator::BeginPlay()
 // ============================================================
 // Utility Function Implementations
 // ============================================================
+
+
+
+void AProceduralLevelGenerator::OnRep_PastWireDeviceSequence()
+{
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return;
+    }
+
+    // Build colors from sequence
+    TArray<EWireColor> WireColors;
+    WireColors.Reserve(PastWireDeviceSequence.Num());
+    for (const FWireSequenceStep& Step : PastWireDeviceSequence)
+    {
+        WireColors.Add(Step.WireColor);
+    }
+
+    if (WireColors.Num() == 0)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("UpdateAllSecurityDocuments on %s: no colors to display"),
+            HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT"));
+        return;
+    }
+
+    // Find all SecurityDocumentActor instances
+    TArray<AActor*> FoundDocs;
+    UGameplayStatics::GetAllActorsOfClass(World, ASecurityDocumentActor::StaticClass(), FoundDocs);
+
+    UE_LOG(LogTemp, Warning, TEXT("UpdateAllSecurityDocuments on %s: Found %d documents"),
+        HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT"),
+        FoundDocs.Num());
+
+    for (AActor* Actor : FoundDocs)
+    {
+        ASecurityDocumentActor* DocActor = Cast<ASecurityDocumentActor>(Actor);
+        if (!DocActor || !DocActor->WidgetComp)
+        {
+            continue;
+        }
+
+        UUserWidget* UserWidget = DocActor->WidgetComp->GetUserWidgetObject();
+        if (!UserWidget)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("UpdateAllSecurityDocuments on %s: WidgetComp has no UserWidget"),
+                HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT"));
+            continue;
+        }
+
+        USecurityDocumentWidget* DocWidget = Cast<USecurityDocumentWidget>(UserWidget);
+        if (!DocWidget)
+        {
+            continue;
+        }
+
+        UE_LOG(LogTemp, Warning, TEXT("UpdateAllSecurityDocuments on %s: Applying %d colors"),
+            HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT"),
+            WireColors.Num());
+
+        DocWidget->AddColorWireLine(WireColors);
+    }
+}
 
 FString AProceduralLevelGenerator::GenerateUniqueName(const TArray<FString>& FirstNames, const TArray<FString>& Surnames, TSet<FString>& UsedNames) const
 {

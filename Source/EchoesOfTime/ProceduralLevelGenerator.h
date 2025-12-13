@@ -81,8 +81,12 @@ public:
     UPROPERTY(Replicated, BlueprintReadOnly)
     FString PastLeverOrderString;
 
-    UPROPERTY(Replicated, BlueprintReadOnly)
+    UPROPERTY(ReplicatedUsing = OnRep_PastWireDeviceSequence, BlueprintReadOnly)
     TArray<FWireSequenceStep> PastWireDeviceSequence;
+
+    UFUNCTION()
+    void OnRep_PastWireDeviceSequence();
+
 protected:
     virtual void BeginPlay() override;
     void SpawnCivilianDeskItems(const TArray<class ACivilianCharacter*>& Civilians, TSubclassOf<class ASearchableActor> ItemClass);
