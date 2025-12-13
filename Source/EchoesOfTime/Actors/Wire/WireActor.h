@@ -45,7 +45,8 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Device")
     class USearchComponent* SearchComponent;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wire")
+    // Replicated color
+    UPROPERTY(ReplicatedUsing = OnRep_WireColor, EditAnywhere, BlueprintReadWrite, Category = "Wire")
     EWireColor WireColor = EWireColor::Red;
 
     UPROPERTY(ReplicatedUsing = OnRep_CutState, BlueprintReadOnly)
@@ -60,6 +61,9 @@ public:
 
     UFUNCTION()
     void OnRep_CutState();
+
+    UFUNCTION()
+    void OnRep_WireColor(); // NEW
 
     UFUNCTION()
     virtual void OnSearchComplete();

@@ -18,7 +18,6 @@ AWireActor::AWireActor()
     bIsCut = false;
 }
 
-
 void AWireActor::BeginPlay()
 {
     Super::BeginPlay();
@@ -27,13 +26,15 @@ void AWireActor::BeginPlay()
     {
         SearchComponent->OnSearchComplete.AddDynamic(this, &AWireActor::OnSearchComplete);
     }
+
+    // Ensure the current WireColor is applied visually on whatever machine we are on
+    ApplyWireColor();
 }
 
 void AWireActor::OnSearchComplete()
 {
     OnWireCut.Broadcast(this);
 
-    // Only hide/cut if not already cut
     if (!bIsCut)
     {
         bIsCut = true;
@@ -68,6 +69,12 @@ void AWireActor::OnRep_CutState()
         WireMesh->SetVisibility(!bIsCut, true);
 }
 
+void AWireActor::OnRep_WireColor()
+{
+    // Called on clients when WireColor changes via replication
+    ApplyWireColor();
+}
+
 FLinearColor AWireActor::GetWireLinearColor() const
 {
     switch (WireColor)
@@ -87,17 +94,17 @@ void AWireActor::ApplyWireColor()
     if (!WireMesh)
         return;
 
-    // Create a dynamic material instance (slot 0) if not already
     UMaterialInstanceDynamic* MID = WireMesh->CreateAndSetMaterialInstanceDynamic(0);
     if (!MID)
         return;
 
-    // Assumes your material has a Vector parameter named "WireColor"
     MID->SetVectorParameterValue(TEXT("WireColor"), GetWireLinearColor());
 }
 
 void AWireActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
     DOREPLIFETIME(AWireActor, bIsCut);
+    DOREPLIFETIME(AWireActor, WireColor); // NEW
 }
