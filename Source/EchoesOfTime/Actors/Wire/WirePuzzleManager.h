@@ -28,18 +28,6 @@ public:
     UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "WirePuzzle", Replicated)
     TArray<AWireDeviceActor*> PuzzleDevices;
 
-    UPROPERTY(Replicated)
-    TArray<int32> DeviceOrder;  // Order of indices into PuzzleDevices to activate
-
-    UPROPERTY(Replicated)
-    TArray<EWireColor> CorrectWireColors; // The expected wire color for each device in the sequence
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "WirePuzzle|Audio")
-    TArray<class USoundBase*> WireDeviceSounds;
-
-    UPROPERTY(Replicated)
-    int32 ProgressIndex = 0;
-
     UPROPERTY(ReplicatedUsing = OnRep_PuzzleCompleted)
     bool bCompleted = false;
 
@@ -51,6 +39,14 @@ public:
 
     virtual void BeginPlay() override;
     void SetupPuzzle();
+
+    UPROPERTY(Replicated)
+    TArray<EWireColor> RequiredColors;
+
+    // Colors that have already been correctly cut
+    UPROPERTY(Replicated)
+    TArray<EWireColor> CompletedColors;
+
     //void HighlightNextCorrectWire();
 
 protected:

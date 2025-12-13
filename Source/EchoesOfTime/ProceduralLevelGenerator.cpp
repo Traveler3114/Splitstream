@@ -318,73 +318,6 @@ void AProceduralLevelGenerator::SpawnCivilianDeskItems(const TArray<ACivilianCha
 // ============================================================
 // Puzzle Setup Implementations
 // ============================================================
-
-void AProceduralLevelGenerator::SetupWirePuzzle()
-{
-    // Spawn wire devices at random points
-    SpawnActorsOnRandomPointsAndAddToManager<AWireDeviceActor, AWirePuzzleManager>(
-        GetWorld(),
-        WireDeviceBPClass,
-        "WireDevice",
-        ETimelineEra::Past,
-        AWirePuzzleManager::StaticClass(),
-        "BarsTarget",
-        ProceduralGenConstants::NumWireDevices,
-        [](AWirePuzzleManager* Manager, AWireDeviceActor* Device) { Manager->PuzzleDevices.Add(Device); }
-    );
-
-    // Find wire puzzle manager and setup the puzzle
-    TArray<AActor*> FoundWireManagers;
-    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AWirePuzzleManager::StaticClass(), FoundWireManagers);
-
-    if (FoundWireManagers.Num() == 0)
-    {
-        return;
-    }
-
-    AWirePuzzleManager* WireManager = Cast<AWirePuzzleManager>(FoundWireManagers[0]);
-    if (!WireManager || WireManager->PuzzleDevices.Num() == 0 || WireManager->TimelineEra != ETimelineEra::Past)
-    {
-        return;
-    }
-
-    // Generate randomized device order
-    TArray<int32> DeviceOrder;
-    DeviceOrder.SetNum(WireManager->PuzzleDevices.Num());
-    for (int32 i = 0; i < WireManager->PuzzleDevices.Num(); ++i)
-    {
-        DeviceOrder[i] = i;
-    }
-    
-    // Shuffle the order
-    for (int32 i = DeviceOrder.Num() - 1; i > 0; --i)
-    {
-        DeviceOrder.Swap(i, FMath::RandRange(0, i));
-    }
-
-    // Build sequence array of {location, color}
-    PastWireDeviceSequence.Empty();
-    for (int32 OrderIndex : DeviceOrder)
-    {
-        AWireDeviceActor* Device = WireManager->PuzzleDevices[OrderIndex];
-        FString Location = Device ? Device->SpawnLocationName : TEXT("Unknown");
-
-        EWireColor Color = EWireColor::Red;
-        if (Device && Device->WireActors.Num() > 0)
-        {
-            int32 WireIdx = FMath::RandRange(0, Device->WireActors.Num() - 1);
-            Color = Device->WireActors[WireIdx]->WireColor;
-        }
-
-        FWireSequenceStep Step;
-        Step.DeviceLocation = Location;
-        Step.WireColor = Color;
-        PastWireDeviceSequence.Add(Step);
-    }
-
-    WireManager->SetupPuzzle();
-}
-
 void AProceduralLevelGenerator::SetupLeverPuzzle()
 {
     // Spawn levers at random points
@@ -396,7 +329,10 @@ void AProceduralLevelGenerator::SetupLeverPuzzle()
         ALeverManager::StaticClass(),
         "LaserManagerTarget",
         ProceduralGenConstants::NumLevers,
-        [](ALeverManager* Manager, ALeverActor* Lever) { Manager->PuzzleLevers.Add(Lever); }
+        [](ALeverManager* Manager, ALeverActor* Lever)
+        {
+            Manager->PuzzleLevers.Add(Lever);
+        }
     );
 
     // Find lever manager and setup the puzzle
@@ -421,7 +357,7 @@ void AProceduralLevelGenerator::SetupLeverPuzzle()
     {
         LeverOrder[i] = i;
     }
-    
+
     // Shuffle the order
     for (int32 i = LeverOrder.Num() - 1; i > 0; --i)
     {
@@ -445,6 +381,143 @@ void AProceduralLevelGenerator::SetupLeverPuzzle()
 
     // Setup lever puzzle with randomized order
     Manager->SetupPuzzle(LeverOrder);
+}
+
+
+void AProceduralLevelGenerator::SetupWirePuzzle()
+{
+    // Spawn wire devices at random points
+    SpawnActorsOnRandomPointsAndAddToManager<AWireDeviceActor, AWirePuzzleManager>(
+        GetWorld(),
+        WireDeviceBPClass,
+        "WireDevice",
+        ETimelineEra::Past,
+        AWirePuzzleManager::StaticClass(),
+        "BarsTarget",
+        ProceduralGenConstants::NumWireDevices,
+        [](AWirePuzzleManager* Manager, AWireDeviceActor* Device)
+        {
+            Manager->PuzzleDevices.Add(Device);
+        }
+    );
+
+    // Find wire puzzle manager and setup the puzzle
+    TArray<AActor*> FoundWireManagers;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AWirePuzzleManager::StaticClass(), FoundWireManagers);
+
+    if (FoundWireManagers.Num() == 0)
+    {
+        return;
+    }
+
+    AWirePuzzleManager* WireManager = Cast<AWirePuzzleManager>(FoundWireManagers[0]);
+    if (!WireManager || WireManager->PuzzleDevices.Num() == 0 || WireManager->TimelineEra != ETimelineEra::Past)
+    {
+        return;
+    }
+
+    const int32 NumDevices = WireManager->PuzzleDevices.Num();
+
+    // Build sequence array of {Location, RequiredColor}
+    PastWireDeviceSequence.Empty();
+
+    // 1) Build a pool of all available colors from EWireColor
+    TArray<EWireColor> AvailableColors = {
+        EWireColor::Red,
+        EWireColor::Green,
+        EWireColor::Blue,
+        EWireColor::Yellow,
+        EWireColor::Orange,
+        EWireColor::Purple
+    };
+
+    // We want 2 unique colours per device
+    const int32 ColorsNeeded = NumDevices * 2;
+    if (AvailableColors.Num() < ColorsNeeded)
+    {
+        UE_LOG(LogTemp, Error,
+            TEXT("SetupWirePuzzle: Not enough wire colors for %d devices * 2 wires (need %d, have %d)"),
+            NumDevices, ColorsNeeded, AvailableColors.Num());
+        return;
+    }
+
+    // 2) Shuffle the colours so we can just consume from the front
+    for (int32 i = AvailableColors.Num() - 1; i > 0; --i)
+    {
+        int32 j = FMath::RandRange(0, i);
+        AvailableColors.Swap(i, j);
+    }
+
+    int32 ColorIndex = 0;
+
+    // 3) For each device:
+    //    - Grab its 2 wire child actors (we assume 2 per device, set up in the BP).
+    //    - Assign 2 unique colours to those wires.
+    //    - Randomly pick one of the 2 as the REQUIRED colour.
+    //    - Store {Location, RequiredColor} in PastWireDeviceSequence.
+    for (AWireDeviceActor* Device : WireManager->PuzzleDevices)
+    {
+        if (!Device)
+        {
+            continue;
+        }
+
+        // Find the 2 wires on this device (as you already do in AWireDeviceActor::BeginPlay,
+        // but here we need them on the server before BeginPlay may have run).
+        TArray<UChildActorComponent*> ChildComps;
+        Device->GetComponents(ChildComps);
+
+        TArray<AWireActor*> LocalDeviceWires;
+        for (UChildActorComponent* ChildComp : ChildComps)
+        {
+            if (AWireActor* Wire = Cast<AWireActor>(ChildComp->GetChildActor()))
+            {
+                LocalDeviceWires.Add(Wire);
+            }
+        }
+
+        if (LocalDeviceWires.Num() < 2)
+        {
+            UE_LOG(LogTemp, Warning,
+                TEXT("SetupWirePuzzle: Device %s has only %d wire(s); expected at least 2."),
+                *Device->GetName(), LocalDeviceWires.Num());
+            continue;
+        }
+
+        if (ColorIndex + 1 >= AvailableColors.Num())
+        {
+            UE_LOG(LogTemp, Warning,
+                TEXT("SetupWirePuzzle: Ran out of colours for device %s"),
+                *Device->GetName());
+            break;
+        }
+
+        // Take 2 unique colours from the shuffled pool
+        EWireColor ColorA = AvailableColors[ColorIndex++];
+        EWireColor ColorB = AvailableColors[ColorIndex++];
+
+        // Assign them to the first two wires on this device
+        LocalDeviceWires[0]->WireColor = ColorA;
+        LocalDeviceWires[1]->WireColor = ColorB;
+
+        // Optional: apply visual material colour immediately on the server
+        LocalDeviceWires[0]->ApplyWireColor();
+        LocalDeviceWires[1]->ApplyWireColor();
+
+        // Randomly pick one of the two as the REQUIRED colour for this device
+        EWireColor RequiredColor = FMath::RandBool() ? ColorA : ColorB;
+
+        // Store in the replicated sequence so:
+        // - ArchiveComputer can show it
+        // - WirePuzzleManager can build RequiredColors
+        FWireSequenceStep Step;
+        Step.DeviceLocation = Device->SpawnLocationName;
+        Step.WireColor = RequiredColor;
+        PastWireDeviceSequence.Add(Step);
+    }
+
+    // Now let the manager build RequiredColors from PastWireDeviceSequence
+    WireManager->SetupPuzzle();
 }
 
 void AProceduralLevelGenerator::SetupDisablingDevices()

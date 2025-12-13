@@ -20,11 +20,11 @@ void AWirePuzzleManager::BeginPlay()
 	SetupPuzzle();
 }
 
-void AWirePuzzleManager::SetupPuzzle() 
+void AWirePuzzleManager::SetupPuzzle()
 {
     if (HasAuthority())
     {
-        // Obtain wire sequence steps from the generator (location + color per step)
+        // Obtain wire sequence steps (location + color per device) from the generator
         TArray<FWireSequenceStep> DeviceSequence;
         for (TActorIterator<AProceduralLevelGenerator> It(GetWorld()); It; ++It)
         {
@@ -32,53 +32,42 @@ void AWirePuzzleManager::SetupPuzzle()
             break; // Only need one generator
         }
 
-        // Sync arrays; add robust logging if device mapping fails!
-        DeviceOrder.SetNum(DeviceSequence.Num());
-        CorrectWireColors.SetNum(DeviceSequence.Num());
+        RequiredColors.Empty();
+
         for (int32 i = 0; i < DeviceSequence.Num(); ++i)
         {
             int32 DeviceIdx = INDEX_NONE;
             for (int32 d = 0; d < PuzzleDevices.Num(); ++d)
             {
-                if (PuzzleDevices[d] && PuzzleDevices[d]->SpawnLocationName == DeviceSequence[i].DeviceLocation)
+                if (PuzzleDevices[d] &&
+                    PuzzleDevices[d]->SpawnLocationName == DeviceSequence[i].DeviceLocation)
                 {
                     DeviceIdx = d;
                     break;
                 }
             }
-            DeviceOrder[i] = DeviceIdx;
-            CorrectWireColors[i] = DeviceSequence[i].WireColor;
+
+            RequiredColors.Add(DeviceSequence[i].WireColor);
 
             if (DeviceIdx == INDEX_NONE)
             {
-                UE_LOG(LogTemp, Error, TEXT("WirePuzzleManager: Device for sequence location '%s' not found! This step will FAIL!"), *DeviceSequence[i].DeviceLocation);
+                UE_LOG(LogTemp, Error,
+                    TEXT("WirePuzzleManager: Device for sequence location '%s' not found!"),
+                    *DeviceSequence[i].DeviceLocation);
             }
         }
 
-        // Assign sounds to devices based on DeviceOrder:
-        // WireDeviceSounds[index] -> device at DeviceOrder[index]
-        if (WireDeviceSounds.Num() > 0 && DeviceOrder.Num() > 0)
-        {
-            for (int32 i = 0; i < DeviceOrder.Num(); ++i)
-            {
-                int32 DeviceIdx = DeviceOrder[i];
-                if (DeviceIdx != INDEX_NONE && PuzzleDevices.IsValidIndex(DeviceIdx) && PuzzleDevices[DeviceIdx])
-                {
-                    USoundBase* AssignedSound = WireDeviceSounds.IsValidIndex(i) ? WireDeviceSounds[i] : nullptr;
-                    PuzzleDevices[DeviceIdx]->WireDeviceSound = AssignedSound;
-                }
-            }
-        }
-
-        ProgressIndex = 0;
+        CompletedColors.Empty();
         bCompleted = false;
+
+        // Bind to wires as before
         for (AWireDeviceActor* Device : PuzzleDevices)
         {
             if (Device)
             {
                 for (AWireActor* Wire : Device->WireActors)
                 {
-                    if (Wire) 
+                    if (Wire)
                     {
                         Wire->OnWireCut.RemoveDynamic(this, &AWirePuzzleManager::OnWireCut);
                         Wire->OnWireCut.AddDynamic(this, &AWirePuzzleManager::OnWireCut);
@@ -87,7 +76,7 @@ void AWirePuzzleManager::SetupPuzzle()
             }
         }
     }
-    //HighlightNextCorrectWire();
+	//HighlightNextCorrectWire();
 }
 
 // void AWirePuzzleManager::HighlightNextCorrectWire()
@@ -134,51 +123,48 @@ void AWirePuzzleManager::OnWireCut(AWireActor* CutWire)
 {
     if (!HasAuthority() || bCompleted || !CutWire) return;
 
-    int32 DeviceIdx = GetDeviceIndexForWire(CutWire);
+    const EWireColor CutColor = CutWire->WireColor;
 
-    // Check if sequence is valid for current ProgressIndex
-    if (!DeviceOrder.IsValidIndex(ProgressIndex) || !CorrectWireColors.IsValidIndex(ProgressIndex))
+    // 1) If this color is not required at all -> alarm
+    if (!RequiredColors.Contains(CutColor))
     {
-        UE_LOG(LogTemp, Warning, TEXT("WirePuzzleManager: Sequence arrays out of bounds!"));
-        return;
-    }
-
-    int32 ExpectedDeviceIdx = DeviceOrder[ProgressIndex];
-    EWireColor ExpectedColor = CorrectWireColors[ProgressIndex];
-
-    if (ExpectedDeviceIdx == INDEX_NONE || !PuzzleDevices.IsValidIndex(ExpectedDeviceIdx))
-    {
-        UE_LOG(LogTemp, Error, TEXT("WirePuzzleManager: Sequence is broken! Device step points to INDEX_NONE or invalid device."));
-        // Optionally: alarm or skip, but safest is to do nothing
-        return;
-    }
-
-    // Evaluate correct wire sequence
-    if (DeviceIdx == ExpectedDeviceIdx &&
-        CutWire->WireColor == ExpectedColor)
-    {
-        // CORRECT cut: advance the puzzle
-        ++ProgressIndex;
-        //HighlightNextCorrectWire();
-
-        if (ProgressIndex >= DeviceOrder.Num())
+        ADefaultGameState* GS = GetWorld() ? GetWorld()->GetGameState<ADefaultGameState>() : nullptr;
+        if (GS)
         {
-            CompletePuzzle();
+            GS->StartAlarm();
+        }
+        return;
+    }
+
+    // 2) If we already completed this color, ignore extra cuts
+    if (CompletedColors.Contains(CutColor))
+    {
+        return;
+    }
+
+    // 3) Mark this color as completed
+    CompletedColors.Add(CutColor);
+
+    // 4) Check if all required colors are now completed
+    bool bAllDone = true;
+    for (EWireColor Needed : RequiredColors)
+    {
+        if (!CompletedColors.Contains(Needed))
+        {
+            bAllDone = false;
+            break;
         }
     }
-    else
-    {
-        // Incorrect wire/device: start alarm!
-        ADefaultGameState* GS = GetWorld() ? GetWorld()->GetGameState<ADefaultGameState>() : nullptr;
-        if (GS) GS->StartAlarm();
 
-        //HighlightNextCorrectWire();
+    if (bAllDone)
+    {
+        CompletePuzzle();
     }
+	//HighlightNextCorrectWire();
 }
 
 void AWirePuzzleManager::ResetPuzzle()
 {
-    //HighlightNextCorrectWire();
     for (auto* Device : PuzzleDevices)
     {
         if (Device)
@@ -190,7 +176,9 @@ void AWirePuzzleManager::ResetPuzzle()
             }
         }
     }
-    ProgressIndex = 0;
+
+    CompletedColors.Empty();
+    bCompleted = false;
 }
 
 void AWirePuzzleManager::CompletePuzzle()
@@ -228,8 +216,7 @@ void AWirePuzzleManager::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
     DOREPLIFETIME(AWirePuzzleManager, PuzzleDevices);
-    DOREPLIFETIME(AWirePuzzleManager, DeviceOrder);
-    DOREPLIFETIME(AWirePuzzleManager, CorrectWireColors);
-    DOREPLIFETIME(AWirePuzzleManager, ProgressIndex);
     DOREPLIFETIME(AWirePuzzleManager, bCompleted);
+    DOREPLIFETIME(AWirePuzzleManager, RequiredColors);
+    DOREPLIFETIME(AWirePuzzleManager, CompletedColors);
 }

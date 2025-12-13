@@ -12,7 +12,9 @@ enum class EWireColor : uint8
     Red,
     Green,
     Blue,
-    Yellow
+    Yellow,
+    Orange,
+    Purple
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWireCutSignature, AWireActor*, Wire);
@@ -24,6 +26,12 @@ class ECHOESOFTIME_API AWireActor : public AActor, public IInteractable
 
 public:
     AWireActor();
+
+    UFUNCTION(BlueprintCallable, Category = "Wire")
+    void ApplyWireColor();
+
+    UFUNCTION(BlueprintPure, Category = "Wire")
+    FLinearColor GetWireLinearColor() const;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
     ETimelineEra TimelineEra = ETimelineEra::Past;

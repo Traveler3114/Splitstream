@@ -18,6 +18,7 @@ AWireActor::AWireActor()
     bIsCut = false;
 }
 
+
 void AWireActor::BeginPlay()
 {
     Super::BeginPlay();
@@ -65,6 +66,34 @@ void AWireActor::OnRep_CutState()
 {
     if (WireMesh)
         WireMesh->SetVisibility(!bIsCut, true);
+}
+
+FLinearColor AWireActor::GetWireLinearColor() const
+{
+    switch (WireColor)
+    {
+    case EWireColor::Red:    return FLinearColor::Red;
+    case EWireColor::Green:  return FLinearColor::Green;
+    case EWireColor::Blue:   return FLinearColor::Blue;
+    case EWireColor::Yellow: return FLinearColor(1.f, 1.f, 0.f);
+    case EWireColor::Orange: return FLinearColor(1.f, 0.5f, 0.f);
+    case EWireColor::Purple: return FLinearColor(0.5f, 0.f, 1.f);
+    default:                 return FLinearColor::White;
+    }
+}
+
+void AWireActor::ApplyWireColor()
+{
+    if (!WireMesh)
+        return;
+
+    // Create a dynamic material instance (slot 0) if not already
+    UMaterialInstanceDynamic* MID = WireMesh->CreateAndSetMaterialInstanceDynamic(0);
+    if (!MID)
+        return;
+
+    // Assumes your material has a Vector parameter named "WireColor"
+    MID->SetVectorParameterValue(TEXT("WireColor"), GetWireLinearColor());
 }
 
 void AWireActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
