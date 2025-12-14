@@ -55,7 +55,6 @@ void AMetalDetector::OnPuzzleCompleted_Implementation()
     // This will be called by LeverManager when its puzzle is completed
     bEnabled = false; // Or whatever logic
     OnRep_Enabled();  // Notify clients immediately
-    UE_LOG(LogTemp, Warning, TEXT("MetalDetector %s disabled by puzzle completion."), *GetName());
 }
 
 void AMetalDetector::OnRep_Enabled()

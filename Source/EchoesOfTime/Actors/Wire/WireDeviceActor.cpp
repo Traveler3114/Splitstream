@@ -41,7 +41,6 @@ void AWireDeviceActor::BeginPlay()
 
 void AWireDeviceActor::OnWireCut(AWireActor* CutWire)
 {
-    UE_LOG(LogTemp, Log, TEXT("Standalone WireDeviceActor: Wire cut %s"), *UEnum::GetValueAsString(CutWire->WireColor));
 }
 
 void AWireDeviceActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

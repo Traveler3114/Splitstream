@@ -95,7 +95,6 @@ void ALobbyPlayerController::ServerKickPlayer_Implementation(APlayerState* Targe
     // Only allow the listen-server host to kick
     if (!IsLocalController())
     {
-        UE_LOG(LogTemp, Warning, TEXT("ServerKickPlayer: Rejecting non-host request."));
         return;
     }
 

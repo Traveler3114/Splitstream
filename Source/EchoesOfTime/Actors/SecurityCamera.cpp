@@ -5,7 +5,6 @@
 #include "Engine/TextureRenderTarget2D.h"
 #include "Components/SceneCaptureComponent2D.h"
 #include "Components/ArrowComponent.h"
-#include "DrawDebugHelpers.h"
 #include "Net/UnrealNetwork.h"
 #include "Interfaces/IDetectable.h"
 #include "Kismet/GameplayStatics.h"
@@ -47,12 +46,6 @@ void ASecurityCamera::BeginPlay()
     {
         GetWorldTimerManager().SetTimer(PanTimerHandle, this, &ASecurityCamera::PanUpdate, PanInterval, true);
     }
-
-    // Debug draw timer (optional)
-    if (bDrawDebug)
-    {
-        GetWorldTimerManager().SetTimer(DebugDrawTimerHandle, this, &ASecurityCamera::DebugDrawUpdate, DebugDrawInterval, true);
-    }
 }
 
 void ASecurityCamera::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -60,7 +53,6 @@ void ASecurityCamera::EndPlay(const EEndPlayReason::Type EndPlayReason)
     // Clean up timers
     GetWorldTimerManager().ClearTimer(DetectionTimerHandle);
     GetWorldTimerManager().ClearTimer(PanTimerHandle);
-    GetWorldTimerManager().ClearTimer(DebugDrawTimerHandle);
 
     Super::EndPlay(EndPlayReason);
 }
@@ -195,51 +187,6 @@ void ASecurityCamera::DetectionUpdate()
     LastDetectedActors.Empty();
     for (AActor* Actor : DetectedThisFrame)
         LastDetectedActors.Add(Actor);
-}
-
-void ASecurityCamera::DebugDrawUpdate()
-{
-    if (!(bDrawDebug && SceneCapture))
-        return;
-
-    FVector CamLoc = SceneCapture->GetComponentLocation();
-    FVector CamForward = SceneCapture->GetForwardVector();
-    float HorizontalFOV = SceneCapture->FOVAngle;
-    float AspectRatio = 1.0f;
-    if (SceneCapture->TextureTarget)
-        AspectRatio = (float)SceneCapture->TextureTarget->SizeX / (float)SceneCapture->TextureTarget->SizeY;
-    float VerticalFOV = FMath::RadiansToDegrees(
-        2 * FMath::Atan(FMath::Tan(FMath::DegreesToRadians(HorizontalFOV) / 2) / AspectRatio)
-    );
-    ViewConeAngle = HorizontalFOV;
-
-    DrawDebugCone(
-        GetWorld(),
-        CamLoc,
-        CamForward,
-        DetectionDistance,
-        FMath::DegreesToRadians(VerticalFOV * 0.5f),
-        FMath::DegreesToRadians(HorizontalFOV * 0.5f),
-        32,
-        FColor::Green,
-        false,
-        DebugDrawInterval,
-        0,
-        1.0f
-    );
-
-    FVector RayEnd = CamLoc + CamForward * DetectionDistance;
-    FHitResult RayHit;
-    FCollisionQueryParams Params;
-    Params.AddIgnoredActor(this);
-
-    bool bRayHit = GetWorld()->LineTraceSingleByChannel(
-        RayHit, CamLoc, RayEnd, ECC_Visibility, Params
-    );
-    FVector RayDrawEnd = bRayHit ? RayHit.ImpactPoint : RayEnd;
-    DrawDebugLine(GetWorld(), CamLoc, RayDrawEnd, FColor::Yellow, false, DebugDrawInterval, 0, 2.0f);
-    if (bRayHit)
-        DrawDebugPoint(GetWorld(), RayHit.ImpactPoint, 16.0f, FColor::Red, false, DebugDrawInterval);
 }
 
 void ASecurityCamera::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

@@ -14,13 +14,10 @@ void USecurityDocumentWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	UE_LOG(LogTemp, Warning, TEXT("SecurityDocumentWidget:: NativeConstruct called"));
-
 	// Find the generator and get the wire sequence
 	UWorld* World = GetWorld();
 	if (!World)
 	{
-		UE_LOG(LogTemp, Error, TEXT("SecurityDocumentWidget:  World is NULL"));
 		return;
 	}
 
@@ -30,13 +27,11 @@ void USecurityDocumentWidget::NativeConstruct()
 
 	if (!Gen)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("SecurityDocumentWidget: Generator not found"));
 		return;
 	}
 
 	if (Gen->PastWireDeviceSequence.Num() == 0)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("SecurityDocumentWidget: Sequence is empty"));
 		return;
 	}
 
@@ -47,8 +42,6 @@ void USecurityDocumentWidget::NativeConstruct()
 	{
 		WireColors.Add(Step.WireColor);
 	}
-
-	UE_LOG(LogTemp, Warning, TEXT("SecurityDocumentWidget: Applying %d colors"), WireColors.Num());
 
 	AddColorWireLine(WireColors);
 }

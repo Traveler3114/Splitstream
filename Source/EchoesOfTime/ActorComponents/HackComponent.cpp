@@ -107,8 +107,6 @@ void UHackComponent::CancelInteract(AActor* Interactor)
                 FGameplayTagContainer CancelTags;
                 CancelTags.AddTag(TAG_Character_Ability_Hack);
                 ASC->CancelAbilities(&CancelTags);
-
-                UE_LOG(LogTemp, Log, TEXT("SearchComponent: Cancelled GAS search ability for %s"), *Interactor->GetName());
             }
         }
     }

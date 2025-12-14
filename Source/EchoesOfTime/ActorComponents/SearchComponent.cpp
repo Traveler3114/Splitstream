@@ -123,8 +123,6 @@ void USearchComponent::CancelInteract(AActor* Interactor)
                 FGameplayTagContainer CancelTags;
                 CancelTags.AddTag(TAG_Character_Ability_Search);
                 ASC->CancelAbilities(&CancelTags);
-
-                UE_LOG(LogTemp, Log, TEXT("SearchComponent: Cancelled GAS search ability for %s"), *Interactor->GetName());
             }
         }
     }

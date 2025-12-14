@@ -65,13 +65,6 @@ void ACodeGenerator::Interact_Implementation(AActor* Interactor)
     if (!Interactor || !TargetCivilian)
         return;
 
-#if UE_BUILD_DEBUG || UE_BUILD_DEVELOPMENT
-    if (GEngine)
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, TEXT("Correct fingerprint!"));
-    }
-#endif
-
     StatusArray.Empty();
 
     for (AKeypadScanner* Keypad : ManagedKeypads)

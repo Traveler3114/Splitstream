@@ -196,10 +196,6 @@ void AProceduralLevelGenerator::BeginPlay()
 {
     Super::BeginPlay();
 
-    UE_LOG(LogTemp, Warning, TEXT("Gen BeginPlay on %s (%s)"),
-        HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT"),
-        *GetName());
-
     if (HasAuthority())
     {
         HandlePastSpawns();
@@ -230,18 +226,12 @@ void AProceduralLevelGenerator::OnRep_PastWireDeviceSequence()
 
     if (WireColors.Num() == 0)
     {
-        UE_LOG(LogTemp, Warning, TEXT("UpdateAllSecurityDocuments on %s: no colors to display"),
-            HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT"));
         return;
     }
 
     // Find all SecurityDocumentActor instances
     TArray<AActor*> FoundDocs;
     UGameplayStatics::GetAllActorsOfClass(World, ASecurityDocumentActor::StaticClass(), FoundDocs);
-
-    UE_LOG(LogTemp, Warning, TEXT("UpdateAllSecurityDocuments on %s: Found %d documents"),
-        HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT"),
-        FoundDocs.Num());
 
     for (AActor* Actor : FoundDocs)
     {
@@ -254,8 +244,6 @@ void AProceduralLevelGenerator::OnRep_PastWireDeviceSequence()
         UUserWidget* UserWidget = DocActor->WidgetComp->GetUserWidgetObject();
         if (!UserWidget)
         {
-            UE_LOG(LogTemp, Warning, TEXT("UpdateAllSecurityDocuments on %s: WidgetComp has no UserWidget"),
-                HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT"));
             continue;
         }
 
@@ -264,10 +252,6 @@ void AProceduralLevelGenerator::OnRep_PastWireDeviceSequence()
         {
             continue;
         }
-
-        UE_LOG(LogTemp, Warning, TEXT("UpdateAllSecurityDocuments on %s: Applying %d colors"),
-            HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT"),
-            WireColors.Num());
 
         DocWidget->AddColorWireLine(WireColors);
     }
@@ -505,9 +489,6 @@ void AProceduralLevelGenerator::SetupWirePuzzle()
     const int32 ColorsNeeded = NumDevices * 2;
     if (AvailableColors.Num() < ColorsNeeded)
     {
-        UE_LOG(LogTemp, Error,
-            TEXT("SetupWirePuzzle: Not enough wire colors for %d devices * 2 wires (need %d, have %d)"),
-            NumDevices, ColorsNeeded, AvailableColors.Num());
         return;
     }
 
@@ -548,17 +529,11 @@ void AProceduralLevelGenerator::SetupWirePuzzle()
 
         if (LocalDeviceWires.Num() < 2)
         {
-            UE_LOG(LogTemp, Warning,
-                TEXT("SetupWirePuzzle: Device %s has only %d wire(s); expected at least 2."),
-                *Device->GetName(), LocalDeviceWires.Num());
             continue;
         }
 
         if (ColorIndex + 1 >= AvailableColors.Num())
         {
-            UE_LOG(LogTemp, Warning,
-                TEXT("SetupWirePuzzle: Ran out of colours for device %s"),
-                *Device->GetName());
             break;
         }
 

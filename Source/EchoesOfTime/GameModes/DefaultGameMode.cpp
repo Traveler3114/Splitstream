@@ -7,7 +7,6 @@
 #include "AbilitySystemComponent.h"
 #include "Engine/World.h"
 #include "GameStates/DefaultGameState.h"
-#include "DrawDebugHelpers.h"
 #include "GameplayTagContainer.h"
 #include "TimerManager.h"
 #include "Controllers/DefaultPlayerController.h"
@@ -31,14 +30,12 @@ AActor* ADefaultGameMode::ChoosePlayerStart_Implementation(AController* Player)
 	ADefaultPlayerState* PS = Player->GetPlayerState<ADefaultPlayerState>();
 	if (!PS)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ChoosePlayerStart: No PlayerState found for controller %s"), *Player->GetName());
 		return Super::ChoosePlayerStart_Implementation(Player);
 	}
 
 	UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
 	if (!ASC)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ChoosePlayerStart: No AbilitySystemComponent found for player %s"), *PS->GetName());
 		return Super::ChoosePlayerStart_Implementation(Player);
 	}
 
@@ -81,12 +78,9 @@ AActor* ADefaultGameMode::ChoosePlayerStart_Implementation(AController* Player)
 	{
 		int32 Index = FMath::RandRange(0, TeamStarts.Num() - 1);
 		APlayerStart* ChosenStart = TeamStarts[Index];
-		UE_LOG(LogTemp, Log, TEXT("ChoosePlayerStart: Chose PlayerStart %s for team %s"), *ChosenStart->GetName(), *TeamString);
-		DrawDebugString(GetWorld(), ChosenStart->GetActorLocation() + FVector(0, 0, 100), FString::Printf(TEXT("%s Start"), *TeamString), nullptr, FColor::Green, 10.0f, true);
 		return ChosenStart;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("ChoosePlayerStart: No PlayerStart found for team %s, using default."), *TeamString);
 	return Super::ChoosePlayerStart_Implementation(Player);
 }
 
@@ -153,7 +147,6 @@ void ADefaultGameMode::RestartLevel()
 	{
 		if (!GS->bAlarmActive)
 		{
-			UE_LOG(LogTemp, Log, TEXT("RestartLevel aborted: alarm was cancelled on the GameState."));
 			return;
 		}
 
@@ -161,13 +154,11 @@ void ADefaultGameMode::RestartLevel()
 		const float Tolerance = 0.2f;
 		if (GS->AlarmEndTime > 0.f && (GS->AlarmEndTime - Now) > Tolerance)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("RestartLevel aborted: timer fired early (remaining %.3f s > tolerance %.3f)."), GS->AlarmEndTime - Now, Tolerance);
 			return;
 		}
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("RestartLevel: no GameState found, aborting."));
 		return;
 	}
 
