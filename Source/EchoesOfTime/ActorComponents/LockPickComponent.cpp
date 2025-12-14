@@ -154,8 +154,6 @@ void ULockPickComponent::CancelInteract(AActor* Interactor)
                 FGameplayTagContainer CancelTags;
                 CancelTags.AddTag(TAG_Character_Ability_LockPick);
                 ASC->CancelAbilities(&CancelTags);
-
-                UE_LOG(LogTemp, Log, TEXT("SearchComponent: Cancelled GAS search ability for %s"), *Interactor->GetName());
             }
         }
     }

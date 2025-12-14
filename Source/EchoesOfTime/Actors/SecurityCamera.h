@@ -23,7 +23,6 @@ protected:
     // Timer handles
     FTimerHandle DetectionTimerHandle;
     FTimerHandle PanTimerHandle;
-    FTimerHandle DebugDrawTimerHandle;
 
     // Timer intervals (can be tweaked)
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Optimization")
@@ -32,13 +31,9 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Optimization")
     float PanInterval = 0.02f; // seconds
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Optimization")
-    float DebugDrawInterval = 0.1f; // seconds
-
     // Timer callbacks
     void DetectionUpdate();
     void PanUpdate();
-    void DebugDrawUpdate();
 
 public:
     // Replication
@@ -63,10 +58,6 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection")
     float ViewConeAngle = 90.0f; // degrees (full angle)
-
-    // Debug: draw vision cone and trace
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection|Debug")
-    bool bDrawDebug = false;
 
     // Camera rotation (pan) settings
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Pan")

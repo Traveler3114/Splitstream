@@ -4,7 +4,6 @@
 #include "Actors/TimeObjects/PastItemPickup.h"
 #include "Actors/TimeObjects/FutureItemPickup.h"
 #include "Kismet/GameplayStatics.h"
-#include "DrawDebugHelpers.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/PlayerController.h"

@@ -172,7 +172,6 @@ void ALobbyGameMode::StartGameIfAllowed(ALobbyPlayerController* RequestingPC)
 	{
 		if (bTravelScheduled)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("StartGameIfAllowed: Travel already scheduled."));
 			return;
 		}
 
@@ -194,12 +193,6 @@ void ALobbyGameMode::StartGameIfAllowed(ALobbyPlayerController* RequestingPC)
 			0.25f,
 			false
 		);
-
-		UE_LOG(LogTemp, Log, TEXT("All ready (%d/%d). Scheduling match travel..."), Ready, Total);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Not all players ready (%d/%d)."), Ready, Total);
 	}
 }
 
@@ -209,7 +202,6 @@ void ALobbyGameMode::DoServerTravelToMatch()
 	if (!URL.Contains(TEXT("?"))) { URL += TEXT("?listen"); }
 	else if (!URL.Contains(TEXT("listen"))) { URL += TEXT("&listen"); }
 
-	UE_LOG(LogTemp, Log, TEXT("ServerTravel -> %s"), *URL);
 	GetWorld()->ServerTravel(URL);
 }
 
@@ -217,7 +209,6 @@ void ALobbyGameMode::HostLeaveLobby()
 {
 	if (bLeaveTravelScheduled)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("HostLeaveLobby: Leave already scheduled."));
 		return;
 	}
 
@@ -266,7 +257,6 @@ void ALobbyGameMode::HostLeaveLobby()
 			if (!bDestroyCalled)
 			{
 				// Fallback if destroy couldn't be initiated
-				UE_LOG(LogTemp, Warning, TEXT("HostLeaveLobby: DestroySession call failed to start. Falling back to timed travel."));
 				if (!bLeaveTravelScheduled)
 				{
 					bLeaveTravelScheduled = true;
@@ -300,8 +290,6 @@ void ALobbyGameMode::HostLeaveLobby()
 
 void ALobbyGameMode::HandleDestroySessionComplete(FName SessionName, bool bWasSuccessful)
 {
-	UE_LOG(LogTemp, Log, TEXT("HandleDestroySessionComplete: %s (Success=%d)"), *SessionName.ToString(), bWasSuccessful ? 1 : 0);
-
 	IOnlineSessionPtr Session;
 	if (IOnlineSubsystem* OSS = IOnlineSubsystem::Get())
 	{
@@ -328,7 +316,6 @@ void ALobbyGameMode::HandleDestroySessionComplete(FName SessionName, bool bWasSu
 void ALobbyGameMode::DoServerTravelToMenu()
 {
 	const FString URL = PendingMenuURL.IsEmpty() ? MainMenuMapPath : PendingMenuURL;
-	UE_LOG(LogTemp, Log, TEXT("Host Leave -> ServerTravel %s"), *URL);
 	GetWorld()->ServerTravel(URL);
 }
 
@@ -371,7 +358,6 @@ void ALobbyGameMode::KickPlayerByPlayerState(APlayerState* TargetPS)
 					});
 				GetWorld()->GetTimerManager().SetTimer(TmpHandle, Del, 0.35f, false);
 
-				UE_LOG(LogTemp, Log, TEXT("Kicked player -> travel to MainMenu: %s"), *TargetPS->GetPlayerName());
 				break;
 			}
 		}

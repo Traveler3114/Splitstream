@@ -7,7 +7,6 @@
 #include "Interfaces/IGhostMirrorSource.h"
 #include "GameFramework/PlayerController.h"
 #include "DefaultPlayerState.h"
-#include "DrawDebugHelpers.h"
 #include "Engine/Engine.h"
 
 AGhostCharacterActor::AGhostCharacterActor()

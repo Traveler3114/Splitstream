@@ -45,12 +45,6 @@ AGuardCharacter::AGuardCharacter()
 
 void AGuardCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
 {
-    if (GEngine)
-    {
-        FString DebugMsg = FString::Printf(TEXT("Health changed: %.1f"), Data.NewValue);
-        GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, DebugMsg);
-    }
-
     // If guard has died, fully disable ALL logic and leave only the ragdoll
     if (Data.NewValue <= 0.f)
     {
@@ -61,12 +55,6 @@ void AGuardCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
             {
                 GS->CancelPreAlarm(nullptr);
             }
-        }
-
-
-        if (GEngine)
-        {
-            GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Health is ZERO!"));
         }
 
         // Detach/Destroy controller (blocks AI/possession/BT/StateTree logic)

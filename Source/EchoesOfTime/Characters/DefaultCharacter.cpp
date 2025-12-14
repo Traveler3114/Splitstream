@@ -629,10 +629,6 @@ void ADefaultCharacter::HandleInteractInstant()
             }
             if (HasAuthority() && !IRequiresItem::Execute_IsCorrectItem(HitActor, ActiveItem))
             {
-                if (IsLocallyControlled() && GEngine)
-                {
-                    GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("You need the correct item to interact!"));
-                }
                 return;
             }
             if (ActiveItem)

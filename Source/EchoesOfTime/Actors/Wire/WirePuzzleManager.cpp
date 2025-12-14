@@ -51,9 +51,6 @@ void AWirePuzzleManager::SetupPuzzle()
 
             if (DeviceIdx == INDEX_NONE)
             {
-                UE_LOG(LogTemp, Error,
-                    TEXT("WirePuzzleManager: Device for sequence location '%s' not found!"),
-                    *DeviceSequence[i].DeviceLocation);
             }
         }
 

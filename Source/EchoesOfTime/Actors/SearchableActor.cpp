@@ -35,11 +35,6 @@ void ASearchableActor::Interact_Implementation(AActor* Interactor)
 
 void ASearchableActor::OnSearchComplete()
 {
-    if (HasAuthority() && GEngine)
-    {
-        FString RevealMsg = FString::Printf(TEXT("Actor searched"));
-        GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Green, RevealMsg);
-    }
 }
 
 

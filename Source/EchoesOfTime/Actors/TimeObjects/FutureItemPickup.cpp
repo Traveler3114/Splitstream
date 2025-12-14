@@ -5,7 +5,6 @@
 #include "EngineUtils.h"
 #include "DefaultPlayerState.h"
 #include "GameFramework/PlayerController.h"
-#include "DrawDebugHelpers.h"
 
 FFutureItemInvalidated AFutureItemPickup::OnFutureItemInvalidated;
 

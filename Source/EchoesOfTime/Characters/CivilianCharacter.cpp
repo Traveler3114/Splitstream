@@ -61,22 +61,9 @@ void ACivilianCharacter::BeginPlay()
 
 void ACivilianCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
 {
-    // Optional: Debug message (can remove if not needed)
-    if (GEngine)
-    {
-        FString DebugMsg = FString::Printf(TEXT("Civilian Health changed: %.1f"), Data.NewValue);
-        GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, DebugMsg);
-    }
-
     if (Data.NewValue <= 0.f)
     {
-        // OPTIONAL: Log/notify
-        if (GEngine)
-        {
-            GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Civilian is DEAD!"));
-        }
-
-        // Detach/Destroy controller—removes AI or Player control and all brain logic
+        // Detach/Destroy controller removes AI or Player control and all brain logic
         DetachFromControllerPendingDestroy();
 
         // Stop movement

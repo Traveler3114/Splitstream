@@ -41,10 +41,6 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone|Visual")
     USpotLightComponent* DroneSpotLight;
 
-    // Optional debug visual
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection|Debug")
-    bool bDrawDebugCone = true;
-
     void DetectionUpdate();
 
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
