@@ -3,7 +3,6 @@
 
 #include "SearchableActor.h"
 #include "Components/SceneComponent.h"
-#include "Components/StaticMeshComponent.h"
 #include "ActorComponents/SearchComponent.h"
 #include "Net/UnrealNetwork.h"
 

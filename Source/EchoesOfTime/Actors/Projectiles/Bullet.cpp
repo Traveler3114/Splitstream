@@ -2,7 +2,6 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "AbilitySystemInterface.h"
 #include "Components/CapsuleComponent.h"
-#include "Kismet/GameplayStatics.h"
 #include "Engine/Engine.h"
 #include "AbilitySystemComponent.h"
 

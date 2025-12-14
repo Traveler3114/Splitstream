@@ -2,8 +2,6 @@
 #include "ActorComponents/SearchComponent.h"
 #include "ActorComponents/InventoryComponent.h"
 #include "DataAssets/ItemBase.h"
-#include "Engine/World.h"
-#include "Kismet/GameplayStatics.h"
 
 ACupActor::ACupActor()
 {

@@ -2,12 +2,10 @@
 #include "Components/SceneComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/SceneCapture2D.h"
-#include "Engine/TextureRenderTarget2D.h"
 #include "Components/SceneCaptureComponent2D.h"
 #include "Components/ArrowComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Interfaces/IDetectable.h"
-#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "GameStates/DefaultGameState.h"
 

@@ -3,8 +3,6 @@
 #include "Components/SceneComponent.h"
 #include "Components/TextRenderComponent.h"
 #include "Net/UnrealNetwork.h"
-#include "Actors/PointActors/SearchableItemSpawnPoint.h"
-#include "Actors/Computers/Computer.h"
 
 ADeskActor::ADeskActor()
 {

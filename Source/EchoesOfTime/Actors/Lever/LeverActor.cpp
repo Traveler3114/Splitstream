@@ -1,5 +1,4 @@
 #include "LeverActor.h"
-#include "Components/TextRenderComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Components/ArrowComponent.h"
 

@@ -1,7 +1,6 @@
 #include "GhostCharacterActor.h"
 #include "Components/SceneComponent.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "Materials/MaterialInterface.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/Character.h"
 #include "Interfaces/IGhostMirrorSource.h"
