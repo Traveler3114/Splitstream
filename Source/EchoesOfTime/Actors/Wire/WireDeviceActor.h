@@ -6,6 +6,18 @@
 #include "TimelineEra.h"
 #include "WireDeviceActor.generated.h"
 
+USTRUCT(BlueprintType)
+struct FWireDeviceColorConfig
+{
+    GENERATED_BODY()
+    UPROPERTY(BlueprintReadWrite)
+    EWireColor WireColorA = EWireColor::None;
+    UPROPERTY(BlueprintReadWrite)
+    EWireColor WireColorB = EWireColor::None;
+    UPROPERTY(BlueprintReadWrite)
+    EWireColor RequiredWireColor = EWireColor::None;
+};
+
 UCLASS()
 class ECHOESOFTIME_API AWireDeviceActor : public AActor
 {
@@ -13,6 +25,9 @@ class ECHOESOFTIME_API AWireDeviceActor : public AActor
 
 public:
     AWireDeviceActor();
+
+    UFUNCTION(BlueprintCallable)
+    void ApplyColorConfiguration(const FWireDeviceColorConfig& Config);
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
     ETimelineEra TimelineEra = ETimelineEra::Past;

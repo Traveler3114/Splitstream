@@ -14,7 +14,7 @@ AWireActor::AWireActor()
     SearchComponent = CreateDefaultSubobject<USearchComponent>(TEXT("SearchComponent"));
     SearchComponent->SetIsReplicated(true);
 
-    WireColor = EWireColor::Red;
+    WireColor = EWireColor::None;
     bIsCut = false;
 }
 
@@ -70,11 +70,6 @@ void AWireActor::OnRep_CutState()
         WireMesh->SetVisibility(!bIsCut, true);
 }
 
-void AWireActor::OnRep_WireColor()
-{
-    // Called on clients when WireColor changes via replication
-    ApplyWireColor();
-}
 
 FLinearColor AWireActor::GetWireLinearColor() const
 {
@@ -90,18 +85,31 @@ FLinearColor AWireActor::GetWireLinearColor() const
     }
 }
 
-void AWireActor::ApplyWireColor()
+void AWireActor::OnRep_WireColor()
 {
-    if (!WireMesh)
-        return;
-
-    UMaterialInstanceDynamic* MID = WireMesh->CreateAndSetMaterialInstanceDynamic(0);
-    if (!MID)
-        return;
-
-    MID->SetVectorParameterValue(TEXT("WireColor"), GetWireLinearColor());
+    ApplyWireColor();
 }
 
+void AWireActor::ApplyWireColor()
+{
+    if (WireMesh)
+    {
+        // Always re-create the MID every time!
+        WireMID = WireMesh->CreateAndSetMaterialInstanceDynamic(0);
+        if (WireMID)
+        {
+            WireMID->SetVectorParameterValue(TEXT("WireColor"), GetWireLinearColor());
+        }
+        else
+        {
+            UE_LOG(LogTemp, Error, TEXT("[%s] Failed to create MID in ApplyWireColor!"), *GetName());
+        }
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("[%s] WireMesh is null in ApplyWireColor!"), *GetName());
+    }
+}
 void AWireActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);

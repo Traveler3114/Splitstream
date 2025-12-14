@@ -31,6 +31,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Wire")
     void ApplyWireColor();
 
+    UPROPERTY(Transient)
+    UMaterialInstanceDynamic* WireMID = nullptr;
+
     UFUNCTION(BlueprintPure, Category = "Wire")
     FLinearColor GetWireLinearColor() const;
 

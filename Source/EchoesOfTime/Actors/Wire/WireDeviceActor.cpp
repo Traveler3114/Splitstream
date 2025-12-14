@@ -22,6 +22,21 @@ AWireDeviceActor::AWireDeviceActor()
 	bReplicates = true;
 }
 
+void AWireDeviceActor::ApplyColorConfiguration(const FWireDeviceColorConfig& Config)
+{
+    if (WireActors.Num() >= 2)
+    {
+        WireActors[0]->WireColor = Config.WireColorA;
+        WireActors[1]->WireColor = Config.WireColorB;
+
+		if (HasAuthority())
+        {
+            WireActors[0]->ApplyWireColor();
+            WireActors[1]->ApplyWireColor();
+        }
+    }
+}
+
 void AWireDeviceActor::BeginPlay()
 {
     Super::BeginPlay();

@@ -452,59 +452,30 @@ void AProceduralLevelGenerator::SetupWirePuzzle()
     int32 ColorIndex = 0;
 
     // 3) For each device:
-    //    - Grab its 2 wire child actors (we assume 2 per device, set up in the BP).
-    //    - Assign 2 unique colours to those wires.
-    //    - Randomly pick one of the 2 as the REQUIRED colour.
-    //    - Store {Location, RequiredColor} in PastWireDeviceSequence.
     for (AWireDeviceActor* Device : WireManager->PuzzleDevices)
     {
         if (!Device)
-        {
             continue;
-        }
-
-        // Find the 2 wires on this device (as you already do in AWireDeviceActor::BeginPlay,
-        // but here we need them on the server before BeginPlay may have run).
-        TArray<UChildActorComponent*> ChildComps;
-        Device->GetComponents(ChildComps);
-
-        TArray<AWireActor*> LocalDeviceWires;
-        for (UChildActorComponent* ChildComp : ChildComps)
-        {
-            if (AWireActor* Wire = Cast<AWireActor>(ChildComp->GetChildActor()))
-            {
-                LocalDeviceWires.Add(Wire);
-            }
-        }
-
-        if (LocalDeviceWires.Num() < 2)
-        {
-            continue;
-        }
 
         if (ColorIndex + 1 >= AvailableColors.Num())
-        {
             break;
-        }
 
-        // Take 2 unique colours from the shuffled pool
+        // Take 2 unique colors from the shuffled pool
         EWireColor ColorA = AvailableColors[ColorIndex++];
         EWireColor ColorB = AvailableColors[ColorIndex++];
 
-        // Assign them to the first two wires on this device
-        LocalDeviceWires[0]->WireColor = ColorA;
-        LocalDeviceWires[1]->WireColor = ColorB;
-
-        // Optional: apply visual material colour immediately on the server
-        LocalDeviceWires[0]->ApplyWireColor();
-        LocalDeviceWires[1]->ApplyWireColor();
-
-        // Randomly pick one of the two as the REQUIRED colour for this device
+        // Randomly pick one of the two as the REQUIRED color for this device
         EWireColor RequiredColor = FMath::RandBool() ? ColorA : ColorB;
 
-        // Store in the replicated sequence so:
-        // - ArchiveComputer can show it
-        // - WirePuzzleManager can build RequiredColors
+        // Build the color config and apply it - device will assign to its wires
+        FWireDeviceColorConfig Config;
+        Config.WireColorA = ColorA;
+        Config.WireColorB = ColorB;
+        Config.RequiredWireColor = RequiredColor;
+
+        Device->ApplyColorConfiguration(Config);
+
+        // Store in the replicated sequence so other logic can access it
         FWireSequenceStep Step;
         Step.DeviceLocation = Device->SpawnLocationName;
         Step.WireColor = RequiredColor;
@@ -514,7 +485,6 @@ void AProceduralLevelGenerator::SetupWirePuzzle()
     // Now let the manager build RequiredColors from PastWireDeviceSequence
     WireManager->SetupPuzzle();
 }
-
 void AProceduralLevelGenerator::SetupDisablingDevices()
 {
     SpawnActorsOnRandomPointsAndAddToManager<ADisablingDeviceActor, ADevicesManagerActor>(
