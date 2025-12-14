@@ -81,11 +81,8 @@ public:
     UPROPERTY(Replicated, BlueprintReadOnly)
     FString PastLeverOrderString;
 
-    UPROPERTY(ReplicatedUsing = OnRep_PastWireDeviceSequence, BlueprintReadOnly)
+    UPROPERTY(Replicated, BlueprintReadOnly)
     TArray<FWireSequenceStep> PastWireDeviceSequence;
-
-    UFUNCTION()
-    void OnRep_PastWireDeviceSequence();
 
 protected:
     virtual void BeginPlay() override;

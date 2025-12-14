@@ -207,56 +207,6 @@ void AProceduralLevelGenerator::BeginPlay()
 // ============================================================
 
 
-
-void AProceduralLevelGenerator::OnRep_PastWireDeviceSequence()
-{
-    UWorld* World = GetWorld();
-    if (!World)
-    {
-        return;
-    }
-
-    // Build colors from sequence
-    TArray<EWireColor> WireColors;
-    WireColors.Reserve(PastWireDeviceSequence.Num());
-    for (const FWireSequenceStep& Step : PastWireDeviceSequence)
-    {
-        WireColors.Add(Step.WireColor);
-    }
-
-    if (WireColors.Num() == 0)
-    {
-        return;
-    }
-
-    // Find all SecurityDocumentActor instances
-    TArray<AActor*> FoundDocs;
-    UGameplayStatics::GetAllActorsOfClass(World, ASecurityDocumentActor::StaticClass(), FoundDocs);
-
-    for (AActor* Actor : FoundDocs)
-    {
-        ASecurityDocumentActor* DocActor = Cast<ASecurityDocumentActor>(Actor);
-        if (!DocActor || !DocActor->WidgetComp)
-        {
-            continue;
-        }
-
-        UUserWidget* UserWidget = DocActor->WidgetComp->GetUserWidgetObject();
-        if (!UserWidget)
-        {
-            continue;
-        }
-
-        USecurityDocumentWidget* DocWidget = Cast<USecurityDocumentWidget>(UserWidget);
-        if (!DocWidget)
-        {
-            continue;
-        }
-
-        DocWidget->AddColorWireLine(WireColors);
-    }
-}
-
 FString AProceduralLevelGenerator::GenerateUniqueName(const TArray<FString>& FirstNames, const TArray<FString>& Surnames, TSet<FString>& UsedNames) const
 {
     FString Name;
