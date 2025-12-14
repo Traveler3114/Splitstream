@@ -26,6 +26,10 @@ void AWireActor::BeginPlay()
     {
         SearchComponent->OnSearchComplete.AddDynamic(this, &AWireActor::OnSearchComplete);
     }
+    if (WireColor != EWireColor::None)
+    {
+        ApplyWireColor();
+    }
 }
 
 void AWireActor::OnSearchComplete()

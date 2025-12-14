@@ -31,27 +31,4 @@ ASecurityDocumentActor::ASecurityDocumentActor()
 void ASecurityDocumentActor::BeginPlay()
 {
     Super::BeginPlay();
-
-    UE_LOG(LogTemp, Warning, TEXT("SecurityDocumentActor::BeginPlay on %s"),
-        HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT"));
-
-    // On the server, after the document has spawned, ask the generator
-    // to update all documents (including this one).
-    if (HasAuthority())
-    {
-        UWorld* World = GetWorld();
-        if (World)
-        {
-            AProceduralLevelGenerator* Gen =
-                Cast<AProceduralLevelGenerator>(UGameplayStatics::GetActorOfClass(
-                    World, AProceduralLevelGenerator::StaticClass()));
-
-            if (Gen)
-            {
-                Gen->OnRep_PastWireDeviceSequence();
-            }
-        }
-    }
-
-    // Clients will be updated from OnRep_PastWireDeviceSequence
 }
