@@ -1,7 +1,6 @@
 #include "Computer.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/SceneComponent.h"
-#include "Components/TextRenderComponent.h"
 #include "ActorComponents/HackComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Engine/Engine.h"

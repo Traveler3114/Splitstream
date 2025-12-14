@@ -7,7 +7,6 @@
 #include "WireDeviceActor.h"
 #include "EngineUtils.h"
 #include "GameStates/DefaultGameState.h"
-#include "Sound/SoundBase.h"
 
 AWirePuzzleManager::AWirePuzzleManager()
 {

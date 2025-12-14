@@ -3,10 +3,8 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/SceneComponent.h"
 #include "Components/TextRenderComponent.h"
-#include "Characters/CivilianCharacter.h"
 #include "DataAssets/ItemBase.h"
 #include "Net/UnrealNetwork.h"
-#include "ActorComponents/InventoryComponent.h"
 #include "TimerManager.h"
 
 ACodeGenerator::ACodeGenerator()

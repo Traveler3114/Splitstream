@@ -4,9 +4,6 @@
 #include "Components/ArrowComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Components/SceneComponent.h"
-#include "ProceduralLevelGenerator.h"
-#include "Kismet/GameplayStatics.h"
-#include "Engine/World.h"
 
 ASecurityDocumentActor::ASecurityDocumentActor()
 {
