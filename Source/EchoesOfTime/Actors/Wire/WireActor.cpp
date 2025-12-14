@@ -26,7 +26,8 @@ void AWireActor::BeginPlay()
     {
         SearchComponent->OnSearchComplete.AddDynamic(this, &AWireActor::OnSearchComplete);
     }
-    if (HasAuthority() && WireColor != EWireColor::None)
+    // Apply color on both server and clients after replication has occurred
+    if (WireColor != EWireColor::None)
     {
         ApplyWireColor();
     }
