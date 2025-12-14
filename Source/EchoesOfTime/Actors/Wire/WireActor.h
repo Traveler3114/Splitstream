@@ -1,3 +1,4 @@
+// WireActor.h
 #pragma once
 
 #include "CoreMinimal.h"
@@ -67,7 +68,7 @@ public:
     void OnRep_CutState();
 
     UFUNCTION()
-    void OnRep_WireColor(); // NEW
+    void OnRep_WireColor();
 
     UFUNCTION()
     virtual void OnSearchComplete();

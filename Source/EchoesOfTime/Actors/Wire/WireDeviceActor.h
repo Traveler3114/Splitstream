@@ -1,3 +1,4 @@
+// WireDeviceActor.h
 #pragma once
 
 #include "CoreMinimal.h"
@@ -24,6 +25,15 @@ class ECHOESOFTIME_API AWireDeviceActor : public AActor
     GENERATED_BODY()
 
 public:
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wires")
+    TArray<FVector> WireRelativeLocations;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wires")
+    FVector WireRelativeScale = FVector(1.0f, 1.0f, 1.0f);
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wires")
+    FRotator WireRelativeRotation = FRotator::ZeroRotator;
+
     AWireDeviceActor();
 
     UFUNCTION(BlueprintCallable)
@@ -39,12 +49,9 @@ public:
     UStaticMeshComponent* DeviceMesh;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    TObjectPtr<class UArrowComponent> ArrowComp;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Device")
     TSubclassOf<AWireActor> WireClass;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated)
     TArray<AWireActor*> WireActors;
 
     UPROPERTY(BlueprintReadOnly, Replicated)
@@ -55,5 +62,5 @@ public:
 
 protected:
     virtual void BeginPlay() override;
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

@@ -1,3 +1,4 @@
+// WireActor.cpp
 #include "WireActor.h"
 #include "ActorComponents/SearchComponent.h"
 #include "Net/UnrealNetwork.h"
@@ -70,7 +71,6 @@ void AWireActor::OnRep_CutState()
         WireMesh->SetVisibility(!bIsCut, true);
 }
 
-
 FLinearColor AWireActor::GetWireLinearColor() const
 {
     switch (WireColor)
@@ -94,7 +94,6 @@ void AWireActor::ApplyWireColor()
 {
     if (WireMesh)
     {
-        // Always re-create the MID every time!
         WireMID = WireMesh->CreateAndSetMaterialInstanceDynamic(0);
         if (WireMID)
         {
@@ -110,10 +109,10 @@ void AWireActor::ApplyWireColor()
         UE_LOG(LogTemp, Error, TEXT("[%s] WireMesh is null in ApplyWireColor!"), *GetName());
     }
 }
+
 void AWireActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
     DOREPLIFETIME(AWireActor, bIsCut);
-    DOREPLIFETIME(AWireActor, WireColor); // NEW
+    DOREPLIFETIME(AWireActor, WireColor);
 }
