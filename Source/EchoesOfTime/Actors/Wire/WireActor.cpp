@@ -26,9 +26,6 @@ void AWireActor::BeginPlay()
     {
         SearchComponent->OnSearchComplete.AddDynamic(this, &AWireActor::OnSearchComplete);
     }
-
-    // Ensure the current WireColor is applied visually on whatever machine we are on
-    ApplyWireColor();
 }
 
 void AWireActor::OnSearchComplete()

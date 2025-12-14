@@ -9,6 +9,7 @@
 UENUM(BlueprintType)
 enum class EWireColor : uint8
 {
+    None,
     Red,
     Green,
     Blue,
@@ -47,7 +48,7 @@ public:
 
     // Replicated color
     UPROPERTY(ReplicatedUsing = OnRep_WireColor, EditAnywhere, BlueprintReadWrite, Category = "Wire")
-    EWireColor WireColor = EWireColor::Red;
+    EWireColor WireColor = EWireColor::None;
 
     UPROPERTY(ReplicatedUsing = OnRep_CutState, BlueprintReadOnly)
     bool bIsCut = false;
