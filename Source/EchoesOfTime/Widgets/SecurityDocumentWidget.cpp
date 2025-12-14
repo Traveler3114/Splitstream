@@ -54,6 +54,7 @@ void USecurityDocumentWidget::AddColorWireLine(TArray<EWireColor> WireColors)
 		return;
 	}
 	// For each wire color, create a colored box and add it to the horizontal box
+	ColorWireBox->ClearChildren();
 	for (EWireColor WireColor : WireColors) 
 	{
 		UBorder* ColorBox = NewObject<UBorder>(this);
