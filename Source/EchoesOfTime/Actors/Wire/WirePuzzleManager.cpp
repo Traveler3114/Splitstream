@@ -21,8 +21,13 @@ void AWirePuzzleManager::BeginPlay()
 
 void AWirePuzzleManager::SetupPuzzle()
 {
+
+
     if (HasAuthority())
     {
+        CompletedColors.Empty();
+        bCompleted = false;
+        ProgressIndex = 0;
         // Obtain wire sequence steps (location + color per device) from the generator
         TArray<FWireSequenceStep> DeviceSequence;
         for (TActorIterator<AProceduralLevelGenerator> It(GetWorld()); It; ++It)
@@ -121,9 +126,16 @@ void AWirePuzzleManager::OnWireCut(AWireActor* CutWire)
 
     const EWireColor CutColor = CutWire->WireColor;
 
-    // 1) If this color is not required at all -> alarm
-    if (!RequiredColors.Contains(CutColor))
+    // --- ENFORCE ORDER ---
+    // 1: Is there a next wire required? 
+    if (!RequiredColors.IsValidIndex(ProgressIndex))
+        return; // Out of bounds, probably already finished
+
+    EWireColor ExpectedColor = RequiredColors[ProgressIndex];
+
+    if (CutColor != ExpectedColor)
     {
+        // Wrong color cut => Alarm!
         ADefaultGameState* GS = GetWorld() ? GetWorld()->GetGameState<ADefaultGameState>() : nullptr;
         if (GS)
         {
@@ -132,35 +144,21 @@ void AWirePuzzleManager::OnWireCut(AWireActor* CutWire)
         return;
     }
 
-    // 2) If we already completed this color, ignore extra cuts
-    if (CompletedColors.Contains(CutColor))
-    {
-        return;
-    }
-
-    // 3) Mark this color as completed
+    // If correct, progress
     CompletedColors.Add(CutColor);
+    ProgressIndex++;
 
-    // 4) Check if all required colors are now completed
-    bool bAllDone = true;
-    for (EWireColor Needed : RequiredColors)
-    {
-        if (!CompletedColors.Contains(Needed))
-        {
-            bAllDone = false;
-            break;
-        }
-    }
-
-    if (bAllDone)
+    // Complete if we're at the end
+    if (ProgressIndex >= RequiredColors.Num())
     {
         CompletePuzzle();
     }
-	//HighlightNextCorrectWire();
 }
-
 void AWirePuzzleManager::ResetPuzzle()
 {
+    CompletedColors.Empty();
+    bCompleted = false;
+    ProgressIndex = 0;
     for (auto* Device : PuzzleDevices)
     {
         if (Device)
@@ -215,4 +213,5 @@ void AWirePuzzleManager::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
     DOREPLIFETIME(AWirePuzzleManager, bCompleted);
     DOREPLIFETIME(AWirePuzzleManager, RequiredColors);
     DOREPLIFETIME(AWirePuzzleManager, CompletedColors);
+    DOREPLIFETIME(AWirePuzzleManager, ProgressIndex);
 }

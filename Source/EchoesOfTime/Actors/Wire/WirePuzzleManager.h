@@ -47,6 +47,9 @@ public:
     UPROPERTY(Replicated)
     TArray<EWireColor> CompletedColors;
 
+    UPROPERTY(Replicated)
+    int32 ProgressIndex = 0;
+
     //void HighlightNextCorrectWire();
 
 protected:
