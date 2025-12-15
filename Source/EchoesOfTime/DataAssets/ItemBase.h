@@ -55,6 +55,12 @@ public:
     bool bEnablePhysicsOnDrop = false;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
+    bool bApplyGameplayEffectsPassively = false;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
+    bool bApplyGameplayAbilitiesPassively = false;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
     float DropImpulseStrength = 500.f;
 
     // --- Ownership (optional, e.g. for fingerprints) ---
@@ -78,12 +84,17 @@ public:
     // --- Core API ---
     virtual void OnEquipped(class AActor* Instigator);
     virtual void OnUnequipped(class AActor* Instigator);
+    virtual void OnAddedToInventory(AActor* Instigator);
+    virtual void OnRemovedFromInventory(AActor* Instigator);
+
     virtual void OnUsed(class AActor* Instigator);
 
     virtual void OnDropped(class AActor* Instigator, FGuid ItemInstanceID, FVector DropLocation);
     virtual void OnDroppedWithTeam(class AActor* Instigator, FGuid ItemInstanceID, FGameplayTag TeamTag, FVector DropLocation);
 
 protected:
+    void ApplyGameplayEffects(AActor *Instigator);
+    void ApplyGameplayAbilities(AActor *Instigator);
     void RemoveGrantedGameplayEffects(AActor* Instigator);
     void RemoveGrantedAbilities(AActor* Instigator);
 };

@@ -78,7 +78,13 @@ bool UInventoryComponent::AddItem(UItemBase* ItemAsset, FGuid InstanceID)
             Slots[i].ItemInstanceID = InstanceID;
             OnInventoryChanged.Broadcast(Slots);
 
-            // If this is the first item added to inventory, auto-equip it
+            // New: Apply passive effects if set
+            if (ItemAsset && ItemAsset->bApplyGameplayEffectsPassively)
+            {
+                ItemAsset->OnAddedToInventory(GetOwner());
+            }
+
+            // If first item (auto-equip)
             bool bWasInventoryEmpty = true;
             for (const FInventorySlot& Slot : Slots)
             {
@@ -102,16 +108,22 @@ void UInventoryComponent::RemoveItem(int32 Index)
 {
     if (Slots.IsValidIndex(Index))
     {
-        // Shift all items after Index down by one
+        auto* Item = Slots[Index].ItemAsset;
+        // Remove passive effects before erasing slot (new!)
+        if (Item)
+        {
+            Item->OnRemovedFromInventory(GetOwner());
+        }
+
+        // ... your existing logic
         for (int32 i = Index; i < Slots.Num() - 1; ++i)
         {
             Slots[i] = Slots[i + 1];
         }
-        // Clear last slot
         Slots[Slots.Num() - 1].ItemAsset = nullptr;
         Slots[Slots.Num() - 1].ItemInstanceID.Invalidate();
 
-        // Fix active slot index if needed
+        // ... Your active slot handling
         if (ActiveSlotIndex >= Slots.Num())
         {
             ActiveSlotIndex = Slots.Num() - 1;

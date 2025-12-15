@@ -13,56 +13,38 @@
 
 void UItemBase::OnEquipped(AActor* Instigator)
 {
-    // --- Grant Gameplay Effects ---
-    if (GrantedGameplayEffects.Num() > 0)
-    {
-        IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(Instigator);
-        if (AbilityInterface)
-        {
-            UAbilitySystemComponent* ASC = AbilityInterface->GetAbilitySystemComponent();
-            if (ASC)
-            {
-                for (TSubclassOf<UGameplayEffect> EffectClass : GrantedGameplayEffects)
-                {
-                    if (EffectClass)
-                    {
-                        FActiveGameplayEffectHandle Handle =
-                            ASC->ApplyGameplayEffectToSelf(EffectClass->GetDefaultObject<UGameplayEffect>(), 1.0f, ASC->MakeEffectContext());
-                        GrantedGameplayEffectHandles.Add(Handle);
-                    }
-                }
-            }
-        }
-    }
-
-    // --- Grant Abilities if AbilitySet is present ---
-    if (AbilitySet)
-    {
-        IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(Instigator);
-        if (AbilityInterface)
-        {
-            UAbilitySystemComponent* ASC = AbilityInterface->GetAbilitySystemComponent();
-            if (ASC)
-            {
-                GrantedAbilityHandles.Empty();
-                for (const FAbilityInputSetEntry& Entry : AbilitySet->Abilities)
-                {
-                    if (!Entry.AbilityClass) continue;
-                    FGameplayAbilitySpec Spec(Entry.AbilityClass, Entry.AbilityLevel, 0);
-                    Spec.GetDynamicSpecSourceTags().AddTag(Entry.InputTag);
-
-                    FGameplayAbilitySpecHandle Handle = ASC->GiveAbility(Spec);
-                    GrantedAbilityHandles.Add(Handle);
-                }
-            }
-        }
-    }
+    if (!bApplyGameplayEffectsPassively) ApplyGameplayEffects(Instigator);
+    if (!bApplyGameplayAbilitiesPassively) ApplyGameplayAbilities(Instigator);
 }
 
 void UItemBase::OnUnequipped(AActor* Instigator)
 {
-    RemoveGrantedGameplayEffects(Instigator);
-    RemoveGrantedAbilities(Instigator);
+    if(!bApplyGameplayEffectsPassively) RemoveGrantedGameplayEffects(Instigator);
+    if(!bApplyGameplayAbilitiesPassively) RemoveGrantedAbilities(Instigator);
+}
+
+void UItemBase::OnAddedToInventory(AActor* Instigator)
+{
+    if (bApplyGameplayEffectsPassively)
+    {
+        ApplyGameplayEffects(Instigator);
+    }
+    if (bApplyGameplayAbilitiesPassively)
+    {
+        ApplyGameplayAbilities(Instigator);
+    }
+}
+
+void UItemBase::OnRemovedFromInventory(AActor* Instigator)
+{
+    if (bApplyGameplayEffectsPassively)
+    {
+        RemoveGrantedGameplayEffects(Instigator);
+    }
+    if (bApplyGameplayAbilitiesPassively)
+    {
+        RemoveGrantedAbilities(Instigator);
+    }
 }
 
 void UItemBase::OnDropped(AActor* Instigator, FGuid ItemInstanceID, FVector DropLocation)
@@ -173,6 +155,55 @@ void UItemBase::OnDroppedWithTeam(AActor* Instigator, FGuid ItemInstanceID, FGam
 void UItemBase::OnUsed(AActor* Instigator)
 {
     // Optional: implement use logic if needed
+}
+
+void UItemBase::ApplyGameplayEffects(AActor *Instigator)
+{
+    if (GrantedGameplayEffects.Num() > 0)
+    {
+        IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(Instigator);
+        if (AbilityInterface)
+        {
+            UAbilitySystemComponent* ASC = AbilityInterface->GetAbilitySystemComponent();
+            if (ASC)
+            {
+                for (TSubclassOf<UGameplayEffect> EffectClass : GrantedGameplayEffects)
+                {
+                    if (EffectClass)
+                    {
+                        FActiveGameplayEffectHandle Handle =
+                            ASC->ApplyGameplayEffectToSelf(EffectClass->GetDefaultObject<UGameplayEffect>(), 1.0f, ASC->MakeEffectContext());
+                        GrantedGameplayEffectHandles.Add(Handle);
+                    }
+                }
+            }
+        }
+    }
+}
+
+void UItemBase::ApplyGameplayAbilities(AActor *Instigator)
+{
+    if (AbilitySet)
+    {
+        IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(Instigator);
+        if (AbilityInterface)
+        {
+            UAbilitySystemComponent* ASC = AbilityInterface->GetAbilitySystemComponent();
+            if (ASC)
+            {
+                GrantedAbilityHandles.Empty();
+                for (const FAbilityInputSetEntry& Entry : AbilitySet->Abilities)
+                {
+                    if (!Entry.AbilityClass) continue;
+                    FGameplayAbilitySpec Spec(Entry.AbilityClass, Entry.AbilityLevel, 0);
+                    Spec.GetDynamicSpecSourceTags().AddTag(Entry.InputTag);
+
+                    FGameplayAbilitySpecHandle Handle = ASC->GiveAbility(Spec);
+                    GrantedAbilityHandles.Add(Handle);
+                }
+            }
+        }
+    }
 }
 
 void UItemBase::RemoveGrantedGameplayEffects(AActor* Instigator)
