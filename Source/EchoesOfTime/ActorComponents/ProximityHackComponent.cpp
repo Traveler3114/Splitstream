@@ -73,7 +73,7 @@ void UProximityHackComponent::BeginPlay()
             ProximityWidgetComponent->SetVisibility(false, true);
 
             ProximityWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
-            float WidgetBaseSize = 100.0f; // match your widget's design size
+            float WidgetBaseSize = 259.0f; // match your widget's design size
             float Scale = (ProximityRadius * 2.0f) / WidgetBaseSize;
             ProximityWidgetComponent->SetWorldScale3D(FVector(1.f, Scale, Scale));
 
