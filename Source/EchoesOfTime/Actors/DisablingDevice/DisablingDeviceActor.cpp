@@ -66,6 +66,11 @@ void ADisablingDeviceActor::CancelInteract_Implementation(AActor* Interactor)
 		SearchComponent->CancelInteract(Interactor);
 }
 
+bool ADisablingDeviceActor::IsProgressiveInteract_Implementation()
+{
+    return true;
+}
+
 void ADisablingDeviceActor::SetHighlighted_Implementation(bool bHighlight)
 {
     if (DeviceMesh && SearchComponent)
