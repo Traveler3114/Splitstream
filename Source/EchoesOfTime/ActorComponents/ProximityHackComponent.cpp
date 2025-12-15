@@ -63,7 +63,6 @@ void UProximityHackComponent::BeginPlay()
             ProximityWidgetComponent->SetupAttachment(Owner->GetRootComponent());
             ProximityWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
             ProximityWidgetComponent->SetDrawAtDesiredSize(true);
-            //ProximityWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, HalfHeight/2.f));
             ProximityWidgetComponent->SetRelativeLocation(FVector::ZeroVector);
             ProximityWidgetComponent->SetRelativeRotation(FRotator(90.f, 0.f, 0.f));
 
@@ -72,6 +71,11 @@ void UProximityHackComponent::BeginPlay()
             ProximityWidgetComponent->InitWidget();
 
             ProximityWidgetComponent->SetVisibility(false, true);
+
+            ProximityWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
+            float WidgetBaseSize = 100.0f; // match your widget's design size
+            float Scale = (ProximityRadius * 2.0f) / WidgetBaseSize;
+            ProximityWidgetComponent->SetWorldScale3D(FVector(1.f, Scale, Scale));
 
             if (UUserWidget* Widget = ProximityWidgetComponent->GetUserWidgetObject())
             {

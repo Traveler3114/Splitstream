@@ -538,37 +538,6 @@ void ADefaultCharacter::UpdateInteractHighlight()
     }
 }
 
-// Progressive Interact Type helpers
-bool ADefaultCharacter::IsProgressiveInteractActor(AActor* Actor) const
-{
-    if (!Actor)
-        return false;
-	bool bIsProgressive = false;
-    bIsProgressive =
-        Actor->FindComponentByClass<UHackComponent>() ||
-        Actor->FindComponentByClass<USearchComponent>() ||
-        Actor->FindComponentByClass<ULockPickComponent>();
-    return bIsProgressive;
-}
-
-FGameplayTag ADefaultCharacter::GetProgressiveInteractTag(AActor* Actor) const
-{
-    if (!Actor)
-        return FGameplayTag();
-    if (Actor->FindComponentByClass<UHackComponent>())
-    {
-        return TAG_Character_Ability_Hack;
-    }
-    if (Actor->FindComponentByClass<USearchComponent>())
-    {
-        return TAG_Character_Ability_Search;
-    }
-    if (Actor->FindComponentByClass<ULockPickComponent>())
-    {
-        return TAG_Character_Ability_LockPick;
-    }
-    return FGameplayTag();
-}
 
 void ADefaultCharacter::HandleInteractHoldStart()
 {
@@ -578,9 +547,11 @@ void ADefaultCharacter::HandleInteractHoldStart()
     AActor* HitActor = Hit.GetActor();
     if (!HitActor) return;
 
-    if (IsProgressiveInteractActor(HitActor)) {
+    if (HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()) &&
+        IInteractable::Execute_IsProgressiveInteract(HitActor))
+    {
         IInteractable::Execute_Interact(HitActor, this);
-		ProgressiveActor = HitActor;
+        ProgressiveActor = HitActor;
     }
 }
 

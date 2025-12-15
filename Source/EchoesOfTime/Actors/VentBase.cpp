@@ -44,6 +44,11 @@ void AVentBase::CancelInteract_Implementation(AActor* Interactor)
         SearchComponent->CancelInteract(Interactor);
 }
 
+bool AVentBase::IsProgressiveInteract_Implementation()
+{
+    return true;
+}
+
 void AVentBase::SetHighlighted_Implementation(bool bHighlight)
 {
     if (VentBaseMesh)

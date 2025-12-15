@@ -70,6 +70,12 @@ void ALockerActor::CancelInteract_Implementation(AActor* Interactor)
         LockPickComponent->CancelInteract(Interactor);
     }
 }
+
+bool ALockerActor::IsProgressiveInteract_Implementation()
+{
+    return (LockPickComponent && !LockPickComponent->IsUnlocked());
+}
+
 void ALockerActor::SetHighlighted_Implementation(bool bHighlight)
 {
     if (LockerDoorMesh && LockerMesh)

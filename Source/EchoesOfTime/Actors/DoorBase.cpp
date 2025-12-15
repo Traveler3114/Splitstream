@@ -77,6 +77,12 @@ void ADoorBase::CancelInteract_Implementation(AActor* Interactor)
     }
 }
 
+// DoubleDoorBase.cpp
+bool ADoorBase::IsProgressiveInteract_Implementation()
+{
+    return (LockPickComponent && bIsLocked && !LockPickComponent->IsUnlocked());
+}
+
 void ADoorBase::OnLockUnlocked()
 {
     bIsLocked = false;

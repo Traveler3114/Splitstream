@@ -43,6 +43,11 @@ void AComputer::Interact_Implementation(AActor* Interactor)
     }
 }
 
+bool AComputer::IsProgressiveInteract_Implementation()
+{
+    return true;
+}
+
 void AComputer::CancelInteract_Implementation(AActor* Interactor)
 {
     if (HackComponent)

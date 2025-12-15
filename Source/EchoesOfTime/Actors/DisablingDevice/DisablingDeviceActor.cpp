@@ -35,6 +35,7 @@ void ADisablingDeviceActor::BeginPlay()
 void ADisablingDeviceActor::OnSearchComplete()
 {
     DisableDevice();
+    SetHighlighted_Implementation(false);
 }
 
 void ADisablingDeviceActor::DisableDevice()

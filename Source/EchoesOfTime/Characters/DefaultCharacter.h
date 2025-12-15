@@ -144,13 +144,6 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
     UInventoryComponent* InventoryComponent;
 
-    // Interaction system
-    UFUNCTION(BlueprintCallable, Category = "Interaction")
-    bool IsProgressiveInteractActor(AActor* Actor) const;
-
-    UFUNCTION(BlueprintCallable, Category = "Interaction")
-    FGameplayTag GetProgressiveInteractTag(AActor* Actor) const;
-
     // Input handlers for interaction
     UFUNCTION()
     void HandleInteractHoldStart();

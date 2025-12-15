@@ -50,6 +50,11 @@ void AWireActor::Interact_Implementation(AActor* Interactor)
         SearchComponent->Interact(Interactor);
 }
 
+bool AWireActor::IsProgressiveInteract_Implementation()
+{
+    return true;
+}
+
 void AWireActor::CancelInteract_Implementation(AActor* Interactor)
 {
     if (SearchComponent)

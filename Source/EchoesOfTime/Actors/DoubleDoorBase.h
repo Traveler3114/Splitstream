@@ -44,6 +44,7 @@ public:
     virtual void Interact_Implementation(AActor* Interactor) override;
 	virtual void CancelInteract_Implementation(AActor* Interactor) override;
     virtual void SetHighlighted_Implementation(bool bHighlight) override;
+    virtual bool IsProgressiveInteract_Implementation() override;
 
     // Keycard unlockable interface
     virtual void UnlockWithKeycard_Implementation(AActor* Interactor) override;

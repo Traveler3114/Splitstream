@@ -32,6 +32,7 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	virtual void Interact_Implementation(AActor* Interactor) override;
+	virtual bool IsProgressiveInteract_Implementation() override;
 	//virtual void SetHighlighted_Implementation(bool bHighlight) override;
 
 	UPROPERTY()

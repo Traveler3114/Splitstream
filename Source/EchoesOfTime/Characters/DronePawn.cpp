@@ -10,6 +10,8 @@
 #include "GameStates/DefaultGameState.h" 
 #include "Actors/PointActors/NavNode.h"
 #include "Net/UnrealNetwork.h"
+#include "AbilitySystemComponent.h"
+#include "AbilitySystem/EOTGameplayTags.h"
 
 ADronePawn::ADronePawn()
 {
@@ -104,8 +106,12 @@ void ADronePawn::DetectionUpdate()
     {
         if (!Candidate || Candidate == this)
             continue;
+
         ADefaultCharacter* DefaultChar = Cast<ADefaultCharacter>(Candidate);
         if (!DefaultChar)
+            continue;
+        UAbilitySystemComponent* ASC = DefaultChar->GetAbilitySystemComponent();
+        if (!ASC || !ASC->HasMatchingGameplayTag(TAG_Character_Status_Illegal))
             continue;
 
         UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(DefaultChar->GetRootComponent());

@@ -32,6 +32,11 @@ void ASearchableActor::Interact_Implementation(AActor* Interactor)
         SearchComponent->Interact(Interactor);
 }
 
+bool ASearchableActor::IsProgressiveInteract_Implementation()
+{
+    return true;
+}
+
 void ASearchableActor::OnSearchComplete()
 {
 }
