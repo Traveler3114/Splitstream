@@ -1,6 +1,7 @@
 #include "Computer.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/SceneComponent.h"
+#include "Components/TextRenderComponent.h"
 #include "ActorComponents/HackComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Engine/Engine.h"
@@ -14,6 +15,13 @@ AComputer::AComputer()
 
     ComputerMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ComputerMesh"));
     ComputerMesh->SetupAttachment(DefaultSceneRoot);
+
+    CodeText = CreateDefaultSubobject<UTextRenderComponent>(TEXT("CodeText"));
+    CodeText->SetupAttachment(DefaultSceneRoot);
+    CodeText->SetHorizontalAlignment(EHTA_Center);
+    CodeText->SetTextRenderColor(FColor::Green); // Or another color
+    CodeText->SetText(FText::FromString(TEXT("")));
+    CodeText->SetHiddenInGame(true); // Hide by default if you wish
 }
 
 void AComputer::BeginPlay()
@@ -31,8 +39,12 @@ void AComputer::BeginPlay()
 
 void AComputer::SetupComputer(const FString& NewStaffName, const FString& NewStoredCode)
 {
-
     StoredCode = NewStoredCode;
+
+    if (CodeText)
+    {
+        CodeText->SetHiddenInGame(true); // Always hide at setup
+    }
 }
 
 void AComputer::Interact_Implementation(AActor* Interactor)
@@ -75,10 +87,34 @@ void AComputer::SetHighlighted_Implementation(bool bHighlight)
 
 void AComputer::OnHackComplete()
 {
+    OnRep_StoredCode();
 }
+
 void AComputer::OnRep_StoredCode()
 {
-    // Optionally display code in UI/widgets
+    if (!HackComponent) return;
+
+    // Only show code if the computer is hacked
+    if (HackComponent->bHacked)
+    {
+        if (CodeText)
+        {
+            if (StoredCode.IsEmpty())
+            {
+                CodeText->SetText(FText::FromString(TEXT("Wrong")));
+            }
+            else
+            {
+                CodeText->SetText(FText::FromString(StoredCode));
+            }
+            CodeText->SetHiddenInGame(false);
+        }
+    }
+    else
+    {
+        // Not hacked: hide the text
+        if (CodeText) CodeText->SetHiddenInGame(true);
+    }
 }
 
 void AComputer::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

@@ -31,6 +31,9 @@ public:
     UPROPERTY(ReplicatedUsing = OnRep_StoredCode, VisibleAnywhere, BlueprintReadOnly, Category = "Hack")
     FString StoredCode;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Computer")
+    UTextRenderComponent* CodeText;
+
 
     UFUNCTION(BlueprintCallable, Category = "Setup")
     void SetupComputer(const FString& NewStaffName, const FString& NewStoredCode);
