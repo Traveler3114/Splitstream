@@ -24,5 +24,5 @@ public:
     void OnRep_IsOpen() override;
 
     UFUNCTION()
-    void HandlePastDoorStateChanged(bool bPastIsOpen);
+    void HandlePastDoorStateChanged(bool bPastIsOpen, int32 Direction);
 };

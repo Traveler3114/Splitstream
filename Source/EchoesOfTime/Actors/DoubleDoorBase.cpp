@@ -1,6 +1,7 @@
 #include "DoubleDoorBase.h"
 #include "ActorComponents/LockPickComponent.h"
 #include "Components/BoxComponent.h"
+#include "Components/ArrowComponent.h"
 #include "Characters/GuardCharacter.h"
 #include "Net/UnrealNetwork.h"
 
@@ -12,6 +13,9 @@ ADoubleDoorBase::ADoubleDoorBase()
     SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
     RootComponent = SceneRoot;
     SceneRoot->SetIsReplicated(true);
+
+    ArrowComp = CreateDefaultSubobject<UArrowComponent>(TEXT("ArrowComp"));
+    ArrowComp->SetupAttachment(RootComponent);
 
     DoorRightMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DoorRightMesh"));
     DoorRightMesh->SetupAttachment(SceneRoot);
@@ -67,11 +71,26 @@ void ADoubleDoorBase::Interact_Implementation(AActor* Interactor)
 
     if (HasAuthority())
     {
+        OpenDirection = ComputeOpenDirection(Interactor);
         bIsOpen = !bIsOpen;
         OnRep_IsOpen();
     }
 }
 
+int32 ADoubleDoorBase::ComputeOpenDirection(AActor* ReferenceActor) const
+{
+    if (!ReferenceActor)
+    {
+        return 1;
+    }
+
+    FVector DoorForward = ArrowComp->GetForwardVector();
+    FVector ToActor = ReferenceActor->GetActorLocation() - GetActorLocation();
+    ToActor.Normalize();
+    float Dot = FVector::DotProduct(DoorForward, ToActor);
+    int32 Dir = (Dot < 0.f) ? 1 : -1;
+    return Dir;
+}
 
 void ADoubleDoorBase::CancelInteract_Implementation(AActor* Interactor)
 {
@@ -96,9 +115,9 @@ void ADoubleDoorBase::OnLockUnlocked()
 void ADoubleDoorBase::OnRep_IsOpen()
 {
     if (bIsOpen)
-        OpenDoor();
+        OpenDoor(OpenDirection);
     else
-        CloseDoor();
+        CloseDoor(OpenDirection);
 }
 
 void ADoubleDoorBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -136,18 +155,18 @@ void ADoubleDoorBase::SetHighlighted_Implementation(bool bHighlight)
 // --- Guard Auto Open/Close Logic ---
 
 void ADoubleDoorBase::OnGuardOpenBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
-    UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+                                              UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
     if (!bAutoOpenForGuards)
         return;
-    if (OtherActor && OtherActor->IsA(AGuardCharacter::StaticClass()))
+    if (OtherActor && (OtherActor->IsA(AGuardCharacter::StaticClass())))
     {
-        ForceOpenDoorForGuard();
+        ForceOpenDoorForGuard(OtherActor);
     }
 }
 
 void ADoubleDoorBase::OnGuardOpenEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
-    UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+                                            UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
     if (!bAutoOpenForGuards)
         return;
@@ -158,27 +177,27 @@ void ADoubleDoorBase::OnGuardOpenEndOverlap(UPrimitiveComponent* OverlappedComp,
         GuardOpenTrigger->GetOverlappingActors(Overlapping, AGuardCharacter::StaticClass());
         if (Overlapping.Num() == 0)
         {
-            ForceCloseDoorForGuard();
+            ForceCloseDoorForGuard(OtherActor);
         }
     }
 }
 
-void ADoubleDoorBase::ForceOpenDoorForGuard()
+void ADoubleDoorBase::ForceOpenDoorForGuard(AActor* GuardActor)
 {
     if (!bIsOpen)
     {
+        OpenDirection = ComputeOpenDirection(GuardActor);
         bIsOpen = true;
         OnRep_IsOpen();
     }
-    // Do NOT touch bIsLocked or bRequiresKeycard
 }
 
-void ADoubleDoorBase::ForceCloseDoorForGuard()
+void ADoubleDoorBase::ForceCloseDoorForGuard(AActor* GuardActor)
 {
     if (bIsOpen)
     {
+        OpenDirection = ComputeOpenDirection(GuardActor);
         bIsOpen = false;
         OnRep_IsOpen();
     }
-    // Do NOT touch bIsLocked or bRequiresKeycard
 }

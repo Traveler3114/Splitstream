@@ -29,16 +29,18 @@ void AFutureDoubleDoor::Interact_Implementation(AActor* Interactor)
     Super::Interact_Implementation(Interactor);
 }
 
-void AFutureDoubleDoor::HandlePastDoubleDoorStateChanged(bool bPastIsOpen)
+void AFutureDoubleDoor::HandlePastDoubleDoorStateChanged(bool bPastIsOpen, int32 Direction)
 {
+    OpenDirection = Direction;
+
     if (bPastIsOpen)
     {
-        OpenDoor();
+        OpenDoor(OpenDirection);
         bIsOpen = true;
     }
     else
     {
-        CloseDoor();
+        CloseDoor(OpenDirection);
         bIsOpen = false;
     }
 }
@@ -46,9 +48,9 @@ void AFutureDoubleDoor::HandlePastDoubleDoorStateChanged(bool bPastIsOpen)
 void AFutureDoubleDoor::OnRep_IsOpen()
 {
     if (bIsOpen)
-        OpenDoor();
+        OpenDoor(OpenDirection);
     else
-        CloseDoor();
+        CloseDoor(OpenDirection);
 }
 
 void AFutureDoubleDoor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

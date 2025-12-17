@@ -29,16 +29,16 @@ void AFutureDoor::Interact_Implementation(AActor* Interactor)
     Super::Interact_Implementation(Interactor); // <--- Add this line
 }
 
-void AFutureDoor::HandlePastDoorStateChanged(bool bPastIsOpen)
+void AFutureDoor::HandlePastDoorStateChanged(bool bPastIsOpen, int32 Direction)
 {
     if (bPastIsOpen)
     {
-        OpenDoor();
+        OpenDoor(Direction);
         bIsOpen = true;
     }
     else
     {
-        CloseDoor();
+        CloseDoor(Direction);
         bIsOpen = false;
     }
 }
@@ -46,9 +46,9 @@ void AFutureDoor::HandlePastDoorStateChanged(bool bPastIsOpen)
 void AFutureDoor::OnRep_IsOpen()
 {
     if (bIsOpen)
-        OpenDoor();
+        OpenDoor(OpenDirection);
     else
-        CloseDoor();
+        CloseDoor(OpenDirection);
 }
 
 void AFutureDoor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

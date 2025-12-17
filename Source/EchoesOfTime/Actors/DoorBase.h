@@ -1,3 +1,5 @@
+// DoorBase.h
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -20,6 +22,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
     UStaticMeshComponent* DoorMesh;
 
+    UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Components")
+	class UArrowComponent* ArrowComp; // Add this property
+
     UPROPERTY(ReplicatedUsing = OnRep_IsOpen, EditAnywhere, BlueprintReadWrite, Category = "Door")
     bool bIsOpen = false;
 
@@ -37,11 +42,13 @@ public:
 
     class ULockPickComponent* LockPickComponent = nullptr;
 
+    int32 ComputeOpenDirection(AActor* ReferenceActor) const;
+
     // IInteractable
     virtual void Interact_Implementation(AActor* Interactor) override;
-	virtual void CancelInteract_Implementation(AActor* Interactor) override;
+    virtual void CancelInteract_Implementation(AActor* Interactor) override;
     virtual void SetHighlighted_Implementation(bool bHighlight) override;
-	virtual bool IsProgressiveInteract_Implementation() override;
+    virtual bool IsProgressiveInteract_Implementation() override;
 
     // Keycard unlockable interface
     virtual void UnlockWithKeycard_Implementation(AActor* Interactor) override;
@@ -57,10 +64,10 @@ public:
     virtual void OnRep_IsOpen();
 
     UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Door")
-    void OpenDoor();
+    void OpenDoor(int32 Direction);
 
     UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Door")
-    void CloseDoor();
+    void CloseDoor(int32 Direction);
 
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -74,8 +81,11 @@ public:
         UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
     UFUNCTION()
-    void ForceOpenDoorForGuard();
+    void ForceOpenDoorForGuard(AActor* GuardActor);
 
     UFUNCTION()
-    void ForceCloseDoorForGuard();
+    void ForceCloseDoorForGuard(AActor* GuardActor);
+
+protected:
+    int32 OpenDirection = 1;
 };

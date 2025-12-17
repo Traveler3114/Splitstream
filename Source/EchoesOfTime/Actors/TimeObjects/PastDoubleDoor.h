@@ -4,7 +4,7 @@
 #include "Actors/DoubleDoorBase.h"
 #include "PastDoubleDoor.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDoubleDoorStateChanged, bool, bIsOpen);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnDoubleDoorStateChanged, bool, bIsOpen, int32, Direction);
 
 UCLASS()
 class ECHOESOFTIME_API APastDoubleDoor : public ADoubleDoorBase

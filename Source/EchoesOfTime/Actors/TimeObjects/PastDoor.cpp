@@ -19,17 +19,17 @@ void APastDoor::Interact_Implementation(AActor* Interactor)
 
     if (HasAuthority())
     {
-        OnDoorStateChanged.Broadcast(bIsOpen);
+        OnDoorStateChanged.Broadcast(bIsOpen, OpenDirection);
     }
 }
 
 void APastDoor::OnRep_IsOpen()
 {
-    OnDoorStateChanged.Broadcast(bIsOpen);
+    OnDoorStateChanged.Broadcast(bIsOpen, OpenDirection);
     if (bIsOpen)
-        OpenDoor();
+        OpenDoor(OpenDirection);
     else
-        CloseDoor();
+        CloseDoor(OpenDirection);
 }
 
 void APastDoor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

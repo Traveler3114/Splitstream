@@ -23,6 +23,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
     UStaticMeshComponent* DoorRightMesh;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+    class UArrowComponent* ArrowComp;
+
     UPROPERTY(ReplicatedUsing = OnRep_IsOpen, EditAnywhere, BlueprintReadWrite, Category = "Door")
     bool bIsOpen = false;
 
@@ -40,9 +43,14 @@ public:
 
     class ULockPickComponent* LockPickComponent = nullptr;
 
+    UPROPERTY(BlueprintReadOnly, Category = "Door")
+    int32 OpenDirection = 1;
+
+    int32 ComputeOpenDirection(AActor* ReferenceActor) const;
+
     // IInteractable
     virtual void Interact_Implementation(AActor* Interactor) override;
-	virtual void CancelInteract_Implementation(AActor* Interactor) override;
+    virtual void CancelInteract_Implementation(AActor* Interactor) override;
     virtual void SetHighlighted_Implementation(bool bHighlight) override;
     virtual bool IsProgressiveInteract_Implementation() override;
 
@@ -60,25 +68,25 @@ public:
     virtual void OnRep_IsOpen();
 
     UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Door")
-    void OpenDoor();
+    void OpenDoor(int32 Direction);
 
     UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Door")
-    void CloseDoor();
+    void CloseDoor(int32 Direction);
 
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
     // Guard auto open/close
     UFUNCTION()
     void OnGuardOpenBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
-        UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+                                 UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
     UFUNCTION()
     void OnGuardOpenEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
-        UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+                               UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
     UFUNCTION()
-    void ForceOpenDoorForGuard();
+    void ForceOpenDoorForGuard(AActor* GuardActor);
 
     UFUNCTION()
-    void ForceCloseDoorForGuard();
+    void ForceCloseDoorForGuard(AActor* GuardActor);
 };

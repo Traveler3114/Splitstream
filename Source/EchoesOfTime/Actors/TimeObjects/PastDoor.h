@@ -4,7 +4,7 @@
 #include "Actors/DoorBase.h"
 #include "PastDoor.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDoorStateChanged, bool, bIsOpen);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnDoorStateChanged, bool, bIsOpen, int32, Direction);
 
 UCLASS()
 class ECHOESOFTIME_API APastDoor : public ADoorBase
