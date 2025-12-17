@@ -29,3 +29,4 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Weapon_Ability_Pistol_Fire, "Weapon.Ability.Pistol.Fi
 UE_DEFINE_GAMEPLAY_TAG(TAG_Weapon_Ability_Pistol_Aim, "Weapon.Ability.Pistol.Aim");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_StateTree_Event_FullyDetected, "StateTree.Event.FullyDetected");
+UE_DEFINE_GAMEPLAY_TAG(TAG_StateTree_Event_RepairNeeded, "StateTree.Event.RepairNeeded");

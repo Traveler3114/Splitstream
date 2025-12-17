@@ -1,19 +1,16 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "RepairableBase.h"
 #include "Interfaces/IInteractable.h"
 #include "PowerGenerator.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API APowerGenerator : public AActor, public IInteractable
+class ECHOESOFTIME_API APowerGenerator : public ARepairableBase, public IInteractable
 {
     GENERATED_BODY()
 
 public:
-    // Sets default values for this actor's properties
     APowerGenerator();
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
@@ -29,15 +26,18 @@ public:
     AActor* CompletionTarget = nullptr;
 
 protected:
-    // Called when the game starts or when spawned
-    virtual void BeginPlay() override;
 
+    virtual void BeginPlay() override;
     virtual void Interact_Implementation(AActor* Interactor) override;
     virtual void CancelInteract_Implementation(AActor* Interactor) override;
     virtual bool IsProgressiveInteract_Implementation() override;
     virtual void SetHighlighted_Implementation(bool bHighlight) override;
 
+    /** Called when search is complete (searched by player) */
     UFUNCTION()
     virtual void OnSearchComplete();
 
+    /** When the robot repairs this power generator */
+    virtual void RequestRepair(AActor* RepairInstigator) override;
+    virtual float GetRepairTime() const override;
 };

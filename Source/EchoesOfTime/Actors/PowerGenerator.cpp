@@ -1,13 +1,9 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "PowerGenerator.h"
-#include "Interfaces/IPuzzleCompletionReceiver.h"
 #include "ActorComponents/SearchComponent.h"
+#include "Interfaces/IPuzzleCompletionReceiver.h"
 
-// Sets default values
 APowerGenerator::APowerGenerator()
 {
-    // Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
     PrimaryActorTick.bCanEverTick = false;
     bReplicates = true;
 
@@ -21,7 +17,6 @@ APowerGenerator::APowerGenerator()
     SearchComponent->SetIsReplicated(true);
 }
 
-// Called when the game starts or when spawned
 void APowerGenerator::BeginPlay()
 {
     Super::BeginPlay();
@@ -29,6 +24,36 @@ void APowerGenerator::BeginPlay()
     {
         SearchComponent->OnSearchComplete.AddDynamic(this, &APowerGenerator::OnSearchComplete);
     }
+}
+
+void APowerGenerator::OnSearchComplete()
+{
+    SetHighlighted_Implementation(false);
+
+    // Fire puzzle completion, if any
+    if (CompletionTarget && CompletionTarget->GetClass()->ImplementsInterface(UPuzzleCompletionReceiver::StaticClass()))
+    {
+        IPuzzleCompletionReceiver::Execute_OnPuzzleCompleted(CompletionTarget);
+    }
+
+    // Notify robot guards/repair system
+    OnRequestRepair.Broadcast(this);
+}
+
+void APowerGenerator::RequestRepair(AActor* RepairInstigator)
+{
+    if (SearchComponent)
+    {
+        SearchComponent->bSearched = false;
+        // Optionally reset other necessary states
+    }
+    // You could also play animation/effects/etc here
+}
+
+float APowerGenerator::GetRepairTime() const
+{
+    // This could be dynamic/per-instance if you wish
+    return RepairTime;
 }
 
 void APowerGenerator::Interact_Implementation(AActor* Interactor)
@@ -71,15 +96,5 @@ void APowerGenerator::SetHighlighted_Implementation(bool bHighlight)
     {
         GeneratorMesh->SetRenderCustomDepth(bHighlight);
         GeneratorMesh->CustomDepthStencilValue = bHighlight ? 1 : 0;
-    }
-}
-
-void APowerGenerator::OnSearchComplete()
-{
-	SearchComponent->bSearched = true;
-    SetHighlighted_Implementation(false);
-    if (CompletionTarget && CompletionTarget->GetClass()->ImplementsInterface(UPuzzleCompletionReceiver::StaticClass()))
-    {
-        IPuzzleCompletionReceiver::Execute_OnPuzzleCompleted(CompletionTarget);
     }
 }
