@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "TimelineEra.h"
 #include "RepairableBase.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRequestRepair, ARepairableBase*, RepairableActor);
@@ -13,6 +14,8 @@ class ECHOESOFTIME_API ARepairableBase : public AActor
 public:
     ARepairableBase();
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
+    ETimelineEra TimelineEra = ETimelineEra::Past;
     /** Called to request this object be repaired. Call this to begin the repair process. */
     UFUNCTION(BlueprintCallable, Category = "Repair")
     virtual void RequestRepair(AActor* RepairInstigator);

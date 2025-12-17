@@ -1,4 +1,5 @@
 #include "FuturePowerGenerator.h"
+#include "ActorComponents/SearchComponent.h"
 #include "PastPowerGenerator.h"
 
 AFuturePowerGenerator::AFuturePowerGenerator()

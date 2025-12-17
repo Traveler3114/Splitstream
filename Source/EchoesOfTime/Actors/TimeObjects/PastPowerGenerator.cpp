@@ -1,4 +1,5 @@
 #include "PastPowerGenerator.h"
+#include "ActorComponents/SearchComponent.h"
 
 APastPowerGenerator::APastPowerGenerator()
 {

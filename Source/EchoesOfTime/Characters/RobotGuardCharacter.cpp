@@ -5,21 +5,31 @@
 #include "Components/StateTreeComponent.h"
 #include "AbilitySystem/EOTGameplayTags.h"
 #include "Actors/RepairableBase.h"
-#include "EngineUtils.h"
+#include "Kismet/GameplayStatics.h"
+#include "Engine/World.h"
+
 
 
 void ARobotGuardCharacter::BeginPlay()
 {
     Super::BeginPlay();
-    for (TActorIterator<ARepairableBase> It(GetWorld()); It; ++It)
+
+    TArray<AActor*> FoundActors;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ARepairableBase::StaticClass(), FoundActors);
+
+    for (AActor* Actor : FoundActors)
     {
-        It->OnRequestRepair.AddDynamic(this, &ARobotGuardCharacter::OnRepairRequested);
+        ARepairableBase* Repairable = Cast<ARepairableBase>(Actor);
+        if (Repairable && Repairable->TimelineEra == TimelineEra)
+        {
+            Repairable->OnRequestRepair.AddDynamic(this, &ARobotGuardCharacter::OnRepairRequested);
+        }
     }
 }
 
 void ARobotGuardCharacter::OnRepairRequested(ARepairableBase* RepairableActor)
 {
-    if (RepairableActor && !RepairQueue.Contains(RepairableActor))
+    if (RepairableActor && !RepairQueue.Contains(RepairableActor) && RepairableActor->TimelineEra == TimelineEra)
     {
         RepairQueue.Add(RepairableActor);
         AController* GuardController = GetController();
