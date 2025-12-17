@@ -26,8 +26,7 @@ void ADefaultPlayerController::BeginPlay()
     CharacterHUD = CharacterHUD == nullptr ? Cast<ACharacterHUD>(GetHUD()) : CharacterHUD;
     if (CharacterHUD)
     {
-        if (CharacterHUD->CharacterOverlay == nullptr)
-            CharacterHUD->AddCharacterOverlay();
+        CharacterHUD->AddCharacterOverlay();
     }
     BindAttributeDelegates();
     BindGameplayTagDelegates();

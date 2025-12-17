@@ -18,7 +18,8 @@ public:
 
 protected:
     virtual void BeginPlay() override;
-	virtual void OnConstruction(const FTransform& Transform) override;
+    virtual void OnConstruction(const FTransform& Transform) override;
+
     // List of sensors (assign in editor per-instance or via Blueprint)
     UPROPERTY(EditInstanceOnly, Category = "Laser Group")
     TArray<ALaserSensor*> LaserSensors;
@@ -30,11 +31,15 @@ protected:
     UPROPERTY(EditAnywhere, Category = "Laser Group")
     bool bRandomize = false;
 
+    // If true, all lasers will be toggled ON and OFF together every RandomizeInterval seconds
+    UPROPERTY(EditAnywhere, Category = "Laser Group")
+    bool bBlinkAllLasers = false;
+
     // Number of lasers to show when randomizing (clamped to sensor count)
     UPROPERTY(EditAnywhere, Category = "Laser Group", meta = (ClampMin = "0"))
     int32 NumToShow = 5;
 
-    // Interval for randomization
+    // Interval for randomization or blinking
     UPROPERTY(EditAnywhere, Category = "Laser Group", meta = (ClampMin = "0.0"))
     float RandomizeInterval = 2.0f;
 
@@ -46,6 +51,10 @@ protected:
 
 private:
     FTimerHandle TimerHandle_Randomize;
+
+    // For blinking mode
+    bool bBlinkState = false; // false: off, true: on
+    void ToggleAllLasers();
 
     void RandomizeOnce();
     void SetSensorsActiveByIndices(const TArray<int32>& IndicesToActivate);

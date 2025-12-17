@@ -24,11 +24,21 @@ void ALaserManager::BeginPlay()
     {
         NumToShow = FMath::Clamp(NumToShow, 0, LaserSensors.Num());
 
-        if (bRandomize && bStartRandomOnBeginPlay && RandomizeInterval > 0.f)
+        // BLINK mode takes precedence over randomize
+        if (bBlinkAllLasers && RandomizeInterval > 0.f)
+        {
+            // Start blink timer
+            GetWorldTimerManager().SetTimer(TimerHandle_Randomize, this, &ALaserManager::ToggleAllLasers, RandomizeInterval, true);
+            bBlinkState = false; // Ensure starts OFF or you can start as true if you want
+            ToggleAllLasers();
+        }
+        // RANDOMIZE mode (only if blink not enabled)
+        else if (bRandomize && bStartRandomOnBeginPlay && RandomizeInterval > 0.f)
         {
             GetWorldTimerManager().SetTimer(TimerHandle_Randomize, this, &ALaserManager::RandomizeOnce, RandomizeInterval, true);
             RandomizeOnce();
         }
+        // Manual/Static selection
         else
         {
             if (LaserSensors.Num() > 0)
@@ -77,6 +87,13 @@ void ALaserManager::OnConstruction(const FTransform& Transform)
     //        LaserSensors.Add(Sensor);
     //    }
     //}
+}
+
+// NEW: Blink toggle for all lasers
+void ALaserManager::ToggleAllLasers()
+{
+    bBlinkState = !bBlinkState;
+    SetAllSensorsActive(bBlinkState);
 }
 
 void ALaserManager::RandomizeOnce()
