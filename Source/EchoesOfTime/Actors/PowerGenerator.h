@@ -22,9 +22,6 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Device")
     class USearchComponent* SearchComponent;
 
-    UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "WirePuzzle|Completion")
-    AActor* CompletionTarget = nullptr;
-
 protected:
 
     virtual void BeginPlay() override;

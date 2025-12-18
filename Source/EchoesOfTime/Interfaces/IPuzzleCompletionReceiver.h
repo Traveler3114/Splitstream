@@ -17,4 +17,7 @@ public:
     // Use BlueprintNativeEvent so you can implement in C++ or Blueprint
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Puzzle")
     void OnPuzzleCompleted();
+
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Puzzle")
+    void OnPuzzleReset();
 };

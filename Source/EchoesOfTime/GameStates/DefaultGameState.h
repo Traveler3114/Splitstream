@@ -1,5 +1,3 @@
-// DefaultGameState.h
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -7,6 +5,7 @@
 #include "DefaultGameState.generated.h"
 
 class AActor;
+class ARepairableBase;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAlarmStarted, float, AlarmEndTime);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAlarmCanceled);
@@ -15,106 +14,132 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPreAlarmStarted, float, PreAlarm
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPreAlarmCanceled);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnMoneyCollectedChanged, int32, CurrentMoney, int32, TargetMoney);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGuardRepairETAStarted, ARepairableBase*, TargetActor, float, Duration);
+
+USTRUCT(BlueprintType)
+struct FGuardRepairCountdown
+{
+    GENERATED_BODY()
+
+    UPROPERTY(BlueprintReadWrite)
+    ARepairableBase* TargetActor = nullptr;
+
+    UPROPERTY(BlueprintReadWrite)
+    float ETA = 0.f;
+};
+
 UCLASS()
 class ECHOESOFTIME_API ADefaultGameState : public AGameState
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	ADefaultGameState();
+    ADefaultGameState();
 
-	UPROPERTY(ReplicatedUsing = OnRep_AlarmStarted, BlueprintReadOnly, Category = "Alarm")
-	float AlarmEndTime;
+    UPROPERTY(ReplicatedUsing = OnRep_AlarmStarted, BlueprintReadOnly, Category = "Alarm")
+    float AlarmEndTime;
 
-	UPROPERTY(ReplicatedUsing = OnRep_AlarmActive, BlueprintReadOnly, Category = "Alarm")
-	bool bAlarmActive;
+    UPROPERTY(ReplicatedUsing = OnRep_AlarmActive, BlueprintReadOnly, Category = "Alarm")
+    bool bAlarmActive;
 
-	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Alarm")
-	AActor* AlarmInstigator;
+    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Alarm")
+    AActor* AlarmInstigator;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Alarm")
-	float AlarmDuration = 5.f;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Alarm")
+    float AlarmDuration = 5.f;
 
-	UPROPERTY(BlueprintAssignable)
-	FOnAlarmStarted OnAlarmStarted;
+    UPROPERTY(ReplicatedUsing = OnRep_GuardRepairCountdowns)
+    TArray<FGuardRepairCountdown> GuardRepairCountdowns;
 
-	UPROPERTY(BlueprintAssignable)
-	FOnAlarmCanceled OnAlarmCanceled;
+    UPROPERTY(BlueprintAssignable)
+    FOnGuardRepairETAStarted OnGuardRepairETAStarted;
 
-	UPROPERTY(BlueprintAssignable)
-	FOnRestartRequested OnRestartRequested;
+    UFUNCTION(BlueprintCallable)
+    void StartGuardRepairCountdown(ARepairableBase* Repairable, float Duration);
 
-	// --- PRE-ALARM ---
-	UPROPERTY(ReplicatedUsing = OnRep_PreAlarmStarted, BlueprintReadOnly, Category = "Alarm")
-	float PreAlarmEndTime;
+    UPROPERTY(BlueprintAssignable)
+    FOnAlarmStarted OnAlarmStarted;
 
-	UPROPERTY(ReplicatedUsing = OnRep_PreAlarmActive, BlueprintReadOnly, Category = "Alarm")
-	bool bPreAlarmActive;
+    UPROPERTY(BlueprintAssignable)
+    FOnAlarmCanceled OnAlarmCanceled;
 
-	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Alarm")
-	AActor* PreAlarmInstigator;
+    UPROPERTY(BlueprintAssignable)
+    FOnRestartRequested OnRestartRequested;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Alarm")
-	float PreAlarmDuration = 3.f;
+    // --- PRE-ALARM ---
+    UPROPERTY(ReplicatedUsing = OnRep_PreAlarmStarted, BlueprintReadOnly, Category = "Alarm")
+    float PreAlarmEndTime;
 
-	UPROPERTY(BlueprintAssignable)
-	FOnPreAlarmStarted OnPreAlarmStarted;
+    UPROPERTY(ReplicatedUsing = OnRep_PreAlarmActive, BlueprintReadOnly, Category = "Alarm")
+    bool bPreAlarmActive;
 
-	UPROPERTY(BlueprintAssignable)
-	FOnPreAlarmCanceled OnPreAlarmCanceled;
+    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Alarm")
+    AActor* PreAlarmInstigator;
 
-	// ALARM
-	UFUNCTION(BlueprintCallable)
-	void StartAlarm(AActor* InAlarmInstigator = nullptr);
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Alarm")
+    float PreAlarmDuration = 3.f;
 
-	UFUNCTION(BlueprintCallable)
-	void CancelAlarm(AActor* InAlarmInstigator = nullptr);
+    UPROPERTY(BlueprintAssignable)
+    FOnPreAlarmStarted OnPreAlarmStarted;
 
-	UFUNCTION(BlueprintCallable, BlueprintPure)
-	float GetRemainingAlarmTime() const;
+    UPROPERTY(BlueprintAssignable)
+    FOnPreAlarmCanceled OnPreAlarmCanceled;
 
-	UFUNCTION(BlueprintCallable)
-	void RequestRestart();
+    // ALARM
+    UFUNCTION(BlueprintCallable)
+    void StartAlarm(AActor* InAlarmInstigator = nullptr);
 
-	// PRE-ALARM
-	UFUNCTION(BlueprintCallable)
-	void StartPreAlarm(AActor* InPreAlarmInstigator, float Duration);
+    UFUNCTION(BlueprintCallable)
+    void CancelAlarm(AActor* InAlarmInstigator = nullptr);
 
-	UFUNCTION(BlueprintCallable)
-	void CancelPreAlarm(AActor* InPreAlarmInstigator = nullptr);
+    UFUNCTION(BlueprintCallable, BlueprintPure)
+    float GetRemainingAlarmTime() const;
 
-	UFUNCTION(BlueprintCallable, BlueprintPure)
-	float GetRemainingPreAlarmTime() const;
+    UFUNCTION(BlueprintCallable)
+    void RequestRestart();
 
-	// Amount of money players need to collect to complete the objective
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Objective")
-	int32 TargetMoneyAmount = 50000;
+    // PRE-ALARM
+    UFUNCTION(BlueprintCallable)
+    void StartPreAlarm(AActor* InPreAlarmInstigator, float Duration);
 
-	// Current progress (total money collected so far)
-	UPROPERTY(ReplicatedUsing = OnRep_CurrentMoneyCollected, BlueprintReadOnly, Category = "Objective")
-	int32 CurrentMoneyCollected = 0;
+    UFUNCTION(BlueprintCallable)
+    void CancelPreAlarm(AActor* InPreAlarmInstigator = nullptr);
 
-	UPROPERTY(BlueprintAssignable)
-	FOnMoneyCollectedChanged OnMoneyCollectedChanged;
+    UFUNCTION(BlueprintCallable, BlueprintPure)
+    float GetRemainingPreAlarmTime() const;
 
-	UFUNCTION()
-	void OnRep_CurrentMoneyCollected();
+    // Amount of money players need to collect to complete the objective
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Objective")
+    int32 TargetMoneyAmount = 50000;
 
-	UFUNCTION(BlueprintCallable)
-	void AddCollectedMoney(int32 Amount);
+    // Current progress (total money collected so far)
+    UPROPERTY(ReplicatedUsing = OnRep_CurrentMoneyCollected, BlueprintReadOnly, Category = "Objective")
+    int32 CurrentMoneyCollected = 0;
+
+    UPROPERTY(BlueprintAssignable)
+    FOnMoneyCollectedChanged OnMoneyCollectedChanged;
+
+    UFUNCTION()
+    void OnRep_CurrentMoneyCollected();
+
+    UFUNCTION(BlueprintCallable)
+    void AddCollectedMoney(int32 Amount);
 
 protected:
-	UFUNCTION()
-	void OnRep_AlarmStarted();
+    UFUNCTION()
+    void OnRep_AlarmStarted();
 
-	UFUNCTION()
-	void OnRep_AlarmActive();
+    UFUNCTION()
+    void OnRep_AlarmActive();
 
-	UFUNCTION()
-	void OnRep_PreAlarmStarted();
+    UFUNCTION()
+    void OnRep_PreAlarmStarted();
 
-	UFUNCTION()
-	void OnRep_PreAlarmActive();
+    UFUNCTION()
+    void OnRep_PreAlarmActive();
 
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+    UFUNCTION()
+    void OnRep_GuardRepairCountdowns();
+
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

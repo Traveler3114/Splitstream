@@ -45,9 +45,11 @@ void APowerGenerator::RequestRepair(AActor* RepairInstigator)
     if (SearchComponent)
     {
         SearchComponent->bSearched = false;
-        // Optionally reset other necessary states
     }
-    // You could also play animation/effects/etc here
+    if (CompletionTarget && CompletionTarget->GetClass()->ImplementsInterface(UPuzzleCompletionReceiver::StaticClass()))
+    {
+        IPuzzleCompletionReceiver::Execute_OnPuzzleReset(CompletionTarget);
+    }
 }
 
 float APowerGenerator::GetRepairTime() const

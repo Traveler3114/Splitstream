@@ -59,6 +59,9 @@ public:
     UFUNCTION()
     void OnMoneyCollectedChanged(int32 Current, int32 Target);
 
+	UFUNCTION()
+	void HandleRepairETAStarted(class ARepairableBase* Repairable, float Duration);
+
 private:
     UPROPERTY()
     class ACharacterHUD* CharacterHUD;
@@ -99,4 +102,9 @@ private:
     void HandlePreAlarmCanceled();
 
     void UpdatePreAlarmUI();
+
+    FTimerHandle RepairCountdownsUpdateTimer;
+    TMap<AActor*, float> ActiveRepairCountdowns;
+
+    void UpdateRepairCountdownUI();
 };

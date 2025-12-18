@@ -8,6 +8,7 @@
 class UHorizontalBox;
 class UCanvasPanel;
 class UTextBlock;
+class UVerticalBox;
 
 UCLASS()
 class ECHOESOFTIME_API UCharacterOverlay : public UUserWidget
@@ -28,6 +29,9 @@ public:
 
     UPROPERTY(meta = (BindWidget))
     UTextBlock* health_txt;
+
+    UPROPERTY(meta = (BindWidget))
+    UVerticalBox* RepairCountdownsBox;
 
     UFUNCTION()
     void SetHealthText(float NewHealth);
@@ -70,4 +74,12 @@ public:
 
     UFUNCTION(BlueprintCallable)
     void UpdateDetectionWidget(AActor* DetectorActor, float Progress, bool bIsLocked, float AngleDegrees = 0.0f);
+
+    UPROPERTY(BlueprintReadWrite)
+    TMap<AActor*, float> CompletionTargetRepairEndTimes;
+
+    // Helper to call from code:
+    UFUNCTION(BlueprintCallable)
+    void UpdateRepairCountdowns(const TMap<AActor*, float>& NewEndTimes);
+
 };

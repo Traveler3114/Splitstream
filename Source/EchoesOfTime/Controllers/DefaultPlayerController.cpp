@@ -11,6 +11,7 @@
 #include "AbilitySystem/EOTGameplayTags.h"
 #include "GameStates/DefaultGameState.h"
 #include "GameplayEffectTypes.h"
+#include "Actors/RepairableBase.h"
 #include "TimerManager.h"
 
 ADefaultPlayerController::ADefaultPlayerController()
@@ -47,6 +48,8 @@ void ADefaultPlayerController::BeginPlay()
             GS->OnMoneyCollectedChanged.AddDynamic(this, &ADefaultPlayerController::OnMoneyCollectedChanged);
             OnMoneyCollectedChanged(GS->CurrentMoneyCollected, GS->TargetMoneyAmount);
 
+            GS->OnGuardRepairETAStarted.AddDynamic(this, &ADefaultPlayerController::HandleRepairETAStarted);
+
             // If an alarm is already active by the time we join, initialize from the replicated values:
             if (GS->bAlarmActive && GS->AlarmEndTime > 0.f)
             {
@@ -62,6 +65,58 @@ void ADefaultPlayerController::BeginPlay()
                 HandlePreAlarmCanceled();
             }
         }
+    }
+}
+
+void ADefaultPlayerController::HandleRepairETAStarted(ARepairableBase* Repairable, float Duration)
+{
+    if (!Repairable || !CharacterHUD || !CharacterHUD->CharacterOverlay) return;
+    AActor* CompletionTarget = Repairable->CompletionTarget;
+    float EndTime = GetWorld()->GetTimeSeconds() + Duration;
+    ActiveRepairCountdowns.Add(CompletionTarget, EndTime);
+
+    // Start timer if not already running
+    if (!GetWorldTimerManager().IsTimerActive(RepairCountdownsUpdateTimer))
+    {
+        GetWorldTimerManager().SetTimer(
+            RepairCountdownsUpdateTimer,
+            this,
+            &ADefaultPlayerController::UpdateRepairCountdownUI,
+            0.1f,
+            true
+        );
+    }
+
+    CharacterHUD->CharacterOverlay->UpdateRepairCountdowns(ActiveRepairCountdowns);
+}
+
+void ADefaultPlayerController::UpdateRepairCountdownUI()
+{
+    float Now = GetWorld()->GetTimeSeconds();
+    TArray<AActor*> ToRemove;
+
+    for (auto& Pair : ActiveRepairCountdowns)
+    {
+        if (Now >= Pair.Value)
+        {
+            ToRemove.Add(Pair.Key);
+        }
+    }
+    for (AActor* Target : ToRemove)
+    {
+        ActiveRepairCountdowns.Remove(Target);
+    }
+
+    // Send updated times to the overlay
+    if (CharacterHUD && CharacterHUD->CharacterOverlay)
+    {
+        CharacterHUD->CharacterOverlay->UpdateRepairCountdowns(ActiveRepairCountdowns);
+    }
+
+    // Stop timer if no countdowns remain
+    if (ActiveRepairCountdowns.Num() == 0)
+    {
+        GetWorldTimerManager().ClearTimer(RepairCountdownsUpdateTimer);
     }
 }
 

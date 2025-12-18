@@ -32,4 +32,6 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Weapon_Ability_Pistol_Aim);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_StateTree_Event_FullyDetected);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_StateTree_Event_RepairNeeded);
 
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Guard_Status_Repair);
+
 

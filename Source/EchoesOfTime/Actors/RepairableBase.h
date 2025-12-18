@@ -31,4 +31,7 @@ public:
     /** How long it takes to repair this actor. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Repair")
     float RepairTime = 5.0f;
+
+    UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Completion")
+    AActor* CompletionTarget = nullptr;
 };

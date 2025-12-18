@@ -48,6 +48,7 @@ protected:
     bool bStartRandomOnBeginPlay = true;
 
     virtual void OnPuzzleCompleted_Implementation() override;
+    virtual void OnPuzzleReset_Implementation() override;
 
 private:
     FTimerHandle TimerHandle_Randomize;

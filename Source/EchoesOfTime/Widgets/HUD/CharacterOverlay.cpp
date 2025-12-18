@@ -7,6 +7,7 @@
 #include "ActorComponents/InventoryComponent.h"
 #include "Components/HorizontalBoxSlot.h"
 #include "Components/CanvasPanel.h"
+#include "Components/VerticalBox.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Components/SizeBox.h"
 #include "Engine/Engine.h"
@@ -55,6 +56,32 @@ void UCharacterOverlay::OnInventoryChanged(const TArray<FInventorySlot>& Items)
             MySlot->SetVerticalAlignment(VAlign_Center);
             MySlot->SetHorizontalAlignment(HAlign_Center);
         }
+    }
+}
+
+void UCharacterOverlay::UpdateRepairCountdowns(const TMap<AActor*, float>& NewEndTimes)
+{
+    CompletionTargetRepairEndTimes = NewEndTimes;
+
+    if (!RepairCountdownsBox) return;
+
+    RepairCountdownsBox->ClearChildren();
+
+    float Now = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f;
+
+    for (const auto& Elem : CompletionTargetRepairEndTimes)
+    {
+        AActor* Target = Elem.Key;
+        float EndTime = Elem.Value;
+        float Remaining = FMath::Max(0.f, EndTime - Now);
+
+        FString TargetName = Target ? Target->GetName() : FString("Unknown");
+        FString CountdownText = FString::Printf(TEXT("%.0f seconds until %s is fixed"), Remaining, *TargetName);
+
+        UTextBlock* RepairText = NewObject<UTextBlock>(RepairCountdownsBox);
+        RepairText->SetText(FText::FromString(CountdownText));
+
+        RepairCountdownsBox->AddChildToVerticalBox(RepairText);
     }
 }
 

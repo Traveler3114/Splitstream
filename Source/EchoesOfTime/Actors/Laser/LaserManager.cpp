@@ -12,8 +12,12 @@ ALaserManager::ALaserManager()
 
 void ALaserManager::OnPuzzleCompleted_Implementation()
 {
-    // On puzzle completion, activate all lasers
     SetAllSensorsActive(false);
+}
+
+void ALaserManager::OnPuzzleReset_Implementation()
+{
+    SetAllSensorsActive(true);
 }
 
 void ALaserManager::BeginPlay()
