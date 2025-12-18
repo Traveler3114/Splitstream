@@ -13,6 +13,22 @@ class UGameplayEffect;
 /**
  * An area that applies the Illegal.Area tag to characters who enter it.
  * Properly handles overlap events to ensure tags are added/removed correctly.
+ * 
+ * This class fixes the issue where illegal tags could get stuck on players due to:
+ * - Multiple overlap events triggering duplicate effect applications
+ * - Effects not being properly removed on overlap end
+ * - Network replication timing issues
+ * 
+ * The class maintains a map of active effect handles per actor, ensuring:
+ * - Only one effect is applied per actor at a time
+ * - Effects are always properly removed when the actor leaves
+ * - Server-authoritative effect application for multiplayer safety
+ * 
+ * Usage:
+ * 1. Create an instance of AIllegalArea in the level
+ * 2. Set the IllegalAreaEffect property to GE_Illegal (or your illegal area effect)
+ * 3. Adjust the AreaVolume extent to define the illegal zone size
+ * 4. The tag will automatically be applied/removed as characters enter/exit
  */
 UCLASS()
 class ECHOESOFTIME_API AIllegalArea : public AActor
