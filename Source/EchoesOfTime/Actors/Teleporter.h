@@ -43,7 +43,7 @@ public:
 	virtual bool RequiresItem_Implementation() const override { return true; }
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KeypadScanner")
-	EItemType RequiredItem = EItemType::Other;
+	EItemType RequiredItem = EItemType::PowerCell;
 
 protected:
 	virtual void BeginPlay() override;

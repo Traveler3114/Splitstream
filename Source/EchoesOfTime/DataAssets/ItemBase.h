@@ -17,6 +17,7 @@ enum class EItemType : uint8
     Tool          UMETA(DisplayName = "Tool"),
     Gadget        UMETA(DisplayName = "Gadget"),
     Pistol        UMETA(DisplayName = "Pistol"),
+    PowerCell     UMETA(DisplayName = "PowerCell"),
     Other         UMETA(DisplayName = "Other")
 };
 
@@ -50,6 +51,9 @@ public:
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
     FRotator PickupMeshRotation = FRotator(0.0f);
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
+    bool bRemoveFromInventoryOnUse = false;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
     bool bEnablePhysicsOnDrop = false;
@@ -87,7 +91,7 @@ public:
     virtual void OnAddedToInventory(AActor* Instigator);
     virtual void OnRemovedFromInventory(AActor* Instigator);
 
-    virtual void OnUsed(class AActor* Instigator);
+    void OnUsed(class AActor* Instigator, FGuid ItemInstanceID);
 
     virtual void OnDropped(class AActor* Instigator, FGuid ItemInstanceID, FVector DropLocation);
     virtual void OnDroppedWithTeam(class AActor* Instigator, FGuid ItemInstanceID, FGameplayTag TeamTag, FVector DropLocation);

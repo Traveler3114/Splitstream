@@ -156,9 +156,8 @@ void ACivilianCharacter::OnFullyDetected_Implementation(AActor* DetectingActor)
 
 bool ACivilianCharacter::IsActorAlreadyDetected_Implementation(AActor* DetectingActor) const
 {
-    if (!AIPerceptionComponent)
+    if (!AIPerceptionComponent || !AIPerceptionComponent->IsActive())
         return false;
-
     TArray<AActor*> PerceivedActors;
     AIPerceptionComponent->GetCurrentlyPerceivedActors(UAISense_Sight::StaticClass(), PerceivedActors);
     return PerceivedActors.Contains(DetectingActor);

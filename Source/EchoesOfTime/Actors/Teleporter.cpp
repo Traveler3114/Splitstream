@@ -30,7 +30,10 @@ void ATeleporter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	TeleportVolume->OnComponentBeginOverlap.AddDynamic(this, &ATeleporter::OnTeleportVolumeBeginOverlap);
+	if (TeleportVolume)
+	{
+		TeleportVolume->OnComponentBeginOverlap.AddDynamic(this, &ATeleporter::OnTeleportVolumeBeginOverlap);
+	}
 }
 
 void ATeleporter::OnTeleportVolumeBeginOverlap(
@@ -42,57 +45,65 @@ void ATeleporter::OnTeleportVolumeBeginOverlap(
 	const FHitResult& SweepResult
 )
 {
+	ACharacter* OverlappingCharacter = Cast<ACharacter>(OtherActor);
+	if (!OverlappingCharacter) return;
 	if (!OtherTeleporter) return;
-	if (!OtherActor || !HasAuthority()) return;
+	if (!HasAuthority()) return;
 	if (!bIsActive || !OtherTeleporter->bIsActive) return;
 
 	// Deactivate both BEFORE teleporting to avoid recursion
 	bIsActive = false;
 	OtherTeleporter->bIsActive = false;
 
-	TeleportVolume->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	OtherTeleporter->TeleportVolume->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	if (TeleportVolume)
+		TeleportVolume->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	if (OtherTeleporter->TeleportVolume)
+		OtherTeleporter->TeleportVolume->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-	ACharacter* OverlappingCharacter = Cast<ACharacter>(OtherActor);
-	if (OverlappingCharacter)
-	{
-		FVector TargetLocation = OtherTeleporter->TeleportTarget->GetComponentLocation();
-		FRotator TargetRotation = OtherTeleporter->TeleportTarget->GetComponentRotation();
-		OverlappingCharacter->SetActorLocationAndRotation(TargetLocation, TargetRotation);
-	}
+	FVector TargetLocation = OtherTeleporter->TeleportTarget
+		? OtherTeleporter->TeleportTarget->GetComponentLocation()
+		: FVector::ZeroVector;
+	FRotator TargetRotation = OtherTeleporter->TeleportTarget
+		? OtherTeleporter->TeleportTarget->GetComponentRotation()
+		: FRotator::ZeroRotator;
+	OverlappingCharacter->SetActorLocationAndRotation(TargetLocation, TargetRotation);
+
+	SetHighlighted_Implementation(bIsActive);
 }
 
 bool ATeleporter::IsCorrectItem_Implementation(UItemBase* Item) const
 {
-	// This is the ONLY place that checks if the item is the correct keycard.
 	return Item && Item->ItemType == RequiredItem;
 }
+
 void ATeleporter::Interact_Implementation(AActor* Interactor)
 {
 	if (!HasAuthority()) return;
-	if (!Interactor || !OtherTeleporter)
-		return;
-	if (bIsActive)  // Only allow interaction when inactive
-		return;
+	if (!Interactor || !OtherTeleporter) return;
 
-	// Reactivate this teleporter and the linked teleporter
+	// Always reset both teleporters to initial state
 	bIsActive = true;
 	OtherTeleporter->bIsActive = true;
 
-	// Re-enable the collision on both volumes
 	if (TeleportVolume)
 		TeleportVolume->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	if (OtherTeleporter->TeleportVolume)
 		OtherTeleporter->TeleportVolume->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+
+	// Remove any outline/highlight
+	SetHighlighted_Implementation(false);
+	OtherTeleporter->SetHighlighted_Implementation(false);
 }
 
 void ATeleporter::SetHighlighted_Implementation(bool bHighlight)
 {
-	if (bIsActive)  // Only allow interaction when inactive
-		return;
-	if (TeleporterMesh)
+	// Always allow turning OFF highlight; only allow turning on highlight when inactive
+	if (!bHighlight || !bIsActive)
 	{
-		TeleporterMesh->SetRenderCustomDepth(bHighlight);
-		TeleporterMesh->CustomDepthStencilValue = bHighlight ? 1 : 0;
+		if (TeleporterMesh)
+		{
+			TeleporterMesh->SetRenderCustomDepth(bHighlight);
+			TeleporterMesh->CustomDepthStencilValue = bHighlight ? 1 : 0;
+		}
 	}
 }

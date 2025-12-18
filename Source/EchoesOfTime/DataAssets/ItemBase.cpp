@@ -152,9 +152,17 @@ void UItemBase::OnDroppedWithTeam(AActor* Instigator, FGuid ItemInstanceID, FGam
     }
 }
 
-void UItemBase::OnUsed(AActor* Instigator)
+void UItemBase::OnUsed(AActor* Instigator, FGuid ItemInstanceID)
 {
-    // Optional: implement use logic if needed
+    if (bRemoveFromInventoryOnUse && Instigator)
+    {
+        UInventoryComponent* Inventory = Instigator->FindComponentByClass<UInventoryComponent>();
+        if (Inventory)
+        {
+            Inventory->RemoveItemByInstanceID(ItemInstanceID);
+        }
+    }
+    // Optional: add more use logic here
 }
 
 void UItemBase::ApplyGameplayEffects(AActor *Instigator)

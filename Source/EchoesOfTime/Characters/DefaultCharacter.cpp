@@ -594,23 +594,22 @@ void ADefaultCharacter::HandleInteractInstant()
             bool bRequiresItem = IInteractable::Execute_RequiresItem(HitActor);
 
             UInventoryComponent* Inventory = FindComponentByClass<UInventoryComponent>();
-            UItemBase* ActiveItem = nullptr;
             if (Inventory)
             {
                 FInventorySlot ActiveSlot = Inventory->GetActiveItem();
-                ActiveItem = ActiveSlot.ItemAsset;
-            }
+                UItemBase* ActiveItem = ActiveSlot.ItemAsset;
 
-            if (bRequiresItem)
-            {
-                // If requires item, check for correct item
-                if (HasAuthority() && !IInteractable::Execute_IsCorrectItem(HitActor, ActiveItem))
+                if (bRequiresItem)
                 {
-                    return;
-                }
-                if (ActiveItem)
-                {
-                    ActiveItem->OnUsed(this);
+                    // If requires item, check for correct item
+                    if (HasAuthority() && !IInteractable::Execute_IsCorrectItem(HitActor, ActiveItem))
+                    {
+                        return;
+                    }
+                    if (ActiveItem)
+                    {
+                        ActiveItem->OnUsed(this, ActiveSlot.ItemInstanceID);
+                    }
                 }
             }
 
@@ -622,7 +621,6 @@ void ADefaultCharacter::HandleInteractInstant()
         }
     }
 }
-
 void ADefaultCharacter::ServerHandleInteract_Implementation(AActor* TargetActor)
 {
     if (!TargetActor)
@@ -633,22 +631,21 @@ void ADefaultCharacter::ServerHandleInteract_Implementation(AActor* TargetActor)
         bool bRequiresItem = IInteractable::Execute_RequiresItem(TargetActor);
 
         UInventoryComponent* Inventory = FindComponentByClass<UInventoryComponent>();
-        UItemBase* ActiveItem = nullptr;
         if (Inventory)
         {
             FInventorySlot ActiveSlot = Inventory->GetActiveItem();
-            ActiveItem = ActiveSlot.ItemAsset;
-        }
+            UItemBase* ActiveItem = ActiveSlot.ItemAsset;
 
-        if (bRequiresItem)
-        {
-            if (!IInteractable::Execute_IsCorrectItem(TargetActor, ActiveItem))
+            if (bRequiresItem)
             {
-                return;
-            }
-            if (ActiveItem)
-            {
-                ActiveItem->OnUsed(this);
+                if (!IInteractable::Execute_IsCorrectItem(TargetActor, ActiveItem))
+                {
+                    return;
+                }
+                if (ActiveItem)
+                {
+                    ActiveItem->OnUsed(this, ActiveSlot.ItemInstanceID);
+                }
             }
         }
 
@@ -656,7 +653,6 @@ void ADefaultCharacter::ServerHandleInteract_Implementation(AActor* TargetActor)
         IInteractable::Execute_Interact(TargetActor, this);
     }
 }
-
 // ---------------- MOVEMENT --------------
 void ADefaultCharacter::Move(const FInputActionValue& Value)
 {
