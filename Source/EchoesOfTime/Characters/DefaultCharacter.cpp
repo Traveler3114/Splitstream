@@ -117,7 +117,7 @@ void ADefaultCharacter::UpdateDetectionTimer()
         bool bInVision = Detector && Detector->GetClass()->ImplementsInterface(UDetectable::StaticClass())
             && IDetectable::Execute_IsActorAlreadyDetected(Detector, this);
 
-        bool bIsIllegal = AbilitySystemComponent && AbilitySystemComponent->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("Character.Status.Illegal"));
+        bool bIsIllegal = AbilitySystemComponent && AbilitySystemComponent->HasMatchingGameplayTag(TAG_Character_Status_Illegal);
 
         float Rate = DeltaTime * 0.5f;
 
@@ -180,7 +180,7 @@ void ADefaultCharacter::InitializeAbilitySystem()
         {
             AbilitySystemComponent->InitAbilityActorInfo(PS, this);
             AbilitySystemComponent->RegisterGameplayTagEvent(
-                FGameplayTag::RequestGameplayTag("Character.Status.Illegal"),
+                TAG_Character_Status_Illegal,
                 EGameplayTagEventType::NewOrRemoved
             ).AddUObject(this, &ADefaultCharacter::OnIllegalTagChanged);
         }
@@ -245,7 +245,7 @@ void ADefaultCharacter::OnDetected_Implementation(AActor* Detector)
 {
     if (!Detector) return;
 
-    if (!AbilitySystemComponent || !AbilitySystemComponent->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("Character.Status.Illegal")))
+    if (!AbilitySystemComponent || !AbilitySystemComponent->HasMatchingGameplayTag(TAG_Character_Status_Illegal))
     {
         return;
     }
