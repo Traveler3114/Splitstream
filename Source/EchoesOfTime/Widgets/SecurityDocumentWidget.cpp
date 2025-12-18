@@ -86,11 +86,11 @@ void USecurityDocumentWidget::AddColorWireLine(TArray<EWireColor> WireColors)
 					break;
 			}
 			ColorBox->SetBrushColor(LinearColor);
-			ColorBox->SetPadding(FMargin(5.0f));
-			ColorBox->SetDesiredSizeScale(FVector2D(1.0f, 1.0f));
+			ColorBox->SetPadding(ColorBoxPadding);
+			ColorBox->SetDesiredSizeScale(ColorBoxDesiredSizeScale);
 			if (UVerticalBoxSlot* MySlot = Cast<UVerticalBoxSlot>(ColorWireBox->AddChild(ColorBox)))
 			{
-				MySlot->SetPadding(FMargin(5.0f));
+				MySlot->SetPadding(ColorBoxSlotPadding);
 			}
 		}
 	}

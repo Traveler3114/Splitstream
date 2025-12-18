@@ -18,4 +18,13 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	class UVerticalBox* ColorWireBox;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wire Display")
+	FMargin ColorBoxPadding = FMargin(5.0f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wire Display")
+	FVector2D ColorBoxDesiredSizeScale = FVector2D(1.0f, 1.0f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wire Display")
+	FMargin ColorBoxSlotPadding = FMargin(5.0f);
 };
