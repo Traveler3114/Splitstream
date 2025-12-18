@@ -48,8 +48,8 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	bool bIsActive = true;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsActive = false;
 
 	UFUNCTION()
 	void OnTeleportVolumeBeginOverlap(
