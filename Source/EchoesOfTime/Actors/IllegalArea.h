@@ -11,7 +11,7 @@ class UBoxComponent;
 class UGameplayEffect;
 
 /**
- * An area that applies the Illegal.Area tag to characters who enter it.
+ * An area that applies the Character.Status.Illegal.Area tag to characters who enter it.
  * Properly handles overlap events to ensure tags are added/removed correctly.
  * 
  * This class fixes the issue where illegal tags could get stuck on players due to:
@@ -27,6 +27,8 @@ class UGameplayEffect;
  * Usage:
  * 1. Create an instance of AIllegalArea in the level
  * 2. Set the IllegalAreaEffect property to GE_Illegal (or your illegal area effect)
+ *    - The effect should grant the Character.Status.Illegal.Area tag
+ *    - Recommended: Use an infinite duration effect that's removed manually
  * 3. Adjust the AreaVolume extent to define the illegal zone size
  * 4. The tag will automatically be applied/removed as characters enter/exit
  */

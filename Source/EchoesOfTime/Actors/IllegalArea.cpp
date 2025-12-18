@@ -62,6 +62,10 @@ void AIllegalArea::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AAct
 	}
 
 	// Apply the gameplay effect
+	// Note: The IllegalAreaEffect should be configured to grant the 
+	// Character.Status.Illegal.Area tag (TAG_Character_Status_Illegal_Area).
+	// This is typically configured in the Blueprint/asset for GE_Illegal.
+	// The effect should have infinite duration and be manually removed on overlap end.
 	FGameplayEffectContextHandle EffectContext = ASC->MakeEffectContext();
 	EffectContext.AddSourceObject(this);
 	
