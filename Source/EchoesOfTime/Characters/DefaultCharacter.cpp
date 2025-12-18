@@ -589,8 +589,10 @@ void ADefaultCharacter::HandleInteractInstant()
         if (!HitActor)
             return;
 
-        if (HitActor->GetClass()->ImplementsInterface(URequiresItem::StaticClass()))
+        if (HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
         {
+            bool bRequiresItem = IInteractable::Execute_RequiresItem(HitActor);
+
             UInventoryComponent* Inventory = FindComponentByClass<UInventoryComponent>();
             UItemBase* ActiveItem = nullptr;
             if (Inventory)
@@ -598,19 +600,24 @@ void ADefaultCharacter::HandleInteractInstant()
                 FInventorySlot ActiveSlot = Inventory->GetActiveItem();
                 ActiveItem = ActiveSlot.ItemAsset;
             }
-            if (HasAuthority() && !IRequiresItem::Execute_IsCorrectItem(HitActor, ActiveItem))
-            {
-                return;
-            }
-            if (ActiveItem)
-            {
-                ActiveItem->OnUsed(this);
-            }
-        }
 
-        if (HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
-        {
+            if (bRequiresItem)
+            {
+                // If requires item, check for correct item
+                if (HasAuthority() && !IInteractable::Execute_IsCorrectItem(HitActor, ActiveItem))
+                {
+                    return;
+                }
+                if (ActiveItem)
+                {
+                    ActiveItem->OnUsed(this);
+                }
+            }
+
+            // If does NOT require item, just interact
             IInteractable::Execute_Interact(HitActor, this);
+
+            // Always call server to handle authoritative interaction
             ServerHandleInteract(HitActor);
         }
     }
@@ -621,8 +628,10 @@ void ADefaultCharacter::ServerHandleInteract_Implementation(AActor* TargetActor)
     if (!TargetActor)
         return;
 
-    if (TargetActor->GetClass()->ImplementsInterface(URequiresItem::StaticClass()))
+    if (TargetActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
     {
+        bool bRequiresItem = IInteractable::Execute_RequiresItem(TargetActor);
+
         UInventoryComponent* Inventory = FindComponentByClass<UInventoryComponent>();
         UItemBase* ActiveItem = nullptr;
         if (Inventory)
@@ -630,18 +639,20 @@ void ADefaultCharacter::ServerHandleInteract_Implementation(AActor* TargetActor)
             FInventorySlot ActiveSlot = Inventory->GetActiveItem();
             ActiveItem = ActiveSlot.ItemAsset;
         }
-        if (!IRequiresItem::Execute_IsCorrectItem(TargetActor, ActiveItem))
-        {
-            return;
-        }
-        if (ActiveItem)
-        {
-            ActiveItem->OnUsed(this);
-        }
-    }
 
-    if (TargetActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
-    {
+        if (bRequiresItem)
+        {
+            if (!IInteractable::Execute_IsCorrectItem(TargetActor, ActiveItem))
+            {
+                return;
+            }
+            if (ActiveItem)
+            {
+                ActiveItem->OnUsed(this);
+            }
+        }
+
+        // If does NOT require item, just interact
         IInteractable::Execute_Interact(TargetActor, this);
     }
 }

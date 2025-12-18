@@ -1,6 +1,9 @@
+
+
 #pragma once
 
 #include "UObject/Interface.h"
+#include "DataAssets/ItemBase.h"
 #include "IInteractable.generated.h"
 
 UINTERFACE(MinimalAPI, Blueprintable)
@@ -26,4 +29,10 @@ public:
 
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interactable")
     bool IsProgressiveInteract();
+
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interactable")
+    bool IsCorrectItem(UItemBase* Item) const;
+
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interactable")
+    bool RequiresItem() const;
 };

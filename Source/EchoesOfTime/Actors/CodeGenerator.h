@@ -3,7 +3,6 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Interfaces/IInteractable.h"
-#include "Interfaces/IRequiresItem.h"
 #include "TimelineEra.h"
 #include "CodeGenerator.generated.h"
 
@@ -30,7 +29,7 @@ struct FKeypadCodeStatus
 };
 
 UCLASS()
-class ECHOESOFTIME_API ACodeGenerator : public AActor, public IInteractable, public IRequiresItem
+class ECHOESOFTIME_API ACodeGenerator : public AActor, public IInteractable
 {
     GENERATED_BODY()
 
@@ -74,6 +73,7 @@ protected:
     virtual void Interact_Implementation(AActor* Interactor) override;
     virtual void SetHighlighted_Implementation(bool bHighlight) override;
     virtual bool IsCorrectItem_Implementation(UItemBase* Item) const override;
+	virtual bool RequiresItem_Implementation() const override { return true; }
 
     void UpdateDisplayText();
     void ExpireOldCodes();

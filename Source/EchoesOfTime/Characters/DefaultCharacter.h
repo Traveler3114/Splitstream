@@ -3,7 +3,6 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Interfaces/IInteractable.h"
-#include "Interfaces/IRequiresItem.h"
 #include "InputActionValue.h"
 #include "AbilitySystemInterface.h"
 #include "Interfaces/IDetectable.h"
@@ -24,7 +23,7 @@ class UInventoryComponent;
 class AItemPickup;
 
 UCLASS()
-class ECHOESOFTIME_API ADefaultCharacter : public ACharacter, public IInteractable, public IRequiresItem, public IAbilitySystemInterface, public IDetectable
+class ECHOESOFTIME_API ADefaultCharacter : public ACharacter, public IInteractable, public IAbilitySystemInterface, public IDetectable
 {
     GENERATED_BODY()
 public:
