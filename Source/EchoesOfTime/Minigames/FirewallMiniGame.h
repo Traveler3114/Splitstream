@@ -46,7 +46,6 @@ struct FMiniGameHeavyEnemy
     FMiniGameHeavyEnemy() : Position(FVector2D::ZeroVector), Texture(nullptr), bIsAlive(true), Size(FVector2D(56, 80)), HP(3) {}
 };
 
-// For both types of projectiles, add Velocity for boss bounce logic
 USTRUCT(BlueprintType)
 struct FMiniGameProjectile
 {
@@ -67,7 +66,8 @@ struct FMiniGameEnemyBullet
     UPROPERTY(EditAnywhere, BlueprintReadWrite) bool bIsActive;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector2D Size;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector2D Velocity;
-    FMiniGameEnemyBullet() : Position(FVector2D::ZeroVector), Texture(nullptr), bIsActive(true), Size(FVector2D(10, 25)), Velocity(FVector2D::ZeroVector) {}
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) float LifeTime; // for bullet timeout
+    FMiniGameEnemyBullet() : Position(FVector2D::ZeroVector), Texture(nullptr), bIsActive(true), Size(FVector2D(10, 25)), Velocity(FVector2D::ZeroVector), LifeTime(0.0f) {}
 };
 
 USTRUCT(BlueprintType)
@@ -79,7 +79,8 @@ struct FMiniGameHeavyEnemyBullet
     UPROPERTY(EditAnywhere, BlueprintReadWrite) bool bIsActive;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector2D Size;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector2D Velocity;
-    FMiniGameHeavyEnemyBullet() : Position(FVector2D::ZeroVector), Texture(nullptr), bIsActive(true), Size(FVector2D(24, 60)), Velocity(FVector2D::ZeroVector) {}
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) float LifeTime; // for bullet timeout
+    FMiniGameHeavyEnemyBullet() : Position(FVector2D::ZeroVector), Texture(nullptr), bIsActive(true), Size(FVector2D(24, 60)), Velocity(FVector2D::ZeroVector), LifeTime(0.0f) {}
 };
 
 USTRUCT(BlueprintType)

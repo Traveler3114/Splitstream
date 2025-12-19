@@ -15,6 +15,10 @@
 #define BOSS_BULLET_COUNT_MIN  3
 #define BOSS_BULLET_COUNT_MAX  5
 
+// Lifespan for enemy and heavy enemy bullets (in seconds)
+#define ENEMY_BULLET_LIFESPAN       5.0f
+#define HEAVY_ENEMY_BULLET_LIFESPAN 5.0f
+
 UFirewallMiniGame::UFirewallMiniGame()
     : bIsGameOver(false)
     , EnemySpawnInterval(0.8f)
@@ -214,6 +218,7 @@ void UFirewallMiniGame::SpawnPlayerBullet()
     Projectiles.Add(Projectile);
 }
 
+// Overloaded with explicit velocity for bounce logic
 void UFirewallMiniGame::SpawnEnemyBullet(const FVector2D& EnemyPosition, UTexture2D* BulletTex, FVector2D ExtraVelocity)
 {
     FMiniGameEnemyBullet Bullet;
@@ -221,7 +226,20 @@ void UFirewallMiniGame::SpawnEnemyBullet(const FVector2D& EnemyPosition, UTextur
     Bullet.Texture = BulletTex;
     Bullet.Size = GetTextureSize(BulletTex);
     Bullet.bIsActive = true;
-    Bullet.Velocity = ExtraVelocity; // Optionally used for bouncing bullets
+    // Set random velocity for bounce even for regular enemies
+    if (ExtraVelocity.IsNearlyZero())
+    {
+        // straight downward plus small random X
+        float angle = FMath::FRandRange(-PI / 6.f, PI / 6.f); // -30 to 30 degrees
+        float speed = GetPlayAreaSize().Y * 0.38f; // gives similar speed to original code downward
+        Bullet.Velocity = FVector2D(FMath::Sin(angle) * speed, FMath::Cos(angle) * speed);
+    }
+    else
+    {
+        Bullet.Velocity = ExtraVelocity;
+    }
+    // Add a lifespan field for manual timeout, using BlueprintReadWrite
+    Bullet.LifeTime = 0.0f;
     EnemyBullets.Add(Bullet);
 }
 
@@ -232,7 +250,17 @@ void UFirewallMiniGame::SpawnHeavyEnemyBullet(const FVector2D& EnemyPosition, UT
     Bullet.Texture = BulletTex;
     Bullet.Size = GetTextureSize(BulletTex);
     Bullet.bIsActive = true;
-    Bullet.Velocity = ExtraVelocity;
+    if (ExtraVelocity.IsNearlyZero())
+    {
+        float angle = FMath::FRandRange(-PI / 4.f, PI / 4.f); // -45 to 45 degrees
+        float speed = GetPlayAreaSize().Y * 0.56f; // gives similar speed as before
+        Bullet.Velocity = FVector2D(FMath::Sin(angle) * speed, FMath::Cos(angle) * speed);
+    }
+    else
+    {
+        Bullet.Velocity = ExtraVelocity;
+    }
+    Bullet.LifeTime = 0.0f;
     HeavyEnemyBullets.Add(Bullet);
 }
 
@@ -290,6 +318,8 @@ void UFirewallMiniGame::UpdateProjectiles(float DeltaTime)
     Projectiles.RemoveAll([](const FMiniGameProjectile& P) { return !P.bIsActive; });
 }
 
+// Bullet bouncing and timeout enabled ALWAYS
+
 void UFirewallMiniGame::UpdateEnemyBullets(float DeltaTime)
 {
     FVector2D Area = GetPlayAreaSize();
@@ -299,25 +329,20 @@ void UFirewallMiniGame::UpdateEnemyBullets(float DeltaTime)
         FMiniGameEnemyBullet& Bull = EnemyBullets[i];
         if (!Bull.bIsActive) continue;
 
-        // Boss bullet logic: bounce if needed
-        if (bIsBossActive && Bull.Velocity.SizeSquared() > 0)
-        {
-            Bull.Position += Bull.Velocity * DeltaTime;
-            // Bounce bullets off all 4 sides
-            if (Bull.Position.X < Bull.Size.X*0.5f && Bull.Velocity.X < 0)  Bull.Velocity.X *= -1.0f;
-            if (Bull.Position.X > Area.X-Bull.Size.X*0.5f && Bull.Velocity.X > 0) Bull.Velocity.X *= -1.0f;
-            if (Bull.Position.Y < Bull.Size.Y*0.5f && Bull.Velocity.Y < 0)  Bull.Velocity.Y *= -1.0f;
-            if (Bull.Position.Y > Area.Y-Bull.Size.Y*0.5f && Bull.Velocity.Y > 0) Bull.Velocity.Y *= -1.0f;
-            // Remove if out
-            if (Bull.Position.Y > Area.Y + Bull.Size.Y * 0.8f || Bull.Position.Y < -Bull.Size.Y)
-                Bull.bIsActive = false;
-        }
-        else
-        {
-            Bull.Position.Y += BulletSpeed * DeltaTime;
-            if (Bull.Position.Y > Area.Y + Bull.Size.Y * 0.8f)
-                Bull.bIsActive = false;
-        }
+        // Always bounce logic, not just boss. Ignore .Velocity == 0.
+        Bull.Position += Bull.Velocity * DeltaTime;
+
+        // Bounce bullets off all 4 sides
+        if (Bull.Position.X < Bull.Size.X*0.5f && Bull.Velocity.X < 0)  Bull.Velocity.X *= -1.0f;
+        if (Bull.Position.X > Area.X-Bull.Size.X*0.5f && Bull.Velocity.X > 0) Bull.Velocity.X *= -1.0f;
+        if (Bull.Position.Y < Bull.Size.Y*0.5f && Bull.Velocity.Y < 0)  Bull.Velocity.Y *= -1.0f;
+        if (Bull.Position.Y > Area.Y-Bull.Size.Y*0.5f && Bull.Velocity.Y > 0) Bull.Velocity.Y *= -1.0f;
+
+        // Increase lifetime and check max
+        Bull.LifeTime += DeltaTime;
+        // Remove if out of life
+        if (Bull.LifeTime > ENEMY_BULLET_LIFESPAN)
+            Bull.bIsActive = false;
     }
     EnemyBullets.RemoveAll([](const FMiniGameEnemyBullet& B) { return !B.bIsActive; });
 }
@@ -330,21 +355,18 @@ void UFirewallMiniGame::UpdateHeavyEnemyBullets(float DeltaTime)
     {
         FMiniGameHeavyEnemyBullet& Bull = HeavyEnemyBullets[i];
         if (!Bull.bIsActive) continue;
-        // Boss bullet logic: bounce only in x for top half mode
-        if (bIsBossActive && BossCurrentMode == 1)
-        {
-            Bull.Position += Bull.Velocity * DeltaTime;
-            if (Bull.Position.X < Bull.Size.X*0.5f && Bull.Velocity.X < 0) Bull.Velocity.X *= -1.0f;
-            if (Bull.Position.X > Area.X - Bull.Size.X*0.5f && Bull.Velocity.X > 0) Bull.Velocity.X *= -1.0f;
-            // Also: if leaves the screen in Y, deactivate
-            if (Bull.Position.Y > Area.Y || Bull.Position.Y < -Bull.Size.Y)
-                Bull.bIsActive = false;
-        }
-        else {
-            Bull.Position.Y += BulletSpeed * DeltaTime;
-            if (Bull.Position.Y > Area.Y + Bull.Size.Y * 0.8f)
-                Bull.bIsActive = false;
-        }
+
+        // Always bounce logic for heavy bullets too, always
+        Bull.Position += Bull.Velocity * DeltaTime;
+        if (Bull.Position.X < Bull.Size.X*0.5f && Bull.Velocity.X < 0) Bull.Velocity.X *= -1.0f;
+        if (Bull.Position.X > Area.X - Bull.Size.X*0.5f && Bull.Velocity.X > 0) Bull.Velocity.X *= -1.0f;
+        if (Bull.Position.Y < Bull.Size.Y*0.5f && Bull.Velocity.Y < 0) Bull.Velocity.Y *= -1.0f;
+        if (Bull.Position.Y > Area.Y - Bull.Size.Y*0.5f && Bull.Velocity.Y > 0) Bull.Velocity.Y *= -1.0f;
+
+        // Increase lifetime and check max
+        Bull.LifeTime += DeltaTime;
+        if (Bull.LifeTime > HEAVY_ENEMY_BULLET_LIFESPAN)
+            Bull.bIsActive = false;
     }
     HeavyEnemyBullets.RemoveAll([](const FMiniGameHeavyEnemyBullet& B) { return !B.bIsActive; });
 }
@@ -409,6 +431,44 @@ void UFirewallMiniGame::CheckCollisions()
         }
     }
 
+    // ***** NEW: Player bullet vs Enemy Bullets (and Heavy Enemy Bullets) *****
+    for (FMiniGameProjectile& Projectile : Projectiles)
+    {
+        if (!Projectile.bIsActive) continue;
+
+        // --- Against regular enemy bullets ---
+        for (FMiniGameEnemyBullet& Bull : EnemyBullets)
+        {
+            if (!Bull.bIsActive) continue;
+            float Distance = FVector2D::Distance(Projectile.Position, Bull.Position);
+            float CollisionRadius = FMath::Max(Projectile.Size.X, Projectile.Size.Y) * 0.5f +
+                                   FMath::Max(Bull.Size.X, Bull.Size.Y) * 0.5f;
+            if (Distance < CollisionRadius)
+            {
+                Projectile.bIsActive = false;
+                Bull.bIsActive = false;
+                break; // This projectile is destroyed so no further checks
+            }
+        }
+        if (!Projectile.bIsActive) continue;
+
+        // --- Against heavy enemy bullets ---
+        for (FMiniGameHeavyEnemyBullet& HBull : HeavyEnemyBullets)
+        {
+            if (!HBull.bIsActive) continue;
+            float Distance = FVector2D::Distance(Projectile.Position, HBull.Position);
+            float CollisionRadius = FMath::Max(Projectile.Size.X, Projectile.Size.Y) * 0.5f +
+                                   FMath::Max(HBull.Size.X, HBull.Size.Y) * 0.5f;
+            if (Distance < CollisionRadius)
+            {
+                Projectile.bIsActive = false;
+                HBull.bIsActive = false;
+                break;
+            }
+        }
+    }
+    // ***** END NEW *****
+
     // Enemy Bullets vs Player
     for (FMiniGameEnemyBullet& Bull : EnemyBullets)
     {
@@ -448,7 +508,6 @@ void UFirewallMiniGame::CheckCollisions()
     if (bDefeat)
         GameOver();
 }
-
 void UFirewallMiniGame::EndGame()
 {
     if (OwningController)
