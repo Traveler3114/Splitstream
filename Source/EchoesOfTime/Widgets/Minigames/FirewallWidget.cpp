@@ -64,30 +64,59 @@ void UFirewallWidget::SetLives(int32 NewLives)
 void UFirewallWidget::DrawGameObjects(const FMiniGamePlayer& Player, const TArray<FMiniGameEnemy>& Enemies, const TArray<FMiniGameProjectile>& Projectiles)
 {
     if (!GameCanvas)
-    {
         return;
-    }
+
+    FVector2D CanvasSize = GameCanvas->GetCachedGeometry().GetLocalSize();
+
+    // Reference resolution—change as needed to match your game's design baseline
+    constexpr float ReferenceWidth = 1920.0f;
+    constexpr float ReferenceHeight = 1080.0f;
+
+    // Scale factors
+    float ScaleX = CanvasSize.X / ReferenceWidth;
+    float ScaleY = CanvasSize.Y / ReferenceHeight;
+    // Uniform scale to maintain proportions (optional, but recommended for pixel-art/squares)
+    float UniformScale = FMath::Min(ScaleX, ScaleY);
 
     CurrentSpriteIndex = 0;
 
+    // Draw player
     if (Player.Texture)
     {
-        DrawSprite(Player.Position, Player.Texture, Player.Size);
+        FVector2D ScaledSize = Player.Size * UniformScale;
+        // Scale position as well so position is relative to canvas
+        FVector2D ScaledPosition(
+            Player.Position.X * ScaleX,
+            Player.Position.Y * ScaleY
+        );
+        DrawSprite(ScaledPosition, Player.Texture, ScaledSize);
     }
 
+    // Draw enemies
     for (const FMiniGameEnemy& Enemy : Enemies)
     {
         if (Enemy.bIsAlive && Enemy.Texture)
         {
-            DrawSprite(Enemy.Position, Enemy.Texture, Enemy.Size);
+            FVector2D ScaledSize = Enemy.Size * UniformScale;
+            FVector2D ScaledPosition(
+                Enemy.Position.X * ScaleX,
+                Enemy.Position.Y * ScaleY
+            );
+            DrawSprite(ScaledPosition, Enemy.Texture, ScaledSize);
         }
     }
 
+    // Draw projectiles
     for (const FMiniGameProjectile& Projectile : Projectiles)
     {
         if (Projectile.bIsActive && Projectile.Texture)
         {
-            DrawSprite(Projectile.Position, Projectile.Texture, Projectile.Size);
+            FVector2D ScaledSize = Projectile.Size * UniformScale;
+            FVector2D ScaledPosition(
+                Projectile.Position.X * ScaleX,
+                Projectile.Position.Y * ScaleY
+            );
+            DrawSprite(ScaledPosition, Projectile.Texture, ScaledSize);
         }
     }
 

@@ -111,7 +111,7 @@ void UFirewallMiniGame::FinishInitAfterWidgetReady()
     Player = FMiniGamePlayer();
     Player.Position = FVector2D(Area.X * 0.5f, Area.Y - Area.Y * 0.12f);
     Player.Texture = PlayerTexture;
-    Player.Size = FVector2D(Area.X * 0.06f, Area.Y * 0.10f);
+    Player.Size = FVector2D(75, 95);
     Player.MoveSpeed = Area.X * 0.4f;
     UE_LOG(LogTemp, Warning, TEXT("FinishInitAfterWidgetReady: Player at (%.1f, %.1f), size=(%.1f, %.1f), speed=%.1f, texture=%s"), Player.Position.X, Player.Position.Y, Player.Size.X, Player.Size.Y, Player.MoveSpeed, Player.Texture ? *Player.Texture->GetName() : TEXT("NULL"));
 
@@ -161,7 +161,7 @@ void UFirewallMiniGame::SpawnEnemies()
             Enemy.Position = FVector2D(StartX + Col * SpacingX, StartY + Row * SpacingY);
             Enemy.Texture = EnemyTexture;
             Enemy.bIsAlive = true;
-            Enemy.Size = FVector2D(EnemySizeX, EnemySizeY);
+            Enemy.Size = FVector2D(75, 75);
 
             Enemies.Add(Enemy);
 
@@ -230,7 +230,7 @@ void UFirewallMiniGame::OnFirePressed()
     Projectile.Texture = ProjectileTexture;
     Projectile.bIsPlayerProjectile = true;
     Projectile.bIsActive = true;
-    Projectile.Size = FVector2D(Area.X * 0.012f, Area.Y * 0.035f);
+    Projectile.Size = FVector2D(8, 54);
 
     Projectiles.Add(Projectile);
 
