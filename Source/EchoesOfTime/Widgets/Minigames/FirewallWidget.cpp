@@ -61,21 +61,17 @@ void UFirewallWidget::SetLives(int32 NewLives)
     }
 }
 
-void UFirewallWidget::DrawGameObjects(const FMiniGamePlayer& Player, const TArray<FMiniGameEnemy>& Enemies, const TArray<FMiniGameProjectile>& Projectiles)
+void UFirewallWidget::DrawGameObjects(const FMiniGamePlayer& Player, const TArray<FMiniGameEnemy>& Enemies,
+                                      const TArray<FMiniGameProjectile>& Projectiles, const TArray<FMiniGameEnemyBullet>& EnemyBullets)
 {
     if (!GameCanvas)
         return;
 
     FVector2D CanvasSize = GameCanvas->GetCachedGeometry().GetLocalSize();
-
-    // Reference resolution—change as needed to match your game's design baseline
     constexpr float ReferenceWidth = 1920.0f;
     constexpr float ReferenceHeight = 1080.0f;
-
-    // Scale factors
     float ScaleX = CanvasSize.X / ReferenceWidth;
     float ScaleY = CanvasSize.Y / ReferenceHeight;
-    // Uniform scale to maintain proportions (optional, but recommended for pixel-art/squares)
     float UniformScale = FMath::Min(ScaleX, ScaleY);
 
     CurrentSpriteIndex = 0;
@@ -84,11 +80,7 @@ void UFirewallWidget::DrawGameObjects(const FMiniGamePlayer& Player, const TArra
     if (Player.Texture)
     {
         FVector2D ScaledSize = Player.Size * UniformScale;
-        // Scale position as well so position is relative to canvas
-        FVector2D ScaledPosition(
-            Player.Position.X * ScaleX,
-            Player.Position.Y * ScaleY
-        );
+        FVector2D ScaledPosition(Player.Position.X * ScaleX, Player.Position.Y * ScaleY);
         DrawSprite(ScaledPosition, Player.Texture, ScaledSize);
     }
 
@@ -98,25 +90,30 @@ void UFirewallWidget::DrawGameObjects(const FMiniGamePlayer& Player, const TArra
         if (Enemy.bIsAlive && Enemy.Texture)
         {
             FVector2D ScaledSize = Enemy.Size * UniformScale;
-            FVector2D ScaledPosition(
-                Enemy.Position.X * ScaleX,
-                Enemy.Position.Y * ScaleY
-            );
+            FVector2D ScaledPosition(Enemy.Position.X * ScaleX, Enemy.Position.Y * ScaleY);
             DrawSprite(ScaledPosition, Enemy.Texture, ScaledSize);
         }
     }
 
-    // Draw projectiles
+    // Draw player projectiles
     for (const FMiniGameProjectile& Projectile : Projectiles)
     {
         if (Projectile.bIsActive && Projectile.Texture)
         {
             FVector2D ScaledSize = Projectile.Size * UniformScale;
-            FVector2D ScaledPosition(
-                Projectile.Position.X * ScaleX,
-                Projectile.Position.Y * ScaleY
-            );
+            FVector2D ScaledPosition(Projectile.Position.X * ScaleX, Projectile.Position.Y * ScaleY);
             DrawSprite(ScaledPosition, Projectile.Texture, ScaledSize);
+        }
+    }
+
+    // Draw enemy bullets
+    for (const FMiniGameEnemyBullet& Bullet : EnemyBullets)
+    {
+        if (Bullet.bIsActive && Bullet.Texture)
+        {
+            FVector2D ScaledSize = Bullet.Size * UniformScale;
+            FVector2D ScaledPosition(Bullet.Position.X * ScaleX, Bullet.Position.Y * ScaleY);
+            DrawSprite(ScaledPosition, Bullet.Texture, ScaledSize);
         }
     }
 

@@ -1,5 +1,3 @@
-// FirewallMiniGame.h
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -43,7 +41,18 @@ struct FMiniGameProjectile
     UPROPERTY(EditAnywhere, BlueprintReadWrite) UTexture2D* Texture;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) bool bIsActive;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector2D Size;
-    FMiniGameProjectile() : Position(FVector2D::ZeroVector), Texture(nullptr), , bIsActive(true), Size(FVector2D(10, 20)) {}
+    FMiniGameProjectile() : Position(FVector2D::ZeroVector), Texture(nullptr), bIsActive(true), Size(FVector2D(10, 20)) {}
+};
+
+USTRUCT(BlueprintType)
+struct FMiniGameEnemyBullet
+{
+    GENERATED_BODY()
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector2D Position;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) UTexture2D* Texture;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) bool bIsActive;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector2D Size;
+    FMiniGameEnemyBullet() : Position(FVector2D::ZeroVector), Texture(nullptr), bIsActive(true), Size(FVector2D(10, 25)) {}
 };
 
 UCLASS(Blueprintable, BlueprintType)
@@ -59,6 +68,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UTexture2D* PlayerTexture;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UTexture2D* EnemyTexture;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UTexture2D* ProjectileTexture;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UTexture2D* EnemyBulletTexture;
 
     UFirewallMiniGame();
 
@@ -68,33 +78,42 @@ public:
     UFUNCTION(BlueprintCallable, Category = "MiniGame")
     void EndGame();
 
-    // Defers the setup to after widget is ready
     void FinishInitAfterWidgetReady();
-
     void TryFinishInitWhenCanvasReady();
 
 private:
     FMiniGamePlayer Player;
     TArray<FMiniGameEnemy> Enemies;
     TArray<FMiniGameProjectile> Projectiles;
+    TArray<FMiniGameEnemyBullet> EnemyBullets;
     int32 Score;
-    float PlayerMoveInput = 0.0f; 
+    float PlayerMoveInput = 0.0f;
     bool bIsGameOver;
-    float EnemyMoveDirection;
 
     UPROPERTY() UFirewallWidget* WidgetRef;
     UPROPERTY() APlayerController* OwningController;
     FTimerHandle TickTimerHandle;
+
+    // Spawning
+    float EnemySpawnInterval;
+    float TimeSinceLastEnemySpawn;
+
+    // Enemy bullet fire
+    float EnemyFireInterval;
+    float TimeSinceLastEnemyFire;
 
     FVector2D GetPlayAreaSize() const;
     void CreateWidget();
     void SetupInput();
     void CleanupInput();
     void TickGame();
-    void SpawnEnemies();
+    void SpawnEnemy();
+    void SpawnPlayerBullet();
+    void SpawnEnemyBullet(const FVector2D& EnemyPosition); // Now takes position directly
     void UpdatePlayer(float DeltaTime);
     void UpdateEnemies(float DeltaTime);
     void UpdateProjectiles(float DeltaTime);
+    void UpdateEnemyBullets(float DeltaTime);
     void CheckCollisions();
     void UpdateWidget();
     void GameOver();

@@ -1,5 +1,3 @@
-// FirewallMiniGame.cpp
-
 #include "FirewallMiniGame.h"
 #include "Widgets/Minigames/FirewallWidget.h"
 #include "Blueprint/UserWidget.h"
@@ -12,7 +10,10 @@
 UFirewallMiniGame::UFirewallMiniGame()
     : Score(0)
     , bIsGameOver(false)
-    , EnemyMoveDirection(1.0f)
+    , EnemySpawnInterval(0.8f)
+    , TimeSinceLastEnemySpawn(0.0f)
+    , EnemyFireInterval(1.0f) // Fires frequently for testing
+    , TimeSinceLastEnemyFire(0.0f)
     , WidgetRef(nullptr)
     , OwningController(nullptr)
 {}
@@ -44,7 +45,8 @@ void UFirewallMiniGame::StartGame(APlayerController* PlayerController)
 
     Score = 0;
     bIsGameOver = false;
-    EnemyMoveDirection = 1.0f;
+    TimeSinceLastEnemySpawn = 0.0f;
+    TimeSinceLastEnemyFire = 0.0f;
 
     CreateWidget();
 
@@ -89,7 +91,7 @@ void UFirewallMiniGame::FinishInitAfterWidgetReady()
 
     Enemies.Empty();
     Projectiles.Empty();
-    SpawnEnemies();
+    EnemyBullets.Empty();
 
     SetupInput();
 
@@ -107,62 +109,59 @@ void UFirewallMiniGame::FinishInitAfterWidgetReady()
     UpdateWidget();
 }
 
-void UFirewallMiniGame::SpawnEnemies()
+void UFirewallMiniGame::SpawnEnemy()
 {
     FVector2D Area = GetPlayAreaSize();
-    int32 Rows = 5;
-    int32 Columns = 11;
+    float MinX = Area.X * 0.06f;
+    float MaxX = Area.X * 0.94f;
 
-    float SpacingX = Area.X / 15.0f;
-    float SpacingY = Area.Y / 18.0f;
-    float TotalWidth = (Columns - 1) * SpacingX;
-    float StartX = (Area.X - TotalWidth) * 0.5f;
-    float StartY = Area.Y * 0.11f;
+    FMiniGameEnemy Enemy;
+    float RandX = FMath::RandRange(MinX, MaxX);
+    Enemy.Position = FVector2D(RandX, 0.f + 32.0f);
+    Enemy.Texture = EnemyTexture;
+    Enemy.bIsAlive = true;
+    Enemy.Size = FVector2D(75, 75);
+    Enemies.Add(Enemy);
+}
 
-    for (int32 Row = 0; Row < Rows; ++Row)
-    {
-        for (int32 Col = 0; Col < Columns; ++Col)
-        {
-            FMiniGameEnemy Enemy;
-            Enemy.Position = FVector2D(StartX + Col * SpacingX, StartY + Row * SpacingY);
-            Enemy.Texture = EnemyTexture;
-            Enemy.bIsAlive = true;
-            Enemy.Size = FVector2D(75, 75);
-            Enemies.Add(Enemy);
-        }
-    }
+void UFirewallMiniGame::SpawnPlayerBullet()
+{
+    FMiniGameProjectile Projectile;
+    Projectile.Position = Player.Position;
+    Projectile.Texture = ProjectileTexture;
+    Projectile.Size = FVector2D(8, 54);
+    Projectile.bIsActive = true;
+    Projectiles.Add(Projectile);
+}
+
+void UFirewallMiniGame::SpawnEnemyBullet(const FVector2D& EnemyPosition)
+{
+    FMiniGameEnemyBullet Bullet;
+    Bullet.Position = EnemyPosition;
+    Bullet.Texture = EnemyBulletTexture;
+    Bullet.Size = FVector2D(40, 38);
+    Bullet.bIsActive = true;
+    EnemyBullets.Add(Bullet);
 }
 
 void UFirewallMiniGame::UpdateEnemies(float DeltaTime)
 {
     FVector2D Area = GetPlayAreaSize();
-    float MoveSpeed = Area.X * 0.35f;
-    bool bShouldMoveDown = false;
+    float FallSpeed = Area.Y * 0.20f;
 
     for (int32 i = 0; i < Enemies.Num(); ++i)
     {
         FMiniGameEnemy& Enemy = Enemies[i];
         if (!Enemy.bIsAlive) continue;
 
-        Enemy.Position.X += EnemyMoveDirection * MoveSpeed * DeltaTime;
+        Enemy.Position.Y += FallSpeed * DeltaTime;
 
-        if (Enemy.Position.X <= Area.X * 0.06f || Enemy.Position.X >= Area.X * 0.94f)
-            bShouldMoveDown = true;
-    }
-
-    if (bShouldMoveDown)
-    {
-        EnemyMoveDirection *= -1.0f;
-        float DownAmount = Area.Y * 0.035f;
-        for (int32 i = 0; i < Enemies.Num(); ++i)
+        if (Enemy.Position.Y - Enemy.Size.Y * 0.5f > Area.Y)
         {
-            FMiniGameEnemy& Enemy = Enemies[i];
-            Enemy.Position.Y += DownAmount;
-            if (Enemy.Position.Y >= Area.Y - Area.Y * 0.17f)
-                GameOver();
-            Enemy.Position.X = FMath::Clamp(Enemy.Position.X, Area.X * 0.06f, Area.X * 0.94f);
+            Enemy.bIsAlive = false;
         }
     }
+    Enemies.RemoveAll([](const FMiniGameEnemy& Enemy) { return !Enemy.bIsAlive; });
 }
 
 void UFirewallMiniGame::OnFirePressed()
@@ -170,13 +169,7 @@ void UFirewallMiniGame::OnFirePressed()
     if (bIsGameOver)
         return;
 
-    FMiniGameProjectile Projectile;
-    Projectile.Position = Player.Position;
-    Projectile.Texture = ProjectileTexture;
-    Projectile.bIsActive = true;
-    Projectile.Size = FVector2D(8, 54);
-
-    Projectiles.Add(Projectile);
+    SpawnPlayerBullet();
 }
 
 void UFirewallMiniGame::UpdateProjectiles(float DeltaTime)
@@ -199,22 +192,45 @@ void UFirewallMiniGame::UpdateProjectiles(float DeltaTime)
     Projectiles.RemoveAll([](const FMiniGameProjectile& P) { return !P.bIsActive; });
 }
 
+void UFirewallMiniGame::UpdateEnemyBullets(float DeltaTime)
+{
+    FVector2D Area = GetPlayAreaSize();
+    float BulletSpeed = Area.Y * 0.38f;
+
+    for (int32 i = 0; i < EnemyBullets.Num(); ++i)
+    {
+        FMiniGameEnemyBullet& Bull = EnemyBullets[i];
+        if (!Bull.bIsActive) continue;
+
+        Bull.Position.Y += BulletSpeed * DeltaTime;
+
+        if (Bull.Position.Y > Area.Y + Bull.Size.Y * 0.8f)
+        {
+            Bull.bIsActive = false;
+        }
+    }
+    EnemyBullets.RemoveAll([](const FMiniGameEnemyBullet& B) { return !B.bIsActive; });
+}
+
 void UFirewallMiniGame::CheckCollisions()
 {
     FVector2D Area = GetPlayAreaSize();
-    float CollisionRadius = Area.X * 0.03f;
+    float PlayerCollisionRadius = FMath::Max(Player.Size.X, Player.Size.Y) * 0.5f;
 
+    // Player projectiles hit enemies
     for (int32 p = 0; p < Projectiles.Num(); ++p)
     {
         FMiniGameProjectile& Projectile = Projectiles[p];
         if (!Projectile.bIsActive) continue;
 
+        // Collide with enemy
         for (int32 e = 0; e < Enemies.Num(); ++e)
         {
             FMiniGameEnemy& Enemy = Enemies[e];
             if (!Enemy.bIsAlive) continue;
 
             float Distance = FVector2D::Distance(Projectile.Position, Enemy.Position);
+            float CollisionRadius = FMath::Max(Enemy.Size.X, Enemy.Size.Y) * 0.42f;
             if (Distance < CollisionRadius)
             {
                 Enemy.bIsAlive = false;
@@ -223,19 +239,41 @@ void UFirewallMiniGame::CheckCollisions()
                 break;
             }
         }
-    }
 
-    bool bAnyAlive = false;
-    for (int32 i = 0; i < Enemies.Num(); ++i)
-    {
-        if (Enemies[i].bIsAlive)
+        // Collide with enemy bullets (NEW: destroy both)
+        for (int32 b = 0; b < EnemyBullets.Num(); ++b)
         {
-            bAnyAlive = true;
-            break;
+            FMiniGameEnemyBullet& EnemyBullet = EnemyBullets[b];
+            if (!EnemyBullet.bIsActive) continue;
+
+            float Distance = FVector2D::Distance(Projectile.Position, EnemyBullet.Position);
+            float CollisionRadius = FMath::Max(Projectile.Size.X, Projectile.Size.Y) * 0.5f +
+                                   FMath::Max(EnemyBullet.Size.X, EnemyBullet.Size.Y) * 0.5f;
+            if (Distance < CollisionRadius * 0.7f) // tuned - reduce if too forgiving
+            {
+                Projectile.bIsActive = false;
+                EnemyBullet.bIsActive = false;
+                break; // bullet destroyed, go to next
+            }
         }
     }
-    if (!bAnyAlive)
-        Victory();
+
+    // Enemy bullets hit player
+    for (int32 b = 0; b < EnemyBullets.Num(); ++b)
+    {
+        FMiniGameEnemyBullet& Bull = EnemyBullets[b];
+        if (!Bull.bIsActive) continue;
+        float Distance = FVector2D::Distance(Bull.Position, Player.Position);
+        if (Distance < PlayerCollisionRadius)
+        {
+            Bull.bIsActive = false;
+            Player.Lives -= 1;
+            if (Player.Lives <= 0)
+            {
+                GameOver();
+            }
+        }
+    }
 }
 
 void UFirewallMiniGame::EndGame()
@@ -265,6 +303,7 @@ void UFirewallMiniGame::EndGame()
     CleanupInput();
     Enemies.Empty();
     Projectiles.Empty();
+    EnemyBullets.Empty();
     OwningController = nullptr;
 }
 
@@ -307,11 +346,44 @@ void UFirewallMiniGame::TickGame()
     if (bIsGameOver)
         return;
 
-    float DeltaTime = 0.016f;
+    float DeltaTime = 0.016f; // 60hz tick
+
+    // Enemy spawn logic
+    TimeSinceLastEnemySpawn += DeltaTime;
+    if (TimeSinceLastEnemySpawn >= EnemySpawnInterval)
+    {
+        SpawnEnemy();
+        TimeSinceLastEnemySpawn = 0.0f;
+    }
+
+    // Enemy bullet fire logic: pick N random alive enemies, NOT just one random enemy
+    TimeSinceLastEnemyFire += DeltaTime;
+    if (TimeSinceLastEnemyFire >= EnemyFireInterval && Enemies.Num() > 0)
+    {
+        // How many bullets per volley? Set to Enemies.Num(), or clamp
+        int32 BulletsToSpawn = FMath::Clamp(Enemies.Num(), 1, 3); // Up to 3 per volley for chaos; raise if you want!
+        TArray<int32> AliveIndices;
+        for (int32 i = 0; i < Enemies.Num(); ++i)
+        {
+            if (Enemies[i].bIsAlive)
+                AliveIndices.Add(i);
+        }
+
+        for (int32 shot = 0; shot < BulletsToSpawn && AliveIndices.Num() > 0; ++shot)
+        {
+            int32 RandomId = FMath::RandRange(0, AliveIndices.Num() - 1);
+            int32 EnemyIndex = AliveIndices[RandomId];
+            SpawnEnemyBullet(Enemies[EnemyIndex].Position);
+            AliveIndices.RemoveAt(RandomId); // Don't choose the same enemy more than once for this volley
+        }
+
+        TimeSinceLastEnemyFire = 0.0f;
+    }
 
     UpdatePlayer(DeltaTime);
     UpdateEnemies(DeltaTime);
     UpdateProjectiles(DeltaTime);
+    UpdateEnemyBullets(DeltaTime);
     CheckCollisions();
     UpdateWidget();
 }
@@ -319,7 +391,6 @@ void UFirewallMiniGame::TickGame()
 void UFirewallMiniGame::UpdatePlayer(float DeltaTime)
 {
     FVector2D Area = GetPlayAreaSize();
-    float OldX = Player.Position.X;
     if (FMath::Abs(PlayerMoveInput) > KINDA_SMALL_NUMBER) {
         Player.Position.X += Player.MoveSpeed * PlayerMoveInput * DeltaTime;
         Player.Position.X = FMath::Clamp(Player.Position.X, Player.Size.X * 0.5f, Area.X - Player.Size.X * 0.5f);
@@ -332,7 +403,7 @@ void UFirewallMiniGame::UpdateWidget()
         return;
     WidgetRef->SetScore(Score);
     WidgetRef->SetLives(Player.Lives);
-    WidgetRef->DrawGameObjects(Player, Enemies, Projectiles);
+    WidgetRef->DrawGameObjects(Player, Enemies, Projectiles, EnemyBullets);
 }
 
 void UFirewallMiniGame::GameOver()
