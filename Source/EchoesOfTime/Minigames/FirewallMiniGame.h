@@ -30,9 +30,23 @@ struct FMiniGameEnemy
     UPROPERTY(EditAnywhere, BlueprintReadWrite) UTexture2D* Texture;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) bool bIsAlive;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector2D Size;
-    FMiniGameEnemy() : Position(FVector2D::ZeroVector), Texture(nullptr), bIsAlive(true), Size(FVector2D(40, 40)) {}
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) int32 HP;
+    FMiniGameEnemy() : Position(FVector2D::ZeroVector), Texture(nullptr), bIsAlive(true), Size(FVector2D(40, 40)), HP(1) {}
 };
 
+USTRUCT(BlueprintType)
+struct FMiniGameHeavyEnemy
+{
+    GENERATED_BODY()
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector2D Position;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) UTexture2D* Texture;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) bool bIsAlive;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector2D Size;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) int32 HP;
+    FMiniGameHeavyEnemy() : Position(FVector2D::ZeroVector), Texture(nullptr), bIsAlive(true), Size(FVector2D(56, 80)), HP(3) {}
+};
+
+// For both types of projectiles, add Velocity for boss bounce logic
 USTRUCT(BlueprintType)
 struct FMiniGameProjectile
 {
@@ -52,7 +66,30 @@ struct FMiniGameEnemyBullet
     UPROPERTY(EditAnywhere, BlueprintReadWrite) UTexture2D* Texture;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) bool bIsActive;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector2D Size;
-    FMiniGameEnemyBullet() : Position(FVector2D::ZeroVector), Texture(nullptr), bIsActive(true), Size(FVector2D(10, 25)) {}
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector2D Velocity;
+    FMiniGameEnemyBullet() : Position(FVector2D::ZeroVector), Texture(nullptr), bIsActive(true), Size(FVector2D(10, 25)), Velocity(FVector2D::ZeroVector) {}
+};
+
+USTRUCT(BlueprintType)
+struct FMiniGameHeavyEnemyBullet
+{
+    GENERATED_BODY()
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector2D Position;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) UTexture2D* Texture;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) bool bIsActive;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector2D Size;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector2D Velocity;
+    FMiniGameHeavyEnemyBullet() : Position(FVector2D::ZeroVector), Texture(nullptr), bIsActive(true), Size(FVector2D(24, 60)), Velocity(FVector2D::ZeroVector) {}
+};
+
+USTRUCT(BlueprintType)
+struct FMiniGameBoss
+{
+    GENERATED_BODY()
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector2D Position;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector2D Size;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) UTexture2D* Texture;
+    FMiniGameBoss() : Position(FVector2D::ZeroVector), Size(FVector2D(96,96)), Texture(nullptr) {}
 };
 
 UCLASS(Blueprintable, BlueprintType)
@@ -67,8 +104,11 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") TSubclassOf<UFirewallWidget> WidgetClass;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UTexture2D* PlayerTexture;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UTexture2D* EnemyTexture;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UTexture2D* HeavyEnemyTexture;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UTexture2D* ProjectileTexture;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UTexture2D* EnemyBulletTexture;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UTexture2D* HeavyEnemyBulletTexture;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UTexture2D* BossTexture;
 
     UFirewallMiniGame();
 
@@ -80,44 +120,77 @@ public:
 
     void FinishInitAfterWidgetReady();
     void TryFinishInitWhenCanvasReady();
+    UFUNCTION(BlueprintCallable, Category = "MiniGame")
+    void OnDifficultyIncrease(int32 NewDifficulty);
+    UFUNCTION(BlueprintCallable, Category = "MiniGame")
+    void OnBossFightStart();
 
 private:
     FMiniGamePlayer Player;
     TArray<FMiniGameEnemy> Enemies;
+    TArray<FMiniGameHeavyEnemy> HeavyEnemies;
     TArray<FMiniGameProjectile> Projectiles;
     TArray<FMiniGameEnemyBullet> EnemyBullets;
-    int32 Score;
-    float PlayerMoveInput = 0.0f;
+    TArray<FMiniGameHeavyEnemyBullet> HeavyEnemyBullets;
+
+    FVector2D PlayerMoveInput = FVector2D::ZeroVector;
     bool bIsGameOver;
 
     UPROPERTY() UFirewallWidget* WidgetRef;
     UPROPERTY() APlayerController* OwningController;
     FTimerHandle TickTimerHandle;
 
-    // Spawning
+    // Spawning/speed
     float EnemySpawnInterval;
     float TimeSinceLastEnemySpawn;
-
-    // Enemy bullet fire
     float EnemyFireInterval;
     float TimeSinceLastEnemyFire;
+    float EnemyFallSpeed;      
+    float HeavyEnemyFallSpeed; 
+
+    // Timed survival, difficulty, boss
+    float GameElapsedTime = 0.0f;
+    int32 DifficultyLevel = 0;
+    bool bDidBossStart = false;
+    bool bPendingBoss = false;
+
+    float Initial_EnemySpawnInterval = 0.8f;
+    float Initial_EnemyFireInterval = 1.0f;
+    float Initial_EnemyFallSpeed = 0.20f;
+    float Initial_HeavyEnemyFallSpeed = 0.17f;
+
+    // Boss
+    FMiniGameBoss Boss;
+    bool bIsBossActive;
+    int32 BossHP;
+    int32 BossCurrentMode;   
+    float BossTimeInMode;
+    float TimeSinceBossBullet;
+    FVector2D BossVelocity;
 
     FVector2D GetPlayAreaSize() const;
+    FVector2D GetTextureSize(UTexture2D* Texture) const;
     void CreateWidget();
     void SetupInput();
     void CleanupInput();
     void TickGame();
     void SpawnEnemy();
+    void SpawnHeavyEnemy();
     void SpawnPlayerBullet();
-    void SpawnEnemyBullet(const FVector2D& EnemyPosition); // Now takes position directly
+    void SpawnEnemyBullet(const FVector2D& EnemyPosition, UTexture2D* BulletTex, FVector2D ExtraVelocity = FVector2D::ZeroVector);
+    void SpawnHeavyEnemyBullet(const FVector2D& EnemyPosition, UTexture2D* BulletTex, FVector2D ExtraVelocity = FVector2D::ZeroVector);
     void UpdatePlayer(float DeltaTime);
     void UpdateEnemies(float DeltaTime);
+    void UpdateHeavyEnemies(float DeltaTime);
     void UpdateProjectiles(float DeltaTime);
     void UpdateEnemyBullets(float DeltaTime);
+    void UpdateHeavyEnemyBullets(float DeltaTime);
     void CheckCollisions();
     void UpdateWidget();
     void GameOver();
     void Victory();
+
+    void UpdateBoss(float DeltaTime);
 
     UFUNCTION()
     void OnMoveAxis(const FInputActionValue& Value);

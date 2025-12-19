@@ -1,5 +1,3 @@
-// Copyright Epic Games, Inc.  All Rights Reserved.
-
 #include "FirewallWidget.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Components/Image.h"
@@ -9,22 +7,18 @@ void UFirewallWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    // Only log major events, not per-frame or per-sprite.
     if (GameOverText)
-    {
         GameOverText->SetVisibility(ESlateVisibility::Hidden);
-    }
+
+    if (BossHPText)
+        BossHPText->SetVisibility(ESlateVisibility::Hidden);
 
     if (GameCanvas)
-    {
         InitialChildCount = GameCanvas->GetChildrenCount();
-    }
 
-    // Preallocate pool to expected max count for all sprites (enemies + player + projectiles + extra)
-    const int32 MaxSprites = 100;
+    const int32 MaxSprites = 250;
     SpritePool.Reserve(MaxSprites);
 
-    // Prepopulate sprite pool and add them to GameCanvas (hidden by default)
     for (int32 i = SpritePool.Num(); i < MaxSprites; ++i)
     {
         UImage* ImageWidget = NewObject<UImage>(this);
@@ -45,24 +39,36 @@ void UFirewallWidget::NativeConstruct()
     }
 }
 
-void UFirewallWidget::SetScore(int32 NewScore)
-{
-    if (ScoreText)
-    {
-        ScoreText->SetText(FText::FromString(FString::Printf(TEXT("Score: %d"), NewScore)));
-    }
-}
-
 void UFirewallWidget::SetLives(int32 NewLives)
 {
     if (LivesText)
-    {
         LivesText->SetText(FText::FromString(FString::Printf(TEXT("Lives: %d"), NewLives)));
+}
+
+void UFirewallWidget::SetBossHP(int32 BossHP, int32 MaxHP)
+{
+    if (BossHPText)
+    {
+        if (BossHP < 0)
+            BossHPText->SetVisibility(ESlateVisibility::Hidden);
+        else
+        {
+            BossHPText->SetVisibility(ESlateVisibility::Visible);
+            BossHPText->SetText(FText::FromString(FString::Printf(TEXT("Boss: %d / %d"), BossHP, MaxHP)));
+        }
     }
 }
 
-void UFirewallWidget::DrawGameObjects(const FMiniGamePlayer& Player, const TArray<FMiniGameEnemy>& Enemies,
-                                      const TArray<FMiniGameProjectile>& Projectiles, const TArray<FMiniGameEnemyBullet>& EnemyBullets)
+void UFirewallWidget::DrawGameObjects(
+    const FMiniGamePlayer& Player,
+    const TArray<FMiniGameEnemy>& Enemies,
+    const TArray<FMiniGameHeavyEnemy>& HeavyEnemies,
+    const TArray<FMiniGameProjectile>& Projectiles,
+    const TArray<FMiniGameEnemyBullet>& EnemyBullets,
+    const TArray<FMiniGameHeavyEnemyBullet>& HeavyEnemyBullets,
+    bool bHasBoss,
+    const FMiniGameBoss& Boss
+)
 {
     if (!GameCanvas)
         return;
@@ -84,50 +90,41 @@ void UFirewallWidget::DrawGameObjects(const FMiniGamePlayer& Player, const TArra
         DrawSprite(ScaledPosition, Player.Texture, ScaledSize);
     }
 
-    // Draw enemies
+    // Draw boss (if present and has valid texture)
+    if (bHasBoss && Boss.Texture)
+    {
+        FVector2D ScaledSize = Boss.Size * UniformScale;
+        FVector2D ScaledPosition(Boss.Position.X * ScaleX, Boss.Position.Y * ScaleY);
+        DrawSprite(ScaledPosition, Boss.Texture, ScaledSize);
+    }
+
     for (const FMiniGameEnemy& Enemy : Enemies)
-    {
         if (Enemy.bIsAlive && Enemy.Texture)
-        {
-            FVector2D ScaledSize = Enemy.Size * UniformScale;
-            FVector2D ScaledPosition(Enemy.Position.X * ScaleX, Enemy.Position.Y * ScaleY);
-            DrawSprite(ScaledPosition, Enemy.Texture, ScaledSize);
-        }
-    }
+            DrawSprite(FVector2D(Enemy.Position.X * ScaleX, Enemy.Position.Y * ScaleY), Enemy.Texture, Enemy.Size * UniformScale);
 
-    // Draw player projectiles
+    for (const FMiniGameHeavyEnemy& Enemy : HeavyEnemies)
+        if (Enemy.bIsAlive && Enemy.Texture)
+            DrawSprite(FVector2D(Enemy.Position.X * ScaleX, Enemy.Position.Y * ScaleY), Enemy.Texture, Enemy.Size * UniformScale);
+
     for (const FMiniGameProjectile& Projectile : Projectiles)
-    {
         if (Projectile.bIsActive && Projectile.Texture)
-        {
-            FVector2D ScaledSize = Projectile.Size * UniformScale;
-            FVector2D ScaledPosition(Projectile.Position.X * ScaleX, Projectile.Position.Y * ScaleY);
-            DrawSprite(ScaledPosition, Projectile.Texture, ScaledSize);
-        }
-    }
+            DrawSprite(FVector2D(Projectile.Position.X * ScaleX, Projectile.Position.Y * ScaleY), Projectile.Texture, Projectile.Size * UniformScale);
 
-    // Draw enemy bullets
     for (const FMiniGameEnemyBullet& Bullet : EnemyBullets)
-    {
         if (Bullet.bIsActive && Bullet.Texture)
-        {
-            FVector2D ScaledSize = Bullet.Size * UniformScale;
-            FVector2D ScaledPosition(Bullet.Position.X * ScaleX, Bullet.Position.Y * ScaleY);
-            DrawSprite(ScaledPosition, Bullet.Texture, ScaledSize);
-        }
-    }
+            DrawSprite(FVector2D(Bullet.Position.X * ScaleX, Bullet.Position.Y * ScaleY), Bullet.Texture, Bullet.Size * UniformScale);
+
+    for (const FMiniGameHeavyEnemyBullet& Bullet : HeavyEnemyBullets)
+        if (Bullet.bIsActive && Bullet.Texture)
+            DrawSprite(FVector2D(Bullet.Position.X * ScaleX, Bullet.Position.Y * ScaleY), Bullet.Texture, Bullet.Size * UniformScale);
 
     HideUnusedSprites();
 }
 
 UImage* UFirewallWidget::GetOrCreateSpriteWidget()
 {
-    // Never log in per-frame sprite get.
     if (CurrentSpriteIndex < SpritePool.Num())
-    {
         return SpritePool[CurrentSpriteIndex++];
-    }
-    // If pool exhausted (should not happen if you preallocated enough), add one more.
     UImage* ImageWidget = NewObject<UImage>(this);
     if (ImageWidget && GameCanvas)
     {
@@ -150,26 +147,18 @@ UImage* UFirewallWidget::GetOrCreateSpriteWidget()
 void UFirewallWidget::HideUnusedSprites()
 {
     for (int32 i = CurrentSpriteIndex; i < SpritePool.Num(); ++i)
-    {
         if (SpritePool[i])
-        {
             SpritePool[i]->SetVisibility(ESlateVisibility::Hidden);
-        }
-    }
 }
 
 void UFirewallWidget::DrawSprite(FVector2D Position, UTexture2D* Texture, FVector2D Size)
 {
     if (!GameCanvas || !Texture)
-    {
         return;
-    }
 
     UImage* ImageWidget = GetOrCreateSpriteWidget();
     if (!ImageWidget)
-    {
         return;
-    }
 
     ImageWidget->SetBrushFromTexture(Texture);
     ImageWidget->SetVisibility(ESlateVisibility::Visible);

@@ -1,5 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.  
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -11,9 +9,6 @@
 #include "Minigames/FirewallMiniGame.h"
 #include "FirewallWidget.generated.h"
 
-/**
- * Pure UI Widget - Only displays what the game tells it to
- */
 UCLASS()
 class ECHOESOFTIME_API UFirewallWidget : public UUserWidget
 {
@@ -23,23 +18,32 @@ public:
     virtual void NativeConstruct() override;
 
     UPROPERTY(meta = (BindWidget))
-    UTextBlock* ScoreText;
-    UPROPERTY(meta = (BindWidget))
     UTextBlock* LivesText;
     UPROPERTY(meta = (BindWidget))
     UCanvasPanel* GameCanvas;
     UPROPERTY(meta = (BindWidget))
     UTextBlock* GameOverText;
+    UPROPERTY(meta = (BindWidgetOptional))
+    UTextBlock* BossHPText;
 
-    UFUNCTION(BlueprintCallable, Category = "MiniGame")
-    void SetScore(int32 NewScore);
     UFUNCTION(BlueprintCallable, Category = "MiniGame")
     void SetLives(int32 NewLives);
 
-    // Note: ADD extra parameter for enemy bullets!
     UFUNCTION(BlueprintCallable, Category = "MiniGame")
-    void DrawGameObjects(const FMiniGamePlayer& Player, const TArray<FMiniGameEnemy>& Enemies,
-                        const TArray<FMiniGameProjectile>& Projectiles, const TArray<FMiniGameEnemyBullet>& EnemyBullets);
+    void SetBossHP(int32 BossHP, int32 MaxHP);
+
+    // Draw everything (including Boss if bHasBoss==true)
+    UFUNCTION(BlueprintCallable, Category = "MiniGame")
+    void DrawGameObjects(
+        const FMiniGamePlayer& Player,
+        const TArray<FMiniGameEnemy>& Enemies,
+        const TArray<FMiniGameHeavyEnemy>& HeavyEnemies,
+        const TArray<FMiniGameProjectile>& Projectiles,
+        const TArray<FMiniGameEnemyBullet>& EnemyBullets,
+        const TArray<FMiniGameHeavyEnemyBullet>& HeavyEnemyBullets,
+        bool bHasBoss,
+        const FMiniGameBoss& Boss // Only valid if bHasBoss is true
+    );
 
     UFUNCTION(BlueprintCallable, Category = "MiniGame")
     void ShowGameOver();
