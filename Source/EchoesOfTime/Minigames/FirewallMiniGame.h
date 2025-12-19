@@ -41,10 +41,9 @@ struct FMiniGameProjectile
     GENERATED_BODY()
     UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector2D Position;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) UTexture2D* Texture;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite) bool bIsPlayerProjectile;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) bool bIsActive;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector2D Size;
-    FMiniGameProjectile() : Position(FVector2D::ZeroVector), Texture(nullptr), bIsPlayerProjectile(true), bIsActive(true), Size(FVector2D(10, 20)) {}
+    FMiniGameProjectile() : Position(FVector2D::ZeroVector), Texture(nullptr), , bIsActive(true), Size(FVector2D(10, 20)) {}
 };
 
 UCLASS(Blueprintable, BlueprintType)
