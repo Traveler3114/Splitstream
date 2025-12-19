@@ -13,8 +13,6 @@ UFirewallMiniGame::UFirewallMiniGame()
     : Score(0)
     , bIsGameOver(false)
     , EnemyMoveDirection(1.0f)
-    , bMovingLeft(false)
-    , bMovingRight(false)
     , WidgetRef(nullptr)
     , OwningController(nullptr)
 {
@@ -62,8 +60,6 @@ void UFirewallMiniGame::StartGame(APlayerController* PlayerController)
     Score = 0;
     bIsGameOver = false;
     EnemyMoveDirection = 1.0f;
-    bMovingLeft = false;
-    bMovingRight = false;
 
     CreateWidget();
 
@@ -392,10 +388,8 @@ void UFirewallMiniGame::SetupInput()
     UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(OwningController->InputComponent);
     if (EnhancedInput)
     {
-        EnhancedInput->BindAction(MoveLeftAction, ETriggerEvent::Started, this, &UFirewallMiniGame::OnMoveLeftPressed);
-        EnhancedInput->BindAction(MoveLeftAction, ETriggerEvent::Completed, this, &UFirewallMiniGame::OnMoveLeftReleased);
-        EnhancedInput->BindAction(MoveRightAction, ETriggerEvent::Started, this, &UFirewallMiniGame::OnMoveRightPressed);
-        EnhancedInput->BindAction(MoveRightAction, ETriggerEvent::Completed, this, &UFirewallMiniGame::OnMoveRightReleased);
+        EnhancedInput->BindAction(MoveAction, ETriggerEvent::Triggered, this, &UFirewallMiniGame::OnMoveAxis);
+        EnhancedInput->BindAction(MoveAction, ETriggerEvent::Completed, this, &UFirewallMiniGame::OnMoveAxisCompleted);
         EnhancedInput->BindAction(FireAction, ETriggerEvent::Started, this, &UFirewallMiniGame::OnFirePressed);
         UE_LOG(LogTemp, Warning, TEXT("SetupInput: Actions bound"));
     }
@@ -403,6 +397,11 @@ void UFirewallMiniGame::SetupInput()
     {
         UE_LOG(LogTemp, Error, TEXT("SetupInput: EnhancedInput is null!"));
     }
+}
+
+void UFirewallMiniGame::OnMoveAxisCompleted(const FInputActionValue& Value)
+{
+    PlayerMoveInput = 0.0f;
 }
 
 void UFirewallMiniGame::CleanupInput()
@@ -433,15 +432,9 @@ void UFirewallMiniGame::UpdatePlayer(float DeltaTime)
 {
     FVector2D Area = GetPlayAreaSize();
     float OldX = Player.Position.X;
-    if (bMovingLeft)
-    {
-        Player.Position.X -= Player.MoveSpeed * DeltaTime;
-        Player.Position.X = FMath::Max(Player.Size.X * 0.5f, Player.Position.X);
-    }
-    if (bMovingRight)
-    {
-        Player.Position.X += Player.MoveSpeed * DeltaTime;
-        Player.Position.X = FMath::Min(Area.X - Player.Size.X * 0.5f, Player.Position.X);
+    if (FMath::Abs(PlayerMoveInput) > KINDA_SMALL_NUMBER) {
+        Player.Position.X += Player.MoveSpeed * PlayerMoveInput * DeltaTime;
+        Player.Position.X = FMath::Clamp(Player.Position.X, Player.Size.X * 0.5f, Area.X - Player.Size.X * 0.5f);
     }
     if (OldX != Player.Position.X)
     {
@@ -488,8 +481,7 @@ void UFirewallMiniGame::Victory()
     EndGame();
 }
 
-// Input callbacks
-void UFirewallMiniGame::OnMoveLeftPressed() { bMovingLeft = true; UE_LOG(LogTemp, Warning, TEXT("OnMoveLeftPressed")); }
-void UFirewallMiniGame::OnMoveLeftReleased() { bMovingLeft = false; UE_LOG(LogTemp, Warning, TEXT("OnMoveLeftReleased")); }
-void UFirewallMiniGame::OnMoveRightPressed() { bMovingRight = true; UE_LOG(LogTemp, Warning, TEXT("OnMoveRightPressed")); }
-void UFirewallMiniGame::OnMoveRightReleased() { bMovingRight = false; UE_LOG(LogTemp, Warning, TEXT("OnMoveRightReleased")); }
+void UFirewallMiniGame::OnMoveAxis(const FInputActionValue& Value)
+{
+    PlayerMoveInput = Value.Get<float>();
+}

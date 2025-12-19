@@ -54,8 +54,7 @@ class ECHOESOFTIME_API UFirewallMiniGame : public UObject
 public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UInputMappingContext* FirewallIMC;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UInputMappingContext* GameplayIMC;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UInputAction* MoveLeftAction;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UInputAction* MoveRightAction;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UInputAction* MoveAction;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UInputAction* FireAction;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") TSubclassOf<UFirewallWidget> WidgetClass;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UTexture2D* PlayerTexture;
@@ -80,10 +79,9 @@ private:
     TArray<FMiniGameEnemy> Enemies;
     TArray<FMiniGameProjectile> Projectiles;
     int32 Score;
+    float PlayerMoveInput = 0.0f; 
     bool bIsGameOver;
     float EnemyMoveDirection;
-    bool bMovingLeft;
-    bool bMovingRight;
 
     UPROPERTY() UFirewallWidget* WidgetRef;
     UPROPERTY() APlayerController* OwningController;
@@ -103,9 +101,9 @@ private:
     void GameOver();
     void Victory();
 
-    void OnMoveLeftPressed();
-    void OnMoveLeftReleased();
-    void OnMoveRightPressed();
-    void OnMoveRightReleased();
+    UFUNCTION()
+    void OnMoveAxis(const FInputActionValue& Value);
+    UFUNCTION()
+    void OnMoveAxisCompleted(const FInputActionValue& Value);
     void OnFirePressed();
 };
