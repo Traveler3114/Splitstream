@@ -7,40 +7,26 @@
 #include "EnhancedInputSubsystems.h"
 #include "Engine/World.h"
 
-#define BOSS_TOTAL_HP          100
-#define BOSS_LOWHP_THRESHOLD   10
-#define BOSS_MODE_DURATION     20.0f
-#define BOSS_BOUNCE_SPEED      370.f
-#define BOSS_BULLET_INTERVAL   0.40f
-#define BOSS_BULLET_COUNT_NORMAL  2
-#define BOSS_BULLET_COUNT_HEAVY   1
-
-#define ENEMY_BULLET_LIFESPAN       5.0f
-#define HEAVY_ENEMY_BULLET_LIFESPAN 5.0f
-
-#define FIXED_ENEMY_SPAWN_INTERVAL    0.8f
-#define FIXED_ENEMY_FIRE_INTERVAL     1.0f
-#define FIXED_ENEMY_FALL_SPEED        0.20f
-#define FIXED_HEAVY_ENEMY_FALL_SPEED  0.17f
+// All gameplay macros have been removed; now UPROPERTY variables are used!
 
 UFirewallMiniGame::UFirewallMiniGame()
     : bIsGameOver(false)
-    , EnemySpawnInterval(FIXED_ENEMY_SPAWN_INTERVAL)
+    , EnemySpawnInterval(FixedEnemySpawnInterval)
     , TimeSinceLastEnemySpawn(0.0f)
-    , EnemyFireInterval(FIXED_ENEMY_FIRE_INTERVAL)
+    , EnemyFireInterval(FixedEnemyFireInterval)
     , TimeSinceLastEnemyFire(0.0f)
-    , EnemyFallSpeed(FIXED_ENEMY_FALL_SPEED)
-    , HeavyEnemyFallSpeed(FIXED_HEAVY_ENEMY_FALL_SPEED)
+    , EnemyFallSpeed(FixedEnemyFallSpeed)
+    , HeavyEnemyFallSpeed(FixedHeavyEnemyFallSpeed)
     , WidgetRef(nullptr)
     , OwningController(nullptr)
     , GameElapsedTime(0.0f)
     , DifficultyLevel(0)
     , bDidBossStart(false)
     , bPendingBoss(false)
-    , Initial_EnemySpawnInterval(FIXED_ENEMY_SPAWN_INTERVAL)
-    , Initial_EnemyFireInterval(FIXED_ENEMY_FIRE_INTERVAL)
-    , Initial_EnemyFallSpeed(FIXED_ENEMY_FALL_SPEED)
-    , Initial_HeavyEnemyFallSpeed(FIXED_HEAVY_ENEMY_FALL_SPEED)
+    , Initial_EnemySpawnInterval(FixedEnemySpawnInterval)
+    , Initial_EnemyFireInterval(FixedEnemyFireInterval)
+    , Initial_EnemyFallSpeed(FixedEnemyFallSpeed)
+    , Initial_HeavyEnemyFallSpeed(FixedHeavyEnemyFallSpeed)
     , bIsBossActive(false)
     , BossHP(0)
     , BossCurrentMode(0)
@@ -81,10 +67,10 @@ void UFirewallMiniGame::StartGame(APlayerController* PlayerController)
     bDidBossStart = false;
     bPendingBoss = false;
 
-    EnemySpawnInterval   = FIXED_ENEMY_SPAWN_INTERVAL;
-    EnemyFireInterval    = FIXED_ENEMY_FIRE_INTERVAL;
-    EnemyFallSpeed       = FIXED_ENEMY_FALL_SPEED;
-    HeavyEnemyFallSpeed  = FIXED_HEAVY_ENEMY_FALL_SPEED;
+    EnemySpawnInterval   = FixedEnemySpawnInterval;
+    EnemyFireInterval    = FixedEnemyFireInterval;
+    EnemyFallSpeed       = FixedEnemyFallSpeed;
+    HeavyEnemyFallSpeed  = FixedHeavyEnemyFallSpeed;
 
     bIsBossActive = false;
     BossHP = 0;
@@ -219,7 +205,7 @@ void UFirewallMiniGame::SpawnEnemyBullet(const FVector2D& EnemyPosition, UTextur
     Bullet.bIsActive = true;
     if (ExtraVelocity.IsNearlyZero()) {
         float speedY = GetPlayAreaSize().Y * 0.38f;
-        float spread = speedY * 0.4f; // 20% of Y speed for horizontal variation
+        float spread = speedY * 0.4f;
         float vx = FMath::FRandRange(-spread, spread);
         Bullet.Velocity = FVector2D(vx, speedY);
     } else {
@@ -238,7 +224,7 @@ void UFirewallMiniGame::SpawnHeavyEnemyBullet(const FVector2D& EnemyPosition, UT
     Bullet.bIsActive = true;
     if (ExtraVelocity.IsNearlyZero()) {
         float speedY = GetPlayAreaSize().Y * 0.56f;
-        float spread = speedY * 0.4f; // Adjust 0.18f for wider/narrower spread
+        float spread = speedY * 0.4f;
         float vx = FMath::FRandRange(-spread, spread);
         Bullet.Velocity = FVector2D(vx, speedY);
     } else {
@@ -252,7 +238,7 @@ void UFirewallMiniGame::UpdateEnemies(float DeltaTime)
 {
     if (bIsBossActive) return;
     FVector2D Area = GetPlayAreaSize();
-    float FallSpeed = Area.Y * FIXED_ENEMY_FALL_SPEED;
+    float FallSpeed = Area.Y * FixedEnemyFallSpeed;
     for (int32 i = 0; i < Enemies.Num(); ++i)
     {
         FMiniGameEnemy& Enemy = Enemies[i];
@@ -268,7 +254,7 @@ void UFirewallMiniGame::UpdateHeavyEnemies(float DeltaTime)
 {
     if (bIsBossActive) return;
     FVector2D Area = GetPlayAreaSize();
-    float FallSpeed = Area.Y * FIXED_HEAVY_ENEMY_FALL_SPEED;
+    float FallSpeed = Area.Y * FixedHeavyEnemyFallSpeed;
     for (int32 i = 0; i < HeavyEnemies.Num(); ++i)
     {
         FMiniGameHeavyEnemy& Enemy = HeavyEnemies[i];
@@ -311,14 +297,13 @@ void UFirewallMiniGame::UpdateEnemyBullets(float DeltaTime)
 
         Bull.Position += Bull.Velocity * DeltaTime;
 
-        // Always bounce logic: ALL enemy bullets bounce on all four edges.
         if (Bull.Position.X < Bull.Size.X*0.5f && Bull.Velocity.X < 0)  Bull.Velocity.X *= -1.0f;
         if (Bull.Position.X > Area.X-Bull.Size.X*0.5f && Bull.Velocity.X > 0) Bull.Velocity.X *= -1.0f;
         if (Bull.Position.Y < Bull.Size.Y*0.5f && Bull.Velocity.Y < 0)  Bull.Velocity.Y *= -1.0f;
         if (Bull.Position.Y > Area.Y-Bull.Size.Y*0.5f && Bull.Velocity.Y > 0) Bull.Velocity.Y *= -1.0f;
 
         Bull.LifeTime += DeltaTime;
-        if (Bull.LifeTime > ENEMY_BULLET_LIFESPAN)
+        if (Bull.LifeTime > EnemyBulletLifespan)
             Bull.bIsActive = false;
     }
     EnemyBullets.RemoveAll([](const FMiniGameEnemyBullet& B) { return !B.bIsActive; });
@@ -334,14 +319,13 @@ void UFirewallMiniGame::UpdateHeavyEnemyBullets(float DeltaTime)
 
         Bull.Position += Bull.Velocity * DeltaTime;
 
-        // Always bounce logic: ALL heavy enemy bullets bounce on all four edges.
         if (Bull.Position.X < Bull.Size.X*0.5f && Bull.Velocity.X < 0) Bull.Velocity.X *= -1.0f;
         if (Bull.Position.X > Area.X-Bull.Size.X*0.5f && Bull.Velocity.X > 0) Bull.Velocity.X *= -1.0f;
         if (Bull.Position.Y < Bull.Size.Y*0.5f && Bull.Velocity.Y < 0) Bull.Velocity.Y *= -1.0f;
         if (Bull.Position.Y > Area.Y-Bull.Size.Y*0.5f && Bull.Velocity.Y > 0) Bull.Velocity.Y *= -1.0f;
 
         Bull.LifeTime += DeltaTime;
-        if (Bull.LifeTime > HEAVY_ENEMY_BULLET_LIFESPAN)
+        if (Bull.LifeTime > HeavyEnemyBulletLifespan)
             Bull.bIsActive = false;
     }
     HeavyEnemyBullets.RemoveAll([](const FMiniGameHeavyEnemyBullet& B) { return !B.bIsActive; });
@@ -535,7 +519,7 @@ void UFirewallMiniGame::CleanupInput()
 void UFirewallMiniGame::OnBossFightStart()
 {
     bIsBossActive = true;
-    BossHP = BOSS_TOTAL_HP;
+    BossHP = BossTotalHP;
     FVector2D Area = GetPlayAreaSize();
     Boss.Position = FVector2D(Area.X / 2.f, Area.Y * 0.22f);
     Boss.Size = GetTextureSize(BossTexture ? BossTexture : HeavyEnemyTexture);
@@ -543,7 +527,7 @@ void UFirewallMiniGame::OnBossFightStart()
     BossCurrentMode = 0;
     BossTimeInMode = 0.0f;
     TimeSinceBossBullet = 0.0f;
-    BossVelocity = FVector2D(BOSS_BOUNCE_SPEED, BOSS_BOUNCE_SPEED);
+    BossVelocity = FVector2D(BossBounceSpeed, BossBounceSpeed);
 }
 
 void UFirewallMiniGame::UpdateBoss(float DeltaTime)
@@ -555,7 +539,7 @@ void UFirewallMiniGame::UpdateBoss(float DeltaTime)
     TimeSinceBossBullet += DeltaTime;
 
     int RealMode = BossCurrentMode;
-    if (BossHP <= BOSS_LOWHP_THRESHOLD)
+    if (BossHP <= BossLowHPThreshold)
         RealMode = 2;
 
     if (RealMode == 0) {
@@ -565,9 +549,9 @@ void UFirewallMiniGame::UpdateBoss(float DeltaTime)
         if ((Boss.Position.Y < Boss.Size.Y * 0.5f && BossVelocity.Y < 0) ||
             (Boss.Position.Y > Area.Y - Boss.Size.Y * 0.5f && BossVelocity.Y > 0)) BossVelocity.Y *= -1.0f;
 
-        if (TimeSinceBossBullet >= BOSS_BULLET_INTERVAL)
+        if (TimeSinceBossBullet >= BossBulletInterval)
         {
-            int Columns = BOSS_BULLET_COUNT_NORMAL;
+            int Columns = BossBulletCountNormal;
             float left = Boss.Position.X - Boss.Size.X * 0.5f + Boss.Size.X * 0.2f;
             float right = Boss.Position.X + Boss.Size.X * 0.5f - Boss.Size.X * 0.2f;
             float y = Boss.Position.Y + Boss.Size.Y * 0.5f;
@@ -591,9 +575,9 @@ void UFirewallMiniGame::UpdateBoss(float DeltaTime)
         if ((Boss.Position.X < Boss.Size.X * 0.5f && BossVelocity.X < 0) ||
             (Boss.Position.X > Area.X - Boss.Size.X * 0.5f && BossVelocity.X > 0)) BossVelocity.X *= -1.0f;
 
-        if (TimeSinceBossBullet >= BOSS_BULLET_INTERVAL)
+        if (TimeSinceBossBullet >= BossBulletInterval)
         {
-            int Columns = BOSS_BULLET_COUNT_HEAVY;
+            int Columns = BossBulletCountHeavy;
             float left = Boss.Position.X - Boss.Size.X * 0.36f;
             float right = Boss.Position.X + Boss.Size.X * 0.36f;
             float y = Boss.Position.Y + Boss.Size.Y * 0.5f;
@@ -616,9 +600,9 @@ void UFirewallMiniGame::UpdateBoss(float DeltaTime)
         if ((Boss.Position.Y < Boss.Size.Y * 0.5f && BossVelocity.Y < 0) ||
             (Boss.Position.Y > Area.Y - Boss.Size.Y * 0.5f && BossVelocity.Y > 0)) BossVelocity.Y *= -1.0f;
 
-        if (TimeSinceBossBullet >= BOSS_BULLET_INTERVAL)
+        if (TimeSinceBossBullet >= BossBulletInterval)
         {
-            int Columns = BOSS_BULLET_COUNT_HEAVY;
+            int Columns = BossBulletCountHeavy;
             float left = Boss.Position.X - Boss.Size.X * 0.36f;
             float right = Boss.Position.X + Boss.Size.X * 0.36f;
             float y = Boss.Position.Y + Boss.Size.Y * 0.5f;
@@ -634,15 +618,15 @@ void UFirewallMiniGame::UpdateBoss(float DeltaTime)
         }
     }
 
-    if (BossHP > BOSS_LOWHP_THRESHOLD && BossTimeInMode > BOSS_MODE_DURATION)
+    if (BossHP > BossLowHPThreshold && BossTimeInMode > BossModeDuration)
     {
         BossCurrentMode = (BossCurrentMode + 1) % 2;
         BossTimeInMode = 0.0f;
         if (BossCurrentMode == 0)
-            BossVelocity = FVector2D(BOSS_BOUNCE_SPEED, BOSS_BOUNCE_SPEED);
+            BossVelocity = FVector2D(BossBounceSpeed, BossBounceSpeed);
         else
         {
-            float sideVel = FMath::RandBool() ? BOSS_BOUNCE_SPEED : -BOSS_BOUNCE_SPEED;
+            float sideVel = FMath::RandBool() ? BossBounceSpeed : -BossBounceSpeed;
             BossVelocity = FVector2D(sideVel, 0.0f);
         }
     }
@@ -670,7 +654,7 @@ void UFirewallMiniGame::TickGame()
         if (!bPendingBoss && !bDidBossStart)
         {
             TimeSinceLastEnemySpawn += DeltaTime;
-            if (TimeSinceLastEnemySpawn >= FIXED_ENEMY_SPAWN_INTERVAL)
+            if (TimeSinceLastEnemySpawn >= FixedEnemySpawnInterval)
             {
                 SpawnEnemy();
                 TimeSinceLastEnemySpawn = 0.0f;
@@ -684,7 +668,7 @@ void UFirewallMiniGame::TickGame()
             bool DoHeavy  = DifficultyLevel >= 1;
             bool CanFireNormal = DoNormal && Enemies.Num() > 0;
             bool CanFireHeavy  = DoHeavy  && HeavyEnemies.Num() > 0;
-            if (TimeSinceLastEnemyFire >= FIXED_ENEMY_FIRE_INTERVAL && (CanFireNormal || CanFireHeavy))
+            if (TimeSinceLastEnemyFire >= FixedEnemyFireInterval && (CanFireNormal || CanFireHeavy))
             {
                 if (CanFireNormal)
                 {
@@ -750,17 +734,29 @@ void UFirewallMiniGame::UpdatePlayer(float DeltaTime)
     {
         Player.Position.X += Player.MoveSpeed * PlayerMoveInput.X * DeltaTime;
         Player.Position.Y += Player.MoveSpeed * PlayerMoveInput.Y * DeltaTime;
-        Player.Position.X = FMath::Clamp(Player.Position.X, Player.Size.X * 0.5f, Area.X - Player.Size.X * 0.5f);
+
+        float HalfW = Player.Size.X * 0.5f;
+
+        // X wrapping
+        if (Player.Position.X < -HalfW)
+        {
+            Player.Position.X = Area.X - HalfW;
+        }
+        else if (Player.Position.X > Area.X + HalfW)
+        {
+            Player.Position.X = HalfW;
+        }
+
+        // Y clamps
         Player.Position.Y = FMath::Clamp(Player.Position.Y, Player.Size.Y * 0.5f, Area.Y - Player.Size.Y * 0.5f);
     }
 }
-
 void UFirewallMiniGame::UpdateWidget()
 {
     if (!WidgetRef)
         return;
     WidgetRef->SetLives(Player.Lives);
-    WidgetRef->SetBossHP(bIsBossActive ? BossHP : -1, BOSS_TOTAL_HP);
+    WidgetRef->SetBossHP(bIsBossActive ? BossHP : -1, BossTotalHP);
     WidgetRef->DrawGameObjects(Player, Enemies, HeavyEnemies, Projectiles, EnemyBullets, HeavyEnemyBullets, bIsBossActive, Boss);
 }
 
@@ -770,6 +766,7 @@ void UFirewallMiniGame::GameOver()
         return;
     bIsGameOver = true;
     if (WidgetRef) WidgetRef->ShowGameOver();
+    OnMiniGameEnded.Broadcast(false); // fire with loss
     EndGame();
 }
 
@@ -779,6 +776,7 @@ void UFirewallMiniGame::Victory()
         return;
     bIsGameOver = true;
     if (WidgetRef) WidgetRef->ShowVictory();
+    OnMiniGameEnded.Broadcast(true); // fire with win
     EndGame();
 }
 

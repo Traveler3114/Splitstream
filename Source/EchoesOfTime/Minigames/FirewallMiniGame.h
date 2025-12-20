@@ -66,7 +66,7 @@ struct FMiniGameEnemyBullet
     UPROPERTY(EditAnywhere, BlueprintReadWrite) bool bIsActive;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector2D Size;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector2D Velocity;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite) float LifeTime; // for bullet timeout
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) float LifeTime;
     FMiniGameEnemyBullet() : Position(FVector2D::ZeroVector), Texture(nullptr), bIsActive(true), Size(FVector2D(10, 25)), Velocity(FVector2D::ZeroVector), LifeTime(0.0f) {}
 };
 
@@ -79,7 +79,7 @@ struct FMiniGameHeavyEnemyBullet
     UPROPERTY(EditAnywhere, BlueprintReadWrite) bool bIsActive;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector2D Size;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector2D Velocity;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite) float LifeTime; // for bullet timeout
+    UPROPERTY(EditAnywhere, BlueprintReadWrite) float LifeTime;
     FMiniGameHeavyEnemyBullet() : Position(FVector2D::ZeroVector), Texture(nullptr), bIsActive(true), Size(FVector2D(24, 60)), Velocity(FVector2D::ZeroVector), LifeTime(0.0f) {}
 };
 
@@ -90,8 +90,10 @@ struct FMiniGameBoss
     UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector2D Position;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector2D Size;
     UPROPERTY(EditAnywhere, BlueprintReadWrite) UTexture2D* Texture;
-    FMiniGameBoss() : Position(FVector2D::ZeroVector), Size(FVector2D(96,96)), Texture(nullptr) {}
+    FMiniGameBoss() : Position(FVector2D::ZeroVector), Size(FVector2D(96, 96)), Texture(nullptr) {}
 };
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFirewallMiniGameEnded, bool, bWasVictory);
 
 UCLASS(Blueprintable, BlueprintType)
 class ECHOESOFTIME_API UFirewallMiniGame : public UObject
@@ -110,6 +112,50 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UTexture2D* EnemyBulletTexture;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UTexture2D* HeavyEnemyBulletTexture;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UTexture2D* BossTexture;
+
+    UPROPERTY(BlueprintAssignable)
+    FFirewallMiniGameEnded OnMiniGameEnded;
+
+    // ==== TUNABLE GAMEPLAY VARIABLES ====
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|Boss Tuning")
+    int32 BossTotalHP = 100;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|Boss Tuning")
+    int32 BossLowHPThreshold = 10;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|Boss Tuning")
+    float BossModeDuration = 20.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|Boss Tuning")
+    float BossBounceSpeed = 370.f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|Boss Tuning")
+    float BossBulletInterval = 0.40f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|Boss Tuning")
+    int32 BossBulletCountNormal = 2;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|Boss Tuning")
+    int32 BossBulletCountHeavy = 1;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|Projectile Tuning")
+    float EnemyBulletLifespan = 5.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|Projectile Tuning")
+    float HeavyEnemyBulletLifespan = 5.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|Enemy Tuning")
+    float FixedEnemySpawnInterval = 0.8f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|Enemy Tuning")
+    float FixedEnemyFireInterval = 1.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|Enemy Tuning")
+    float FixedEnemyFallSpeed = 0.20f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|Enemy Tuning")
+    float FixedHeavyEnemyFallSpeed = 0.17f;
+    // =====================================
 
     UFirewallMiniGame();
 
@@ -155,10 +201,10 @@ private:
     bool bDidBossStart = false;
     bool bPendingBoss = false;
 
-    float Initial_EnemySpawnInterval = 0.8f;
-    float Initial_EnemyFireInterval = 1.0f;
-    float Initial_EnemyFallSpeed = 0.20f;
-    float Initial_HeavyEnemyFallSpeed = 0.17f;
+    float Initial_EnemySpawnInterval;
+    float Initial_EnemyFireInterval;
+    float Initial_EnemyFallSpeed;
+    float Initial_HeavyEnemyFallSpeed;
 
     // Boss
     FMiniGameBoss Boss;
