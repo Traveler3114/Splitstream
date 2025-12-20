@@ -9,35 +9,38 @@
 
 #define BOSS_TOTAL_HP          100
 #define BOSS_LOWHP_THRESHOLD   10
-#define BOSS_MODE_DURATION     5.0f
+#define BOSS_MODE_DURATION     20.0f
 #define BOSS_BOUNCE_SPEED      370.f
 #define BOSS_BULLET_INTERVAL   0.40f
-#define BOSS_BULLET_COUNT_MIN  3
-#define BOSS_BULLET_COUNT_MAX  5
+#define BOSS_BULLET_COUNT_NORMAL  2
+#define BOSS_BULLET_COUNT_HEAVY   1
 
-// Lifespan for enemy and heavy enemy bullets (in seconds)
 #define ENEMY_BULLET_LIFESPAN       5.0f
 #define HEAVY_ENEMY_BULLET_LIFESPAN 5.0f
 
+#define FIXED_ENEMY_SPAWN_INTERVAL    0.8f
+#define FIXED_ENEMY_FIRE_INTERVAL     1.0f
+#define FIXED_ENEMY_FALL_SPEED        0.20f
+#define FIXED_HEAVY_ENEMY_FALL_SPEED  0.17f
+
 UFirewallMiniGame::UFirewallMiniGame()
     : bIsGameOver(false)
-    , EnemySpawnInterval(0.8f)
+    , EnemySpawnInterval(FIXED_ENEMY_SPAWN_INTERVAL)
     , TimeSinceLastEnemySpawn(0.0f)
-    , EnemyFireInterval(1.0f)
+    , EnemyFireInterval(FIXED_ENEMY_FIRE_INTERVAL)
     , TimeSinceLastEnemyFire(0.0f)
-    , EnemyFallSpeed(0.20f)
-    , HeavyEnemyFallSpeed(0.17f)
+    , EnemyFallSpeed(FIXED_ENEMY_FALL_SPEED)
+    , HeavyEnemyFallSpeed(FIXED_HEAVY_ENEMY_FALL_SPEED)
     , WidgetRef(nullptr)
     , OwningController(nullptr)
     , GameElapsedTime(0.0f)
     , DifficultyLevel(0)
     , bDidBossStart(false)
     , bPendingBoss(false)
-    , Initial_EnemySpawnInterval(0.8f)
-    , Initial_EnemyFireInterval(1.0f)
-    , Initial_EnemyFallSpeed(0.20f)
-    , Initial_HeavyEnemyFallSpeed(0.17f)
-    // Boss related
+    , Initial_EnemySpawnInterval(FIXED_ENEMY_SPAWN_INTERVAL)
+    , Initial_EnemyFireInterval(FIXED_ENEMY_FIRE_INTERVAL)
+    , Initial_EnemyFallSpeed(FIXED_ENEMY_FALL_SPEED)
+    , Initial_HeavyEnemyFallSpeed(FIXED_HEAVY_ENEMY_FALL_SPEED)
     , bIsBossActive(false)
     , BossHP(0)
     , BossCurrentMode(0)
@@ -61,9 +64,7 @@ FVector2D UFirewallMiniGame::GetTextureSize(UTexture2D* Texture) const
 
 void UFirewallMiniGame::StartGame(APlayerController* PlayerController)
 {
-    if (!PlayerController)
-        return;
-
+    if (!PlayerController) return;
     OwningController = PlayerController;
     if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
             ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(OwningController->GetLocalPlayer()))
@@ -80,12 +81,11 @@ void UFirewallMiniGame::StartGame(APlayerController* PlayerController)
     bDidBossStart = false;
     bPendingBoss = false;
 
-    EnemySpawnInterval   = Initial_EnemySpawnInterval;
-    EnemyFireInterval    = Initial_EnemyFireInterval;
-    EnemyFallSpeed       = Initial_EnemyFallSpeed;
-    HeavyEnemyFallSpeed  = Initial_HeavyEnemyFallSpeed;
+    EnemySpawnInterval   = FIXED_ENEMY_SPAWN_INTERVAL;
+    EnemyFireInterval    = FIXED_ENEMY_FIRE_INTERVAL;
+    EnemyFallSpeed       = FIXED_ENEMY_FALL_SPEED;
+    HeavyEnemyFallSpeed  = FIXED_HEAVY_ENEMY_FALL_SPEED;
 
-    // Boss
     bIsBossActive = false;
     BossHP = 0;
     BossCurrentMode = 0;
@@ -127,7 +127,7 @@ void UFirewallMiniGame::FinishInitAfterWidgetReady()
     Player.Position = FVector2D(Area.X * 0.5f, Area.Y - Area.Y * 0.12f);
     Player.Texture = PlayerTexture;
     Player.Size = GetTextureSize(PlayerTexture);
-    Player.MoveSpeed = 600.f; // SPEED UP SPACESHIP!
+    Player.MoveSpeed = 600.f;
 
     Enemies.Empty();
     HeavyEnemies.Empty();
@@ -135,7 +135,6 @@ void UFirewallMiniGame::FinishInitAfterWidgetReady()
     EnemyBullets.Empty();
     HeavyEnemyBullets.Empty();
 
-    // Boss
     bIsBossActive = false;
     BossHP = 0;
     BossCurrentMode = 0;
@@ -159,7 +158,7 @@ void UFirewallMiniGame::FinishInitAfterWidgetReady()
 
 void UFirewallMiniGame::SpawnEnemy()
 {
-    if (bIsBossActive) return; // Don't spawn regulars in boss
+    if (bIsBossActive) return;
     FVector2D Area = GetPlayAreaSize();
     float MinX = Area.X * 0.06f;
     float MaxX = Area.X * 0.94f;
@@ -167,20 +166,13 @@ void UFirewallMiniGame::SpawnEnemy()
 
     float t = GameElapsedTime;
     float heavySpawnChance = 0.f;
-    if (t < 20.0f) {
-        heavySpawnChance = 0.0f;
-    } else if (t < 40.0f) {
-        heavySpawnChance = 0.5f;
-    } else {
-        heavySpawnChance = 1.0f;
-    }
+    if (t < 20.0f) heavySpawnChance = 0.0f;
+    else if (t < 40.0f) heavySpawnChance = 0.5f;
+    else heavySpawnChance = 1.0f;
 
-    if (FMath::FRand() < heavySpawnChance)
-    {
+    if (FMath::FRand() < heavySpawnChance) {
         SpawnHeavyEnemy();
-    }
-    else
-    {
+    } else {
         FMiniGameEnemy Enemy;
         Enemy.Position = FVector2D(RandX, 0.f + 32.0f);
         Enemy.Texture = EnemyTexture;
@@ -218,7 +210,6 @@ void UFirewallMiniGame::SpawnPlayerBullet()
     Projectiles.Add(Projectile);
 }
 
-// Overloaded with explicit velocity for bounce logic
 void UFirewallMiniGame::SpawnEnemyBullet(const FVector2D& EnemyPosition, UTexture2D* BulletTex, FVector2D ExtraVelocity)
 {
     FMiniGameEnemyBullet Bullet;
@@ -226,19 +217,14 @@ void UFirewallMiniGame::SpawnEnemyBullet(const FVector2D& EnemyPosition, UTextur
     Bullet.Texture = BulletTex;
     Bullet.Size = GetTextureSize(BulletTex);
     Bullet.bIsActive = true;
-    // Set random velocity for bounce even for regular enemies
-    if (ExtraVelocity.IsNearlyZero())
-    {
-        // straight downward plus small random X
-        float angle = FMath::FRandRange(-PI / 6.f, PI / 6.f); // -30 to 30 degrees
-        float speed = GetPlayAreaSize().Y * 0.38f; // gives similar speed to original code downward
-        Bullet.Velocity = FVector2D(FMath::Sin(angle) * speed, FMath::Cos(angle) * speed);
-    }
-    else
-    {
+    if (ExtraVelocity.IsNearlyZero()) {
+        float speedY = GetPlayAreaSize().Y * 0.38f;
+        float spread = speedY * 0.4f; // 20% of Y speed for horizontal variation
+        float vx = FMath::FRandRange(-spread, spread);
+        Bullet.Velocity = FVector2D(vx, speedY);
+    } else {
         Bullet.Velocity = ExtraVelocity;
     }
-    // Add a lifespan field for manual timeout, using BlueprintReadWrite
     Bullet.LifeTime = 0.0f;
     EnemyBullets.Add(Bullet);
 }
@@ -250,14 +236,12 @@ void UFirewallMiniGame::SpawnHeavyEnemyBullet(const FVector2D& EnemyPosition, UT
     Bullet.Texture = BulletTex;
     Bullet.Size = GetTextureSize(BulletTex);
     Bullet.bIsActive = true;
-    if (ExtraVelocity.IsNearlyZero())
-    {
-        float angle = FMath::FRandRange(-PI / 4.f, PI / 4.f); // -45 to 45 degrees
-        float speed = GetPlayAreaSize().Y * 0.56f; // gives similar speed as before
-        Bullet.Velocity = FVector2D(FMath::Sin(angle) * speed, FMath::Cos(angle) * speed);
-    }
-    else
-    {
+    if (ExtraVelocity.IsNearlyZero()) {
+        float speedY = GetPlayAreaSize().Y * 0.56f;
+        float spread = speedY * 0.4f; // Adjust 0.18f for wider/narrower spread
+        float vx = FMath::FRandRange(-spread, spread);
+        Bullet.Velocity = FVector2D(vx, speedY);
+    } else {
         Bullet.Velocity = ExtraVelocity;
     }
     Bullet.LifeTime = 0.0f;
@@ -266,9 +250,9 @@ void UFirewallMiniGame::SpawnHeavyEnemyBullet(const FVector2D& EnemyPosition, UT
 
 void UFirewallMiniGame::UpdateEnemies(float DeltaTime)
 {
-    if (bIsBossActive) return; // No regulars in boss fight
+    if (bIsBossActive) return;
     FVector2D Area = GetPlayAreaSize();
-    float FallSpeed = Area.Y * EnemyFallSpeed;
+    float FallSpeed = Area.Y * FIXED_ENEMY_FALL_SPEED;
     for (int32 i = 0; i < Enemies.Num(); ++i)
     {
         FMiniGameEnemy& Enemy = Enemies[i];
@@ -284,7 +268,7 @@ void UFirewallMiniGame::UpdateHeavyEnemies(float DeltaTime)
 {
     if (bIsBossActive) return;
     FVector2D Area = GetPlayAreaSize();
-    float FallSpeed = Area.Y * HeavyEnemyFallSpeed;
+    float FallSpeed = Area.Y * FIXED_HEAVY_ENEMY_FALL_SPEED;
     for (int32 i = 0; i < HeavyEnemies.Num(); ++i)
     {
         FMiniGameHeavyEnemy& Enemy = HeavyEnemies[i];
@@ -298,8 +282,7 @@ void UFirewallMiniGame::UpdateHeavyEnemies(float DeltaTime)
 
 void UFirewallMiniGame::OnFirePressed()
 {
-    if (bIsGameOver)
-        return;
+    if (bIsGameOver) return;
     SpawnPlayerBullet();
 }
 
@@ -318,29 +301,23 @@ void UFirewallMiniGame::UpdateProjectiles(float DeltaTime)
     Projectiles.RemoveAll([](const FMiniGameProjectile& P) { return !P.bIsActive; });
 }
 
-// Bullet bouncing and timeout enabled ALWAYS
-
 void UFirewallMiniGame::UpdateEnemyBullets(float DeltaTime)
 {
     FVector2D Area = GetPlayAreaSize();
-    float BulletSpeed = Area.Y * 0.38f;
     for (int32 i = 0; i < EnemyBullets.Num(); ++i)
     {
         FMiniGameEnemyBullet& Bull = EnemyBullets[i];
         if (!Bull.bIsActive) continue;
 
-        // Always bounce logic, not just boss. Ignore .Velocity == 0.
         Bull.Position += Bull.Velocity * DeltaTime;
 
-        // Bounce bullets off all 4 sides
+        // Always bounce logic: ALL enemy bullets bounce on all four edges.
         if (Bull.Position.X < Bull.Size.X*0.5f && Bull.Velocity.X < 0)  Bull.Velocity.X *= -1.0f;
         if (Bull.Position.X > Area.X-Bull.Size.X*0.5f && Bull.Velocity.X > 0) Bull.Velocity.X *= -1.0f;
         if (Bull.Position.Y < Bull.Size.Y*0.5f && Bull.Velocity.Y < 0)  Bull.Velocity.Y *= -1.0f;
         if (Bull.Position.Y > Area.Y-Bull.Size.Y*0.5f && Bull.Velocity.Y > 0) Bull.Velocity.Y *= -1.0f;
 
-        // Increase lifetime and check max
         Bull.LifeTime += DeltaTime;
-        // Remove if out of life
         if (Bull.LifeTime > ENEMY_BULLET_LIFESPAN)
             Bull.bIsActive = false;
     }
@@ -350,20 +327,19 @@ void UFirewallMiniGame::UpdateEnemyBullets(float DeltaTime)
 void UFirewallMiniGame::UpdateHeavyEnemyBullets(float DeltaTime)
 {
     FVector2D Area = GetPlayAreaSize();
-    float BulletSpeed = Area.Y * 0.56f;
     for (int32 i = 0; i < HeavyEnemyBullets.Num(); ++i)
     {
         FMiniGameHeavyEnemyBullet& Bull = HeavyEnemyBullets[i];
         if (!Bull.bIsActive) continue;
 
-        // Always bounce logic for heavy bullets too, always
         Bull.Position += Bull.Velocity * DeltaTime;
-        if (Bull.Position.X < Bull.Size.X*0.5f && Bull.Velocity.X < 0) Bull.Velocity.X *= -1.0f;
-        if (Bull.Position.X > Area.X - Bull.Size.X*0.5f && Bull.Velocity.X > 0) Bull.Velocity.X *= -1.0f;
-        if (Bull.Position.Y < Bull.Size.Y*0.5f && Bull.Velocity.Y < 0) Bull.Velocity.Y *= -1.0f;
-        if (Bull.Position.Y > Area.Y - Bull.Size.Y*0.5f && Bull.Velocity.Y > 0) Bull.Velocity.Y *= -1.0f;
 
-        // Increase lifetime and check max
+        // Always bounce logic: ALL heavy enemy bullets bounce on all four edges.
+        if (Bull.Position.X < Bull.Size.X*0.5f && Bull.Velocity.X < 0) Bull.Velocity.X *= -1.0f;
+        if (Bull.Position.X > Area.X-Bull.Size.X*0.5f && Bull.Velocity.X > 0) Bull.Velocity.X *= -1.0f;
+        if (Bull.Position.Y < Bull.Size.Y*0.5f && Bull.Velocity.Y < 0) Bull.Velocity.Y *= -1.0f;
+        if (Bull.Position.Y > Area.Y-Bull.Size.Y*0.5f && Bull.Velocity.Y > 0) Bull.Velocity.Y *= -1.0f;
+
         Bull.LifeTime += DeltaTime;
         if (Bull.LifeTime > HEAVY_ENEMY_BULLET_LIFESPAN)
             Bull.bIsActive = false;
@@ -378,12 +354,10 @@ void UFirewallMiniGame::CheckCollisions()
     bool bVictory = false;
     bool bDefeat = false;
 
-    // Projectiles vs Boss and Enemies
     for (FMiniGameProjectile& Projectile : Projectiles)
     {
         if (!Projectile.bIsActive) continue;
 
-        // --- Hit boss ---
         if (bIsBossActive && BossHP > 0)
         {
             float Dist = FVector2D::Distance(Projectile.Position, Boss.Position);
@@ -394,11 +368,10 @@ void UFirewallMiniGame::CheckCollisions()
                 BossHP--;
                 if (BossHP <= 0)
                     bVictory = true;
-                continue; // skip to next projectile
+                continue;
             }
         }
 
-        // --- Hit enemies ---
         if (!bIsBossActive) {
             for (FMiniGameEnemy& Enemy : Enemies)
             {
@@ -431,12 +404,10 @@ void UFirewallMiniGame::CheckCollisions()
         }
     }
 
-    // ***** NEW: Player bullet vs Enemy Bullets (and Heavy Enemy Bullets) *****
     for (FMiniGameProjectile& Projectile : Projectiles)
     {
         if (!Projectile.bIsActive) continue;
 
-        // --- Against regular enemy bullets ---
         for (FMiniGameEnemyBullet& Bull : EnemyBullets)
         {
             if (!Bull.bIsActive) continue;
@@ -447,12 +418,11 @@ void UFirewallMiniGame::CheckCollisions()
             {
                 Projectile.bIsActive = false;
                 Bull.bIsActive = false;
-                break; // This projectile is destroyed so no further checks
+                break;
             }
         }
         if (!Projectile.bIsActive) continue;
 
-        // --- Against heavy enemy bullets ---
         for (FMiniGameHeavyEnemyBullet& HBull : HeavyEnemyBullets)
         {
             if (!HBull.bIsActive) continue;
@@ -467,9 +437,7 @@ void UFirewallMiniGame::CheckCollisions()
             }
         }
     }
-    // ***** END NEW *****
 
-    // Enemy Bullets vs Player
     for (FMiniGameEnemyBullet& Bull : EnemyBullets)
     {
         if (!Bull.bIsActive) continue;
@@ -495,14 +463,12 @@ void UFirewallMiniGame::CheckCollisions()
         }
     }
 
-    // Now cleanup projectiles/enemies/bullets after all looping is done:
     Projectiles.RemoveAll([](const FMiniGameProjectile& P) { return !P.bIsActive; });
     Enemies.RemoveAll([](const FMiniGameEnemy& Enemy) { return !Enemy.bIsAlive; });
     HeavyEnemies.RemoveAll([](const FMiniGameHeavyEnemy& Enemy) { return !Enemy.bIsAlive; });
     EnemyBullets.RemoveAll([](const FMiniGameEnemyBullet& B) { return !B.bIsActive; });
     HeavyEnemyBullets.RemoveAll([](const FMiniGameHeavyEnemyBullet& B) { return !B.bIsActive; });
 
-    // End game if needed, but only after all unsafe array usage is over!
     if (bVictory)
         Victory();
     if (bDefeat)
@@ -561,29 +527,23 @@ void UFirewallMiniGame::SetupInput()
     }
 }
 
-
 void UFirewallMiniGame::CleanupInput()
 {
     // Stub for input cleanup
 }
 
-// --------------------------
-// Boss Implementation
-// --------------------------
 void UFirewallMiniGame::OnBossFightStart()
 {
-    // Called automatically when 60s up & all enemies dead!
     bIsBossActive = true;
     BossHP = BOSS_TOTAL_HP;
     FVector2D Area = GetPlayAreaSize();
-    Boss.Position = FVector2D(Area.X/2.f, Area.Y*0.22f);
+    Boss.Position = FVector2D(Area.X / 2.f, Area.Y * 0.22f);
     Boss.Size = GetTextureSize(BossTexture ? BossTexture : HeavyEnemyTexture);
     Boss.Texture = (BossTexture != nullptr) ? BossTexture : HeavyEnemyTexture;
-    // Start in mode 0
     BossCurrentMode = 0;
     BossTimeInMode = 0.0f;
     TimeSinceBossBullet = 0.0f;
-    BossVelocity = FVector2D(BOSS_BOUNCE_SPEED, BOSS_BOUNCE_SPEED); // Diagonal to start
+    BossVelocity = FVector2D(BOSS_BOUNCE_SPEED, BOSS_BOUNCE_SPEED);
 }
 
 void UFirewallMiniGame::UpdateBoss(float DeltaTime)
@@ -594,81 +554,92 @@ void UFirewallMiniGame::UpdateBoss(float DeltaTime)
     BossTimeInMode += DeltaTime;
     TimeSinceBossBullet += DeltaTime;
 
-    // Determine mode
-    int NumColumns = FMath::RandRange(BOSS_BULLET_COUNT_MIN, BOSS_BULLET_COUNT_MAX);
-
-    // If low HP, it's mode 2
     int RealMode = BossCurrentMode;
-    if (BossHP <= BOSS_LOWHP_THRESHOLD) RealMode = 2;
+    if (BossHP <= BOSS_LOWHP_THRESHOLD)
+        RealMode = 2;
 
-    if (RealMode == 0)
-    {
-        // Bounce anywhere (full screen, x and y)
+    if (RealMode == 0) {
         Boss.Position += BossVelocity * DeltaTime;
-        // Bounce X
-        if ((Boss.Position.X < Boss.Size.X*0.5f && BossVelocity.X<0) ||
-            (Boss.Position.X > Area.X-Boss.Size.X*0.5f && BossVelocity.X>0)) BossVelocity.X *= -1.0f;
-        // Bounce Y
-        if ((Boss.Position.Y < Boss.Size.Y*0.5f && BossVelocity.Y<0) ||
-            (Boss.Position.Y > Area.Y-Boss.Size.Y*0.5f && BossVelocity.Y>0)) BossVelocity.Y *= -1.0f;
+        if ((Boss.Position.X < Boss.Size.X * 0.5f && BossVelocity.X < 0) ||
+            (Boss.Position.X > Area.X - Boss.Size.X * 0.5f && BossVelocity.X > 0)) BossVelocity.X *= -1.0f;
+        if ((Boss.Position.Y < Boss.Size.Y * 0.5f && BossVelocity.Y < 0) ||
+            (Boss.Position.Y > Area.Y - Boss.Size.Y * 0.5f && BossVelocity.Y > 0)) BossVelocity.Y *= -1.0f;
 
-        // Fire: Normal bullets (bounce) except if lowHP mode—then heavy!
         if (TimeSinceBossBullet >= BOSS_BULLET_INTERVAL)
         {
-            int NShots = 2 + (BossHP<=BOSS_LOWHP_THRESHOLD ? 5 : FMath::RandRange(2,4));
-            for (int i=0; i<NShots; ++i)
+            int Columns = BOSS_BULLET_COUNT_NORMAL;
+            float left = Boss.Position.X - Boss.Size.X * 0.5f + Boss.Size.X * 0.2f;
+            float right = Boss.Position.X + Boss.Size.X * 0.5f - Boss.Size.X * 0.2f;
+            float y = Boss.Position.Y + Boss.Size.Y * 0.5f;
+            for (int i = 0; i < Columns; ++i)
             {
-                float ang = FMath::FRandRange(0, 2.f*PI);
-                FVector2D Vel = FVector2D(FMath::Cos(ang), FMath::Sin(ang)).GetSafeNormal() * (BOSS_BOUNCE_SPEED+110.f);
-
-                if(BossHP > BOSS_LOWHP_THRESHOLD)
-                    SpawnEnemyBullet(Boss.Position, EnemyBulletTexture, Vel);
-                else
-                    SpawnHeavyEnemyBullet(Boss.Position, HeavyEnemyBulletTexture, Vel);
+                float frac = Columns == 1 ? 0.5f : float(i) / (Columns - 1);
+                float x = FMath::Lerp(left, right, frac);
+                FVector2D BulletPos(x, y);
+                FVector2D BulletVel(0.f, Area.Y * 0.38f);
+                SpawnEnemyBullet(BulletPos, EnemyBulletTexture, BulletVel);
             }
             TimeSinceBossBullet = 0.0f;
         }
     }
-    else // RealMode == 1
-    {
-        // Bounce on top half, left/right only
+    else if (RealMode == 1) {
         Boss.Position += FVector2D(BossVelocity.X, 0.f) * DeltaTime;
-        float minY = Boss.Size.Y*0.5f;
-        float midY = Area.Y*0.19f;
-        float maxY = Area.Y*0.38f;
-
+        float minY = Boss.Size.Y * 0.5f;
+        float maxY = Area.Y * 0.38f;
         Boss.Position.Y = FMath::Clamp(Boss.Position.Y, minY, maxY);
 
-        if ((Boss.Position.X < Boss.Size.X*0.5f && BossVelocity.X<0) ||
-            (Boss.Position.X > Area.X-Boss.Size.X*0.5f && BossVelocity.X>0)) BossVelocity.X *= -1.0f;
+        if ((Boss.Position.X < Boss.Size.X * 0.5f && BossVelocity.X < 0) ||
+            (Boss.Position.X > Area.X - Boss.Size.X * 0.5f && BossVelocity.X > 0)) BossVelocity.X *= -1.0f;
 
-        // Fire: Heavy bullets, spread shot columns
-        if (TimeSinceBossBullet >= BOSS_BULLET_INTERVAL + 0.16f)
+        if (TimeSinceBossBullet >= BOSS_BULLET_INTERVAL)
         {
-            int Columns = FMath::RandRange(3, 5);
-            float left = Boss.Size.X*0.5f + 10.f;
-            float right = Area.X - Boss.Size.X*0.5f - 10.f;
-            for (int i=0; i<Columns; ++i)
+            int Columns = BOSS_BULLET_COUNT_HEAVY;
+            float left = Boss.Position.X - Boss.Size.X * 0.36f;
+            float right = Boss.Position.X + Boss.Size.X * 0.36f;
+            float y = Boss.Position.Y + Boss.Size.Y * 0.5f;
+            for (int i = 0; i < Columns; ++i)
             {
-                float frac = Columns==1 ? 0.5f : float(i)/(Columns-1);
+                float frac = Columns == 1 ? 0.5f : float(i) / (Columns - 1);
                 float x = FMath::Lerp(left, right, frac);
-                FVector2D BulletPos(x, Boss.Position.Y+Boss.Size.Y*0.5f+6.0f);
-                FVector2D Vel = FVector2D(0.f, 380.f+FMath::FRandRange(-65.f,65.f));
-                SpawnHeavyEnemyBullet(BulletPos, HeavyEnemyBulletTexture, Vel);
+                FVector2D BulletPos(x, y);
+                FVector2D BulletVel(0.f, Area.Y * 0.56f);
+                SpawnHeavyEnemyBullet(BulletPos, HeavyEnemyBulletTexture, BulletVel);
+            }
+            TimeSinceBossBullet = 0.0f;
+        }
+    }
+    else
+    {
+        Boss.Position += BossVelocity * DeltaTime;
+        if ((Boss.Position.X < Boss.Size.X * 0.5f && BossVelocity.X < 0) ||
+            (Boss.Position.X > Area.X - Boss.Size.X * 0.5f && BossVelocity.X > 0)) BossVelocity.X *= -1.0f;
+        if ((Boss.Position.Y < Boss.Size.Y * 0.5f && BossVelocity.Y < 0) ||
+            (Boss.Position.Y > Area.Y - Boss.Size.Y * 0.5f && BossVelocity.Y > 0)) BossVelocity.Y *= -1.0f;
+
+        if (TimeSinceBossBullet >= BOSS_BULLET_INTERVAL)
+        {
+            int Columns = BOSS_BULLET_COUNT_HEAVY;
+            float left = Boss.Position.X - Boss.Size.X * 0.36f;
+            float right = Boss.Position.X + Boss.Size.X * 0.36f;
+            float y = Boss.Position.Y + Boss.Size.Y * 0.5f;
+            for (int i = 0; i < Columns; ++i)
+            {
+                float frac = Columns == 1 ? 0.5f : float(i) / (Columns - 1);
+                float x = FMath::Lerp(left, right, frac);
+                FVector2D BulletPos(x, y);
+                FVector2D BulletVel(0.f, Area.Y * 0.56f);
+                SpawnHeavyEnemyBullet(BulletPos, HeavyEnemyBulletTexture, BulletVel);
             }
             TimeSinceBossBullet = 0.0f;
         }
     }
 
-    // Switch mode?
     if (BossHP > BOSS_LOWHP_THRESHOLD && BossTimeInMode > BOSS_MODE_DURATION)
     {
         BossCurrentMode = (BossCurrentMode + 1) % 2;
         BossTimeInMode = 0.0f;
         if (BossCurrentMode == 0)
-        {
             BossVelocity = FVector2D(BOSS_BOUNCE_SPEED, BOSS_BOUNCE_SPEED);
-        }
         else
         {
             float sideVel = FMath::RandBool() ? BOSS_BOUNCE_SPEED : -BOSS_BOUNCE_SPEED;
@@ -683,32 +654,23 @@ void UFirewallMiniGame::TickGame()
     float DeltaTime = 0.016f;
     GameElapsedTime += DeltaTime;
 
-    // (Normal phase) Stop at boss
     if (!bIsBossActive)
     {
         if (DifficultyLevel == 0 && GameElapsedTime >= 20.0f)
         {
             DifficultyLevel = 1;
-            EnemySpawnInterval = 0.55f;
-            EnemyFireInterval  = 0.75f;
-            EnemyFallSpeed     = 0.23f;
-            HeavyEnemyFallSpeed= 0.20f;
             OnDifficultyIncrease(DifficultyLevel);
         }
         else if (DifficultyLevel == 1 && GameElapsedTime >= 40.0f)
         {
             DifficultyLevel = 2;
-            EnemySpawnInterval = 0.36f;
-            EnemyFireInterval  = 0.45f;
-            EnemyFallSpeed     = 0.24f;
-            HeavyEnemyFallSpeed= 0.38f;
             OnDifficultyIncrease(DifficultyLevel);
         }
 
         if (!bPendingBoss && !bDidBossStart)
         {
             TimeSinceLastEnemySpawn += DeltaTime;
-            if (TimeSinceLastEnemySpawn >= EnemySpawnInterval)
+            if (TimeSinceLastEnemySpawn >= FIXED_ENEMY_SPAWN_INTERVAL)
             {
                 SpawnEnemy();
                 TimeSinceLastEnemySpawn = 0.0f;
@@ -722,7 +684,7 @@ void UFirewallMiniGame::TickGame()
             bool DoHeavy  = DifficultyLevel >= 1;
             bool CanFireNormal = DoNormal && Enemies.Num() > 0;
             bool CanFireHeavy  = DoHeavy  && HeavyEnemies.Num() > 0;
-            if (TimeSinceLastEnemyFire >= EnemyFireInterval && (CanFireNormal || CanFireHeavy))
+            if (TimeSinceLastEnemyFire >= FIXED_ENEMY_FIRE_INTERVAL && (CanFireNormal || CanFireHeavy))
             {
                 if (CanFireNormal)
                 {
@@ -758,7 +720,6 @@ void UFirewallMiniGame::TickGame()
             }
         }
 
-        // Boss phase: After 60s and all enemies dead
         if (!bDidBossStart && !bPendingBoss && GameElapsedTime >= 60.0f)
             bPendingBoss = true;
         if (bPendingBoss && !bDidBossStart && Enemies.Num() == 0 && HeavyEnemies.Num() == 0)
@@ -780,21 +741,15 @@ void UFirewallMiniGame::TickGame()
     UpdateWidget();
 }
 
-void UFirewallMiniGame::OnDifficultyIncrease(int32 NewDifficulty)
-{
-    // You may add SFX/UI here
-}
+void UFirewallMiniGame::OnDifficultyIncrease(int32 NewDifficulty) {}
 
 void UFirewallMiniGame::UpdatePlayer(float DeltaTime)
 {
     FVector2D Area = GetPlayAreaSize();
     if (!PlayerMoveInput.IsNearlyZero())
     {
-        // Move both horizontally and vertically
         Player.Position.X += Player.MoveSpeed * PlayerMoveInput.X * DeltaTime;
         Player.Position.Y += Player.MoveSpeed * PlayerMoveInput.Y * DeltaTime;
-
-        // Clamp to play field
         Player.Position.X = FMath::Clamp(Player.Position.X, Player.Size.X * 0.5f, Area.X - Player.Size.X * 0.5f);
         Player.Position.Y = FMath::Clamp(Player.Position.Y, Player.Size.Y * 0.5f, Area.Y - Player.Size.Y * 0.5f);
     }
@@ -805,7 +760,7 @@ void UFirewallMiniGame::UpdateWidget()
     if (!WidgetRef)
         return;
     WidgetRef->SetLives(Player.Lives);
-    WidgetRef->SetBossHP(bIsBossActive ? BossHP : -1, BOSS_TOTAL_HP);  // New boss HP function
+    WidgetRef->SetBossHP(bIsBossActive ? BossHP : -1, BOSS_TOTAL_HP);
     WidgetRef->DrawGameObjects(Player, Enemies, HeavyEnemies, Projectiles, EnemyBullets, HeavyEnemyBullets, bIsBossActive, Boss);
 }
 
@@ -829,7 +784,6 @@ void UFirewallMiniGame::Victory()
 
 void UFirewallMiniGame::OnMoveAxis(const FInputActionValue& Value)
 {
-    // Value.Get<FVector2D>() is the Enhanced Input way to get 2D axis
     PlayerMoveInput = Value.Get<FVector2D>();
 }
 

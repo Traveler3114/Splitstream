@@ -23,7 +23,7 @@ public:
     UCanvasPanel* GameCanvas;
     UPROPERTY(meta = (BindWidget))
     UTextBlock* GameOverText;
-    UPROPERTY(meta = (BindWidgetOptional))
+    UPROPERTY(meta = (BindWidget))
     UTextBlock* BossHPText;
 
     UFUNCTION(BlueprintCallable, Category = "MiniGame")
