@@ -12,6 +12,7 @@
 #include "GameStates/DefaultGameState.h"
 #include "GameplayEffectTypes.h"
 #include "Actors/RepairableBase.h"
+#include "Actors/Terminal.h"
 #include "TimerManager.h"
 
 ADefaultPlayerController::ADefaultPlayerController()
@@ -409,5 +410,14 @@ void ADefaultPlayerController::ServerTryLockPick_Implementation(AActor* TargetDo
         {
             LockComp->ServerTrySetPin(Angle);
         }
+    }
+}
+
+
+void ADefaultPlayerController::Server_NotifyTerminalMiniGameEnded_Implementation(ATerminal* Terminal, bool bWasVictory)
+{
+    if (Terminal)
+    {
+        Terminal->HandleMiniGameEnded_Internal(bWasVictory);
     }
 }

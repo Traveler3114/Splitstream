@@ -6,6 +6,7 @@
 #include "DefaultPlayerController.generated.h"
 
 class UPauseMenuWidget;
+class ATerminal;
 
 UCLASS()
 class ECHOESOFTIME_API ADefaultPlayerController : public APlayerController
@@ -59,8 +60,12 @@ public:
     UFUNCTION()
     void OnMoneyCollectedChanged(int32 Current, int32 Target);
 
-	UFUNCTION()
-	void HandleRepairETAStarted(class ARepairableBase* Repairable, float Duration);
+    UFUNCTION()
+    void HandleRepairETAStarted(class ARepairableBase* Repairable, float Duration);
+
+    // ---- ADD THIS ----
+    UFUNCTION(Server, Reliable)
+    void Server_NotifyTerminalMiniGameEnded(ATerminal* Terminal, bool bWasVictory);
 
 private:
     UPROPERTY()
