@@ -63,7 +63,10 @@ public:
     void HandleAbilityInputReleased(const FInputActionInstance& Instance, FGameplayTag InputTag);
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Abilities")
-    UAbilityInputSet* AbilityInputSet;
+    UAbilityInputSet* FutureGASet;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Abilities")
+    UAbilityInputSet* SoloGASet;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Abilities")
     UDefaultGASet* DefaultGASet;

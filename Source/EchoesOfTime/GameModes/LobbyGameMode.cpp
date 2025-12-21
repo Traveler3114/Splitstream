@@ -8,7 +8,9 @@
 #include "Engine/World.h"
 #include "Engine/Engine.h"
 #include "Engine/NetConnection.h" // for UNetConnection
-
+#include "AbilitySystemComponent.h"
+#include "DefaultPlayerState.h"
+#include "GameplayTagContainer.h"
 // Online Subsystem
 #include "OnlineSubsystem.h"
 #include "Interfaces/OnlineSessionInterface.h"
@@ -161,39 +163,62 @@ ALobbyPlayerController* ALobbyGameMode::GetHostLobbyController() const
 	return nullptr;
 }
 
+
+
 void ALobbyGameMode::StartGameIfAllowed(ALobbyPlayerController* RequestingPC)
 {
-	if (!RequestingPC || !RequestingPC->HasAuthority()) return;
+    if (!RequestingPC || !RequestingPC->HasAuthority()) return;
 
-	int32 Total = 0, Ready = 0; bool bAll = false;
-	ComputeAllPlayersReady(Total, Ready, bAll);
+    int32 Total = 0, Ready = 0; bool bAll = false;
+    ComputeAllPlayersReady(Total, Ready, bAll);
 
-	if (!bRequireAllReadyToStart || bAll)
-	{
-		if (bTravelScheduled)
+    if (!bRequireAllReadyToStart || bAll)
+    {
+        // --- SOLO TAG LOGIC ----
+        const FGameplayTag SoloTag = FGameplayTag::RequestGameplayTag("Team.Solo");
+		for (APlayerState* PS : GameState->PlayerArray)
 		{
-			return;
-		}
-
-		// Show loading on all clients
-		for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
-		{
-			if (ALobbyPlayerController* LPC = Cast<ALobbyPlayerController>(It->Get()))
+			if (ADefaultPlayerState* DPS = Cast<ADefaultPlayerState>(PS))
 			{
-				LPC->ClientShowLoadingScreen();
+				if (GameState->PlayerArray.Num() == 1)
+				{
+					// Set the solo team
+					DPS->TeamName = "Solo";
+					DPS->UpdateTeamGameplayTag();
+				}
+				else if (DPS->TeamName == "Solo")
+				{
+					// Reset the team if previously set (multi joined)
+					DPS->TeamName = "Past";
+					DPS->UpdateTeamGameplayTag();
+				}
 			}
 		}
+        // --- END SOLO TAG LOGIC ----
 
-		// Travel after a short delay so RPCs are processed
-		bTravelScheduled = true;
-		GetWorld()->GetTimerManager().SetTimer(
-			TravelTimerHandle,
-			this,
-			&ALobbyGameMode::DoServerTravelToMatch,
-			0.25f,
-			false
-		);
-	}
+        // Then your loading screen logic and travel...
+        if (bTravelScheduled)
+        {
+            return;
+        }
+
+        for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+        {
+            if (ALobbyPlayerController* LPC = Cast<ALobbyPlayerController>(It->Get()))
+            {
+                LPC->ClientShowLoadingScreen();
+            }
+        }
+
+        bTravelScheduled = true;
+        GetWorld()->GetTimerManager().SetTimer(
+            TravelTimerHandle,
+            this,
+            &ALobbyGameMode::DoServerTravelToMatch,
+            0.25f,
+            false
+        );
+    }
 }
 
 void ALobbyGameMode::DoServerTravelToMatch()

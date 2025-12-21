@@ -68,6 +68,8 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "Lobby")      FOnReadyChanged     OnReadyChanged;
     UPROPERTY(BlueprintAssignable, Category = "Lobby")      FOnTeamChanged      OnTeamChanged;
 
+    void UpdateTeamGameplayTag();
+
 protected:
     UPROPERTY(ReplicatedUsing = OnRep_Meta) FString DisplayName;
     UPROPERTY(ReplicatedUsing = OnRep_Meta) int32   AvatarIndex = 0;
@@ -86,7 +88,7 @@ protected:
 
     // TEAM
     void ApplyTeam(const FString& NewTeam);
-    void UpdateTeamGameplayTag();
+
 
     virtual void BeginPlay() override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

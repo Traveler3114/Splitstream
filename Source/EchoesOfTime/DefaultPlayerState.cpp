@@ -1,3 +1,5 @@
+// DefaultPlayerState.cpp
+
 #include "DefaultPlayerState.h"
 #include "Net/UnrealNetwork.h"
 #include "AbilitySystemComponent.h"
@@ -119,18 +121,24 @@ void ADefaultPlayerState::OnRep_TeamName()
 void ADefaultPlayerState::UpdateTeamGameplayTag()
 {
     if (!AbilitySystemComponent) return;
-    const FGameplayTag PastTag = FGameplayTag::RequestGameplayTag(FName(TEXT("Team.Past")), false);
+    // The tags are requested even if not found, to keep parity with others
+    const FGameplayTag PastTag   = FGameplayTag::RequestGameplayTag(FName(TEXT("Team.Past")), false);
     const FGameplayTag FutureTag = FGameplayTag::RequestGameplayTag(FName(TEXT("Team.Future")), false);
+    const FGameplayTag SoloTag   = FGameplayTag::RequestGameplayTag(FName(TEXT("Team.Solo")), false);
 
+    // Always clear all tags first
     if (PastTag.IsValid())   AbilitySystemComponent->RemoveLooseGameplayTag(PastTag);
     if (FutureTag.IsValid()) AbilitySystemComponent->RemoveLooseGameplayTag(FutureTag);
+    if (SoloTag.IsValid())   AbilitySystemComponent->RemoveLooseGameplayTag(SoloTag);
 
+    // Set the right one
     if (TeamName == "Past" && PastTag.IsValid())
         AbilitySystemComponent->AddLooseGameplayTag(PastTag);
     else if (TeamName == "Future" && FutureTag.IsValid())
         AbilitySystemComponent->AddLooseGameplayTag(FutureTag);
+    else if (TeamName == "Solo" && SoloTag.IsValid())
+        AbilitySystemComponent->AddLooseGameplayTag(SoloTag);
 }
-
 void ADefaultPlayerState::OnRep_Meta()
 {
     OnPlayerMetaChanged.Broadcast(this);

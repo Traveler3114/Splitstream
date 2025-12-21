@@ -11,6 +11,7 @@
 #include "ActorComponents/InventoryComponent.h"
 #include "InputActionValue.h"
 #include "Net/UnrealNetwork.h"
+#include "Kismet/GameplayStatics.h"
 #include "AbilitySystem/EOTGameplayTags.h"
 #include "Interfaces/IDetectable.h"
 #include "EngineUtils.h"
@@ -215,25 +216,46 @@ void ADefaultCharacter::GrantAbilitiesFromDefaultSet()
     }
 }
 
+
+
 void ADefaultCharacter::GrantAbilitiesFromInputSet()
 {
-    if (!AbilityInputSet) return;
     ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
     if (!PS) return;
     UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
     if (!ASC) return;
 
-    for (const FAbilityInputSetEntry& Entry : AbilityInputSet->Abilities)
+    // Grant future abilities ONLY if Team.Future tag
+    if (FutureGASet && ASC->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("Team.Future")))
     {
-        if (!Entry.AbilityClass) continue;
-        FGameplayAbilitySpec Spec(Entry.AbilityClass, Entry.AbilityLevel, 0);
-        if (Entry.InputTag.IsValid())
+        for (const FAbilityInputSetEntry& Entry : FutureGASet->Abilities)
         {
-            Spec.GetDynamicSpecSourceTags().AddTag(Entry.InputTag);
+            if (!Entry.AbilityClass) continue;
+            FGameplayAbilitySpec Spec(Entry.AbilityClass, Entry.AbilityLevel, 0);
+            if (Entry.InputTag.IsValid())
+            {
+                Spec.GetDynamicSpecSourceTags().AddTag(Entry.InputTag);
+            }
+            ASC->GiveAbility(Spec);
         }
-        ASC->GiveAbility(Spec);
+    }
+
+    // Grant solo abilities ONLY if there is only one player
+    if (ASC->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("Team.Solo")))
+    {
+        for (const FAbilityInputSetEntry& Entry : SoloGASet->Abilities)
+        {
+            if (!Entry.AbilityClass) continue;
+            FGameplayAbilitySpec Spec(Entry.AbilityClass, Entry.AbilityLevel, 0);
+            if (Entry.InputTag.IsValid())
+            {
+                Spec.GetDynamicSpecSourceTags().AddTag(Entry.InputTag);
+            }
+            ASC->GiveAbility(Spec);
+        }
     }
 }
+
 
 UAbilitySystemComponent* ADefaultCharacter::GetAbilitySystemComponent() const
 {
