@@ -11,6 +11,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Ability_Future_PastEcho, "Character.Ability
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Ability_LockPick, "Character.Ability.LockPick");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Ability_Hack, "Character.Ability.Hack");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Ability_Search, "Character.Ability.Search");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Ability_Solo_Teleport, "Character.Ability.Solo.Teleport");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_PastEcho, "Character.Status.PastEcho");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_LockPicking, "Character.Status.LockPicking");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Hacking, "Character.Status.Hacking");
@@ -21,6 +22,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Aiming, "Character.Status.Aiming");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Firing, "Character.Status.Firing");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Illegal_Action, "Character.Status.Illegal.Action");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Illegal_Area, "Character.Status.Illegal.Area");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Teleporting, "Character.Status.Teleporting");
 UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_PastEcho_Activated, "GameplayCue.PastEcho.Activated");
 UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_PastEcho_Deactivated, "GameplayCue.PastEcho.Deactivated");
 
