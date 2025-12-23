@@ -47,6 +47,41 @@ void AFuturePowerGenerator::EndPlay(const EEndPlayReason::Type EndPlayReason)
     Super::EndPlay(EndPlayReason);
 }
 
+void AFuturePowerGenerator::ServerSetEnabled_Implementation(bool bNewEnabled)
+{
+    bEnabled = bNewEnabled;
+}
+
+void AFuturePowerGenerator::HandlePastGeneratorCompleted(bool bPastSearched)
+{
+    // Only authority/server should set bEnabled
+    if (HasAuthority())
+    {
+        bEnabled = !bPastSearched;
+        if (bPastSearched)
+        {
+            if (CompletionTarget && CompletionTarget->GetClass()->ImplementsInterface(UPuzzleCompletionReceiver::StaticClass()))
+            {
+                IPuzzleCompletionReceiver::Execute_OnPuzzleCompleted(CompletionTarget);
+            }
+            SetHighlighted_Implementation(false);
+            OnRequestRepair.Broadcast(this);
+        }
+        else // bPastSearched == false
+        {
+            if (CompletionTarget && CompletionTarget->GetClass()->ImplementsInterface(UPuzzleCompletionReceiver::StaticClass()))
+            {
+                IPuzzleCompletionReceiver::Execute_OnPuzzleReset(CompletionTarget);
+            }
+        }
+    }
+    else
+    {
+        // Clients request the server to update bEnabled
+        ServerSetEnabled(!bPastSearched);
+    }
+}
+
 void AFuturePowerGenerator::Interact_Implementation(AActor* Interactor)
 {
     if (!bEnabled || !Interactor)
@@ -98,30 +133,6 @@ void AFuturePowerGenerator::SetHighlighted_Implementation(bool bHighlight)
     }
 }
 
-void AFuturePowerGenerator::HandlePastGeneratorCompleted(bool bPastSearched)
-{
-    if (bPastSearched)
-    {
-        bEnabled = false;
-        if (CompletionTarget && CompletionTarget->GetClass()->ImplementsInterface(UPuzzleCompletionReceiver::StaticClass()))
-        {
-            IPuzzleCompletionReceiver::Execute_OnPuzzleCompleted(CompletionTarget);
-        }
-        // Remove highlight
-        SetHighlighted_Implementation(false);
-        // Optionally: Call OnRequestRepair.Broadcast(this); or puzzle completion handling
-        OnRequestRepair.Broadcast(this);
-    }
-	else if (bPastSearched == false)
-    {
-        bEnabled = true;
-        if (CompletionTarget && CompletionTarget->GetClass()->ImplementsInterface(UPuzzleCompletionReceiver::StaticClass()))
-        {
-            IPuzzleCompletionReceiver::Execute_OnPuzzleReset(CompletionTarget);
-        }
-    }
-}
-
 void AFuturePowerGenerator::OnMiniGameEnded(bool bWasVictory)
 {
     if (MiniGameInstance)
@@ -131,14 +142,21 @@ void AFuturePowerGenerator::OnMiniGameEnded(bool bWasVictory)
 
     if (bWasVictory)
     {
-        bEnabled = false;
-        SetHighlighted_Implementation(false);
-        // Fire puzzle completion / repair like Terminal
-        if (CompletionTarget && CompletionTarget->GetClass()->ImplementsInterface(UPuzzleCompletionReceiver::StaticClass()))
+        if (HasAuthority())
         {
-            IPuzzleCompletionReceiver::Execute_OnPuzzleCompleted(CompletionTarget);
+            bEnabled = false;
+            SetHighlighted_Implementation(false);
+            // Fire puzzle completion / repair like Terminal
+            if (CompletionTarget && CompletionTarget->GetClass()->ImplementsInterface(UPuzzleCompletionReceiver::StaticClass()))
+            {
+                IPuzzleCompletionReceiver::Execute_OnPuzzleCompleted(CompletionTarget);
+            }
+            OnRequestRepair.Broadcast(this);
         }
-        OnRequestRepair.Broadcast(this);
+        else
+        {
+            ServerSetEnabled(false);
+        }
     }
     else
     {
@@ -159,9 +177,16 @@ bool AFuturePowerGenerator::IsProgressiveInteract_Implementation()
 
 void AFuturePowerGenerator::RequestRepair(AActor* RepairInstigator)
 {
-    bEnabled = true;
-    if (CompletionTarget && CompletionTarget->GetClass()->ImplementsInterface(UPuzzleCompletionReceiver::StaticClass()))
+    if (HasAuthority())
     {
-        IPuzzleCompletionReceiver::Execute_OnPuzzleReset(CompletionTarget);
+        bEnabled = true;
+        if (CompletionTarget && CompletionTarget->GetClass()->ImplementsInterface(UPuzzleCompletionReceiver::StaticClass()))
+        {
+            IPuzzleCompletionReceiver::Execute_OnPuzzleReset(CompletionTarget);
+        }
+    }
+    else
+    {
+        ServerSetEnabled(true);
     }
 }

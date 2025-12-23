@@ -11,7 +11,7 @@ class ECHOESOFTIME_API AFuturePowerGenerator : public APowerGenerator
 
 public:
     AFuturePowerGenerator();
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -28,6 +28,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "MiniGame")
     TSubclassOf<class UFirewallMiniGame> FirewallMiniGameClass;
 
+    UFUNCTION(Server, Reliable)
+    void ServerSetEnabled(bool bNewEnabled);
+
 protected:
     UFUNCTION()
     void HandlePastGeneratorCompleted(bool bCompleted);
@@ -42,6 +45,6 @@ protected:
     TWeakObjectPtr<APlayerController> LastInteractingPC;
 
     // Enabled/disabled state
-    UPROPERTY(EditAnywhere, BlueprintReadWrite,Replicated)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
     bool bEnabled = true;
 };
