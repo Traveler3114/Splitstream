@@ -65,6 +65,9 @@ public:
     bool bApplyGameplayAbilitiesPassively = false;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
+    bool bAlertGuardsWhenSeen = false;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
     float DropImpulseStrength = 500.f;
 
     // --- Ownership (optional, e.g. for fingerprints) ---

@@ -5,10 +5,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Interfaces/IInteractable.h"
+#include "Interfaces/IDetectable.h"
 #include "VentBase.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API AVentBase : public AActor, public IInteractable
+class ECHOESOFTIME_API AVentBase : public AActor, public IInteractable, public IDetectable
 {
 	GENERATED_BODY()
 	
@@ -25,6 +26,8 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Device")
 	class USearchComponent* SearchComponent;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
+	class UAIPerceptionStimuliSourceComponent* StimuliSourceComponent;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -41,6 +44,8 @@ protected:
 	virtual void CancelInteract_Implementation(AActor* Interactor) override;
 	virtual bool IsProgressiveInteract_Implementation() override;
 	virtual void SetHighlighted_Implementation(bool bHighlight) override;
+
+	virtual void OnDetected_Implementation(AActor* Detector) override;
 
 	UFUNCTION()
 	virtual void OnSearchComplete();

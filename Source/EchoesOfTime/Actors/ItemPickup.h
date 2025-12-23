@@ -3,13 +3,14 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Interfaces/IInteractable.h"
+#include "Interfaces/IDetectable.h"
 #include "DataAssets/ItemBase.h"
 #include "ItemPickup.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPickedUp, AActor*, Interactor, UItemBase*, ItemData);
 
 UCLASS()
-class ECHOESOFTIME_API AItemPickup : public AActor, public IInteractable
+class ECHOESOFTIME_API AItemPickup : public AActor, public IInteractable, public IDetectable
 {
     GENERATED_BODY()
 
@@ -25,6 +26,9 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     UStaticMeshComponent* OverrideMeshComp;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
+    class UAIPerceptionStimuliSourceComponent* StimuliSourceComponent;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Search", meta = (AllowPrivateAccess = true))
     class USearchComponent* SearchComp = nullptr;
@@ -45,6 +49,8 @@ public:
 
     virtual void Interact_Implementation(AActor* Interactor) override;
     virtual void SetHighlighted_Implementation(bool bHighlight) override;
+
+    virtual void OnDetected_Implementation(AActor* Detector) override;
 
     UFUNCTION(BlueprintCallable, Category = "Item")
     void RefreshMeshFromItemData();

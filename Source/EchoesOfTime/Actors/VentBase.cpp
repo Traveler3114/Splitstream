@@ -3,6 +3,8 @@
 
 #include "VentBase.h"
 #include "ActorComponents/SearchComponent.h"
+#include "Perception/AIPerceptionStimuliSourceComponent.h"
+
 
 // Sets default values
 AVentBase::AVentBase()
@@ -19,6 +21,8 @@ AVentBase::AVentBase()
 
     SearchComponent = CreateDefaultSubobject<USearchComponent>(TEXT("SearchComponent"));
     SearchComponent->SetIsReplicated(true);
+
+    StimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("StimuliSource"));
 }
 
 // Called when the game starts or when spawned
@@ -29,7 +33,19 @@ void AVentBase::BeginPlay()
     {
         SearchComponent->OnSearchComplete.AddDynamic(this, &AVentBase::OnSearchComplete);
 	}
-	
+}
+
+void AVentBase::OnDetected_Implementation(AActor* Detector)
+{
+    UE_LOG(LogTemp, Warning, TEXT("AVentBase::OnDetected_Implementation! Detector: %s, Vent open: %d"), *GetNameSafe(Detector), bIsOpen);
+    if (bIsOpen)
+    {
+        if (Detector && Detector->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
+        {
+            UE_LOG(LogTemp, Warning, TEXT("AVentBase: Calling OnFullyDetected on %s"), *GetNameSafe(Detector));
+            IDetectable::Execute_OnFullyDetected(Detector, this);
+        }
+    }
 }
 
 void AVentBase::Interact_Implementation(AActor* Interactor)

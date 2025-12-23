@@ -197,11 +197,22 @@ void AGuardCharacter::OnLost_Implementation(AActor* Detector)
     }
 }
 
-void AGuardCharacter::OnFullyDetected_Implementation(AActor* DetectingActor)
+void AGuardCharacter::OnFullyDetected_Implementation(AActor* ActorDetected)
 {
-
+    UE_LOG(LogTemp, Warning, TEXT("Guard OnFullyDetected: %s"), *GetNameSafe(ActorDetected));
     if (bIsDead) return;
-    TargetActor = DetectingActor;
+    TargetActor = ActorDetected;
+
+    // Pawn = player/AI threat
+    if (ActorDetected->IsA(APawn::StaticClass()))
+    {
+        // Do logic for DefaultCharacter/other pawns
+        // Example: escalate alarm, chase, start combat
+    }
+    else
+    {
+       UE_LOG(LogTemp, Warning, TEXT("Guard fully detected an illegal actor!"));
+    }
 
     AController* GuardController = GetController();
     if (GuardController)
@@ -213,7 +224,7 @@ void AGuardCharacter::OnFullyDetected_Implementation(AActor* DetectingActor)
             StateTreeComp->SendStateTreeEvent(MyEvent);
         }
     }
-   
+
     if (HasAuthority())
     {
         if (ADefaultGameState* GS = Cast<ADefaultGameState>(GetWorld()->GetGameState()))
@@ -245,6 +256,7 @@ void AGuardCharacter::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
 {
     for (AActor* Actor : UpdatedActors)
     {
+        UE_LOG(LogTemp, Warning, TEXT("Guard perception update: %s"), *GetNameSafe(Actor));
         if (Actor && Actor->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
         {
             FActorPerceptionBlueprintInfo Info;

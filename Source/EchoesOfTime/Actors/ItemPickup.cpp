@@ -2,6 +2,7 @@
 #include "ActorComponents/InventoryComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "ActorComponents/SearchComponent.h"
+#include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Engine/Engine.h"
 
 AItemPickup::AItemPickup()
@@ -18,6 +19,8 @@ AItemPickup::AItemPickup()
 
     ItemData = nullptr;
     ItemInstanceID.Invalidate();
+
+    StimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("StimuliSource"));
 }
 
 void AItemPickup::BeginPlay()
@@ -36,6 +39,7 @@ void AItemPickup::BeginPlay()
     {
         SearchComp->OnSearchComplete.AddDynamic(this, &AItemPickup::OnSearchComplete);
     }
+
 }
 
 void AItemPickup::InitFromItemData(UItemBase* InItemData, FGuid InInstanceID)
@@ -117,3 +121,11 @@ void AItemPickup::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedE
     }
 }
 #endif
+
+void AItemPickup::OnDetected_Implementation(AActor* Detector)
+{
+    if (ItemData && ItemData->bAlertGuardsWhenSeen && Detector)
+    {
+        IDetectable::Execute_OnFullyDetected(Detector, this);
+    }
+}

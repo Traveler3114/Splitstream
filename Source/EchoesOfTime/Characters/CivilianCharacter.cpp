@@ -139,9 +139,21 @@ void ACivilianCharacter::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActor
 }
 
 // Called by detected actors when their detection timeline is finished
-void ACivilianCharacter::OnFullyDetected_Implementation(AActor* DetectingActor)
+void ACivilianCharacter::OnFullyDetected_Implementation(AActor* ActorDetected)
 {
-    TargetActor = DetectingActor;
+    TargetActor = ActorDetected;
+
+    if (ActorDetected->IsA(APawn::StaticClass()))
+    {
+        // Do logic for DefaultCharacter/other pawns
+        // Example: escalate alarm, chase, start combat
+    }
+    else
+    {
+        // Evidence or world-interactable
+        // Example: raise a different StateTree event, investigate, call for repair/etc
+    }
+
     AController* CivilianController = GetController();
     if (CivilianController)
     {
