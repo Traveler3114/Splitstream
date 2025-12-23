@@ -34,6 +34,7 @@ protected:
     USearchComponent* SearchComp = nullptr;
 
     bool bIsSearching = false;
+    bool InitialSearchedState = false; // <-- added for toggle-based completion
 
     void BindInput();
     void UnbindInput();

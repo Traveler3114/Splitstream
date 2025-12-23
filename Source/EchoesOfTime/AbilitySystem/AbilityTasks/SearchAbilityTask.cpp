@@ -20,6 +20,8 @@ void USearchAbilityTask::Activate()
         return;
     }
 
+    InitialSearchedState = SearchComp->bSearched; // <-- store the initial searched state for toggle-based completion
+
     if (GetAvatarActor()->HasAuthority())
     {
         SearchComp->StartSearching();
@@ -73,7 +75,8 @@ void USearchAbilityTask::TickTask(float DeltaTime)
         SearchWidget->UpdateProgress(SearchComp->GetSearchProgress());
     }
 
-    if (SearchComp->bSearched)
+    // Only complete when search state toggles from original (supports alternating multi-search)
+    if (SearchComp->bSearched != InitialSearchedState)
     {
         FinishTask(true);
     }

@@ -77,17 +77,6 @@ bool APowerGenerator::IsProgressiveInteract_Implementation()
 
 void APowerGenerator::SetHighlighted_Implementation(bool bHighlight)
 {
-    // Do not highlight if already searched
-    if (SearchComponent && SearchComponent->bSearched)
-    {
-        if (GeneratorMesh)
-        {
-            GeneratorMesh->SetRenderCustomDepth(false);
-            GeneratorMesh->CustomDepthStencilValue = 0;
-        }
-        return;
-    }
-
     if (GeneratorMesh)
     {
         GeneratorMesh->SetRenderCustomDepth(bHighlight);

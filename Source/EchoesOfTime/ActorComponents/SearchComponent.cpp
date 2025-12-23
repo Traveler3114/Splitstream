@@ -21,27 +21,43 @@ void USearchComponent::BeginPlay()
 
 void USearchComponent::StartSearching()
 {
-    if (bSearchingInProgress) return; // block concurrent searches
-
-    if (bSearched && !bAllowMultipleSearches) return; // only block if already searched AND only one search allowed
-
-    bSearchingInProgress = true;
-    if (GetOwner()->HasAuthority())
+    if (bSearchingInProgress)
     {
-        MulticastResetSearchElapsed();
+        if (bAllowMultipleSearches)
+        {
+            if (GetOwner() && GetOwner()->HasAuthority())
+            {
+                MulticastResetSearchElapsed();
+            }
+            SearchElapsed = 0.f;
+            SetComponentTickEnabled(true);
+        }
+        else
+        {
+            return;
+        }
     }
-    SetComponentTickEnabled(true);
+    else
+    {
+        if (bSearched && !bAllowMultipleSearches)
+        {
+            return;
+        }
 
-    if (bAllowMultipleSearches)
-        bSearched = false; // clear so future checks (UI, code) see the new search in progress
+        bSearchingInProgress = true;
+        if (GetOwner() && GetOwner()->HasAuthority())
+        {
+            MulticastResetSearchElapsed();
+        }
+        SetComponentTickEnabled(true);
+    }
 }
-
 
 void USearchComponent::CancelSearching()
 {
     bSearchingInProgress = false;
     SetComponentTickEnabled(false);
-    if (GetOwner()->HasAuthority())
+    if (GetOwner() && GetOwner()->HasAuthority())
     {
         MulticastResetSearchElapsed();
     }
@@ -54,8 +70,9 @@ void USearchComponent::MulticastResetSearchElapsed_Implementation()
 
 float USearchComponent::GetSearchProgress() const
 {
-    if (!bSearchingInProgress || SearchDuration <= 0.f) return 0.f;
-    return FMath::Clamp(SearchElapsed / SearchDuration, 0.f, 1.f);
+    float Progress = (!bSearchingInProgress || SearchDuration <= 0.f) ? 0.f
+        : FMath::Clamp(SearchElapsed / SearchDuration, 0.f, 1.f);
+    return Progress;
 }
 
 void USearchComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -67,7 +84,14 @@ void USearchComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
         if (SearchElapsed >= SearchDuration)
         {
             bSearchingInProgress = false;
-            bSearched = !bSearched;
+            if (bAllowMultipleSearches)
+            {
+                bSearched = !bSearched;
+            }
+            else
+            {
+                bSearched = true;
+            }
             SetComponentTickEnabled(false);
             OnSearchComplete.Broadcast();
         }
@@ -79,26 +103,30 @@ void USearchComponent::OnRep_Searched()
     OnSearchComplete.Broadcast();
 }
 
-
 void USearchComponent::Interact(AActor* Interactor)
 {
-    if (GetOwner()->HasAuthority()) {
+    if (GetOwner() && GetOwner()->HasAuthority())
+    {
         LastInteractor = Interactor;
     }
-    if ((bSearched || bSearchingInProgress) && !bAllowMultipleSearches) return;
-    if (GetOwner()->HasAuthority())
+
+    if ((bSearched || bSearchingInProgress) && !bAllowMultipleSearches)
     {
-        LastInteractor = Interactor; // 'Interactor' MUST be the server pawn
+        return;
     }
-    // Fire gameplay event for GAS
+
+    if (GetOwner() && GetOwner()->HasAuthority())
+    {
+        LastInteractor = Interactor;
+    }
+
     if (IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(Interactor))
     {
         if (UAbilitySystemComponent* ASC = AbilityInterface->GetAbilitySystemComponent())
         {
             FGameplayEventData EventData;
             EventData.Instigator = Interactor;
-            EventData.OptionalObject = GetOwner(); // This is the Searchable actor, needed for GAS ability
-
+            EventData.OptionalObject = GetOwner();
             ASC->HandleGameplayEvent(
                 TAG_Character_Ability_Search,
                 &EventData
@@ -112,7 +140,6 @@ void USearchComponent::CancelInteract(AActor* Interactor)
     CancelSearching();
     if (Interactor)
     {
-        // Get AbilitySystemComponent from the interactor
         if (IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(Interactor))
         {
             if (UAbilitySystemComponent* ASC = AbilityInterface->GetAbilitySystemComponent())
@@ -125,12 +152,9 @@ void USearchComponent::CancelInteract(AActor* Interactor)
     }
 }
 
-
-
 void USearchComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(USearchComponent, bSearched);
     DOREPLIFETIME(USearchComponent, bSearchingInProgress);
-    // Replicate other relevant properties if needed
 }
