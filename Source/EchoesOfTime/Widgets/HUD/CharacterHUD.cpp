@@ -7,6 +7,13 @@
 
 void ACharacterHUD::AddCharacterOverlay()
 {
+    // Remove existing overlay if any
+    if (CharacterOverlay)
+    {
+        CharacterOverlay->RemoveFromParent();
+        CharacterOverlay = nullptr;
+    }
+
     APlayerController* PlayerController = GetOwningPlayerController();
     if (PlayerController && CharacterOverlayClass)
     {

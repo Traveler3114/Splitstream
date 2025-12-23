@@ -22,51 +22,76 @@ ADefaultPlayerController::ADefaultPlayerController()
     PauseMenuWidget = nullptr;
 }
 
-void ADefaultPlayerController::BeginPlay()
+void ADefaultPlayerController::SetupOverlay()
 {
-    Super::BeginPlay();
-    CharacterHUD = CharacterHUD == nullptr ? Cast<ACharacterHUD>(GetHUD()) : CharacterHUD;
+    if (!IsLocalController()) return;
+
+    CharacterHUD = Cast<ACharacterHUD>(GetHUD());
     if (CharacterHUD)
     {
         CharacterHUD->AddCharacterOverlay();
+
+        // Only proceed if overlay instance actually exists
+        if (CharacterHUD->CharacterOverlay)
+        {
+            // Ping
+            if (APlayerState* PS = GetPlayerState<APlayerState>())
+                CharacterHUD->CharacterOverlay->SetPingText(PS->ExactPing);
+
+            // Health
+            if (ADefaultPlayerState* MyPS = Cast<ADefaultPlayerState>(GetPlayerState<APlayerState>()))
+                if (UPlayerAttributeSet* AttrSet = MyPS->GetAttributeSet())
+                    CharacterHUD->CharacterOverlay->SetHealthText(AttrSet->GetHealth());
+
+            // Money/Objective
+            if (ADefaultGameState* GS = GetWorld()->GetGameState<ADefaultGameState>())
+                CharacterHUD->CharacterOverlay->SetObjectiveText(GS->CurrentMoneyCollected, GS->TargetMoneyAmount);
+        }
     }
+
+    // Always bind events/delegates after overlay creation
     BindAttributeDelegates();
     BindGameplayTagDelegates();
     GetWorldTimerManager().SetTimer(PingUpdateTimerHandle, this, &ADefaultPlayerController::UpdatePingOnOverlay, 1.0f, true);
 
-    // Bind to GameState alarm events - only for local controllers (to update local UI)
-    if (IsLocalController())
+    // Alarm/pre-alarm event handlers and immediate state update
+    if (ADefaultGameState* GS = GetWorld() ? GetWorld()->GetGameState<ADefaultGameState>() : nullptr)
     {
-        if (ADefaultGameState* GS = GetWorld() ? GetWorld()->GetGameState<ADefaultGameState>() : nullptr)
+        GS->OnAlarmStarted.AddDynamic(this, &ADefaultPlayerController::HandleAlarmStarted);
+        GS->OnAlarmCanceled.AddDynamic(this, &ADefaultPlayerController::HandleAlarmCanceled);
+        GS->OnPreAlarmStarted.AddDynamic(this, &ADefaultPlayerController::HandlePreAlarmStarted);
+        GS->OnPreAlarmCanceled.AddDynamic(this, &ADefaultPlayerController::HandlePreAlarmCanceled);
+        GS->OnMoneyCollectedChanged.AddDynamic(this, &ADefaultPlayerController::OnMoneyCollectedChanged);
+        OnMoneyCollectedChanged(GS->CurrentMoneyCollected, GS->TargetMoneyAmount);
+        GS->OnGuardRepairETAStarted.AddDynamic(this, &ADefaultPlayerController::HandleRepairETAStarted);
+
+        // --- The critical part: immediately update alarm/pre-alarm UI
+        if (GS->bAlarmActive && GS->AlarmEndTime > 0.f)
         {
-            GS->OnAlarmStarted.AddDynamic(this, &ADefaultPlayerController::HandleAlarmStarted);
-            GS->OnAlarmCanceled.AddDynamic(this, &ADefaultPlayerController::HandleAlarmCanceled);
-
-            // Pre-alarm binding
-            GS->OnPreAlarmStarted.AddDynamic(this, &ADefaultPlayerController::HandlePreAlarmStarted);
-            GS->OnPreAlarmCanceled.AddDynamic(this, &ADefaultPlayerController::HandlePreAlarmCanceled);
-
-            GS->OnMoneyCollectedChanged.AddDynamic(this, &ADefaultPlayerController::OnMoneyCollectedChanged);
-            OnMoneyCollectedChanged(GS->CurrentMoneyCollected, GS->TargetMoneyAmount);
-
-            GS->OnGuardRepairETAStarted.AddDynamic(this, &ADefaultPlayerController::HandleRepairETAStarted);
-
-            // If an alarm is already active by the time we join, initialize from the replicated values:
-            if (GS->bAlarmActive && GS->AlarmEndTime > 0.f)
-            {
-                HandleAlarmStarted(GS->AlarmEndTime);
-            }
-            else if (GS->bPreAlarmActive && GS->PreAlarmEndTime > 0.f)
-            {
-                HandlePreAlarmStarted(GS->PreAlarmEndTime, GS->PreAlarmInstigator);
-            }
-            else
-            {
-                HandleAlarmCanceled();
-                HandlePreAlarmCanceled();
-            }
+            HandleAlarmStarted(GS->AlarmEndTime);
+        }
+        else if (GS->bPreAlarmActive && GS->PreAlarmEndTime > 0.f)
+        {
+            HandlePreAlarmStarted(GS->PreAlarmEndTime, GS->PreAlarmInstigator);
+        }
+        else
+        {
+            HandleAlarmCanceled();
+            HandlePreAlarmCanceled();
         }
     }
+}
+
+void ADefaultPlayerController::OnPossess(APawn* InPawn)
+{
+    Super::OnPossess(InPawn);
+    SetupOverlay();
+}
+
+void ADefaultPlayerController::BeginPlay()
+{
+    Super::BeginPlay();
+    SetupOverlay();
 }
 
 void ADefaultPlayerController::HandleRepairETAStarted(ARepairableBase* Repairable, float Duration)
@@ -243,11 +268,11 @@ void ADefaultPlayerController::ClientShowLoadingScreen_Implementation()
     }
 }
 
+
 void ADefaultPlayerController::OnRep_PlayerState()
 {
     Super::OnRep_PlayerState();
-    BindAttributeDelegates();
-    BindGameplayTagDelegates();
+    SetupOverlay();
 }
 
 void ADefaultPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
