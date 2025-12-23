@@ -37,12 +37,10 @@ void AVentBase::BeginPlay()
 
 void AVentBase::OnDetected_Implementation(AActor* Detector)
 {
-    UE_LOG(LogTemp, Warning, TEXT("AVentBase::OnDetected_Implementation! Detector: %s, Vent open: %d"), *GetNameSafe(Detector), bIsOpen);
     if (bIsOpen)
     {
         if (Detector && Detector->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
         {
-            UE_LOG(LogTemp, Warning, TEXT("AVentBase: Calling OnFullyDetected on %s"), *GetNameSafe(Detector));
             IDetectable::Execute_OnFullyDetected(Detector, this);
         }
     }

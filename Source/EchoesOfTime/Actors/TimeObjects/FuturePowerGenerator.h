@@ -11,21 +11,40 @@ class ECHOESOFTIME_API AFuturePowerGenerator : public APowerGenerator
 
 public:
     AFuturePowerGenerator();
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     virtual void Interact_Implementation(AActor* Interactor) override;
+    virtual bool IsProgressiveInteract_Implementation() override;
     virtual void CancelInteract_Implementation(AActor* Interactor) override;
     virtual void SetHighlighted_Implementation(bool bHighlight) override;
+
+    virtual void RequestRepair(AActor* RepairInstigator) override;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PastPowerGenerator")
     TSoftObjectPtr<class APastPowerGenerator> PastGenerator;
 
-    // Optionally, allow getting this generator's completion state
     UFUNCTION(BlueprintPure, Category = "FuturePowerGenerator")
     bool IsCompleted() const;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "MiniGame")
+    TSubclassOf<class UFirewallMiniGame> FirewallMiniGameClass;
 
 protected:
     UFUNCTION()
     void HandlePastGeneratorCompleted(bool bCompleted);
+
+    // --- Minigame stuff ---
+    UFUNCTION()
+    void OnMiniGameEnded(bool bWasVictory);
+
+    UPROPERTY()
+    class UFirewallMiniGame* MiniGameInstance = nullptr;
+
+    TWeakObjectPtr<APlayerController> LastInteractingPC;
+
+    // Enabled/disabled state
+    UPROPERTY(EditAnywhere, BlueprintReadWrite,Replicated)
+    bool bEnabled = true;
 };

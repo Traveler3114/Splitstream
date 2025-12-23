@@ -199,7 +199,6 @@ void AGuardCharacter::OnLost_Implementation(AActor* Detector)
 
 void AGuardCharacter::OnFullyDetected_Implementation(AActor* ActorDetected)
 {
-    UE_LOG(LogTemp, Warning, TEXT("Guard OnFullyDetected: %s"), *GetNameSafe(ActorDetected));
     if (bIsDead) return;
     TargetActor = ActorDetected;
 
@@ -256,7 +255,6 @@ void AGuardCharacter::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
 {
     for (AActor* Actor : UpdatedActors)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Guard perception update: %s"), *GetNameSafe(Actor));
         if (Actor && Actor->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
         {
             FActorPerceptionBlueprintInfo Info;
