@@ -22,11 +22,6 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "PastPowerGenerator")
     FOnGeneratorCompleted OnGeneratorCompleted;
 
-    // True if SearchComponent->bSearched == true
-    UFUNCTION(BlueprintPure, Category = "PastPowerGenerator")
-    bool IsCompleted() const;
-
 protected:
-    UFUNCTION()
-    void OnSearchCompletedEvent();
+    void OnSearchComplete() override;
 };

@@ -67,7 +67,7 @@ void USearchComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
         if (SearchElapsed >= SearchDuration)
         {
             bSearchingInProgress = false;
-            bSearched = true;
+            bSearched = !bSearched;
             SetComponentTickEnabled(false);
             OnSearchComplete.Broadcast();
         }
@@ -76,10 +76,7 @@ void USearchComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 
 void USearchComponent::OnRep_Searched()
 {
-    if (bSearched)
-    {
-        OnSearchComplete.Broadcast();
-    }
+    OnSearchComplete.Broadcast();
 }
 
 

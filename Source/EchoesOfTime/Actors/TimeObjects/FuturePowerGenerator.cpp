@@ -26,10 +26,6 @@ void AFuturePowerGenerator::BeginPlay()
     if (Past)
     {
         Past->OnGeneratorCompleted.AddDynamic(this, &AFuturePowerGenerator::HandlePastGeneratorCompleted);
-        if (Past->IsCompleted())   // If already completed, disable immediately
-        {
-            HandlePastGeneratorCompleted(true);
-        }
     }
 }
 
@@ -102,9 +98,9 @@ void AFuturePowerGenerator::SetHighlighted_Implementation(bool bHighlight)
     }
 }
 
-void AFuturePowerGenerator::HandlePastGeneratorCompleted(bool bCompleted)
+void AFuturePowerGenerator::HandlePastGeneratorCompleted(bool bPastSearched)
 {
-    if (bCompleted && bEnabled)
+    if (bPastSearched)
     {
         bEnabled = false;
         if (CompletionTarget && CompletionTarget->GetClass()->ImplementsInterface(UPuzzleCompletionReceiver::StaticClass()))
@@ -115,6 +111,14 @@ void AFuturePowerGenerator::HandlePastGeneratorCompleted(bool bCompleted)
         SetHighlighted_Implementation(false);
         // Optionally: Call OnRequestRepair.Broadcast(this); or puzzle completion handling
         OnRequestRepair.Broadcast(this);
+    }
+	else if (bPastSearched == false)
+    {
+        bEnabled = true;
+        if (CompletionTarget && CompletionTarget->GetClass()->ImplementsInterface(UPuzzleCompletionReceiver::StaticClass()))
+        {
+            IPuzzleCompletionReceiver::Execute_OnPuzzleReset(CompletionTarget);
+        }
     }
 }
 
@@ -146,12 +150,6 @@ void AFuturePowerGenerator::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AFuturePowerGenerator, bEnabled);
-}
-
-bool AFuturePowerGenerator::IsCompleted() const
-{
-    // Completed if disabled
-    return !bEnabled;
 }
 
 bool AFuturePowerGenerator::IsProgressiveInteract_Implementation()

@@ -25,9 +25,6 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PastPowerGenerator")
     TSoftObjectPtr<class APastPowerGenerator> PastGenerator;
 
-    UFUNCTION(BlueprintPure, Category = "FuturePowerGenerator")
-    bool IsCompleted() const;
-
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "MiniGame")
     TSubclassOf<class UFirewallMiniGame> FirewallMiniGameClass;
 

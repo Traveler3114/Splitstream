@@ -60,18 +60,12 @@ float APowerGenerator::GetRepairTime() const
 
 void APowerGenerator::Interact_Implementation(AActor* Interactor)
 {
-    if (SearchComponent && SearchComponent->bSearched)
-        return;
-
     if (SearchComponent)
         SearchComponent->Interact(Interactor);
 }
 
 void APowerGenerator::CancelInteract_Implementation(AActor* Interactor)
 {
-    if (SearchComponent && SearchComponent->bSearched)
-        return;
-
     if (SearchComponent)
         SearchComponent->CancelInteract(Interactor);
 }
