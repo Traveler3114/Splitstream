@@ -107,7 +107,7 @@ void AItemPickup::TryPickup(AActor* Interactor)
     UInventoryComponent* Inventory = Interactor->FindComponentByClass<UInventoryComponent>();
     if (Inventory && Inventory->AddItem(ItemData, ItemInstanceID))
     {
-        OnPickedUp.Broadcast(Interactor, ItemData);
+        OnItemPickedUp.Broadcast(Interactor, ItemData);
         Destroy();
     }
 }

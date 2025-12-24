@@ -6,9 +6,11 @@
 #include "GameplayEffectTypes.h"
 #include "Interfaces/IDetectable.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "ActorComponents/InventoryComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/StateTreeComponent.h"
 #include "ActorComponents/DetectionComponent.h"
+#include "ActorComponents/SearchComponent.h"
 #include "AbilitySystem/EOTGameplayTags.h"
 
 ACivilianCharacter::ACivilianCharacter()
@@ -35,6 +37,9 @@ ACivilianCharacter::ACivilianCharacter()
 
     DetectionComponent = CreateDefaultSubobject<UDetectionComponent>(TEXT("DetectionComponent"));
     DetectionComponent->SetIsReplicated(true);
+
+	SearchComponent = CreateDefaultSubobject<USearchComponent>(TEXT("SearchComponent"));
+	SearchComponent->SetIsReplicated(true);
 }
 
 void ACivilianCharacter::OnDetected_Implementation(AActor* Detector)
@@ -70,6 +75,61 @@ void ACivilianCharacter::BeginPlay()
     {
         AIPerceptionComponent->OnPerceptionUpdated.AddDynamic(this, &ACivilianCharacter::OnPerceptionUpdated);
     }
+
+    if (SearchComponent)
+    {
+        SearchComponent->OnSearchComplete.AddDynamic(this, &ACivilianCharacter::OnSearchComplete);
+    }
+}
+
+void ACivilianCharacter::Interact_Implementation(AActor* Interactor)
+{
+    if(SearchComponent && bIsDead)
+    {
+        SearchComponent->Interact(Interactor);
+	}
+}
+
+void ACivilianCharacter::CancelInteract_Implementation(AActor* Interactor)
+{
+    if (SearchComponent && bIsDead)
+    {
+        SearchComponent->CancelInteract(Interactor);
+    }
+}
+
+void ACivilianCharacter::SetHighlighted_Implementation(bool bHighlight)
+{
+    USkeletalMeshComponent* SkelMesh = GetMesh();
+    if (SkelMesh && bIsDead)
+    {
+        SkelMesh->SetRenderCustomDepth(bHighlight);
+        SkelMesh->CustomDepthStencilValue = bHighlight ? 1 : 0;
+    }
+}
+
+bool ACivilianCharacter::IsProgressiveInteract_Implementation()
+{
+    return true;
+}
+
+void ACivilianCharacter::OnSearchComplete()
+{
+    AActor* Interactor = SearchComponent ? SearchComponent->LastInteractor.Get() : nullptr;
+    TryPickup(Interactor);
+}
+
+void ACivilianCharacter::TryPickup(AActor* Interactor)
+{
+    if (!HasAuthority()) return;
+    if (!ItemData || !Interactor) return;
+
+    UInventoryComponent* Inventory = Interactor->FindComponentByClass<UInventoryComponent>();
+    if (Inventory && Inventory->AddItem(ItemData, ItemInstanceID))
+    {
+        OnCivilianPickedUp.Broadcast(Interactor, ItemData);
+        Destroy();
+    }
 }
 
 void ACivilianCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
@@ -98,6 +158,10 @@ void ACivilianCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
         {
             SkelMesh->SetCollisionProfileName(TEXT("Ragdoll"));
             SkelMesh->SetSimulatePhysics(true);
+
+            // Make sure mesh responds to visibility/camera trace after death
+            SkelMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics); // Allow traces + physics
+            SkelMesh->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block); // Block visibility raycasts
         }
 
         // Deactivate perception (stops further sensing, disables related events)

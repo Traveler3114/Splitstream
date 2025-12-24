@@ -6,15 +6,19 @@
 #include "GameFramework/Character.h"
 #include "Interfaces/IDetectable.h"
 #include "Interfaces/IGhostMirrorSource.h"
+#include "Interfaces/IInteractable.h"
 #include "TimelineEra.h"
 #include "AbilitySystemInterface.h"
+#include "DataAssets/ItemBase.h"
 #include "GameplayEffect.h"
 #include "GuardCharacter.generated.h"
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGuardPickedUp, AActor*, Interactor, UItemBase*, ItemData);
 
 class ANavNode;
 
 UCLASS()
-class ECHOESOFTIME_API AGuardCharacter : public ACharacter, public IDetectable, public IGhostMirrorSource, public IAbilitySystemInterface
+class ECHOESOFTIME_API AGuardCharacter : public ACharacter, public IDetectable, public IGhostMirrorSource, public IAbilitySystemInterface, public IInteractable
 {
     GENERATED_BODY()
 
@@ -23,10 +27,30 @@ public:
     virtual void BeginPlay() override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+    virtual void Interact_Implementation(AActor* Interactor) override;
+    virtual void CancelInteract_Implementation(AActor* Interactor) override;
+    virtual void SetHighlighted_Implementation(bool bHighlight) override;
+    virtual bool IsProgressiveInteract_Implementation() override;
+    UFUNCTION()
+    void OnSearchComplete();
+    void TryPickup(AActor* Interactor);
+
+    UPROPERTY(BlueprintAssignable, Category = "Item")
+    FOnGuardPickedUp OnGuardPickedUp;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Item")
+    UItemBase* ItemData;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Item")
+    FGuid ItemInstanceID;
+
     void OnHealthChanged(const struct FOnAttributeChangeData& Data);
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detection")
     class UDetectionComponent* DetectionComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detection")
+    class USearchComponent* SearchComponent;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard")
     bool bIsSecurityChief = false;

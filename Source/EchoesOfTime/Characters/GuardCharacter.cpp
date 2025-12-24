@@ -6,6 +6,8 @@
 #include "Actors/PointActors/RefPointActor.h"
 #include "Net/UnrealNetwork.h"
 #include "AbilitySystemComponent.h"
+#include "ActorComponents/InventoryComponent.h"
+#include "ActorComponents/SearchComponent.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
 #include "AbilitySystem/AttributeSets/PlayerAttributeSet.h"
@@ -46,10 +48,79 @@ AGuardCharacter::AGuardCharacter()
 
     DetectionComponent = CreateDefaultSubobject<UDetectionComponent>(TEXT("DetectionComponent"));
     DetectionComponent->SetIsReplicated(true);
+
+    SearchComponent = CreateDefaultSubobject<USearchComponent>(TEXT("SearchComponent"));
+    SearchComponent->SetIsReplicated(true);
 }
 
+void AGuardCharacter::Interact_Implementation(AActor* Interactor)
+{
+    if (SearchComponent && bIsDead)
+    {
+        SearchComponent->Interact(Interactor);
+    }
+}
 
+void AGuardCharacter::CancelInteract_Implementation(AActor* Interactor)
+{
+    if (SearchComponent && bIsDead)
+    {
+        SearchComponent->CancelInteract(Interactor);
+    }
+}
 
+void AGuardCharacter::SetHighlighted_Implementation(bool bHighlight)
+{
+    USkeletalMeshComponent* SkelMesh = GetMesh();
+    if (SkelMesh && bIsDead)
+    {
+        SkelMesh->SetRenderCustomDepth(bHighlight);
+        SkelMesh->CustomDepthStencilValue = bHighlight ? 1 : 0;
+    }
+}
+
+bool AGuardCharacter::IsProgressiveInteract_Implementation()
+{
+    return true;
+}
+
+void AGuardCharacter::OnSearchComplete()
+{
+    UE_LOG(LogTemp, Warning, TEXT("OnSearchComplete called (%s), Dead=%d"), *GetName(), bIsDead);
+    AActor* Interactor = SearchComponent ? SearchComponent->LastInteractor.Get() : nullptr;
+    if (!Interactor) UE_LOG(LogTemp, Error, TEXT("OnSearchComplete: LastInteractor is null!"));
+    TryPickup(Interactor);
+}
+
+void AGuardCharacter::TryPickup(AActor* Interactor)
+{
+    UE_LOG(LogTemp, Warning, TEXT("TryPickup: HasAuthority=%d, ItemData=%p, Interactor=%p, Dead=%d"), HasAuthority(), ItemData, Interactor, bIsDead);
+    if (!HasAuthority()) return;
+    if (!ItemData || !Interactor)
+    {
+        if (!ItemData) UE_LOG(LogTemp, Error, TEXT("TryPickup: NO ItemData!"));
+        if (!Interactor) UE_LOG(LogTemp, Error, TEXT("TryPickup: NO Interactor!"));
+        return;
+    }
+
+    UInventoryComponent* Inventory = Interactor->FindComponentByClass<UInventoryComponent>();
+    if (!Inventory)
+    {
+        UE_LOG(LogTemp, Error, TEXT("TryPickup: No InventoryComponent on Interactor!"));
+        return;
+    }
+
+    if (Inventory->AddItem(ItemData, ItemInstanceID))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("SUCCESS: Guard picked up (destroying self): %s"), *GetName());
+        OnGuardPickedUp.Broadcast(Interactor, ItemData);
+        Destroy();
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("TryPickup: Inventory->AddItem returned false!"));
+    }
+}
 void AGuardCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
 {
     // If guard has died, fully disable ALL logic and leave only the ragdoll
@@ -92,6 +163,10 @@ void AGuardCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
         {
             SkelMesh->SetCollisionProfileName(TEXT("Ragdoll"));
             SkelMesh->SetSimulatePhysics(true);
+
+            // Make sure mesh responds to visibility/camera trace after death
+            SkelMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics); // Allow traces + physics
+            SkelMesh->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block); // Block visibility raycasts
         }
 
         // Hide text/name or other visible extras
@@ -133,6 +208,10 @@ void AGuardCharacter::OnRep_GuardName()
 void AGuardCharacter::BeginPlay()
 {
     Super::BeginPlay();
+    if (SearchComponent)
+    {
+        SearchComponent->OnSearchComplete.AddDynamic(this, &AGuardCharacter::OnSearchComplete);
+    }
     if (NameText)
     {
         NameText->SetText(FText::FromString(GuardName));

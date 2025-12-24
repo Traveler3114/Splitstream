@@ -7,7 +7,7 @@
 #include "DataAssets/ItemBase.h"
 #include "ItemPickup.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPickedUp, AActor*, Interactor, UItemBase*, ItemData);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemPickedUp, AActor*, Interactor, UItemBase*, ItemData);
 
 UCLASS()
 class ECHOESOFTIME_API AItemPickup : public AActor, public IInteractable, public IDetectable
@@ -22,7 +22,7 @@ public:
 #endif
 
     UPROPERTY(BlueprintAssignable, Category = "Item")
-    FOnPickedUp OnPickedUp;
+    FOnItemPickedUp OnItemPickedUp;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     UStaticMeshComponent* OverrideMeshComp;
