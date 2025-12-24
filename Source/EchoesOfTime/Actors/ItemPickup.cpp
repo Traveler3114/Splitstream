@@ -2,6 +2,7 @@
 #include "ActorComponents/InventoryComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "ActorComponents/SearchComponent.h"
+#include "ActorComponents/DetectionComponent.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Engine/Engine.h"
 
@@ -16,6 +17,9 @@ AItemPickup::AItemPickup()
     OverrideMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("OverrideMeshComp"));
     OverrideMeshComp->SetupAttachment(SceneRoot);
     OverrideMeshComp->SetIsReplicated(true);
+
+    DetectionComponent = CreateDefaultSubobject<UDetectionComponent>(TEXT("DetectionComponent"));
+    DetectionComponent->SetIsReplicated(true);
 
     ItemData = nullptr;
     ItemInstanceID.Invalidate();
@@ -139,6 +143,14 @@ void AItemPickup::OnDetected_Implementation(AActor* Detector)
 {
     if (ItemData && ItemData->bAlertGuardsWhenSeen && Detector)
     {
-        IDetectable::Execute_OnFullyDetected(Detector, this);
+        DetectionComponent->StartDetection(Detector);
+    }
+}
+
+void AItemPickup::OnLost_Implementation(AActor* Detector)
+{
+    if (ItemData && ItemData->bAlertGuardsWhenSeen && Detector)
+    {
+        DetectionComponent->StopDetection(Detector);
     }
 }

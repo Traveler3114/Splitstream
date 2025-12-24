@@ -42,11 +42,11 @@ void AVentBase::BeginPlay()
 
 void AVentBase::OnDetected_Implementation(AActor* Detector)
 {
-    if (DetectionComponent && bIsOpen) DetectionComponent->OnDetected(Detector);
+    if (DetectionComponent && !(DetectionComponent->bDetectionInProgress) && !(DetectionComponent->bFullyDetected)&& bIsOpen) DetectionComponent->StartDetection(Detector);
 }
 void AVentBase::OnLost_Implementation(AActor* Detector)
 {
-    if (DetectionComponent && bIsOpen) DetectionComponent->OnLost(Detector);
+    if (DetectionComponent && !(DetectionComponent->bDetectionInProgress) && !(DetectionComponent->bFullyDetected) && bIsOpen) DetectionComponent->StopDetection(Detector);
 }
 
 void AVentBase::Interact_Implementation(AActor* Interactor)

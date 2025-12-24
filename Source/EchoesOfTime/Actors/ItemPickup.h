@@ -33,6 +33,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Search", meta = (AllowPrivateAccess = true))
     class USearchComponent* SearchComp = nullptr;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Detection")
+    class UDetectionComponent* DetectionComponent;
+
     UFUNCTION()
     void OnSearchComplete();
 
@@ -53,6 +56,7 @@ public:
     virtual void SetHighlighted_Implementation(bool bHighlight) override;
 
     virtual void OnDetected_Implementation(AActor* Detector) override;
+    virtual void OnLost_Implementation(AActor* Detector) override;
 
     UFUNCTION(BlueprintCallable, Category = "Item")
     void RefreshMeshFromItemData();

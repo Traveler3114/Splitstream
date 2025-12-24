@@ -1,24 +1,24 @@
 #include "DetectionComponent.h"
 #include "Net/UnrealNetwork.h"
-#include "Interfaces/IDetectable.h"
-#include "GameFramework/Actor.h"
-#include "TimerManager.h"
-#include "Blueprint/UserWidget.h"
+#include "Components/WidgetComponent.h"
 #include "Widgets/DetectionActorWidget.h"
+#include "Blueprint/UserWidget.h"
+#include "GameFramework/Actor.h"
+
+#define DETECTION_LOG(Verbosity, Format, ...) \
+    UE_LOG(LogTemp, Verbosity, TEXT("[%s][%s][Role: %s] " Format), \
+    *GetNameSafe(GetOwner()), *GetName(), \
+    (GetOwnerRole() == ROLE_Authority ? TEXT("Authority") : (GetOwnerRole() == ROLE_AutonomousProxy ? TEXT("AutonomousProxy") : (GetOwnerRole() == ROLE_SimulatedProxy ? TEXT("SimulatedProxy") : TEXT("Unknown")))), \
+    ##__VA_ARGS__ )
 
 UDetectionComponent::UDetectionComponent()
 {
-    PrimaryComponentTick.bCanEverTick = false;
     SetIsReplicatedByDefault(true);
-
-    DetectionDuration = 2.5f;
-    DetectionProgress = 0.0f;
-    bIsFullyDetected = false;
-    bIsLosingSight = false;
-    CurrentDetector = nullptr;
+    PrimaryComponentTick.bCanEverTick = true;
 
     DetectionWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("DetectionWidgetComp"));
-    DetectionWidgetComponent->SetIsReplicated(true);
+    DetectionWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
+    DetectionWidgetComponent->SetDrawAtDesiredSize(true);
 }
 
 void UDetectionComponent::BeginPlay()
@@ -27,156 +27,129 @@ void UDetectionComponent::BeginPlay()
 
     if (DetectionWidgetComponent && GetOwner())
     {
-        USceneComponent* RootComp = GetOwner()->GetRootComponent();
-        if (RootComp)
-        {
-            DetectionWidgetComponent->AttachToComponent(RootComp, FAttachmentTransformRules::KeepRelativeTransform);
-            DetectionWidgetComponent->SetRelativeLocation(FVector(0, 0, 120));
-        }
+        USceneComponent* Root = GetOwner()->GetRootComponent();
+        DetectionWidgetComponent->AttachToComponent(Root, FAttachmentTransformRules::KeepRelativeTransform);
+        DetectionWidgetComponent->SetRelativeLocation(FVector(0, 0, 120));
         if (DetectionWidgetClass)
         {
             DetectionWidgetComponent->SetWidgetClass(DetectionWidgetClass);
         }
+        DetectionWidgetComponent->SetVisibility(false, true);
     }
 
-    if (GetOwner() && GetOwner()->HasAuthority())
-    {
-        GetWorld()->GetTimerManager().SetTimer(DetectionTickHandle, this, &UDetectionComponent::DetectionProgressTick, 0.05f, true);
-    }
-}
-
-void UDetectionComponent::OnFullyDetectedEvent()
-{
-    if (CurrentDetector)
-    {
-        if (CurrentDetector->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
-        {
-            IDetectable::Execute_OnFullyDetected(CurrentDetector, GetOwner());
-        }
-    }
-}
-
-void UDetectionComponent::SetDetectionWidgetClass(TSubclassOf<UUserWidget> WidgetClass)
-{
-    DetectionWidgetClass = WidgetClass;
-    if (DetectionWidgetComponent && DetectionWidgetClass)
-    {
-        DetectionWidgetComponent->SetWidgetClass(DetectionWidgetClass);
-    }
+    DetectionElapsed = 0.f;
+    bFullyDetected = false;
+    bDetectionInProgress = false;
+    CurrentDetector = nullptr;
 }
 
 void UDetectionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-    DOREPLIFETIME(UDetectionComponent, DetectionWidgetComponent); // Note: this is actually not necessary, see below
+    DOREPLIFETIME(UDetectionComponent, bDetectionInProgress);
+    DOREPLIFETIME(UDetectionComponent, bFullyDetected);
     DOREPLIFETIME(UDetectionComponent, CurrentDetector);
-    DOREPLIFETIME_CONDITION_NOTIFY(UDetectionComponent, DetectionProgress, COND_None, REPNOTIFY_Always);
-    DOREPLIFETIME_CONDITION_NOTIFY(UDetectionComponent, bIsFullyDetected, COND_None, REPNOTIFY_Always);
 }
 
-void UDetectionComponent::OnRep_DetectionProgress()
+void UDetectionComponent::StartDetection(AActor* Detector)
 {
-    UpdateDetectionWidget();
+    if (!GetOwner() || !Detector) return;
+    if (GetOwnerRole() != ROLE_Authority) return;
+
+    CurrentDetector = Detector;
+    bFullyDetected = false;
+    bDetectionInProgress = true;
+    MulticastResetDetectionElapsed();
+    SetComponentTickEnabled(true);
 }
 
-void UDetectionComponent::OnRep_IsFullyDetected()
+void UDetectionComponent::StopDetection(AActor* Detector)
 {
-    UpdateDetectionWidget();
+    if (GetOwnerRole() != ROLE_Authority) return;
+
+    bDetectionInProgress = false; // Will now fall/drain in Tick
+    // Don't reset DetectionElapsed here!
+    SetComponentTickEnabled(true);
 }
 
-void UDetectionComponent::OnDetected(AActor* Detector)
+void UDetectionComponent::MulticastResetDetectionElapsed_Implementation()
 {
-    if (!Detector)
-        return;
-    if (CurrentDetector == nullptr || CurrentDetector == Detector)
+    DetectionElapsed = 0.f;
+    SetComponentTickEnabled(true);
+}
+
+float UDetectionComponent::GetDetectionProgress() const
+{
+    return FMath::Clamp(DetectionElapsed / FMath::Max(DetectionDuration, 0.01f), 0.f, 1.f);
+}
+
+void UDetectionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+    bool bShow = false;
+    if (bDetectionInProgress)
     {
-        CurrentDetector = Detector;
-        bIsLosingSight = false;
-    }
-}
-
-void UDetectionComponent::OnLost(AActor* Detector)
-{
-    if (CurrentDetector && Detector == CurrentDetector)
-    {
-        bIsLosingSight = true;
-    }
-}
-
-void UDetectionComponent::DetectionProgressTick()
-{
-    if (CurrentDetector)
-    {
-        bool bCanDetect = false;
-        if (CurrentDetector->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
+        DetectionElapsed += DeltaTime;
+        if (DetectionElapsed >= DetectionDuration)
         {
-            bCanDetect = IDetectable::Execute_IsActorAlreadyDetected(CurrentDetector, GetOwner());
+            DetectionElapsed = DetectionDuration;
+            bDetectionInProgress = false;
+            bFullyDetected = true;
+            FullyDetectedElapsed = 0.f; // Start "hold bar on full" timer
+            SetComponentTickEnabled(true); // Keep ticking until bar hide
+            HandleFullyDetected();
         }
-
-        float dt = 0.05f;
-        float rate = dt / FMath::Max(DetectionDuration, 0.01f);
-
-        if (bCanDetect && !bIsLosingSight && !bIsFullyDetected)
+        bShow = true;
+    }
+    else if (bFullyDetected)
+    {
+        FullyDetectedElapsed += DeltaTime;
+        DetectionElapsed = DetectionDuration; // force bar to stay full
+        bShow = true;
+        if (FullyDetectedElapsed >= DetectionBarHideDelay)
         {
-            DetectionProgress = FMath::Min(DetectionProgress + rate, 1.0f);
-            if (DetectionProgress >= 1.0f && !bIsFullyDetected)
-            {
-                DetectionProgress = 1.0f;
-                bIsFullyDetected = true;
-                OnFullyDetectedEvent();
-            }
-        }
-        else if ((!bCanDetect || bIsLosingSight) && !bIsFullyDetected)
-        {
-            DetectionProgress = FMath::Max(DetectionProgress - rate * 0.5f, 0.0f);
-            if (DetectionProgress <= 0.0f)
-            {
-                DetectionProgress = 0.0f;
-                CurrentDetector = nullptr;
-                bIsLosingSight = false;
-            }
+            bFullyDetected = false;
+            DetectionElapsed = 0.f;
+            FullyDetectedElapsed = 0.f;
+            SetComponentTickEnabled(false);
+            bShow = false;
         }
     }
     else
     {
-        DetectionProgress = 0.f;
-        bIsLosingSight = false;
+        // the fallback draining logic
+        DetectionElapsed = FMath::Max(0.f, DetectionElapsed - DeltaTime);
+        if (DetectionElapsed > 0.f)
+            bShow = true;
+        else
+            SetComponentTickEnabled(false);
     }
 
     if (DetectionWidgetComponent)
+        DetectionWidgetComponent->SetVisibility(bShow, true);
+
+    UpdateWidget();
+}
+
+void UDetectionComponent::UpdateWidget()
+{
+    if (!DetectionWidgetComponent) return;
+    if (!CachedWidget)
     {
-        DetectionWidgetComponent->SetVisibility(ShouldShowDetectionWidget());
+        if (UUserWidget* BaseWidget = DetectionWidgetComponent->GetWidget())
+            CachedWidget = Cast<UDetectionActorWidget>(BaseWidget);
     }
+    if (!CachedWidget) return;
 
-    UpdateDetectionWidget();
+    float Progress = GetDetectionProgress();
+    CachedWidget->SetDetectionProgress(Progress, bFullyDetected);
 }
 
-void UDetectionComponent::UpdateDetectionWidget()
+void UDetectionComponent::HandleFullyDetected()
 {
-    if (!DetectionWidgetComponent)
-        return;
-    UUserWidget* Widget = DetectionWidgetComponent->GetWidget();
-    if (!Widget)
-        return;
-
-    UDetectionActorWidget* DetectionWidget = Cast<UDetectionActorWidget>(Widget);
-    if (!DetectionWidget)
-        return;
-
-    DetectionWidget->SetDetectionProgress(DetectionProgress, bIsFullyDetected);
-}
-
-bool UDetectionComponent::ShouldShowDetectionWidget() const
-{
-    return DetectionProgress > 0.01f || bIsFullyDetected;
-}
-
-float UDetectionComponent::GetDetectionProgressPercent() const
-{
-    return DetectionProgress;
-}
-
-FLinearColor UDetectionComponent::GetDetectionBarColor() const
-{
-    return DetectionProgress >= 1.0f ? FLinearColor::Red : FLinearColor(1.f, 0.85f, 0.15f);
+    if (CurrentDetector && CurrentDetector->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
+    {
+        IDetectable::Execute_OnFullyDetected(CurrentDetector, GetOwner());
+    }
 }
