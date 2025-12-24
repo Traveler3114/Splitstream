@@ -106,7 +106,7 @@ void ULockPickAbilityTask::OnMouseX(float Axis)
     if (!bIsLockPicking) return;
     LockPickInputVector.X += Axis * 2.0f;
     LockPickInputVector = LockPickInputVector.GetClampedToMaxSize(150.f);
-    LockPickDialAngle = FMath::Atan2(LockPickInputVector.Y, LockPickInputVector.X) * (180.f / PI);
+    LockPickDialAngle = - FMath::Atan2(LockPickInputVector.Y, LockPickInputVector.X) * (180.f / PI);
     if (LockPickDialAngle < 0) LockPickDialAngle += 360.f;
 }
 
@@ -115,7 +115,7 @@ void ULockPickAbilityTask::OnMouseY(float Axis)
     if (!bIsLockPicking) return;
     LockPickInputVector.Y += Axis * 2.0f;
     LockPickInputVector = LockPickInputVector.GetClampedToMaxSize(150.f);
-    LockPickDialAngle = FMath::Atan2(LockPickInputVector.Y, LockPickInputVector.X) * (180.f / PI);
+    LockPickDialAngle = - FMath::Atan2(LockPickInputVector.Y, LockPickInputVector.X) * (180.f / PI);
     if (LockPickDialAngle < 0) LockPickDialAngle += 360.f;
 }
 
