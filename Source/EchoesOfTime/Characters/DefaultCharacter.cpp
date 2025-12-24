@@ -49,7 +49,6 @@ ADefaultCharacter::ADefaultCharacter()
 
     EquippedItemMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("EquippedItemMeshComp"));
     EquippedItemMeshComp->SetupAttachment(GetMesh(), TEXT("HandGrip_R"));
-    EquippedItemMeshComp->SetIsReplicated(true);
     EquippedItemMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
@@ -326,28 +325,24 @@ void ADefaultCharacter::OnInventoryChanged(const TArray<FInventorySlot>& Slots)
 void ADefaultCharacter::UpdateEquippedItemMesh()
 {
     if (!InventoryComponent || !EquippedItemMeshComp)
-    {
         return;
-    }
 
     FInventorySlot ActiveSlot = InventoryComponent->GetActiveItem();
     UItemBase* ItemAsset = ActiveSlot.ItemAsset;
+    UStaticMesh* NewMesh = (ItemAsset && ItemAsset->ItemMesh) ? ItemAsset->ItemMesh : nullptr;
 
-    // 1) SERVER: set mesh & transforms (replicated to clients)
-    if (HasAuthority())
+    if (EquippedItemMeshComp->GetStaticMesh() != NewMesh)
     {
-        if (ItemAsset && ItemAsset->ItemMesh)
-        {
-            EquippedItemMeshComp->SetStaticMesh(ItemAsset->ItemMesh);
-            EquippedItemMeshComp->SetWorldScale3D(ItemAsset->PickupMeshScale);
-            EquippedItemMeshComp->SetRelativeRotation(ItemAsset->PickupMeshRotation);
-            EquippedItemMeshComp->SetRelativeLocation(FVector(-0.000000, 0.500000, 2.208336));
-            EquippedItemMeshComp->SetRelativeRotation(FRotator(0.528160, -3.449450, 8.694707));
-        }
-        else
-        {
-            EquippedItemMeshComp->SetStaticMesh(nullptr);
-        }
+        EquippedItemMeshComp->SetStaticMesh(nullptr);
+        EquippedItemMeshComp->SetStaticMesh(NewMesh);
+    }
+
+    if (NewMesh && ItemAsset)
+    {
+        EquippedItemMeshComp->SetWorldScale3D(ItemAsset->PickupMeshScale);
+        EquippedItemMeshComp->SetRelativeRotation(ItemAsset->PickupMeshRotation);
+        EquippedItemMeshComp->SetRelativeLocation(FVector(-0.000000, 0.500000, 2.208336));
+        EquippedItemMeshComp->SetRelativeRotation(FRotator(0.528160, -3.449450, 8.694707));
     }
 
     // 2) ALL (server + clients): compute ADS socket -> aim coordinates
