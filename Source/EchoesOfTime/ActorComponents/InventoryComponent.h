@@ -30,7 +30,7 @@ public:
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
-    UItemBase* DefaultItemAsset;
+    TArray<UItemBase*> DefaultItemAssets;
 
     UPROPERTY(BlueprintAssignable, Category = "Inventory")
     FOnInventoryChanged OnInventoryChanged;

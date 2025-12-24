@@ -38,9 +38,16 @@ void UInventoryComponent::BeginPlay()
     Super::BeginPlay();
     Slots.SetNum(SlotCount);
 
-    if (GetOwner()->HasAuthority() && DefaultItemAsset)
+    if (GetOwner()->HasAuthority())
     {
-        AddItem(DefaultItemAsset, FGuid::NewGuid());
+        // New: Add all default items
+        for (UItemBase* Item : DefaultItemAssets)
+        {
+            if (Item)
+            {
+                AddItem(Item, FGuid::NewGuid());
+            }
+        }
     }
 }
 
