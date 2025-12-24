@@ -4,6 +4,7 @@
 #include "ActorComponents/SearchComponent.h"
 #include "ActorComponents/DetectionComponent.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "Perception/AISense_Sight.h"
 #include "Engine/Engine.h"
 
 AItemPickup::AItemPickup()
@@ -25,6 +26,12 @@ AItemPickup::AItemPickup()
     ItemInstanceID.Invalidate();
 
     StimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("StimuliSource"));
+    if (StimuliSourceComponent)
+    {
+        StimuliSourceComponent->bAutoRegister = true;
+        // Register to be sensed by sight by default (you can add other senses if needed)
+        StimuliSourceComponent->RegisterForSense(UAISense_Sight::StaticClass());
+    }
 }
 
 void AItemPickup::BeginPlay()
@@ -43,7 +50,12 @@ void AItemPickup::BeginPlay()
     {
         SearchComp->OnSearchComplete.AddDynamic(this, &AItemPickup::OnSearchComplete);
     }
-
+    if (StimuliSourceComponent)
+    {
+        StimuliSourceComponent->bAutoRegister = true;
+        // Register to be sensed by sight by default (you can add other senses if needed)
+        StimuliSourceComponent->RegisterForSense(UAISense_Sight::StaticClass());
+    }
 }
 
 void AItemPickup::InitFromItemData(UItemBase* InItemData, FGuid InInstanceID)

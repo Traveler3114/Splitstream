@@ -19,6 +19,14 @@ UDetectionComponent::UDetectionComponent()
     DetectionWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("DetectionWidgetComp"));
     DetectionWidgetComponent->SetWidgetSpace(EWidgetSpace::Screen);
     DetectionWidgetComponent->SetDrawAtDesiredSize(true);
+
+	//REMEMBBER WHEN CHANGING PATH OF THE WIDGET TO UPDATE THIS PATH TOO!!!!
+    static ConstructorHelpers::FClassFinder<UDetectionActorWidget> WidgetFinder(TEXT("/Game/Blueprints/Widgets/WBP_DetectionActorWidget"));
+    if (WidgetFinder.Class)
+    {
+        DetectionWidgetClass = WidgetFinder.Class;
+        DetectionWidgetComponent->SetWidgetClass(DetectionWidgetClass);
+    }
 }
 
 void UDetectionComponent::BeginPlay()
