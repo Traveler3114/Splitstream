@@ -82,6 +82,19 @@ void AItemPickup::Interact_Implementation(AActor* Interactor)
     TryPickup(Interactor);
 }
 
+void AItemPickup::CancelInteract_Implementation(AActor* Interactor)
+{
+    if (SearchComp)
+    {
+        SearchComp->CancelInteract(Interactor);
+    }
+}
+
+bool AItemPickup::IsProgressiveInteract_Implementation()
+{
+    return SearchComp != nullptr;
+}
+
 void AItemPickup::TryPickup(AActor* Interactor)
 {
     if (!HasAuthority()) return;
