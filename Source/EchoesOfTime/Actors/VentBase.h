@@ -26,6 +26,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Device")
 	class USearchComponent* SearchComponent;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Detection")
+    class UDetectionComponent* DetectionComponent;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	class UAIPerceptionStimuliSourceComponent* StimuliSourceComponent;
 protected:
@@ -38,12 +41,6 @@ protected:
 
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Vent")
 	void CloseVent();
-
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Vent")
-	void OnDetectionStart(AActor* Detector);
-
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Vent")
-	void OnDetectionEnd(AActor* Detector);
 
 	virtual void Interact_Implementation(AActor* Interactor) override;
 	virtual void CancelInteract_Implementation(AActor* Interactor) override;

@@ -3,6 +3,7 @@
 
 #include "VentBase.h"
 #include "ActorComponents/SearchComponent.h"
+#include "ActorComponents/DetectionComponent.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 
 
@@ -22,6 +23,9 @@ AVentBase::AVentBase()
     SearchComponent = CreateDefaultSubobject<USearchComponent>(TEXT("SearchComponent"));
     SearchComponent->SetIsReplicated(true);
 
+    DetectionComponent = CreateDefaultSubobject<UDetectionComponent>(TEXT("DetectionComponent"));
+    DetectionComponent->SetIsReplicated(true);
+
     StimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("StimuliSource"));
 
 }
@@ -38,14 +42,11 @@ void AVentBase::BeginPlay()
 
 void AVentBase::OnDetected_Implementation(AActor* Detector)
 {
-    if(bIsOpen)
-    OnDetectionStart(Detector);
+    if (DetectionComponent && bIsOpen) DetectionComponent->OnDetected(Detector);
 }
-
 void AVentBase::OnLost_Implementation(AActor* Detector)
 {
-    if (bIsOpen)
-        OnDetectionEnd(Detector);
+    if (DetectionComponent && bIsOpen) DetectionComponent->OnLost(Detector);
 }
 
 void AVentBase::Interact_Implementation(AActor* Interactor)
