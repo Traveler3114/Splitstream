@@ -57,13 +57,20 @@ void ADefaultPlayerController::SetupOverlay()
     // Alarm/pre-alarm event handlers and immediate state update
     if (ADefaultGameState* GS = GetWorld() ? GetWorld()->GetGameState<ADefaultGameState>() : nullptr)
     {
+        GS->OnAlarmStarted.RemoveDynamic(this, &ADefaultPlayerController::HandleAlarmStarted);
         GS->OnAlarmStarted.AddDynamic(this, &ADefaultPlayerController::HandleAlarmStarted);
+        GS->OnAlarmCanceled.RemoveDynamic(this, &ADefaultPlayerController::HandleAlarmCanceled);
         GS->OnAlarmCanceled.AddDynamic(this, &ADefaultPlayerController::HandleAlarmCanceled);
+        GS->OnPreAlarmStarted.RemoveDynamic(this, &ADefaultPlayerController::HandlePreAlarmStarted);
         GS->OnPreAlarmStarted.AddDynamic(this, &ADefaultPlayerController::HandlePreAlarmStarted);
+        GS->OnPreAlarmCanceled.RemoveDynamic(this, &ADefaultPlayerController::HandlePreAlarmCanceled);
         GS->OnPreAlarmCanceled.AddDynamic(this, &ADefaultPlayerController::HandlePreAlarmCanceled);
+        GS->OnMoneyCollectedChanged.RemoveDynamic(this, &ADefaultPlayerController::OnMoneyCollectedChanged);
         GS->OnMoneyCollectedChanged.AddDynamic(this, &ADefaultPlayerController::OnMoneyCollectedChanged);
-        OnMoneyCollectedChanged(GS->CurrentMoneyCollected, GS->TargetMoneyAmount);
+        GS->OnGuardRepairETAStarted.RemoveDynamic(this, &ADefaultPlayerController::HandleRepairETAStarted);
         GS->OnGuardRepairETAStarted.AddDynamic(this, &ADefaultPlayerController::HandleRepairETAStarted);
+        OnMoneyCollectedChanged(GS->CurrentMoneyCollected, GS->TargetMoneyAmount);
+
 
         // --- The critical part: immediately update alarm/pre-alarm UI
         if (GS->bAlarmActive && GS->AlarmEndTime > 0.f)
