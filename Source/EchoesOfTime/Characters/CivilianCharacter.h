@@ -24,8 +24,6 @@ public:
 
     void OnHealthChanged(const struct FOnAttributeChangeData& Data);
 
-    
-
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Civilian")
     FString CivilianName;
 
@@ -40,6 +38,9 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     UAbilitySystemComponent* AbilitySystemComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detection")
+    class UDetectionComponent* DetectionComponent;
 
     UPROPERTY()
     UPlayerAttributeSet* AttributeSet;
@@ -60,10 +61,14 @@ public:
 
     AActor* DetectedActor = nullptr;
 
+	virtual void OnDetected_Implementation(AActor* Detector) override;
+	virtual void OnLost_Implementation(AActor* Detector) override;
 
     virtual void OnFullyDetected_Implementation(AActor* DetectingActor) override;
 
     virtual bool IsActorAlreadyDetected_Implementation(AActor* DetectingActor) const override;
+
+    bool bIsDead = false;
 
 protected:
     UFUNCTION()

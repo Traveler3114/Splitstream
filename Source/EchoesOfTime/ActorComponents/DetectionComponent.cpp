@@ -17,7 +17,7 @@ UDetectionComponent::UDetectionComponent()
     PrimaryComponentTick.bCanEverTick = true;
 
     DetectionWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("DetectionWidgetComp"));
-    DetectionWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
+    DetectionWidgetComponent->SetWidgetSpace(EWidgetSpace::Screen);
     DetectionWidgetComponent->SetDrawAtDesiredSize(true);
 }
 

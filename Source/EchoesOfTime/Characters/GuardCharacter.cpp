@@ -16,6 +16,7 @@
 #include "ActorComponents/ProximityHackComponent.h"
 #include "AbilitySystem/EOTGameplayTags.h"
 #include "Components/CapsuleComponent.h"
+#include "ActorComponents/DetectionComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 AGuardCharacter::AGuardCharacter()
@@ -42,7 +43,12 @@ AGuardCharacter::AGuardCharacter()
 
     NameText = CreateDefaultSubobject<UTextRenderComponent>(TEXT("NameText"));
     NameText->SetupAttachment(GetMesh());
+
+    DetectionComponent = CreateDefaultSubobject<UDetectionComponent>(TEXT("DetectionComponent"));
+    DetectionComponent->SetIsReplicated(true);
 }
+
+
 
 void AGuardCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
 {
@@ -176,7 +182,7 @@ void AGuardCharacter::BeginPlay()
 
 void AGuardCharacter::OnDetected_Implementation(AActor* Detector)
 {
-    if (!bIsInCameraView)
+    if (!bIsInCameraView && !bIsDead)
     {
         bIsInCameraView = true;
         if (SpawnedGhost)
@@ -184,11 +190,12 @@ void AGuardCharacter::OnDetected_Implementation(AActor* Detector)
             SpawnedGhost->UpdateGhostVisibility();
         }
     }
+    if (DetectionComponent && !(DetectionComponent->bDetectionInProgress) && !(DetectionComponent->bFullyDetected) && bIsDead) DetectionComponent->StartDetection(Detector);
 }
 
 void AGuardCharacter::OnLost_Implementation(AActor* Detector)
 {
-    if (bIsInCameraView)
+    if (bIsInCameraView && !bIsDead)
     {
         bIsInCameraView = false;
         if (SpawnedGhost)
@@ -196,6 +203,7 @@ void AGuardCharacter::OnLost_Implementation(AActor* Detector)
             SpawnedGhost->UpdateGhostVisibility();
         }
     }
+    if (DetectionComponent && !(DetectionComponent->bDetectionInProgress) && !(DetectionComponent->bFullyDetected) && bIsDead) DetectionComponent->StopDetection(Detector);
 }
 
 void AGuardCharacter::OnFullyDetected_Implementation(AActor* ActorDetected)

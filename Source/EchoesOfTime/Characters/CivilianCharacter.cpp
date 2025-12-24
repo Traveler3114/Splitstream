@@ -8,6 +8,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/StateTreeComponent.h"
+#include "ActorComponents/DetectionComponent.h"
 #include "AbilitySystem/EOTGameplayTags.h"
 
 ACivilianCharacter::ACivilianCharacter()
@@ -31,6 +32,18 @@ ACivilianCharacter::ACivilianCharacter()
 
     AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
     AttributeSet = CreateDefaultSubobject<UPlayerAttributeSet>(TEXT("AttributeSet"));
+
+    DetectionComponent = CreateDefaultSubobject<UDetectionComponent>(TEXT("DetectionComponent"));
+    DetectionComponent->SetIsReplicated(true);
+}
+
+void ACivilianCharacter::OnDetected_Implementation(AActor* Detector)
+{
+    if (DetectionComponent && !(DetectionComponent->bDetectionInProgress) && !(DetectionComponent->bFullyDetected) && bIsDead) DetectionComponent->StartDetection(Detector);
+}
+void ACivilianCharacter::OnLost_Implementation(AActor* Detector)
+{
+    if (DetectionComponent && !(DetectionComponent->bDetectionInProgress) && !(DetectionComponent->bFullyDetected) && bIsDead) DetectionComponent->StopDetection(Detector);
 }
 
 void ACivilianCharacter::BeginPlay()
@@ -63,6 +76,7 @@ void ACivilianCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
 {
     if (Data.NewValue <= 0.f)
     {
+        bIsDead = true;
         // Detach/Destroy controller removes AI or Player control and all brain logic
         DetachFromControllerPendingDestroy();
 

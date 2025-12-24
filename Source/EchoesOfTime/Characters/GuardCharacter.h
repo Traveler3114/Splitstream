@@ -25,6 +25,9 @@ public:
 
     void OnHealthChanged(const struct FOnAttributeChangeData& Data);
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detection")
+    class UDetectionComponent* DetectionComponent;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard")
     bool bIsSecurityChief = false;
 
