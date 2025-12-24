@@ -23,6 +23,7 @@ AVentBase::AVentBase()
     SearchComponent->SetIsReplicated(true);
 
     StimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("StimuliSource"));
+
 }
 
 // Called when the game starts or when spawned
@@ -37,13 +38,14 @@ void AVentBase::BeginPlay()
 
 void AVentBase::OnDetected_Implementation(AActor* Detector)
 {
+    if(bIsOpen)
+    OnDetectionStart(Detector);
+}
+
+void AVentBase::OnLost_Implementation(AActor* Detector)
+{
     if (bIsOpen)
-    {
-        if (Detector && Detector->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
-        {
-            IDetectable::Execute_OnFullyDetected(Detector, this);
-        }
-    }
+        OnDetectionEnd(Detector);
 }
 
 void AVentBase::Interact_Implementation(AActor* Interactor)

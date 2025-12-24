@@ -15,6 +15,7 @@
 #include "Components/StateTreeComponent.h"
 #include "ActorComponents/ProximityHackComponent.h"
 #include "AbilitySystem/EOTGameplayTags.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 AGuardCharacter::AGuardCharacter()
@@ -202,27 +203,34 @@ void AGuardCharacter::OnFullyDetected_Implementation(AActor* ActorDetected)
     if (bIsDead) return;
     TargetActor = ActorDetected;
 
-    // Pawn = player/AI threat
     if (ActorDetected->IsA(APawn::StaticClass()))
     {
-        // Do logic for DefaultCharacter/other pawns
-        // Example: escalate alarm, chase, start combat
+        AController* GuardController = GetController();
+        if (GuardController)
+        {
+            UStateTreeComponent* StateTreeComp = GuardController->FindComponentByClass<UStateTreeComponent>();
+            if (StateTreeComp)
+            {
+                FStateTreeEvent MyEvent(TAG_StateTree_Event_FullyDetected_Pawn);
+                StateTreeComp->SendStateTreeEvent(MyEvent);
+            }
+        }
     }
     else
     {
-       UE_LOG(LogTemp, Warning, TEXT("Guard fully detected an illegal actor!"));
-    }
-
-    AController* GuardController = GetController();
-    if (GuardController)
-    {
-        UStateTreeComponent* StateTreeComp = GuardController->FindComponentByClass<UStateTreeComponent>();
-        if (StateTreeComp)
+        AController* GuardController = GetController();
+        if (GuardController)
         {
-            FStateTreeEvent MyEvent(TAG_StateTree_Event_FullyDetected);
-            StateTreeComp->SendStateTreeEvent(MyEvent);
+            UStateTreeComponent* StateTreeComp = GuardController->FindComponentByClass<UStateTreeComponent>();
+            if (StateTreeComp)
+            {
+                FStateTreeEvent MyEvent(TAG_StateTree_Event_FullyDetected_Actor);
+                StateTreeComp->SendStateTreeEvent(MyEvent);
+            }
         }
     }
+
+
 
     if (HasAuthority())
     {

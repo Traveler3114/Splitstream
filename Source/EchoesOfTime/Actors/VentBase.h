@@ -39,6 +39,11 @@ protected:
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Vent")
 	void CloseVent();
 
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Vent")
+	void OnDetectionStart(AActor* Detector);
+
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Vent")
+	void OnDetectionEnd(AActor* Detector);
 
 	virtual void Interact_Implementation(AActor* Interactor) override;
 	virtual void CancelInteract_Implementation(AActor* Interactor) override;
@@ -46,6 +51,7 @@ protected:
 	virtual void SetHighlighted_Implementation(bool bHighlight) override;
 
 	virtual void OnDetected_Implementation(AActor* Detector) override;
+	virtual void OnLost_Implementation(AActor* Detector) override;
 
 	UFUNCTION()
 	virtual void OnSearchComplete();

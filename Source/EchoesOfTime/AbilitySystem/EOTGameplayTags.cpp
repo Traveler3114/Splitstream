@@ -30,7 +30,8 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_PastEcho_Deactivated, "GameplayCue.PastEc
 UE_DEFINE_GAMEPLAY_TAG(TAG_Weapon_Ability_Pistol_Fire, "Weapon.Ability.Pistol.Fire");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Weapon_Ability_Pistol_Aim, "Weapon.Ability.Pistol.Aim");
 
-UE_DEFINE_GAMEPLAY_TAG(TAG_StateTree_Event_FullyDetected, "StateTree.Event.FullyDetected");
+UE_DEFINE_GAMEPLAY_TAG(TAG_StateTree_Event_FullyDetected_Pawn, "StateTree.Event.FullyDetected.Pawn");
+UE_DEFINE_GAMEPLAY_TAG(TAG_StateTree_Event_FullyDetected_Actor, "StateTree.Event.FullyDetected.Actor");
 UE_DEFINE_GAMEPLAY_TAG(TAG_StateTree_Event_RepairNeeded, "StateTree.Event.RepairNeeded");
 
 

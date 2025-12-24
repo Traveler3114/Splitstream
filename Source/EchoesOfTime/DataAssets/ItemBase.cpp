@@ -8,6 +8,7 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/PlayerController.h"
 #include "AbilitySystemInterface.h"
+#include "ActorComponents/InventoryComponent.h"
 #include "AbilitySystemComponent.h"
 #include "GameplayEffect.h"
 

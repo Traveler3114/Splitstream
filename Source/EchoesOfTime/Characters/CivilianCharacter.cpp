@@ -145,23 +145,28 @@ void ACivilianCharacter::OnFullyDetected_Implementation(AActor* ActorDetected)
 
     if (ActorDetected->IsA(APawn::StaticClass()))
     {
-        // Do logic for DefaultCharacter/other pawns
-        // Example: escalate alarm, chase, start combat
+        AController* GuardController = GetController();
+        if (GuardController)
+        {
+            UStateTreeComponent* StateTreeComp = GuardController->FindComponentByClass<UStateTreeComponent>();
+            if (StateTreeComp)
+            {
+                FStateTreeEvent MyEvent(TAG_StateTree_Event_FullyDetected_Pawn);
+                StateTreeComp->SendStateTreeEvent(MyEvent);
+            }
+        }
     }
     else
     {
-        // Evidence or world-interactable
-        // Example: raise a different StateTree event, investigate, call for repair/etc
-    }
-
-    AController* CivilianController = GetController();
-    if (CivilianController)
-    {
-        UStateTreeComponent* StateTreeComp = CivilianController->FindComponentByClass<UStateTreeComponent>();
-        if (StateTreeComp)
+        AController* GuardController = GetController();
+        if (GuardController)
         {
-            FStateTreeEvent MyEvent(TAG_StateTree_Event_FullyDetected);
-            StateTreeComp->SendStateTreeEvent(MyEvent);
+            UStateTreeComponent* StateTreeComp = GuardController->FindComponentByClass<UStateTreeComponent>();
+            if (StateTreeComp)
+            {
+                FStateTreeEvent MyEvent(TAG_StateTree_Event_FullyDetected_Actor);
+                StateTreeComp->SendStateTreeEvent(MyEvent);
+            }
         }
     }
 }
