@@ -11,7 +11,9 @@
 #include "ActorComponents/InventoryComponent.h"
 #include "InputActionValue.h"
 #include "Net/UnrealNetwork.h"
+#include "GameplayEffectTypes.h"
 #include "Kismet/GameplayStatics.h"
+#include "AbilitySystem/AttributeSets/PlayerAttributeSet.h"
 #include "AbilitySystem/EOTGameplayTags.h"
 #include "Interfaces/IDetectable.h"
 #include "EngineUtils.h"
@@ -183,6 +185,18 @@ void ADefaultCharacter::InitializeAbilitySystem()
                 TAG_Character_Status_Illegal,
                 EGameplayTagEventType::NewOrRemoved
             ).AddUObject(this, &ADefaultCharacter::OnIllegalTagChanged);
+            
+            AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+                UPlayerAttributeSet::GetWalkSpeedAttribute()
+            ).AddUObject(this, &ADefaultCharacter::OnWalkSpeedChanged);
+
+            AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+                UPlayerAttributeSet::GetRunSpeedAttribute()
+            ).AddUObject(this, &ADefaultCharacter::OnRunSpeedChanged);
+
+            AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+                UPlayerAttributeSet::GetCrouchSpeedAttribute()
+            ).AddUObject(this, &ADefaultCharacter::OnCrouchSpeedChanged);
         }
     }
     if (HasAuthority() && AttributeInitGE)
@@ -198,6 +212,29 @@ void ADefaultCharacter::InitializeAbilitySystem()
             }
         }
     }
+}
+
+void ADefaultCharacter::OnWalkSpeedChanged(const FOnAttributeChangeData& ChangeData)
+{
+    // Only update this if NOT sprinting/crouching
+    if (!bIsSprinting && !GetCharacterMovement()->IsCrouching())
+    {
+        GetCharacterMovement()->MaxWalkSpeed = ChangeData.NewValue;
+    }
+}
+
+void ADefaultCharacter::OnRunSpeedChanged(const FOnAttributeChangeData& ChangeData)
+{
+    if (bIsSprinting)
+        GetCharacterMovement()->MaxWalkSpeed = ChangeData.NewValue;
+}
+
+void ADefaultCharacter::OnCrouchSpeedChanged(const FOnAttributeChangeData& ChangeData)
+{
+    if (GetCharacterMovement()->IsCrouching())
+        GetCharacterMovement()->MaxWalkSpeed = ChangeData.NewValue;
+        
+    GetCharacterMovement()->MaxWalkSpeedCrouched = ChangeData.NewValue; // Always update this property
 }
 
 void ADefaultCharacter::GrantAbilitiesFromDefaultSet()
@@ -720,15 +757,42 @@ void ADefaultCharacter::Jump()
     Super::Jump();
 }
 
+const UPlayerAttributeSet* ADefaultCharacter::GetPlayerAttributeSet() const
+{
+    return AbilitySystemComponent
+        ? Cast<const UPlayerAttributeSet>(AbilitySystemComponent->GetAttributeSet(UPlayerAttributeSet::StaticClass()))
+        : nullptr;
+}
+
 void ADefaultCharacter::StartCrouch()
 {
     if (!GetCharacterMovement()->IsFalling())
         Crouch();
+
+    // Set crouch speed from GAS attribute
+    const UPlayerAttributeSet* AttrSet = GetPlayerAttributeSet();
+    if (AttrSet && GetCharacterMovement())
+    {
+        GetCharacterMovement()->MaxWalkSpeed = AttrSet->GetCrouchSpeed();
+        GetCharacterMovement()->MaxWalkSpeedCrouched = AttrSet->GetCrouchSpeed();
+    }
 }
 
 void ADefaultCharacter::StopCrouching()
 {
     UnCrouch();
+
+    // Restore speed from GAS attribute
+    const UPlayerAttributeSet* AttrSet = GetPlayerAttributeSet();
+    if (AttrSet && GetCharacterMovement())
+    {
+        if (bIsSprinting)
+            GetCharacterMovement()->MaxWalkSpeed = AttrSet->GetRunSpeed();
+        else
+            GetCharacterMovement()->MaxWalkSpeed = AttrSet->GetWalkSpeed();
+
+        GetCharacterMovement()->MaxWalkSpeedCrouched = AttrSet->GetCrouchSpeed();
+    }
 }
 
 // ----------- SPRINT & CAMERA ROTATION -----------
@@ -759,14 +823,24 @@ void ADefaultCharacter::ServerStopSprint_Implementation()
 
 void ADefaultCharacter::OnRep_SprintState()
 {
+    const UPlayerAttributeSet* AttrSet = GetPlayerAttributeSet();
+    if (!GetCharacterMovement() || !AttrSet)
+        return;
+
     if (bIsSprinting)
     {
-        GetCharacterMovement()->MaxWalkSpeed = 500.f;
+        GetCharacterMovement()->MaxWalkSpeed = AttrSet->GetRunSpeed();
+    }
+    else if (GetCharacterMovement()->IsCrouching())
+    {
+        GetCharacterMovement()->MaxWalkSpeed = AttrSet->GetCrouchSpeed();
     }
     else
     {
-        GetCharacterMovement()->MaxWalkSpeed = 250.f;
+        GetCharacterMovement()->MaxWalkSpeed = AttrSet->GetWalkSpeed();
     }
+    // Always update crouch speed property
+    GetCharacterMovement()->MaxWalkSpeedCrouched = AttrSet->GetCrouchSpeed();
 }
 
 void ADefaultCharacter::ServerCameraRotationUpdate_Implementation(float NewPitch)

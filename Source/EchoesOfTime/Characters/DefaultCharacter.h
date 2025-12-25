@@ -9,9 +9,10 @@
 #include "DataAssets/InputMappingSet.h"
 #include "DataAssets/AbilitySets/AbilityInputSet.h"
 #include "DataAssets/AbilitySets/DefaultGASet.h"
+#include "AbilitySystem/AttributeSets/PlayerAttributeSet.h"
 #include "Components/TimelineComponent.h"
 #include "Curves/CurveFloat.h"
-
+#include "GameplayEffect.h"
 #include "DefaultCharacter.generated.h"
 
 class UCameraComponent;
@@ -30,6 +31,12 @@ public:
     ADefaultCharacter();
 
     AActor* ProgressiveActor=nullptr;
+
+    void OnWalkSpeedChanged(const FOnAttributeChangeData& ChangeData);
+    void OnRunSpeedChanged(const FOnAttributeChangeData& ChangeData);
+    void OnCrouchSpeedChanged(const FOnAttributeChangeData& ChangeData);
+
+    const UPlayerAttributeSet* GetPlayerAttributeSet() const;
 
     virtual void PostInitializeComponents() override;
     virtual void BeginPlay() override;

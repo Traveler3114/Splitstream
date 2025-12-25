@@ -28,6 +28,24 @@ public:
         UFUNCTION()
     void OnRep_Health(const FGameplayAttributeData& OldValue);
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Attributes", ReplicatedUsing = OnRep_WalkSpeed)
+    FGameplayAttributeData WalkSpeed;
+    ATTRIBUTE_ACCESSORS(UPlayerAttributeSet, WalkSpeed)
+    UFUNCTION()
+    void OnRep_WalkSpeed(const FGameplayAttributeData& OldValue);
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Attributes", ReplicatedUsing = OnRep_RunSpeed)
+    FGameplayAttributeData RunSpeed;
+    ATTRIBUTE_ACCESSORS(UPlayerAttributeSet, RunSpeed)
+    UFUNCTION()
+    void OnRep_RunSpeed(const FGameplayAttributeData& OldValue);
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Attributes", ReplicatedUsing = OnRep_CrouchSpeed)
+    FGameplayAttributeData CrouchSpeed;
+    ATTRIBUTE_ACCESSORS(UPlayerAttributeSet, CrouchSpeed)
+    UFUNCTION()
+    void OnRep_CrouchSpeed(const FGameplayAttributeData& OldValue);
+
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
     virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
     virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
