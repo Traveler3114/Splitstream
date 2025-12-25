@@ -12,6 +12,7 @@
 #include "Components/SizeBox.h"
 #include "Engine/Engine.h"
 #include "Widgets/DetectionWidget.h"
+#include "Widgets/DetectionActorWidget.h"
 #include "Components/Border.h"
 
 void UCharacterOverlay::OnInventoryChanged(const TArray<FInventorySlot>& Items)
@@ -198,6 +199,53 @@ void UCharacterOverlay::UpdateDetectionWidget(AActor* DetectorActor, float Progr
         {
             WidgetInstance->RemoveFromParent();
             DetectionWidgets.Remove(DetectorActor);
+        }
+    }
+}
+
+
+
+void UCharacterOverlay::UpdateDetectionActorWidget(AActor* DetectorActor, float Progress, bool bIsLocked, FVector2D ScreenPosition)
+{
+    if (!CanvasPanel || !DetectorActor) return;
+
+    UDetectionActorWidget*& Widget = DetectionActorWidgets.FindOrAdd(DetectorActor);
+    if (!Widget)
+    {
+        if (!DetectionActorWidgetClass) return;
+        Widget = CreateWidget<UDetectionActorWidget>(GetWorld(), DetectionActorWidgetClass);
+        if (Widget)
+        {
+            CanvasPanel->AddChild(Widget);
+        }
+    }
+
+    if (Widget)
+    {
+        Widget->SetDetectionProgress(Progress, bIsLocked);
+
+        FVector2D CanvasSize = CanvasPanel->GetCachedGeometry().GetLocalSize();
+        FVector2D ViewportSize = UWidgetLayoutLibrary::GetViewportSize(this);
+
+        FVector2D LocalPosition = ScreenPosition;
+        // Only scale if sizes are not (nearly) equal
+        if (!ViewportSize.IsNearlyZero() && !CanvasSize.IsNearlyZero()
+            && !CanvasSize.Equals(ViewportSize, 1.0f)) // 1 pixel tolerance
+        {
+            LocalPosition.X = (ScreenPosition.X / ViewportSize.X) * CanvasSize.X;
+            LocalPosition.Y = (ScreenPosition.Y / ViewportSize.Y) * CanvasSize.Y;
+        }
+
+        if (UCanvasPanelSlot* CanvasSlot = Cast<UCanvasPanelSlot>(Widget->Slot))
+        {
+            CanvasSlot->SetPosition(LocalPosition);
+            CanvasSlot->SetAlignment(FVector2D(0.5f, 0.5f));
+        }
+
+        if (Progress <= 0.001f && !bIsLocked)
+        {
+            Widget->RemoveFromParent();
+            DetectionActorWidgets.Remove(DetectorActor);
         }
     }
 }

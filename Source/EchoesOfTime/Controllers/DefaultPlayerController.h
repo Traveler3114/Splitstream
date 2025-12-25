@@ -16,6 +16,7 @@ public:
     ADefaultPlayerController();
 
     virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
 	virtual void OnPossess(APawn* InPawn) override;
     virtual void SetupInputComponent() override;
     virtual void OnRep_PlayerState() override;
@@ -53,6 +54,9 @@ public:
 
     UFUNCTION(Client, Reliable, BlueprintCallable)
     void ClientUpdateDetectionWidget(AActor* DetectorActor, float Progress, bool bIsLocked = false, float AngleDegrees = 0.0f);
+
+    UFUNCTION(Client, Reliable)
+    void ClientUpdateDetectionActorWidget(AActor* DetectorActor, float Progress, bool bIsLocked);
 
     UFUNCTION(Server, Reliable)
     void ServerTryLockPick(AActor* TargetDoor, float Angle);

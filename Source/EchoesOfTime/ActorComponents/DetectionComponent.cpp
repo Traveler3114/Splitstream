@@ -1,54 +1,30 @@
 #include "DetectionComponent.h"
 #include "Net/UnrealNetwork.h"
-#include "Components/WidgetComponent.h"
-#include "Widgets/DetectionActorWidget.h"
-#include "Blueprint/UserWidget.h"
+#include "DetectionRegistry.h"
 #include "GameFramework/Actor.h"
-
-#define DETECTION_LOG(Verbosity, Format, ...) \
-    UE_LOG(LogTemp, Verbosity, TEXT("[%s][%s][Role: %s] " Format), \
-    *GetNameSafe(GetOwner()), *GetName(), \
-    (GetOwnerRole() == ROLE_Authority ? TEXT("Authority") : (GetOwnerRole() == ROLE_AutonomousProxy ? TEXT("AutonomousProxy") : (GetOwnerRole() == ROLE_SimulatedProxy ? TEXT("SimulatedProxy") : TEXT("Unknown")))), \
-    ##__VA_ARGS__ )
 
 UDetectionComponent::UDetectionComponent()
 {
     SetIsReplicatedByDefault(true);
     PrimaryComponentTick.bCanEverTick = true;
-
-    DetectionWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("DetectionWidgetComp"));
-    DetectionWidgetComponent->SetWidgetSpace(EWidgetSpace::Screen);
-    DetectionWidgetComponent->SetDrawAtDesiredSize(true);
-
-	//REMEMBBER WHEN CHANGING PATH OF THE WIDGET TO UPDATE THIS PATH TOO!!!!
-    static ConstructorHelpers::FClassFinder<UDetectionActorWidget> WidgetFinder(TEXT("/Game/Blueprints/Widgets/WBP_DetectionActorWidget"));
-    if (WidgetFinder.Class)
-    {
-        DetectionWidgetClass = WidgetFinder.Class;
-        DetectionWidgetComponent->SetWidgetClass(DetectionWidgetClass);
-    }
 }
 
 void UDetectionComponent::BeginPlay()
 {
     Super::BeginPlay();
 
-    if (DetectionWidgetComponent && GetOwner())
-    {
-        USceneComponent* Root = GetOwner()->GetRootComponent();
-        DetectionWidgetComponent->AttachToComponent(Root, FAttachmentTransformRules::KeepRelativeTransform);
-        DetectionWidgetComponent->SetRelativeLocation(FVector(0, 0, 120));
-        if (DetectionWidgetClass)
-        {
-            DetectionWidgetComponent->SetWidgetClass(DetectionWidgetClass);
-        }
-        DetectionWidgetComponent->SetVisibility(false, true);
-    }
-
     DetectionElapsed = 0.f;
     bFullyDetected = false;
     bDetectionInProgress = false;
     CurrentDetector = nullptr;
+}
+
+void UDetectionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    Super::EndPlay(EndPlayReason);
+
+    // Unregister from registry if still present
+    MulticastUpdateRegistry(false);
 }
 
 void UDetectionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -69,16 +45,22 @@ void UDetectionComponent::StartDetection(AActor* Detector)
     bDetectionInProgress = true;
     MulticastResetDetectionElapsed();
     SetComponentTickEnabled(true);
+
+    MulticastUpdateRegistry(true);
+    OnDetectionBegan.Broadcast(GetOwner());
 }
 
 void UDetectionComponent::StopDetection(AActor* Detector)
 {
     if (GetOwnerRole() != ROLE_Authority) return;
 
-    bDetectionInProgress = false; // Will now fall/drain in Tick
-    // Don't reset DetectionElapsed here!
+    bDetectionInProgress = false;
     SetComponentTickEnabled(true);
+
+    MulticastUpdateRegistry(false);
+    OnDetectionEnded.Broadcast(GetOwner());
 }
+
 
 void UDetectionComponent::MulticastResetDetectionElapsed_Implementation()
 {
@@ -126,7 +108,6 @@ void UDetectionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
     }
     else
     {
-        // the fallback draining logic
         DetectionElapsed = FMath::Max(0.f, DetectionElapsed - DeltaTime);
         if (DetectionElapsed > 0.f)
             bShow = true;
@@ -134,24 +115,26 @@ void UDetectionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
             SetComponentTickEnabled(false);
     }
 
-    if (DetectionWidgetComponent)
-        DetectionWidgetComponent->SetVisibility(bShow, true);
-
-    UpdateWidget();
+    // NO WidgetComponent calls, UI is handled by HUD/player via registry
 }
 
-void UDetectionComponent::UpdateWidget()
+void UDetectionComponent::MulticastUpdateRegistry_Implementation(bool bRegister)
 {
-    if (!DetectionWidgetComponent) return;
-    if (!CachedWidget)
+    if (GetWorld())
     {
-        if (UUserWidget* BaseWidget = DetectionWidgetComponent->GetWidget())
-            CachedWidget = Cast<UDetectionActorWidget>(BaseWidget);
+        UDetectionRegistry* Registry = GetWorld()->GetSubsystem<UDetectionRegistry>();
+        if (Registry)
+        {
+            if (bRegister)
+            {
+                Registry->RegisterDetectedActor(GetOwner());
+            }
+            else
+            {
+                Registry->UnregisterDetectedActor(GetOwner());
+            }
+        }
     }
-    if (!CachedWidget) return;
-
-    float Progress = GetDetectionProgress();
-    CachedWidget->SetDetectionProgress(Progress, bFullyDetected);
 }
 
 void UDetectionComponent::HandleFullyDetected()
@@ -160,4 +143,5 @@ void UDetectionComponent::HandleFullyDetected()
     {
         IDetectable::Execute_OnFullyDetected(CurrentDetector, GetOwner());
     }
+    // Registry and OnDetectionBegan still already notified
 }

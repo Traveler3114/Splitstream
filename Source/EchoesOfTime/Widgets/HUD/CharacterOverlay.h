@@ -66,14 +66,23 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TSubclassOf<class UDetectionWidget> DetectionWidgetClass;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TSubclassOf<class UDetectionActorWidget> DetectionActorWidgetClass;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Status")
     float TextureScale = 1.25f;
 
     UPROPERTY()
     TMap<AActor*, class UDetectionWidget*> DetectionWidgets;
 
+    UPROPERTY()
+    TMap<AActor*, class UDetectionActorWidget*> DetectionActorWidgets;
+
     UFUNCTION(BlueprintCallable)
     void UpdateDetectionWidget(AActor* DetectorActor, float Progress, bool bIsLocked, float AngleDegrees = 0.0f);
+
+    UFUNCTION(BlueprintCallable)
+    void UpdateDetectionActorWidget(AActor* DetectorActor, float Progress, bool bIsLocked, FVector2D ScreenPosition);
 
     UPROPERTY(BlueprintReadWrite)
     TMap<AActor*, float> CompletionTargetRepairEndTimes;
