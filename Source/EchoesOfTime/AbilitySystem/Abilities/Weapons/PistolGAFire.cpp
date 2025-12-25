@@ -3,11 +3,13 @@
 #include "Actors/Projectiles/Bullet.h"
 #include "Characters/DefaultCharacter.h"
 #include "AbilitySystemComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "Engine/Engine.h"
 
 UPistolGAFire::UPistolGAFire()
 {
     InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
-    NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted; // LOCAL PREDICTED
+    NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
 
     FGameplayTagContainer Tags;
     FGameplayTag MyTag = TAG_Weapon_Ability_Pistol_Fire;
@@ -26,11 +28,16 @@ void UPistolGAFire::ActivateAbility(
 {
     Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-    ADefaultCharacter* Character = Cast<ADefaultCharacter>(ActorInfo->AvatarActor.Get());
+    ADefaultCharacter* Character = Cast<ADefaultCharacter>(ActorInfo ? ActorInfo->AvatarActor.Get() : nullptr);
+
     if (Character && Character->EquippedItemMeshComp && ProjectileClass)
     {
-        FVector MuzzleLocation = Character->EquippedItemMeshComp->GetSocketLocation(FName("Muzzle"));
         FRotator MuzzleRotation = Character->EquippedItemMeshComp->GetSocketRotation(FName("Muzzle"));
+        FVector SpawnLocation = Character->EquippedItemMeshComp->GetSocketLocation(FName("Muzzle"));
+        FVector Forward = Character->GetActorForwardVector();
+        float SafeDistance = Character->GetCapsuleComponent()->GetUnscaledCapsuleRadius() + 10.0f;
+        SpawnLocation += Forward * SafeDistance;
+
         UWorld* World = Character->GetWorld();
         if (World)
         {
@@ -38,38 +45,35 @@ void UPistolGAFire::ActivateAbility(
             SpawnParams.Owner = Character;
             SpawnParams.Instigator = Character;
 
-            // --- Local Prediction: Client spawns its own bullet for instant feedback ---
-            if (IsLocallyControlled()&&!HasAuthority(&ActivationInfo))
+            // Local Prediction Spawn (client only)
+            if (IsLocallyControlled() && !HasAuthority(&ActivationInfo))
             {
                 FScopedPredictionWindow ScopedPrediction(ActorInfo->AbilitySystemComponent.Get(), true);
 
-                // Spawn predicted bullet
                 ABullet* PredictedBullet = World->SpawnActor<ABullet>(
                     ProjectileClass,
-                    MuzzleLocation,
+                    SpawnLocation,
                     MuzzleRotation,
                     SpawnParams
                 );
                 if (PredictedBullet)
                 {
                     PredictedBullet->SetIgnoreActorsAndComponents(Character, Character->EquippedItemMeshComp);
-                    // Mark as predicted (optional, up to you)
                 }
             }
 
-            // --- Server Authority: Server spawns real bullet, gets replicated ---
+            // Server-authoritative spawn (this will replicate)
             if (HasAuthority(&ActivationInfo))
             {
-                ABullet* ServerBullet = World->SpawnActor<ABullet>(
+                ABullet* RealBullet = World->SpawnActor<ABullet>(
                     ProjectileClass,
-                    MuzzleLocation,
+                    SpawnLocation,
                     MuzzleRotation,
                     SpawnParams
                 );
-                if (ServerBullet)
+                if (RealBullet)
                 {
-                    ServerBullet->SetIgnoreActorsAndComponents(Character, Character->EquippedItemMeshComp);
-                    // Server-side only: set for replication, etc.
+                    RealBullet->SetIgnoreActorsAndComponents(Character, Character->EquippedItemMeshComp);
                 }
             }
         }
