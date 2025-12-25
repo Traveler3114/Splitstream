@@ -53,10 +53,14 @@ void UInventoryComponent::BeginPlay()
 
 void UInventoryComponent::SetActiveSlot(int32 Index)
 {
+    // Already active, do nothing
+    if (Index == ActiveSlotIndex)
+        return;
+
     if (Index >= 0 && Index < Slots.Num())
     {
-        // Unequip previous item, if any and if it's different from new
-        if (ActiveSlotIndex != Index && Slots.IsValidIndex(ActiveSlotIndex))
+        // Unequip previous item if valid
+        if (Slots.IsValidIndex(ActiveSlotIndex))
         {
             FInventorySlot& OldSlot = Slots[ActiveSlotIndex];
             if (OldSlot.ItemAsset)
