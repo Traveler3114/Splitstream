@@ -1,10 +1,25 @@
 #include "DetectionActorWidget.h"
 #include "Components/ProgressBar.h"
+#include "Styling/SlateBrush.h"
 
 void UDetectionActorWidget::SetDetectionProgress(float Progress, bool bIsLocked)
 {
     if (!DetectionProgressBar) return;
     Progress = FMath::Clamp(Progress, 0.0f, 1.0f);
+
+    // Switch texture/brush and background based on whether full or not.
+    if (Progress >= 1.0f)
+    {
+        DetectionProgressBar->WidgetStyle.FillImage = FullBrush;
+        // Hide background when full
+        DetectionProgressBar->WidgetStyle.BackgroundImage = FSlateNoResource();
+    }
+    else
+    {
+        DetectionProgressBar->WidgetStyle.FillImage = NormalBrush;
+        // Restore background when not full
+        DetectionProgressBar->WidgetStyle.BackgroundImage = NormalBackgroundBrush;
+    }
 
     if (bIsLocked)
     {
@@ -15,6 +30,7 @@ void UDetectionActorWidget::SetDetectionProgress(float Progress, bool bIsLocked)
 
     DetectionProgressBar->SetPercent(Progress);
 
+    // (You can keep your color interpolation code here as desired)
     FLinearColor BarColor;
     if (Progress < 0.5f)
     {

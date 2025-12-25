@@ -15,4 +15,17 @@ public:
 protected:
     UPROPERTY(meta = (BindWidget))
     class UProgressBar* DetectionProgressBar;
+
+    /** The brush for the normal progress bar fill image */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection", meta = (AllowPrivateAccess = "true"))
+    FSlateBrush NormalBrush;
+
+    /** The brush for the normal background image */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection", meta = (AllowPrivateAccess = "true"))
+    FSlateBrush NormalBackgroundBrush;
+
+    /** The brush for the full progress bar */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection", meta = (AllowPrivateAccess = "true"))
+    FSlateBrush FullBrush;
+
 };
