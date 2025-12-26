@@ -4,30 +4,41 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "MapSelectionWidget.h"
 #include "MainMenuWidget.generated.h"
 
 class UButton;
+
 UCLASS()
 class ECHOESOFTIME_API UMainMenuWidget : public UUserWidget
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 public:
+    virtual void NativeConstruct() override;
 
-	virtual void NativeConstruct() override;
-
-	UPROPERTY(meta = (BindWidget)) UButton* createsession_btn;
-	UPROPERTY(meta = (BindWidget)) UButton* settings_btn;
-	UPROPERTY(meta = (BindWidget)) UButton* quit_btn;
-
-	UPROPERTY(meta = (BindWidgetOptional))
+    UPROPERTY(meta = (BindWidget)) UButton* host_btn;
+    UPROPERTY(meta = (BindWidget)) UButton* settings_btn;
+    UPROPERTY(meta = (BindWidget)) UButton* quit_btn;
+    UPROPERTY(meta = (BindWidgetOptional))
     class USettingsWidget* SettingsWidget;
 
-	UFUNCTION()
-	void OnCreateSessionClicked();
+    // New: reference to MapSelectionWidget (created dynamically)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+    TSubclassOf<UMapSelectionWidget> MapSelectionWidgetClass;
 
-	UFUNCTION()
-	void OnSettingsClicked();
+    UPROPERTY()
+    UMapSelectionWidget* MapSelectionWidgetInstance;
 
-	UFUNCTION()
-	void OnQuitClicked();
+    UFUNCTION()
+    void OnHostClicked();
+
+    UFUNCTION()
+    void OnSettingsClicked();
+
+    UFUNCTION()
+    void OnQuitClicked();
+
+    // Called when map is chosen from selection widget
+    UFUNCTION()
+    void OnMapSelected(const FString& LevelName, const TSoftObjectPtr<UWorld>& LevelAsset);
 };
