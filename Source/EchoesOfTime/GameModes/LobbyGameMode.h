@@ -25,11 +25,11 @@ public:
     bool bRequireAllReadyToStart = true;
 
     // Map to travel to when host starts the game
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Lobby|Travel")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lobby|Travel")
     FString MatchMapPath = TEXT("/Game/Maps/TestMap"); // Must exist & be in packaging list
 
     // Map to travel to when leaving the lobby (main menu)
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Lobby|Travel")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lobby|Travel")
     FString MainMenuMapPath = TEXT("/Game/Maps/MainMenuMap"); // Must exist & be in packaging list
 
     bool TryAssignSeatToPlayer(APlayerState* PlayerState);
