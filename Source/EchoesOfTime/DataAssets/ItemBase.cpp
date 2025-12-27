@@ -11,48 +11,32 @@
 #include "ActorComponents/InventoryComponent.h"
 #include "AbilitySystemComponent.h"
 #include "GameplayEffect.h"
+#include "Logging/LogMacros.h"
+
 
 void UItemBase::OnEquipped(AActor* Instigator)
 {
-    if (!bApplyGameplayEffectsPassively) ApplyGameplayEffects(Instigator);
-    if (!bApplyGameplayAbilitiesPassively) ApplyGameplayAbilities(Instigator);
+    
 }
 
 void UItemBase::OnUnequipped(AActor* Instigator)
 {
-    if(!bApplyGameplayEffectsPassively) RemoveGrantedGameplayEffects(Instigator);
-    if(!bApplyGameplayAbilitiesPassively) RemoveGrantedAbilities(Instigator);
+    
 }
 
 void UItemBase::OnAddedToInventory(AActor* Instigator)
 {
-    if (bApplyGameplayEffectsPassively)
-    {
-        ApplyGameplayEffects(Instigator);
-    }
-    if (bApplyGameplayAbilitiesPassively)
-    {
-        ApplyGameplayAbilities(Instigator);
-    }
+    
 }
 
 void UItemBase::OnRemovedFromInventory(AActor* Instigator)
 {
-    if (bApplyGameplayEffectsPassively)
-    {
-        RemoveGrantedGameplayEffects(Instigator);
-    }
-    if (bApplyGameplayAbilitiesPassively)
-    {
-        RemoveGrantedAbilities(Instigator);
-    }
+    
 }
 
 void UItemBase::OnDropped(AActor* Instigator, FGuid ItemInstanceID, FVector DropLocation)
 {
-    RemoveGrantedGameplayEffects(Instigator);
-    RemoveGrantedAbilities(Instigator);
-
+    // Instance effect/ability removal handled in InventoryComponent before this is called!
     if (!Instigator) return;
     UWorld* World = Instigator->GetWorld();
     if (!World) return;
@@ -67,12 +51,10 @@ void UItemBase::OnDropped(AActor* Instigator, FGuid ItemInstanceID, FVector Drop
         Pickup->ItemData = this;
         Pickup->ItemInstanceID = ItemInstanceID;
         UGameplayStatics::FinishSpawningActor(Pickup, SpawnTransform);
-
         if (bEnablePhysicsOnDrop && Pickup->OverrideMeshComp)
         {
             Pickup->SetActorLocation(Instigator->GetActorLocation());
             Pickup->OverrideMeshComp->SetSimulatePhysics(true);
-
             FVector ForwardVector = Instigator->GetActorForwardVector();
             FVector Impulse = ForwardVector * DropImpulseStrength;
             Pickup->OverrideMeshComp->AddImpulse(Impulse, NAME_None, true);
@@ -82,16 +64,14 @@ void UItemBase::OnDropped(AActor* Instigator, FGuid ItemInstanceID, FVector Drop
 
 void UItemBase::OnDroppedWithTeam(AActor* Instigator, FGuid ItemInstanceID, FGameplayTag TeamTag, FVector DropLocation)
 {
-    RemoveGrantedGameplayEffects(Instigator);
-    RemoveGrantedAbilities(Instigator);
-
+    // Instance effect/ability removal handled in InventoryComponent before this is called!
     if (!Instigator) return;
     UWorld* World = Instigator->GetWorld();
     if (!World) return;
 
     FVector SpawnLocation = bEnablePhysicsOnDrop ? Instigator->GetActorLocation() : DropLocation;
     FRotator SpawnRotation = PickupMeshRotation;
-    SpawnLocation.Z = FMath::Max(SpawnLocation.Z, 0.0f); // Slightly raise the drop location
+    SpawnLocation.Z = FMath::Max(SpawnLocation.Z, 0.0f);
     FTransform SpawnTransform = FTransform(SpawnRotation, SpawnLocation);
 
     static FGameplayTag PastTag = FGameplayTag::RequestGameplayTag(TEXT("Team.Past"));
@@ -105,7 +85,6 @@ void UItemBase::OnDroppedWithTeam(AActor* Instigator, FGuid ItemInstanceID, FGam
             Pickup->ItemData = this;
             Pickup->ItemInstanceID = ItemInstanceID;
             UGameplayStatics::FinishSpawningActor(Pickup, SpawnTransform);
-
             if (bEnablePhysicsOnDrop && Pickup->OverrideMeshComp)
             {
                 Pickup->SetActorLocation(Instigator->GetActorLocation());
@@ -123,7 +102,6 @@ void UItemBase::OnDroppedWithTeam(AActor* Instigator, FGuid ItemInstanceID, FGam
             Pickup->ItemData = this;
             Pickup->ItemInstanceID = ItemInstanceID;
             UGameplayStatics::FinishSpawningActor(Pickup, SpawnTransform);
-
             if (bEnablePhysicsOnDrop && Pickup->OverrideMeshComp)
             {
                 Pickup->SetActorLocation(Instigator->GetActorLocation());
@@ -141,7 +119,6 @@ void UItemBase::OnDroppedWithTeam(AActor* Instigator, FGuid ItemInstanceID, FGam
             Pickup->ItemData = this;
             Pickup->ItemInstanceID = ItemInstanceID;
             UGameplayStatics::FinishSpawningActor(Pickup, SpawnTransform);
-
             if (bEnablePhysicsOnDrop && Pickup->OverrideMeshComp)
             {
                 Pickup->SetActorLocation(Instigator->GetActorLocation());
@@ -163,11 +140,11 @@ void UItemBase::OnUsed(AActor* Instigator, FGuid ItemInstanceID)
             Inventory->RemoveItemByInstanceID(ItemInstanceID);
         }
     }
-    // Optional: add more use logic here
 }
 
-void UItemBase::ApplyGameplayEffects(AActor *Instigator)
+void UItemBase::GrantEffectsTo(AActor* Instigator, TArray<FActiveGameplayEffectHandle>& OutHandles) const
 {
+    OutHandles.Empty();
     if (GrantedGameplayEffects.Num() > 0)
     {
         IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(Instigator);
@@ -182,7 +159,7 @@ void UItemBase::ApplyGameplayEffects(AActor *Instigator)
                     {
                         FActiveGameplayEffectHandle Handle =
                             ASC->ApplyGameplayEffectToSelf(EffectClass->GetDefaultObject<UGameplayEffect>(), 1.0f, ASC->MakeEffectContext());
-                        GrantedGameplayEffectHandles.Add(Handle);
+                        OutHandles.Add(Handle);
                     }
                 }
             }
@@ -190,8 +167,9 @@ void UItemBase::ApplyGameplayEffects(AActor *Instigator)
     }
 }
 
-void UItemBase::ApplyGameplayAbilities(AActor *Instigator)
+void UItemBase::GrantAbilitiesTo(AActor* Instigator, TArray<FGameplayAbilitySpecHandle>& OutHandles) const
 {
+    OutHandles.Empty();
     if (AbilitySet)
     {
         IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(Instigator);
@@ -200,47 +178,45 @@ void UItemBase::ApplyGameplayAbilities(AActor *Instigator)
             UAbilitySystemComponent* ASC = AbilityInterface->GetAbilitySystemComponent();
             if (ASC)
             {
-                GrantedAbilityHandles.Empty();
                 for (const FAbilityInputSetEntry& Entry : AbilitySet->Abilities)
                 {
                     if (!Entry.AbilityClass) continue;
                     FGameplayAbilitySpec Spec(Entry.AbilityClass, Entry.AbilityLevel, 0);
                     Spec.GetDynamicSpecSourceTags().AddTag(Entry.InputTag);
-
                     FGameplayAbilitySpecHandle Handle = ASC->GiveAbility(Spec);
-                    GrantedAbilityHandles.Add(Handle);
+                    OutHandles.Add(Handle);
                 }
             }
         }
     }
 }
 
-void UItemBase::RemoveGrantedGameplayEffects(AActor* Instigator)
+void UItemBase::RemoveGrantedEffectsFrom(AActor* Instigator, const TArray<FActiveGameplayEffectHandle>& Handles) const
 {
+    if (!Handles.Num()) return;
     IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(Instigator);
     if (!AbilityInterface) return;
 
     UAbilitySystemComponent* ASC = AbilityInterface->GetAbilitySystemComponent();
     if (!ASC) return;
 
-    for (const FActiveGameplayEffectHandle& Handle : GrantedGameplayEffectHandles)
+    for (const FActiveGameplayEffectHandle& Handle : Handles)
     {
         ASC->RemoveActiveGameplayEffect(Handle);
     }
-    GrantedGameplayEffectHandles.Empty();
 }
 
-void UItemBase::RemoveGrantedAbilities(AActor* Instigator)
+void UItemBase::RemoveGrantedAbilitiesFrom(AActor* Instigator, const TArray<FGameplayAbilitySpecHandle>& Handles) const
 {
+    if (!Handles.Num()) return;
     IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(Instigator);
     if (!AbilityInterface) return;
 
     UAbilitySystemComponent* ASC = AbilityInterface->GetAbilitySystemComponent();
     if (!ASC) return;
 
-    for (const FGameplayAbilitySpecHandle& Handle : GrantedAbilityHandles)
+    for (const FGameplayAbilitySpecHandle& Handle : Handles)
     {
         ASC->ClearAbility(Handle);
     }
-    GrantedAbilityHandles.Empty();
 }

@@ -40,7 +40,6 @@ void UInventoryComponent::BeginPlay()
 
     if (GetOwner()->HasAuthority())
     {
-        // New: Add all default items
         for (UItemBase* Item : DefaultItemAssets)
         {
             if (Item)
@@ -53,30 +52,50 @@ void UInventoryComponent::BeginPlay()
 
 void UInventoryComponent::SetActiveSlot(int32 Index)
 {
-    // Already active, do nothing
     if (Index == ActiveSlotIndex)
         return;
 
-    if (Index >= 0 && Index < Slots.Num())
+    // Unequip previous
+    if (Slots.IsValidIndex(ActiveSlotIndex))
     {
-        // Unequip previous item if valid
-        if (Slots.IsValidIndex(ActiveSlotIndex))
+        FInventorySlot& OldSlot = Slots[ActiveSlotIndex];
+        if (OldSlot.ItemAsset)
         {
-            FInventorySlot& OldSlot = Slots[ActiveSlotIndex];
-            if (OldSlot.ItemAsset)
+            if (!OldSlot.ItemAsset->bApplyGameplayEffectsPassively)
             {
-                OldSlot.ItemAsset->OnUnequipped(GetOwner());
+                OldSlot.ItemAsset->RemoveGrantedEffectsFrom(GetOwner(), OldSlot.GrantedGameplayEffectHandles);
+                OldSlot.GrantedGameplayEffectHandles.Empty();
             }
+            if (!OldSlot.ItemAsset->bApplyGameplayAbilitiesPassively)
+            {
+                OldSlot.ItemAsset->RemoveGrantedAbilitiesFrom(GetOwner(), OldSlot.GrantedAbilityHandles);
+                OldSlot.GrantedAbilityHandles.Empty();
+            }
+            OldSlot.ItemAsset->OnUnequipped(GetOwner());
         }
+    }
 
-        ActiveSlotIndex = Index;
-        FInventorySlot& NewSlot = Slots[Index];
+    ActiveSlotIndex = Index;
+
+    // Equip new
+    if (Slots.IsValidIndex(ActiveSlotIndex))
+    {
+        FInventorySlot& NewSlot = Slots[ActiveSlotIndex];
         if (NewSlot.ItemAsset)
         {
+            if (!NewSlot.ItemAsset->bApplyGameplayEffectsPassively)
+            {
+                NewSlot.ItemAsset->GrantEffectsTo(GetOwner(), NewSlot.GrantedGameplayEffectHandles);
+            }
+            if (!NewSlot.ItemAsset->bApplyGameplayAbilitiesPassively)
+            {
+                NewSlot.ItemAsset->GrantAbilitiesTo(GetOwner(), NewSlot.GrantedAbilityHandles);
+            }
             NewSlot.ItemAsset->OnEquipped(GetOwner());
         }
-        OnRep_ActiveSlotIndex();
     }
+
+    OnRep_ActiveSlotIndex();
 }
 
 bool UInventoryComponent::AddItem(UItemBase* ItemAsset, FGuid InstanceID)
@@ -87,15 +106,19 @@ bool UInventoryComponent::AddItem(UItemBase* ItemAsset, FGuid InstanceID)
         {
             Slots[i].ItemAsset = ItemAsset;
             Slots[i].ItemInstanceID = InstanceID;
-            OnInventoryChanged.Broadcast(Slots);
 
-            // New: Apply passive effects if set
+            // --- Handle effect/ability application per-instance ---
             if (ItemAsset && ItemAsset->bApplyGameplayEffectsPassively)
             {
-                ItemAsset->OnAddedToInventory(GetOwner());
+                ItemAsset->GrantEffectsTo(GetOwner(), Slots[i].GrantedGameplayEffectHandles);
+            }
+            if (ItemAsset && ItemAsset->bApplyGameplayAbilitiesPassively)
+            {
+                ItemAsset->GrantAbilitiesTo(GetOwner(), Slots[i].GrantedAbilityHandles);
             }
 
-            // If first item (auto-equip)
+            OnInventoryChanged.Broadcast(Slots);
+
             bool bWasInventoryEmpty = true;
             for (const FInventorySlot& Slot : Slots)
             {
@@ -120,21 +143,26 @@ void UInventoryComponent::RemoveItem(int32 Index)
     if (Slots.IsValidIndex(Index))
     {
         auto* Item = Slots[Index].ItemAsset;
-        // Remove passive effects before erasing slot (new!)
+        // Remove instance-granted effects/abilities before removing from inventory
         if (Item)
         {
+            Item->RemoveGrantedEffectsFrom(GetOwner(), Slots[Index].GrantedGameplayEffectHandles);
+            Item->RemoveGrantedAbilitiesFrom(GetOwner(), Slots[Index].GrantedAbilityHandles);
+            Slots[Index].GrantedGameplayEffectHandles.Empty();
+            Slots[Index].GrantedAbilityHandles.Empty();
+
             Item->OnRemovedFromInventory(GetOwner());
         }
 
-        // ... your existing logic
         for (int32 i = Index; i < Slots.Num() - 1; ++i)
         {
             Slots[i] = Slots[i + 1];
         }
         Slots[Slots.Num() - 1].ItemAsset = nullptr;
         Slots[Slots.Num() - 1].ItemInstanceID.Invalidate();
+        Slots[Slots.Num() - 1].GrantedGameplayEffectHandles.Empty();
+        Slots[Slots.Num() - 1].GrantedAbilityHandles.Empty();
 
-        // ... Your active slot handling
         if (ActiveSlotIndex >= Slots.Num())
         {
             ActiveSlotIndex = Slots.Num() - 1;
@@ -145,7 +173,7 @@ void UInventoryComponent::RemoveItem(int32 Index)
         }
         else if (ActiveSlotIndex == Index)
         {
-            ActiveSlotIndex = INDEX_NONE; // Or auto-select first item if you prefer
+            ActiveSlotIndex = INDEX_NONE;
         }
 
         OnInventoryChanged.Broadcast(Slots);
@@ -174,7 +202,17 @@ void UInventoryComponent::DropActiveItem(FVector DropLocation)
     FInventorySlot ActiveSlot = GetActiveItem();
     if (!ActiveSlot.ItemAsset) return;
     FGameplayTag TeamTag = GetTeamTag();
-    //ActiveSlot.ItemAsset->OnDroppedWithTeam(GetOwner(), ActiveSlot.ItemInstanceID, TeamTag, DropLocation);
+
+    // Remove granted handles before drop
+    int DropIndex = ActiveSlotIndex;
+    if (Slots.IsValidIndex(DropIndex))
+    {
+        Slots[DropIndex].ItemAsset->RemoveGrantedEffectsFrom(GetOwner(), Slots[DropIndex].GrantedGameplayEffectHandles);
+        Slots[DropIndex].ItemAsset->RemoveGrantedAbilitiesFrom(GetOwner(), Slots[DropIndex].GrantedAbilityHandles);
+        Slots[DropIndex].GrantedGameplayEffectHandles.Empty();
+        Slots[DropIndex].GrantedAbilityHandles.Empty();
+    }
+
     ActiveSlot.ItemAsset->OnDropped(GetOwner(), ActiveSlot.ItemInstanceID, DropLocation);
     RemoveItem(ActiveSlotIndex);
 }

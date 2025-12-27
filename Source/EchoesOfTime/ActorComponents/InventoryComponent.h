@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "DataAssets/ItemBase.h"
+#include "GameplayEffectTypes.h"
+#include "GameplayAbilitySpec.h"
 #include "InventoryComponent.generated.h"
 
 USTRUCT(BlueprintType)
@@ -15,6 +17,10 @@ struct FInventorySlot
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FGuid ItemInstanceID;
+
+    // Per-instance effect/ability handles (not properties, runtime only!)
+    TArray<FActiveGameplayEffectHandle> GrantedGameplayEffectHandles;
+    TArray<FGameplayAbilitySpecHandle>  GrantedAbilityHandles;
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInventoryChanged, const TArray<FInventorySlot>&, Items);

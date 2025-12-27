@@ -7,19 +7,25 @@ void UDetectionActorWidget::SetDetectionProgress(float Progress, bool bIsLocked)
     if (!DetectionProgressBar) return;
     Progress = FMath::Clamp(Progress, 0.0f, 1.0f);
 
+    // Copy the current style
+    FProgressBarStyle BarStyle = DetectionProgressBar->GetWidgetStyle();
+
     // Switch texture/brush and background based on whether full or not.
     if (Progress >= 1.0f)
     {
-        DetectionProgressBar->WidgetStyle.FillImage = FullBrush;
+        BarStyle.FillImage = FullBrush;
         // Hide background when full
-        DetectionProgressBar->WidgetStyle.BackgroundImage = FSlateNoResource();
+        BarStyle.BackgroundImage = FSlateNoResource();
     }
     else
     {
-        DetectionProgressBar->WidgetStyle.FillImage = NormalBrush;
+        BarStyle.FillImage = NormalBrush;
         // Restore background when not full
-        DetectionProgressBar->WidgetStyle.BackgroundImage = NormalBackgroundBrush;
+        BarStyle.BackgroundImage = NormalBackgroundBrush;
     }
+
+    // Set the modified style back
+    DetectionProgressBar->SetWidgetStyle(BarStyle);
 
     if (bIsLocked)
     {

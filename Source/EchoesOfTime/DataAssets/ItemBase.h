@@ -18,7 +18,7 @@ enum class EItemType : uint8
     Gadget        UMETA(DisplayName = "Gadget"),
     Pistol        UMETA(DisplayName = "Pistol"),
     PowerCell     UMETA(DisplayName = "PowerCell"),
-	BodyBag       UMETA(DisplayName = "BodyBag"),
+    BodyBag       UMETA(DisplayName = "BodyBag"),
     Other         UMETA(DisplayName = "Other")
 };
 
@@ -79,15 +79,9 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tags")
     TArray<TSubclassOf<class UGameplayEffect>> GrantedGameplayEffects;
 
-    UPROPERTY(Transient)
-    TArray<struct FActiveGameplayEffectHandle> GrantedGameplayEffectHandles;
-
     // --- Abilities (optional) ---
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
     UAbilityInputSet* AbilitySet;
-
-    UPROPERTY(Transient)
-    TArray<FGameplayAbilitySpecHandle> GrantedAbilityHandles;
 
     // --- Core API ---
     virtual void OnEquipped(class AActor* Instigator);
@@ -100,9 +94,9 @@ public:
     virtual void OnDropped(class AActor* Instigator, FGuid ItemInstanceID, FVector DropLocation);
     virtual void OnDroppedWithTeam(class AActor* Instigator, FGuid ItemInstanceID, FGameplayTag TeamTag, FVector DropLocation);
 
-protected:
-    void ApplyGameplayEffects(AActor *Instigator);
-    void ApplyGameplayAbilities(AActor *Instigator);
-    void RemoveGrantedGameplayEffects(AActor* Instigator);
-    void RemoveGrantedAbilities(AActor* Instigator);
+    // NEW: Per-instance effect/ability handling
+    void GrantEffectsTo(AActor* Instigator, TArray<FActiveGameplayEffectHandle>& OutHandles) const;
+    void GrantAbilitiesTo(AActor* Instigator, TArray<FGameplayAbilitySpecHandle>& OutHandles) const;
+    void RemoveGrantedEffectsFrom(AActor* Instigator, const TArray<FActiveGameplayEffectHandle>& Handles) const;
+    void RemoveGrantedAbilitiesFrom(AActor* Instigator, const TArray<FGameplayAbilitySpecHandle>& Handles) const;
 };
