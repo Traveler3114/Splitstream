@@ -34,6 +34,11 @@ public:
 
 	UPROPERTY(meta = (BindWidget)) UTextBlock* team_txt;
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly) UTextBlock* ready_txt;
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* MapName_txt;
+
+	UFUNCTION(BlueprintCallable, Category = "LobbyUI")
+	void SetMapName(const FText& Name);
 
 private:
 	void RefreshReadyLabel(bool bIsReady);

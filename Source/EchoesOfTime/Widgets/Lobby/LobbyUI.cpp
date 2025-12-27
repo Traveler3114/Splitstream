@@ -26,6 +26,14 @@ void ULobbyUI::NativeConstruct()
 	}
 }
 
+void ULobbyUI::SetMapName(const FText& Name)
+{
+	if (MapName_txt)
+	{
+		MapName_txt->SetText(Name);
+	}
+}
+
 void ULobbyUI::OnChangeTeamButtonClicked()
 {
 	if (APlayerController* PC = GetOwningPlayer())

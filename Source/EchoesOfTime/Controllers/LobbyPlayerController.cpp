@@ -3,6 +3,8 @@
 #include "Blueprint/UserWidget.h"
 #include "GameModes/LobbyGameMode.h"
 #include "GameFramework/PlayerState.h"
+#include "AdvancedSessionsLibrary.h"
+#include "OnlineSessionSettings.h"
 #include "Engine/Engine.h"
 
 void ALobbyPlayerController::BeginPlay()
@@ -17,7 +19,23 @@ void ALobbyPlayerController::BeginPlay()
         if (LobbyUIInstance)
         {
             LobbyUIInstance->AddToViewport();
+            IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
+            if (!Subsystem) return;
 
+            IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
+            if (!Session.IsValid()) return;
+
+            FNamedOnlineSession* SessionData = Session->GetNamedSession(NAME_GameSession);
+            if (!SessionData) return;
+
+            FString MapName;
+            if (SessionData->SessionSettings.Get(FName("LEVELNAME"), MapName))
+            {
+                if (LobbyUIInstance)
+                {
+                    LobbyUIInstance->SetMapName(FText::FromString(MapName));
+                }
+            }
             if (HasAuthority())
             {
                 LobbyUIInstance->SetStartButtonVisibility(ESlateVisibility::Visible);
