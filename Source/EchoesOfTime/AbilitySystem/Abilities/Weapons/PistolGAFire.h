@@ -1,14 +1,9 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
 #include "PistolGAFire.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class ECHOESOFTIME_API UPistolGAFire : public UGameplayAbility
 {
@@ -25,5 +20,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	TSubclassOf<class ABullet> ProjectileClass;
 
-
+	// Explicit RPC for projectile spawn transform sync
+	UFUNCTION(Server, Reliable)
+	void ServerSpawnProjectile(const FVector& SpawnLocation, const FRotator& SpawnRotation);
 };
