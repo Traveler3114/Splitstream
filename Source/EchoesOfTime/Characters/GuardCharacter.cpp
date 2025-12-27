@@ -261,26 +261,20 @@ void AGuardCharacter::BeginPlay()
 
 void AGuardCharacter::OnDetected_Implementation(AActor* Detector)
 {
-    if (!bIsInCameraView && !bIsDead)
+    bIsInCameraView = true;
+    if (SpawnedGhost)
     {
-        bIsInCameraView = true;
-        if (SpawnedGhost)
-        {
-            SpawnedGhost->UpdateGhostVisibility();
-        }
+        SpawnedGhost->UpdateGhostVisibility();
     }
     if (DetectionComponent && !(DetectionComponent->bDetectionInProgress) && !(DetectionComponent->bFullyDetected) && bIsDead) DetectionComponent->StartDetection(Detector);
 }
 
 void AGuardCharacter::OnLost_Implementation(AActor* Detector)
 {
-    if (bIsInCameraView && !bIsDead)
+    bIsInCameraView = false;
+    if (SpawnedGhost)
     {
-        bIsInCameraView = false;
-        if (SpawnedGhost)
-        {
-            SpawnedGhost->UpdateGhostVisibility();
-        }
+        SpawnedGhost->UpdateGhostVisibility();
     }
     if (DetectionComponent && !(DetectionComponent->bDetectionInProgress) && !(DetectionComponent->bFullyDetected) && bIsDead) DetectionComponent->StopDetection(Detector);
 }

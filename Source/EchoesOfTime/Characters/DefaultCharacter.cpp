@@ -289,6 +289,16 @@ void ADefaultCharacter::GrantAbilitiesFromInputSet()
             }
             ASC->GiveAbility(Spec);
         }
+        for (const FAbilityInputSetEntry& Entry : FutureGASet->Abilities)
+        {
+            if (!Entry.AbilityClass) continue;
+            FGameplayAbilitySpec Spec(Entry.AbilityClass, Entry.AbilityLevel, 0);
+            if (Entry.InputTag.IsValid())
+            {
+                Spec.GetDynamicSpecSourceTags().AddTag(Entry.InputTag);
+            }
+            ASC->GiveAbility(Spec);
+        }
     }
 }
 
