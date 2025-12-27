@@ -83,7 +83,6 @@ void UFirewallMiniGame::StartGame(APlayerController* PlayerController)
     CreateWidget();
     if (UWorld* World = OwningController->GetWorld())
         World->GetTimerManager().SetTimerForNextTick(this, &UFirewallMiniGame::TryFinishInitWhenCanvasReady);
-    Victory();
 }
 
 void UFirewallMiniGame::TryFinishInitWhenCanvasReady()
