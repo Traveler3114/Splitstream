@@ -58,9 +58,6 @@ public:
     UFUNCTION(Client, Reliable)
     void ClientUpdateDetectionActorWidget(AActor* DetectorActor, float Progress, bool bIsLocked);
 
-    UFUNCTION(Server, Reliable)
-    void ServerTryLockPick(AActor* TargetDoor, float Angle);
-
     UFUNCTION(Client, Reliable)
     void ClientShowLoadingScreen();
 
@@ -70,10 +67,8 @@ public:
     UFUNCTION()
     void HandleRepairETAStarted(class ARepairableBase* Repairable, float Duration);
 
-    // ---- ADD THIS ----
-    UFUNCTION(Server, Reliable)
-    void Server_NotifyTerminalMiniGameEnded(ATerminal* Terminal, bool bWasVictory);
-
+	UFUNCTION(Server, Reliable)
+    void ServerExecuteAction(UObject* Target, const FServerActionPayload& Payload);
 private:
     UPROPERTY()
     class ACharacterHUD* CharacterHUD;

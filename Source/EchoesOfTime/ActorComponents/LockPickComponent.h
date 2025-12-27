@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Interfaces/IServerActionInterface.h"
 #include "LockPickComponent.generated.h"
 
 // Delegate for when the lock is unlocked
@@ -28,7 +29,7 @@ struct FLockPinData
 };
 
 UCLASS(Blueprintable, ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
-class ECHOESOFTIME_API ULockPickComponent : public UActorComponent
+class ECHOESOFTIME_API ULockPickComponent : public UActorComponent, public IServerActionInterface
 {
     GENERATED_BODY()
 
@@ -91,6 +92,8 @@ public:
     // --- RPCs ---
     UFUNCTION(Server, Reliable)
     void ServerTrySetPin(float InputAngle);
+
+    virtual void ExecuteServerAction_Implementation(const FServerActionPayload& Payload) override;
 
     UFUNCTION()
     void OnRep_Unlocked();

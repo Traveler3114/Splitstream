@@ -214,6 +214,15 @@ void ULockPickComponent::OnRep_Unlocked()
     }
 }
 
+// In LockPickComponent.cpp
+
+void ULockPickComponent::ExecuteServerAction_Implementation(const FServerActionPayload& Payload)
+{
+    // interpret Payload fields as appropriate for your component
+    ServerTrySetPin(Payload.FloatValue); // for lockpicking, FloatValue is the angle.
+    // For more advanced mechanics, parse more fields—IntValue, ObjectValue, etc.
+}
+
 void ULockPickComponent::ServerTrySetPin_Implementation(float InputAngle)
 {
     if (TrySetCurrentPin(InputAngle))

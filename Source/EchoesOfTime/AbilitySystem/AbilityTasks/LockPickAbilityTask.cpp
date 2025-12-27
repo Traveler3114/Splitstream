@@ -3,6 +3,7 @@
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "Widgets/HUD/LockPickWidget.h"
+#include "Interfaces/IServerActionInterface.h"
 #include "Controllers/DefaultPlayerController.h"
 
 ULockPickAbilityTask* ULockPickAbilityTask::StartLockPickTask(UGameplayAbility* OwningAbility, ULockPickComponent* InLockComp)
@@ -126,7 +127,10 @@ void ULockPickAbilityTask::OnConfirm()
     if (!Pawn) return;
     ADefaultPlayerController* PC = Cast<ADefaultPlayerController>(Pawn->GetController());
     if (!PC) return;
-    PC->ServerTryLockPick(LockComp->GetOwner(), LockPickDialAngle);
+
+    FServerActionPayload Payload;
+    Payload.FloatValue = LockPickDialAngle;
+    PC->ServerExecuteAction(LockComp, Payload);
 }
 void ULockPickAbilityTask::ServerConfirmPin_Implementation(float Angle)
 {

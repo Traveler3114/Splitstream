@@ -58,6 +58,7 @@ void UFirewallMiniGame::StartGame(APlayerController* PlayerController)
         if (GameplayIMC) Subsystem->RemoveMappingContext(GameplayIMC);
         if (FirewallIMC) Subsystem->AddMappingContext(FirewallIMC, 100);
     }
+    
 
     bIsGameOver = false;
     TimeSinceLastEnemySpawn = 0.0f;
@@ -82,6 +83,7 @@ void UFirewallMiniGame::StartGame(APlayerController* PlayerController)
     CreateWidget();
     if (UWorld* World = OwningController->GetWorld())
         World->GetTimerManager().SetTimerForNextTick(this, &UFirewallMiniGame::TryFinishInitWhenCanvasReady);
+    Victory();
 }
 
 void UFirewallMiniGame::TryFinishInitWhenCanvasReady()

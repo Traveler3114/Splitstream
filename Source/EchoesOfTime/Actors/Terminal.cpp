@@ -51,7 +51,9 @@ void ATerminal::OnMiniGameEnded(bool bWasVictory)
         {
             if (ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(PC))
             {
-                MyPC->Server_NotifyTerminalMiniGameEnded(this, bWasVictory);
+                FServerActionPayload Payload;
+                Payload.BoolValue = bWasVictory;
+                MyPC->ServerExecuteAction(this, Payload);
             }
         }
         return;
@@ -99,6 +101,16 @@ void ATerminal::SetHighlighted_Implementation(bool bHighlight)
         TerminalMesh->SetRenderCustomDepth(bHighlight);
         TerminalMesh->CustomDepthStencilValue = bHighlight ? 1 : 0;
     }
+}
+
+void ATerminal::ExecuteServerAction_Implementation(const FServerActionPayload& Payload)
+{
+    UE_LOG(LogTemp, Warning, TEXT("ATerminal::ExecuteServerAction_Implementation called! Payload.BoolValue=%s, Payload.IntValue=%d, Payload.FloatValue=%.2f"),
+        Payload.BoolValue ? TEXT("true") : TEXT("false"),
+        Payload.IntValue,
+        Payload.FloatValue);
+
+    HandleMiniGameEnded_Internal(Payload.BoolValue);
 }
 
 void ATerminal::RequestRepair(AActor* RepairInstigator)

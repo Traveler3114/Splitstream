@@ -47,11 +47,6 @@ void AFuturePowerGenerator::EndPlay(const EEndPlayReason::Type EndPlayReason)
     Super::EndPlay(EndPlayReason);
 }
 
-void AFuturePowerGenerator::ServerSetEnabled_Implementation(bool bNewEnabled)
-{
-    bEnabled = bNewEnabled;
-}
-
 void AFuturePowerGenerator::HandlePastGeneratorCompleted(bool bPastSearched)
 {
     // Only authority/server should set bEnabled
@@ -77,8 +72,17 @@ void AFuturePowerGenerator::HandlePastGeneratorCompleted(bool bPastSearched)
     }
     else
     {
-        // Clients request the server to update bEnabled
-        ServerSetEnabled(!bPastSearched);
+        // Clients request the server to update bEnabled -- DEPRECATED: use interface!
+        FServerActionPayload Payload;
+        Payload.BoolValue = !bPastSearched;
+        // Get the owning PC!
+        if (APlayerController* PC = LastInteractingPC.IsValid() ? LastInteractingPC.Get() : nullptr)
+        {
+            if (ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(PC))
+            {
+                MyPC->ServerExecuteAction(this, Payload);
+            }
+        }
     }
 }
 
@@ -105,6 +109,31 @@ void AFuturePowerGenerator::Interact_Implementation(AActor* Interactor)
         MiniGameInstance->OnMiniGameEnded.AddDynamic(this, &AFuturePowerGenerator::OnMiniGameEnded);
         MiniGameInstance->StartGame(PC);
         LastInteractingPC = PC;
+    }
+}
+
+void AFuturePowerGenerator::ExecuteServerAction_Implementation(const FServerActionPayload& Payload)
+{
+    // This is executed on the server via the PC's ServerExecuteAction RPC
+    UE_LOG(LogTemp, Warning, TEXT("AFuturePowerGenerator::ExecuteServerAction_Implementation called! Payload.BoolValue=%s"),
+        Payload.BoolValue ? TEXT("true") : TEXT("false"));
+    bEnabled = Payload.BoolValue;
+	if (!bEnabled)
+    {
+        SetHighlighted_Implementation(false);
+        // Fire puzzle completion / repair like Terminal
+        if (CompletionTarget && CompletionTarget->GetClass()->ImplementsInterface(UPuzzleCompletionReceiver::StaticClass()))
+        {
+            IPuzzleCompletionReceiver::Execute_OnPuzzleCompleted(CompletionTarget);
+        }
+        OnRequestRepair.Broadcast(this);
+    }
+    else
+    {
+        if (CompletionTarget && CompletionTarget->GetClass()->ImplementsInterface(UPuzzleCompletionReceiver::StaticClass()))
+        {
+            IPuzzleCompletionReceiver::Execute_OnPuzzleReset(CompletionTarget);
+        }
     }
 }
 
@@ -155,7 +184,16 @@ void AFuturePowerGenerator::OnMiniGameEnded(bool bWasVictory)
         }
         else
         {
-            ServerSetEnabled(false);
+            // Use the new action pattern to safely communicate to the server!
+            if (APlayerController* PC = LastInteractingPC.IsValid() ? LastInteractingPC.Get() : nullptr)
+            {
+                if (ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(PC))
+                {
+                    FServerActionPayload Payload;
+                    Payload.BoolValue = false; // Disable this generator
+                    MyPC->ServerExecuteAction(this, Payload);
+                }
+            }
         }
     }
     else
@@ -187,6 +225,15 @@ void AFuturePowerGenerator::RequestRepair(AActor* RepairInstigator)
     }
     else
     {
-        ServerSetEnabled(true);
+        // Use the server action interface for consistency!
+        if (APlayerController* PC = LastInteractingPC.IsValid() ? LastInteractingPC.Get() : nullptr)
+        {
+            if (ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(PC))
+            {
+                FServerActionPayload Payload;
+                Payload.BoolValue = true; // Enable this generator
+                MyPC->ServerExecuteAction(this, Payload);
+            }
+        }
     }
 }

@@ -2,10 +2,11 @@
 
 #include "CoreMinimal.h"
 #include "Actors/PowerGenerator.h"
+#include "Interfaces/IServerActionInterface.h"
 #include "FuturePowerGenerator.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API AFuturePowerGenerator : public APowerGenerator
+class ECHOESOFTIME_API AFuturePowerGenerator : public APowerGenerator, public IServerActionInterface
 {
     GENERATED_BODY()
 
@@ -22,20 +23,19 @@ public:
 
     virtual void RequestRepair(AActor* RepairInstigator) override;
 
+    // NEW: Universal server action interface implementation
+    virtual void ExecuteServerAction_Implementation(const FServerActionPayload& Payload) override;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PastPowerGenerator")
     TSoftObjectPtr<class APastPowerGenerator> PastGenerator;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "MiniGame")
     TSubclassOf<class UFirewallMiniGame> FirewallMiniGameClass;
 
-    UFUNCTION(Server, Reliable)
-    void ServerSetEnabled(bool bNewEnabled);
-
 protected:
     UFUNCTION()
     void HandlePastGeneratorCompleted(bool bCompleted);
 
-    // --- Minigame stuff ---
     UFUNCTION()
     void OnMiniGameEnded(bool bWasVictory);
 

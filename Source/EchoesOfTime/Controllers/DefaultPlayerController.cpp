@@ -15,6 +15,7 @@
 #include "GameStates/DefaultGameState.h"
 #include "GameplayEffectTypes.h"
 #include "Actors/RepairableBase.h"
+#include "Interfaces/IServerActionInterface.h"
 #include "Actors/Terminal.h"
 #include "TimerManager.h"
 
@@ -489,22 +490,17 @@ void ADefaultPlayerController::OnIllegalTagChanged(const FGameplayTag Tag, int32
     }
 }
 
-void ADefaultPlayerController::ServerTryLockPick_Implementation(AActor* TargetDoor, float Angle)
+void ADefaultPlayerController::ServerExecuteAction_Implementation(UObject* Target, const FServerActionPayload& Payload)
 {
-    if (TargetDoor)
+    UE_LOG(LogTemp, Warning, TEXT("ServerExecuteAction_Implementation called! Target=%s"), *GetNameSafe(Target));
+    if (Target && Target->GetClass()->ImplementsInterface(UServerActionInterface::StaticClass()))
     {
-        if (ULockPickComponent* LockComp = TargetDoor->FindComponentByClass<ULockPickComponent>())
-        {
-            LockComp->ServerTrySetPin(Angle);
-        }
+        UE_LOG(LogTemp, Warning, TEXT("Target implements IServerActionInterface, invoking ExecuteServerAction..."));
+        IServerActionInterface::Execute_ExecuteServerAction(Target, Payload);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("Target does NOT implement IServerActionInterface!"));
     }
 }
 
-
-void ADefaultPlayerController::Server_NotifyTerminalMiniGameEnded_Implementation(ATerminal* Terminal, bool bWasVictory)
-{
-    if (Terminal)
-    {
-        Terminal->HandleMiniGameEnded_Internal(bWasVictory);
-    }
-}
