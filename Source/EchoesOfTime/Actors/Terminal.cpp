@@ -1,5 +1,5 @@
 #include "Terminal.h"
-#include "Minigames/FirewallMiniGame.h"
+#include "Minigames/DinoJumpMiniGame.h"
 #include "Interfaces/IPuzzleCompletionReceiver.h"
 #include "Controllers/DefaultPlayerController.h"
 #include "Net/UnrealNetwork.h"
@@ -30,7 +30,7 @@ void ATerminal::Interact_Implementation(AActor* Interactor)
     if (MiniGameInstance)
         return;
 
-    MiniGameInstance = NewObject<UFirewallMiniGame>(this, FirewallMiniGameClass);
+    MiniGameInstance = NewObject<UDinoJumpMiniGame>(this, DinoJumpMiniGameClass);
     if (MiniGameInstance)
     {
         MiniGameInstance->OnMiniGameEnded.AddDynamic(this, &ATerminal::OnMiniGameEnded);

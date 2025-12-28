@@ -20,7 +20,7 @@ public:
     UStaticMeshComponent* TerminalMesh;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "MiniGame")
-    TSubclassOf<class UFirewallMiniGame> FirewallMiniGameClass;
+    TSubclassOf<class UDinoJumpMiniGame> DinoJumpMiniGameClass;
 
     void HandleMiniGameEnded_Internal(bool bWasVictory);
 
@@ -37,7 +37,7 @@ protected:
     bool bEnabled = true;
 
     UPROPERTY()
-    UFirewallMiniGame* MiniGameInstance;
+    UDinoJumpMiniGame* MiniGameInstance;
 
     UFUNCTION()
     void OnMiniGameEnded(bool bWasVictory);
