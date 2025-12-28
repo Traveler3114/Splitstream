@@ -7,11 +7,25 @@
 #include "Blueprint/UserWidget.h"
 #include "Engine/World.h"
 
+// ---- Tile segment state for extension in TickGame() ----
+namespace {
+    enum class ETileSegType { Flat, StairUp, StairDown };
+    struct FTileGenState {
+        ETileSegType currType = ETileSegType::Flat;
+        int tilesLeft = 0;
+        int stairStepsLeft = 0;
+        float lastY = 0.f;
+    };
+    FTileGenState GTileGenExt;
+}
+// --------------------------------------------------------
+
 UNeonRunnerMiniGame::UNeonRunnerMiniGame()
     : GroundLevelY(0), TimeSinceLastObstacle(0.f), NextObsDistance(0.f), SurvivalTime(0.f),
     bIsGameOver(false), bVictoryAchieved(false),
     WidgetRef(nullptr), OwningController(nullptr), bGravityFlipped(false)
 {
+    PlayerStartX = 960.f;
 }
 
 FVector2D UNeonRunnerMiniGame::GetPlayAreaSize() const
@@ -30,9 +44,11 @@ FVector2D UNeonRunnerMiniGame::GetTextureSize(UTexture2D* Texture) const
 
 float UNeonRunnerMiniGame::GetCurrentGroundY() const
 {
-    // Ceiling ground for gravity flip: use about 150 units from top
     return bGravityFlipped ? 150.f : GroundY;
 }
+
+static int RandomFlatLen() { return FMath::RandRange(1, 10); }
+static int RandomStairSteps() { return FMath::RandRange(1, 5); }
 
 void UNeonRunnerMiniGame::StartGame(APlayerController* PlayerController)
 {
@@ -55,12 +71,113 @@ void UNeonRunnerMiniGame::StartGame(APlayerController* PlayerController)
     Player = FDinoPlayer();
     Player.Texture = DinoTexture;
     Player.Size = GetTextureSize(DinoTexture);
-    Player.Position = FVector2D(DinoStartX, GroundY);
-    Player.bIsOnGround = true;
     Player.Velocity = FVector2D::ZeroVector;
 
     GroundLevelY = GroundY;
     Obstacles.Empty();
+
+    Tiles.Empty();
+    float y = GroundY + TileSize * 0.5f;
+    float prevY = y;
+    float minY = GroundY - 3 * TileSize;
+    float maxY = GroundY + 3 * TileSize;
+
+    const int InitialFlatTiles = 24;
+    for (int i = 0; i < InitialFlatTiles; ++i) {
+        FDinoObstacle floorTile;
+        floorTile.Type = EObstacleType::Tile;
+        floorTile.Texture = TileTexture;
+        floorTile.Size = FVector2D(TileSize, TileSize);
+        floorTile.Position.X = i * TileSize + TileSize * 0.5f;
+        floorTile.Position.Y = y;
+        floorTile.bIsActive = true;
+        Tiles.Add(floorTile);
+        prevY = y;
+    }
+
+    int i = InitialFlatTiles;
+    int lastI = i;
+    GTileGenExt.currType = ETileSegType::Flat;
+    GTileGenExt.tilesLeft = 0;
+    GTileGenExt.stairStepsLeft = 0;
+    GTileGenExt.lastY = prevY;
+
+    // Fill view + buffer
+    float canvasW = Area.X;
+    int NumInitialTiles = FMath::CeilToInt(canvasW / TileSize) + 24;
+
+    while (i < NumInitialTiles)
+    {
+        // Start new segment if needed
+        if (GTileGenExt.tilesLeft == 0) {
+            int which = FMath::RandRange(0, 2);
+            if (which == 0) {
+                // Flat segment
+                GTileGenExt.currType = ETileSegType::Flat;
+                GTileGenExt.tilesLeft = RandomFlatLen();
+                GTileGenExt.stairStepsLeft = 0;
+            }
+            else {
+                // StairUp or StairDown
+                GTileGenExt.currType = (FMath::RandBool() ? ETileSegType::StairUp : ETileSegType::StairDown);
+                GTileGenExt.stairStepsLeft = RandomStairSteps();
+                GTileGenExt.tilesLeft = GTileGenExt.stairStepsLeft * 2; // 2 tiles per step
+            }
+        }
+        FDinoObstacle floorTile;
+        floorTile.Type = EObstacleType::Tile;
+        floorTile.Texture = TileTexture;
+        floorTile.Size = FVector2D(TileSize, TileSize);
+        floorTile.Position.X = i * TileSize + TileSize * 0.5f;
+
+        if (GTileGenExt.currType == ETileSegType::Flat) {
+            y = prevY;
+        }
+        else if ((GTileGenExt.tilesLeft % 2 == 0) && (GTileGenExt.stairStepsLeft > 0)) {
+            float candidateY = prevY + (GTileGenExt.currType == ETileSegType::StairUp ? -TileSize : TileSize);
+            // clamp
+            if (candidateY < minY) candidateY = minY;
+            if (candidateY > maxY) candidateY = maxY;
+            y = candidateY;
+            GTileGenExt.stairStepsLeft--;
+        }
+        else {
+            y = prevY;
+        }
+        floorTile.Position.Y = y;
+        floorTile.bIsActive = true;
+        Tiles.Add(floorTile);
+        prevY = y;
+        GTileGenExt.lastY = y;
+        GTileGenExt.tilesLeft--;
+        i++;
+    }
+
+    // Prepare state for TickGame
+    GTileGenExt.currType = ETileSegType::Flat;
+    GTileGenExt.tilesLeft = 0;
+    GTileGenExt.stairStepsLeft = 0;
+    GTileGenExt.lastY = prevY;
+
+    float StartX = PlayerStartX;
+    if (Tiles.Num() > 0) {
+        float BestDist = FLT_MAX;
+        int BestIdx = 0;
+        for (int i2 = 0; i2 < Tiles.Num(); ++i2) {
+            float dist = FMath::Abs(Tiles[i2].Position.X - StartX);
+            if (dist < BestDist) { BestDist = dist; BestIdx = i2; }
+        }
+        const FDinoObstacle& StartTile = Tiles[BestIdx];
+        FVector2D HalfSizeT = StartTile.Size * 0.5f;
+        FVector2D HalfSizeP = Player.Size * 0.5f;
+        Player.Position.X = StartX;
+        Player.Position.Y = StartTile.Position.Y - HalfSizeT.Y - HalfSizeP.Y;
+    }
+    else {
+        Player.Position = FVector2D(StartX, GroundY);
+    }
+    Player.bIsOnGround = true;
+    Player.Velocity = FVector2D::ZeroVector;
 
     CreateWidget();
 
@@ -78,7 +195,65 @@ void UNeonRunnerMiniGame::TickGame()
     float DeltaTime = 0.016f;
     SurvivalTime += DeltaTime;
 
-    // Scroll obstacles left to simulate dino running forward
+    float totalScroll = PlayerMoveSpeed * DeltaTime;
+    for (FDinoObstacle& Tile : Tiles) {
+        Tile.Position.X -= totalScroll;
+        if (Tile.Position.X + Tile.Size.X * 0.5f < -100.f)
+            Tile.bIsActive = false;
+    }
+    Tiles.RemoveAll([](const FDinoObstacle& T) { return !T.bIsActive; });
+
+    // EXTREME random floor/stair
+    FVector2D Area = GetPlayAreaSize();
+    float MostRight = 0.f;
+    for (const FDinoObstacle& Tile : Tiles)
+        if (Tile.Position.X > MostRight)
+            MostRight = Tile.Position.X;
+    float minY = GroundY - 3 * TileSize;
+    float maxY = GroundY + 3 * TileSize;
+
+    while (MostRight < Area.X + TileSize * 2) {
+        if (GTileGenExt.tilesLeft == 0) {
+            int which = FMath::RandRange(0, 2);
+            if (which == 0) {
+                GTileGenExt.currType = ETileSegType::Flat;
+                GTileGenExt.tilesLeft = RandomFlatLen();
+                GTileGenExt.stairStepsLeft = 0;
+            }
+            else {
+                GTileGenExt.currType = (FMath::RandBool() ? ETileSegType::StairUp : ETileSegType::StairDown);
+                GTileGenExt.stairStepsLeft = RandomStairSteps();
+                GTileGenExt.tilesLeft = GTileGenExt.stairStepsLeft * 2;
+            }
+        }
+
+        FDinoObstacle floorTile;
+        floorTile.Type = EObstacleType::Tile;
+        floorTile.Texture = TileTexture;
+        floorTile.Size = FVector2D(TileSize, TileSize);
+        floorTile.Position.X = MostRight + TileSize;
+
+        float y = GTileGenExt.lastY;
+        if (GTileGenExt.currType == ETileSegType::Flat) {
+            // nothing, stay level
+        }
+        else if ((GTileGenExt.tilesLeft % 2 == 0) && (GTileGenExt.stairStepsLeft > 0)) {
+            float candidateY = GTileGenExt.lastY + (GTileGenExt.currType == ETileSegType::StairUp ? -TileSize : TileSize);
+            // clamp
+            if (candidateY < minY) candidateY = minY;
+            if (candidateY > maxY) candidateY = maxY;
+            y = candidateY;
+            GTileGenExt.stairStepsLeft--;
+        }
+        floorTile.Position.Y = y;
+        floorTile.bIsActive = true;
+        Tiles.Add(floorTile);
+        GTileGenExt.tilesLeft--;
+        GTileGenExt.lastY = y;
+        MostRight = floorTile.Position.X;
+    }
+
+    // Scroll obstacles
     for (FDinoObstacle& Obs : Obstacles)
     {
         Obs.Position.X -= PlayerMoveSpeed * DeltaTime;
@@ -108,8 +283,7 @@ void UNeonRunnerMiniGame::TickGame()
         OwningController->GetWorld()->GetTimerManager().SetTimerForNextTick(this, &UNeonRunnerMiniGame::TickGame);
 }
 
-// ----- Randomized Chunks: Spikes, Blocks, Flying, Gap/Pit, Portal (Teleporter) -----
-
+// --- Rest of your code below unchanged ---
 void UNeonRunnerMiniGame::SpawnRandomObstacleChunk()
 {
     FVector2D Area = GetPlayAreaSize();
@@ -119,11 +293,10 @@ void UNeonRunnerMiniGame::SpawnRandomObstacleChunk()
 
     if (FMath::FRand() < PlatformGapChance)
     {
-        // Pit/gap
         FDinoObstacle gap;
         gap.Type = EObstacleType::Gap;
         gap.Size = FVector2D(200.f + FMath::FRandRange(-65.f, 110.f), 40.f);
-        gap.Position = FVector2D(baseX + gap.Size.X * 0.5f, groundY + 300.f); // Move far down (invisible)
+        gap.Position = FVector2D(baseX + gap.Size.X * 0.5f, groundY + 300.f);
         gap.Texture = nullptr;
         gap.bIsActive = true;
         Obstacles.Add(gap);
@@ -131,7 +304,6 @@ void UNeonRunnerMiniGame::SpawnRandomObstacleChunk()
     }
     if (Pattern <= 1)
     {
-        // Single spike
         FDinoObstacle spike;
         spike.Type = EObstacleType::Spike;
         spike.Texture = ObstacleTexture_Spike;
@@ -142,7 +314,6 @@ void UNeonRunnerMiniGame::SpawnRandomObstacleChunk()
     }
     else if (Pattern == 2)
     {
-        // Two spikes
         for (int i = 0; i < 2; ++i)
         {
             FDinoObstacle spike;
@@ -156,7 +327,6 @@ void UNeonRunnerMiniGame::SpawnRandomObstacleChunk()
     }
     else if (Pattern == 3)
     {
-        // Block (jump wall)
         FDinoObstacle block;
         block.Type = EObstacleType::Block;
         block.Texture = ObstacleTexture_Block;
@@ -167,7 +337,6 @@ void UNeonRunnerMiniGame::SpawnRandomObstacleChunk()
     }
     else if (Pattern == 4)
     {
-        // Flying obstacle
         FDinoObstacle fly;
         fly.Type = EObstacleType::Flying;
         fly.Texture = ObstacleTexture_Flying;
@@ -178,17 +347,14 @@ void UNeonRunnerMiniGame::SpawnRandomObstacleChunk()
     }
     else if (Pattern == 5)
     {
-        // Gravity flip teleporter!
         FDinoObstacle portal;
         portal.Type = EObstacleType::Teleporter;
         portal.Texture = ObstacleTexture_Teleporter;
         portal.Size = FVector2D(60.f, 96.f);
-        // Place on ground or ceiling depending on current state
         portal.Position = FVector2D(baseX, groundY);
         portal.bIsActive = true;
         Obstacles.Add(portal);
     }
-    // else: triple spike
     else
     {
         for (int i = 0; i < 3; ++i)
@@ -206,30 +372,128 @@ void UNeonRunnerMiniGame::SpawnRandomObstacleChunk()
 
 void UNeonRunnerMiniGame::UpdatePlayer(float DeltaTime)
 {
-    // Only vertical (jump, gravity, and death check)
-    if (!Player.bIsOnGround)
-    {
-        float gravityDir = (bGravityFlipped ? -1.f : 1.f);
-        Player.Velocity.Y += Gravity * DeltaTime * gravityDir;
-        Player.Position.Y += Player.Velocity.Y * DeltaTime;
+    static bool bWasPushedPrev = false;
 
-        float groundY = GetCurrentGroundY();
-        // Die if out of bounds
-        if ((!bGravityFlipped && Player.Position.Y > groundY + 130.f) ||
-            (bGravityFlipped && Player.Position.Y < groundY - 130.f))
+    FVector2D HalfSizeP = Player.Size * 0.5f;
+    float gravityDir = (bGravityFlipped ? -1.f : 1.f);
+
+    if (!Player.bIsOnGround)
+        Player.Velocity.Y += Gravity * DeltaTime * gravityDir;
+    float AttemptY = Player.Position.Y + Player.Velocity.Y * DeltaTime;
+
+    float totalScroll = PlayerMoveSpeed * DeltaTime;
+    float PlayerLeft = Player.Position.X - HalfSizeP.X;
+    float PlayerRight = Player.Position.X + HalfSizeP.X;
+    float PlayerTop = AttemptY - HalfSizeP.Y + 2.f;
+    float PlayerBottom = AttemptY + HalfSizeP.Y - 2.f;
+
+    bool bPushedThisFrame = false;
+
+    for (const FDinoObstacle& Tile : Tiles)
+    {
+        if (!Tile.bIsActive) continue;
+        FVector2D HalfSizeT = Tile.Size * 0.5f;
+        float TileLeft = Tile.Position.X - HalfSizeT.X;
+        float TileRight = Tile.Position.X + HalfSizeT.X;
+        float TileTop = Tile.Position.Y - HalfSizeT.Y;
+        float TileBottom = Tile.Position.Y + HalfSizeT.Y;
+        bool bVerticalOverlap = (PlayerBottom > TileTop + 1.f && PlayerTop < TileBottom - 1.f);
+
+        if (PlayerRight > TileLeft && PlayerLeft < TileLeft && bVerticalOverlap)
         {
-            GameOver();
-            return;
-        }
-        // Landed
-        if ((!bGravityFlipped && Player.Position.Y >= groundY) ||
-            (bGravityFlipped && Player.Position.Y <= groundY))
-        {
-            Player.Position.Y = groundY;
-            Player.bIsOnGround = true;
-            Player.Velocity.Y = 0.f;
+            bPushedThisFrame = true;
+            break;
         }
     }
+
+    if (bPushedThisFrame)
+    {
+        Player.Position.X -= totalScroll;
+        if (Player.Position.X > PlayerStartX) Player.Position.X = PlayerStartX;
+    }
+
+    float BestTileTop = FLT_MAX;
+    float BestTileBottom = -FLT_MAX;
+    bool bFoundFloor = false;
+
+    float FootLeftX = Player.Position.X - HalfSizeP.X * 0.7f;
+    float FootRightX = Player.Position.X + HalfSizeP.X * 0.7f;
+
+    for (const FDinoObstacle& Tile : Tiles)
+    {
+        if (!Tile.bIsActive) continue;
+        FVector2D HalfSizeT = Tile.Size * 0.5f;
+        float TileLeft = Tile.Position.X - HalfSizeT.X;
+        float TileRight = Tile.Position.X + HalfSizeT.X;
+        float TileTop = Tile.Position.Y - HalfSizeT.Y;
+        float TileBottom = Tile.Position.Y + HalfSizeT.Y;
+
+        float OverlapLeft = FMath::Max(FootLeftX, TileLeft);
+        float OverlapRight = FMath::Min(FootRightX, TileRight);
+        bool bStandingOn = (OverlapLeft < OverlapRight);
+        if (bStandingOn)
+        {
+            if (!bGravityFlipped)
+            {
+                if (Player.Position.Y + HalfSizeP.Y <= TileTop + 1.0f &&
+                    AttemptY + HalfSizeP.Y >= TileTop - 1.0f)
+                {
+                    if (TileTop < BestTileTop)
+                    {
+                        BestTileTop = TileTop;
+                        bFoundFloor = true;
+                    }
+                }
+            }
+            else
+            {
+                if (Player.Position.Y - HalfSizeP.Y >= TileBottom - 1.0f &&
+                    AttemptY - HalfSizeP.Y <= TileBottom + 1.0f)
+                {
+                    if (TileBottom > BestTileBottom)
+                    {
+                        BestTileBottom = TileBottom;
+                        bFoundFloor = true;
+                    }
+                }
+            }
+        }
+    }
+
+    if (bFoundFloor)
+    {
+        if (!bGravityFlipped)
+        {
+            Player.Position.Y = BestTileTop - HalfSizeP.Y;
+            Player.Velocity.Y = 0;
+            Player.bIsOnGround = true;
+        }
+        else
+        {
+            Player.Position.Y = BestTileBottom + HalfSizeP.Y;
+            Player.Velocity.Y = 0;
+            Player.bIsOnGround = true;
+        }
+    }
+    else
+    {
+        Player.Position.Y = AttemptY;
+        Player.bIsOnGround = false;
+    }
+
+    if (Player.Position.X - HalfSizeP.X < 2.f)
+    {
+        GameOver();
+        return;
+    }
+    if ((!bGravityFlipped && Player.Position.Y > GroundY + 500.f) ||
+        (bGravityFlipped && Player.Position.Y < 50.f))
+    {
+        GameOver();
+        return;
+    }
+
+    bWasPushedPrev = bPushedThisFrame;
 }
 
 void UNeonRunnerMiniGame::UpdateObstacles(float DeltaTime)
@@ -245,7 +509,6 @@ void UNeonRunnerMiniGame::CheckCollisions()
         if (!Obs.bIsActive)
             continue;
 
-        // Gaps: If player over a pit (and on ground), fall!
         if (Obs.Type == EObstacleType::Gap)
         {
             float gapLeft = Obs.Position.X - Obs.Size.X * 0.5f;
@@ -257,7 +520,6 @@ void UNeonRunnerMiniGame::CheckCollisions()
             continue;
         }
 
-        // Teleporter: flip on overlap, remove portal
         if (Obs.Type == EObstacleType::Teleporter)
         {
             float dx = FMath::Abs(Player.Position.X - Obs.Position.X);
@@ -276,7 +538,6 @@ void UNeonRunnerMiniGame::CheckCollisions()
             continue;
         }
 
-        // Spike/Block/Flying - bounding box collision
         float dx = FMath::Abs(DinoCenter.X - Obs.Position.X);
         float dy = FMath::Abs(DinoCenter.Y - Obs.Position.Y);
         float collideX = (Player.Size.X + Obs.Size.X) * 0.42f;
@@ -331,6 +592,7 @@ void UNeonRunnerMiniGame::EndGame()
     bIsGameOver = true;
     CleanupInput();
     Obstacles.Empty();
+    Tiles.Empty();
     OwningController = nullptr;
 }
 
@@ -369,5 +631,5 @@ void UNeonRunnerMiniGame::OnJump()
 void UNeonRunnerMiniGame::UpdateWidget()
 {
     if (!WidgetRef) return;
-    WidgetRef->DrawGameObjects(Player, Obstacles, bIsGameOver, SurvivalTime, VictoryTime);
+    WidgetRef->DrawGameObjects(Player, Obstacles, Tiles, bIsGameOver, SurvivalTime, VictoryTime);
 }

@@ -11,7 +11,7 @@ void UNeonRunnerWidget::NativeConstruct()
 
     if (GameCanvas)
         InitialChildCount = GameCanvas->GetChildrenCount();
-    const int32 MaxSprites = 100;
+    const int32 MaxSprites = 200; // more for tiles
     SpritePool.Reserve(MaxSprites);
     for (int32 i = SpritePool.Num(); i < MaxSprites; ++i)
     {
@@ -32,7 +32,9 @@ void UNeonRunnerWidget::NativeConstruct()
     }
 }
 
-void UNeonRunnerWidget::DrawGameObjects(const FDinoPlayer& Player, const TArray<FDinoObstacle>& Obstacles, bool bGameOver, float SurvivalTime, float VictoryTime)
+// --- TILE SYSTEM ---
+// Add Tiles parameter
+void UNeonRunnerWidget::DrawGameObjects(const FDinoPlayer& Player, const TArray<FDinoObstacle>& Obstacles, const TArray<FDinoObstacle>& Tiles, bool bGameOver, float SurvivalTime, float VictoryTime)
 {
     if (!GameCanvas) return;
 
@@ -44,12 +46,25 @@ void UNeonRunnerWidget::DrawGameObjects(const FDinoPlayer& Player, const TArray<
     float UniformScale = FMath::Min(ScaleX, ScaleY);
 
     CurrentSpriteIndex = 0;
+
+    // --- TILE SYSTEM ---
+    // Draw tiles first (behind everything)
+    for (const FDinoObstacle& Tile : Tiles)
+    {
+        if (!Tile.bIsActive || Tile.Type != EObstacleType::Tile || !Tile.Texture) continue;
+        FVector2D ScaledSize = Tile.Size * UniformScale;
+        FVector2D ScaledPosition(Tile.Position.X * ScaleX, Tile.Position.Y * ScaleY);
+        DrawSprite(ScaledPosition, Tile.Texture, ScaledSize);
+    }
+
+    // Player
     if (Player.Texture)
     {
         FVector2D ScaledSize = Player.Size * UniformScale;
         FVector2D ScaledPosition(Player.Position.X * ScaleX, Player.Position.Y * ScaleY);
         DrawSprite(ScaledPosition, Player.Texture, ScaledSize);
     }
+    // Obstacles
     for (const FDinoObstacle& Obs : Obstacles)
     {
         if (!Obs.bIsActive || Obs.Type == EObstacleType::Gap || !Obs.Texture) continue;
@@ -67,6 +82,7 @@ void UNeonRunnerWidget::DrawGameObjects(const FDinoPlayer& Player, const TArray<
     }
 }
 
+// No change needed below
 UImage* UNeonRunnerWidget::GetOrCreateSpriteWidget()
 {
     if (CurrentSpriteIndex < SpritePool.Num())

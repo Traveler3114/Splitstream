@@ -10,15 +10,16 @@
 class UNeonRunnerWidget;
 class APlayerController;
 
-// ---- Obstacle Types ----
 UENUM(BlueprintType)
 enum class EObstacleType : uint8
 {
     Spike,
     Block,
     Flying,
-    Gap,         // Pit
-    Teleporter   // Gravity portal
+    Gap,
+    Teleporter,
+    // --- TILE SYSTEM ---
+    Tile         // NEW: Floor or Hill Tile
 };
 
 USTRUCT(BlueprintType)
@@ -56,12 +57,13 @@ class ECHOESOFTIME_API UNeonRunnerMiniGame : public UObject
 {
     GENERATED_BODY()
 public:
-    // Textures for all obstacle types
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UTexture2D* DinoTexture;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UTexture2D* ObstacleTexture_Spike;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UTexture2D* ObstacleTexture_Block;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UTexture2D* ObstacleTexture_Flying;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UTexture2D* ObstacleTexture_Teleporter;
+    // --- TILE SYSTEM ---
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UTexture2D* TileTexture;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") TSubclassOf<UNeonRunnerWidget> WidgetClass;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UInputMappingContext* DinoIMC;
@@ -70,7 +72,6 @@ public:
 
     UPROPERTY(BlueprintAssignable) FDinoGameEnded OnMiniGameEnded;
 
-    // Gameplay tuning
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|Gameplay")
     float PlayerMoveSpeed = 720.f;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|Gameplay")
@@ -84,13 +85,16 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|Gameplay")
     float VictoryTime = 30.f;
 
-    // Obstacle chunk tuning
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|Gameplay")
     float ObstacleMinDistance = 600.f;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|Gameplay")
     float ObstacleMaxDistance = 1100.f;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|Gameplay")
     float PlatformGapChance = 0.16f;
+
+    // --- TILE SYSTEM ---
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|Tiles")
+    float TileSize = 70.f; // One square side in px
 
     UNeonRunnerMiniGame();
 
@@ -100,6 +104,10 @@ public:
 private:
     FDinoPlayer Player;
     TArray<FDinoObstacle> Obstacles;
+
+    // --- TILE SYSTEM ---
+    TArray<FDinoObstacle> Tiles; // NEW
+
     float GroundLevelY;
     float TimeSinceLastObstacle;
     float NextObsDistance;
@@ -128,4 +136,8 @@ private:
     FVector2D GetTextureSize(UTexture2D* Texture) const;
 
     UFUNCTION() void OnJump();
+
+    float PlayerStartX = 320.f;
 };
+
+// If you have forward declarations for DrawGameObjects of the Widget, add parameter for Tiles. (see NeonRunnerWidget.h)

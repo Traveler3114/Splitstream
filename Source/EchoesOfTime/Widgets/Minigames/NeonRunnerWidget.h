@@ -20,8 +20,10 @@ public:
     UPROPERTY(meta = (BindWidget)) UTextBlock* GameOverText;
     UPROPERTY(meta = (BindWidget)) UTextBlock* ProgressText;
 
+    // --- TILE SYSTEM ---
+    // Add Tiles parameter
     UFUNCTION(BlueprintCallable, Category = "MiniGame")
-    void DrawGameObjects(const FDinoPlayer& Player, const TArray<FDinoObstacle>& Obstacles, bool bGameOver, float SurvivalTime, float VictoryTime);
+    void DrawGameObjects(const FDinoPlayer& Player, const TArray<FDinoObstacle>& Obstacles, const TArray<FDinoObstacle>& Tiles, bool bGameOver, float SurvivalTime, float VictoryTime);
 
     UFUNCTION(BlueprintCallable, Category = "MiniGame")
     void ShowGameOver();
