@@ -6,11 +6,11 @@
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Components/Image.h"
-#include "Minigames/DinoJumpMiniGame.h"
-#include "DinoJumpWidget.generated.h"
+#include "Minigames/NeonRunnerMiniGame.h"
+#include "NeonRunnerWidget.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API UDinoJumpWidget : public UUserWidget
+class ECHOESOFTIME_API UNeonRunnerWidget : public UUserWidget
 {
     GENERATED_BODY()
 public:

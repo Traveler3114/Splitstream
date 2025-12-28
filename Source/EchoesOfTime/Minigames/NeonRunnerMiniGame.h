@@ -5,9 +5,9 @@
 #include "InputMappingContext.h"
 #include "InputAction.h"
 #include "Engine/Texture2D.h"
-#include "DinoJumpMiniGame.generated.h"
+#include "NeonRunnerMiniGame.generated.h"
 
-class UDinoJumpWidget;
+class UNeonRunnerWidget;
 class APlayerController;
 
 // ---- Obstacle Types ----
@@ -52,7 +52,7 @@ struct FDinoPlayer
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDinoGameEnded, bool, bWasVictory);
 
 UCLASS(Blueprintable, BlueprintType)
-class ECHOESOFTIME_API UDinoJumpMiniGame : public UObject
+class ECHOESOFTIME_API UNeonRunnerMiniGame : public UObject
 {
     GENERATED_BODY()
 public:
@@ -63,7 +63,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UTexture2D* ObstacleTexture_Flying;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UTexture2D* ObstacleTexture_Teleporter;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") TSubclassOf<UDinoJumpWidget> WidgetClass;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") TSubclassOf<UNeonRunnerWidget> WidgetClass;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UInputMappingContext* DinoIMC;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UInputMappingContext* GameplayIMC;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UInputAction* JumpAction;
@@ -92,7 +92,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|Gameplay")
     float PlatformGapChance = 0.16f;
 
-    UDinoJumpMiniGame();
+    UNeonRunnerMiniGame();
 
     UFUNCTION(BlueprintCallable, Category = "MiniGame") void StartGame(APlayerController* PlayerController);
     UFUNCTION(BlueprintCallable, Category = "MiniGame") void EndGame();
@@ -106,7 +106,7 @@ private:
     float SurvivalTime;
     bool bIsGameOver;
     bool bVictoryAchieved;
-    UPROPERTY() UDinoJumpWidget* WidgetRef;
+    UPROPERTY() UNeonRunnerWidget* WidgetRef;
     UPROPERTY() APlayerController* OwningController;
     FTimerHandle TickTimerHandle;
 

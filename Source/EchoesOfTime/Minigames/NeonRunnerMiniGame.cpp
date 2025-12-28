@@ -1,5 +1,5 @@
-#include "DinoJumpMiniGame.h"
-#include "Widgets/Minigames/DinoJumpWidget.h"
+#include "NeonRunnerMiniGame.h"
+#include "Widgets/Minigames/NeonRunnerWidget.h"
 #include "GameFramework/PlayerController.h"
 #include "TimerManager.h"
 #include "EnhancedInputComponent.h"
@@ -7,34 +7,34 @@
 #include "Blueprint/UserWidget.h"
 #include "Engine/World.h"
 
-UDinoJumpMiniGame::UDinoJumpMiniGame()
+UNeonRunnerMiniGame::UNeonRunnerMiniGame()
     : GroundLevelY(0), TimeSinceLastObstacle(0.f), NextObsDistance(0.f), SurvivalTime(0.f),
     bIsGameOver(false), bVictoryAchieved(false),
     WidgetRef(nullptr), OwningController(nullptr), bGravityFlipped(false)
 {
 }
 
-FVector2D UDinoJumpMiniGame::GetPlayAreaSize() const
+FVector2D UNeonRunnerMiniGame::GetPlayAreaSize() const
 {
     if (WidgetRef && WidgetRef->GameCanvas)
         return WidgetRef->GameCanvas->GetCachedGeometry().GetLocalSize();
     return FVector2D(1920, 1080);
 }
 
-FVector2D UDinoJumpMiniGame::GetTextureSize(UTexture2D* Texture) const
+FVector2D UNeonRunnerMiniGame::GetTextureSize(UTexture2D* Texture) const
 {
     if (Texture)
         return FVector2D(Texture->GetImportedSize().X, Texture->GetImportedSize().Y);
     return FVector2D(96, 96);
 }
 
-float UDinoJumpMiniGame::GetCurrentGroundY() const
+float UNeonRunnerMiniGame::GetCurrentGroundY() const
 {
     // Ceiling ground for gravity flip: use about 150 units from top
     return bGravityFlipped ? 150.f : GroundY;
 }
 
-void UDinoJumpMiniGame::StartGame(APlayerController* PlayerController)
+void UNeonRunnerMiniGame::StartGame(APlayerController* PlayerController)
 {
     OwningController = PlayerController;
     bIsGameOver = false;
@@ -65,13 +65,13 @@ void UDinoJumpMiniGame::StartGame(APlayerController* PlayerController)
     CreateWidget();
 
     if (UWorld* World = OwningController->GetWorld())
-        World->GetTimerManager().SetTimerForNextTick(this, &UDinoJumpMiniGame::TickGame);
+        World->GetTimerManager().SetTimerForNextTick(this, &UNeonRunnerMiniGame::TickGame);
 
     SetupInput();
     UpdateWidget();
 }
 
-void UDinoJumpMiniGame::TickGame()
+void UNeonRunnerMiniGame::TickGame()
 {
     if (bIsGameOver) return;
 
@@ -105,12 +105,12 @@ void UDinoJumpMiniGame::TickGame()
         Victory();
 
     if (!bIsGameOver && OwningController && OwningController->GetWorld())
-        OwningController->GetWorld()->GetTimerManager().SetTimerForNextTick(this, &UDinoJumpMiniGame::TickGame);
+        OwningController->GetWorld()->GetTimerManager().SetTimerForNextTick(this, &UNeonRunnerMiniGame::TickGame);
 }
 
 // ----- Randomized Chunks: Spikes, Blocks, Flying, Gap/Pit, Portal (Teleporter) -----
 
-void UDinoJumpMiniGame::SpawnRandomObstacleChunk()
+void UNeonRunnerMiniGame::SpawnRandomObstacleChunk()
 {
     FVector2D Area = GetPlayAreaSize();
     float groundY = GetCurrentGroundY();
@@ -204,7 +204,7 @@ void UDinoJumpMiniGame::SpawnRandomObstacleChunk()
     }
 }
 
-void UDinoJumpMiniGame::UpdatePlayer(float DeltaTime)
+void UNeonRunnerMiniGame::UpdatePlayer(float DeltaTime)
 {
     // Only vertical (jump, gravity, and death check)
     if (!Player.bIsOnGround)
@@ -232,12 +232,12 @@ void UDinoJumpMiniGame::UpdatePlayer(float DeltaTime)
     }
 }
 
-void UDinoJumpMiniGame::UpdateObstacles(float DeltaTime)
+void UNeonRunnerMiniGame::UpdateObstacles(float DeltaTime)
 {
     // NO LONGER NEEDED - see TickGame
 }
 
-void UDinoJumpMiniGame::CheckCollisions()
+void UNeonRunnerMiniGame::CheckCollisions()
 {
     FVector2D DinoCenter = Player.Position;
     for (FDinoObstacle& Obs : Obstacles)
@@ -290,7 +290,7 @@ void UDinoJumpMiniGame::CheckCollisions()
     }
 }
 
-void UDinoJumpMiniGame::GameOver()
+void UNeonRunnerMiniGame::GameOver()
 {
     if (bIsGameOver) return;
     bIsGameOver = true;
@@ -299,7 +299,7 @@ void UDinoJumpMiniGame::GameOver()
     EndGame();
 }
 
-void UDinoJumpMiniGame::Victory()
+void UNeonRunnerMiniGame::Victory()
 {
     if (bIsGameOver) return;
     bIsGameOver = true;
@@ -309,7 +309,7 @@ void UDinoJumpMiniGame::Victory()
     EndGame();
 }
 
-void UDinoJumpMiniGame::EndGame()
+void UNeonRunnerMiniGame::EndGame()
 {
     if (OwningController)
     {
@@ -334,29 +334,29 @@ void UDinoJumpMiniGame::EndGame()
     OwningController = nullptr;
 }
 
-void UDinoJumpMiniGame::CreateWidget()
+void UNeonRunnerMiniGame::CreateWidget()
 {
     if (!OwningController || !WidgetClass) return;
-    WidgetRef = ::CreateWidget<UDinoJumpWidget>(OwningController, WidgetClass);
+    WidgetRef = ::CreateWidget<UNeonRunnerWidget>(OwningController, WidgetClass);
     if (WidgetRef) WidgetRef->AddToViewport(0);
 }
 
-void UDinoJumpMiniGame::SetupInput()
+void UNeonRunnerMiniGame::SetupInput()
 {
     if (!OwningController) return;
     UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(OwningController->InputComponent);
     if (EnhancedInput)
     {
-        EnhancedInput->BindAction(JumpAction, ETriggerEvent::Started, this, &UDinoJumpMiniGame::OnJump);
+        EnhancedInput->BindAction(JumpAction, ETriggerEvent::Started, this, &UNeonRunnerMiniGame::OnJump);
     }
 }
 
-void UDinoJumpMiniGame::CleanupInput()
+void UNeonRunnerMiniGame::CleanupInput()
 {
     // Optional
 }
 
-void UDinoJumpMiniGame::OnJump()
+void UNeonRunnerMiniGame::OnJump()
 {
     if (bIsGameOver) return;
     if (Player.bIsOnGround)
@@ -366,7 +366,7 @@ void UDinoJumpMiniGame::OnJump()
     }
 }
 
-void UDinoJumpMiniGame::UpdateWidget()
+void UNeonRunnerMiniGame::UpdateWidget()
 {
     if (!WidgetRef) return;
     WidgetRef->DrawGameObjects(Player, Obstacles, bIsGameOver, SurvivalTime, VictoryTime);

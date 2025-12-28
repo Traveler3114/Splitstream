@@ -1,9 +1,9 @@
-#include "DinoJumpWidget.h"
+#include "NeonRunnerWidget.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Components/Image.h"
 #include "Engine/Texture2D.h"
 
-void UDinoJumpWidget::NativeConstruct()
+void UNeonRunnerWidget::NativeConstruct()
 {
     Super::NativeConstruct();
     if (GameOverText) GameOverText->SetVisibility(ESlateVisibility::Hidden);
@@ -32,7 +32,7 @@ void UDinoJumpWidget::NativeConstruct()
     }
 }
 
-void UDinoJumpWidget::DrawGameObjects(const FDinoPlayer& Player, const TArray<FDinoObstacle>& Obstacles, bool bGameOver, float SurvivalTime, float VictoryTime)
+void UNeonRunnerWidget::DrawGameObjects(const FDinoPlayer& Player, const TArray<FDinoObstacle>& Obstacles, bool bGameOver, float SurvivalTime, float VictoryTime)
 {
     if (!GameCanvas) return;
 
@@ -67,7 +67,7 @@ void UDinoJumpWidget::DrawGameObjects(const FDinoPlayer& Player, const TArray<FD
     }
 }
 
-UImage* UDinoJumpWidget::GetOrCreateSpriteWidget()
+UImage* UNeonRunnerWidget::GetOrCreateSpriteWidget()
 {
     if (CurrentSpriteIndex < SpritePool.Num())
         return SpritePool[CurrentSpriteIndex++];
@@ -89,13 +89,13 @@ UImage* UDinoJumpWidget::GetOrCreateSpriteWidget()
     return Img;
 }
 
-void UDinoJumpWidget::HideUnusedSprites()
+void UNeonRunnerWidget::HideUnusedSprites()
 {
     for (int32 i = CurrentSpriteIndex; i < SpritePool.Num(); ++i)
         if (SpritePool[i]) SpritePool[i]->SetVisibility(ESlateVisibility::Hidden);
 }
 
-void UDinoJumpWidget::DrawSprite(FVector2D Position, UTexture2D* Texture, FVector2D Size)
+void UNeonRunnerWidget::DrawSprite(FVector2D Position, UTexture2D* Texture, FVector2D Size)
 {
     if (!GameCanvas || !Texture) return;
     UImage* Img = GetOrCreateSpriteWidget();
@@ -110,7 +110,7 @@ void UDinoJumpWidget::DrawSprite(FVector2D Position, UTexture2D* Texture, FVecto
     }
 }
 
-void UDinoJumpWidget::ShowGameOver()
+void UNeonRunnerWidget::ShowGameOver()
 {
     if (GameOverText)
     {
@@ -119,7 +119,7 @@ void UDinoJumpWidget::ShowGameOver()
     }
 }
 
-void UDinoJumpWidget::ShowVictory()
+void UNeonRunnerWidget::ShowVictory()
 {
     if (GameOverText)
     {
