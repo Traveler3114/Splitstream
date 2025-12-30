@@ -33,8 +33,8 @@ void UNeonRunnerWidget::NativeConstruct()
 }
 
 // --- TILE SYSTEM ---
-// Add Tiles parameter
-void UNeonRunnerWidget::DrawGameObjects(const FDinoPlayer& Player, const TArray<FDinoObstacle>& Obstacles, const TArray<FDinoObstacle>& Tiles, bool bGameOver, float SurvivalTime, float VictoryTime)
+// Remove GAP check
+void UNeonRunnerWidget::DrawGameObjects(const FNeonRunnerPlayer& Player, const TArray<FNeonRunnerObstacle>& Obstacles, const TArray<FNeonRunnerObstacle>& Tiles, bool bGameOver, float SurvivalTime, float VictoryTime)
 {
     if (!GameCanvas) return;
 
@@ -47,9 +47,8 @@ void UNeonRunnerWidget::DrawGameObjects(const FDinoPlayer& Player, const TArray<
 
     CurrentSpriteIndex = 0;
 
-    // --- TILE SYSTEM ---
     // Draw tiles first (behind everything)
-    for (const FDinoObstacle& Tile : Tiles)
+    for (const FNeonRunnerObstacle& Tile : Tiles)
     {
         if (!Tile.bIsActive || Tile.Type != EObstacleType::Tile || !Tile.Texture) continue;
         FVector2D ScaledSize = Tile.Size * UniformScale;
@@ -65,9 +64,9 @@ void UNeonRunnerWidget::DrawGameObjects(const FDinoPlayer& Player, const TArray<
         DrawSprite(ScaledPosition, Player.Texture, ScaledSize);
     }
     // Obstacles
-    for (const FDinoObstacle& Obs : Obstacles)
+    for (const FNeonRunnerObstacle& Obs : Obstacles)
     {
-        if (!Obs.bIsActive || Obs.Type == EObstacleType::Gap || !Obs.Texture) continue;
+        if (!Obs.bIsActive || !Obs.Texture) continue;
         FVector2D ScaledSize = Obs.Size * UniformScale;
         FVector2D ScaledPosition(Obs.Position.X * ScaleX, Obs.Position.Y * ScaleY);
         DrawSprite(ScaledPosition, Obs.Texture, ScaledSize);
