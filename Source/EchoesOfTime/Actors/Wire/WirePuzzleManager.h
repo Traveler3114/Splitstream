@@ -5,7 +5,7 @@
 #include "WireActor.h"
 #include "WireDeviceActor.h"
 #include "TimelineEra.h"
-#include "ProceduralLevelGenerator.h" // Required for FWireSequenceStep usage
+#include "Actors/ProceduralLevelGenerator.h"
 #include "WirePuzzleManager.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWirePuzzleCompleted);

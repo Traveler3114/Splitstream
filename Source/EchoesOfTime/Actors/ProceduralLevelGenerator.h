@@ -64,7 +64,7 @@ public:
     TSubclassOf<class ANewspaperActor> NewspaperBPClass;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Items")
-    TSubclassOf<class ASearchableActor> SearchableItemBPClass;
+    TArray<TSubclassOf<class ASearchableActor>> SearchableItemClasses;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Disabling Device")
 	TSubclassOf<class ADisablingDeviceActor> DisablingDeviceBPClass;
@@ -89,7 +89,7 @@ public:
 
 protected:
     virtual void BeginPlay() override;
-    void SpawnCivilianDeskItems(const TArray<class ACivilianCharacter*>& Civilians, TSubclassOf<class ASearchableActor> ItemClass);
+    void SpawnCivilianDeskItems(const TArray<class ACivilianCharacter*>& Civilians);
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
     FString GenerateRandomCode(int32 Length = 4) const;

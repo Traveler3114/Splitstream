@@ -73,7 +73,7 @@ public:
 
     // --- Ownership (optional, e.g. for fingerprints) ---
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Ownership")
-    TSoftObjectPtr<class ACivilianCharacter> OwnerCivilian;
+    class ACivilianCharacter* OwnerCivilian;
 
     // --- Effects (optional) ---
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tags")

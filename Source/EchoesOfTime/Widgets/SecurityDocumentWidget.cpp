@@ -4,7 +4,7 @@
 #include "SecurityDocumentWidget.h"
 #include "Components/Border.h"
 #include "Components/VerticalBox.h"
-#include "ProceduralLevelGenerator.h"
+#include "Actors/ProceduralLevelGenerator.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"

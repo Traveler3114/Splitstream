@@ -1,5 +1,5 @@
 #include "ArchiveComputer.h"
-#include "ProceduralLevelGenerator.h"
+#include "Actors/ProceduralLevelGenerator.h"
 #include "Computer.h"
 #include "Actors/DeskActor.h"
 #include "Actors/CodeGenerator.h"

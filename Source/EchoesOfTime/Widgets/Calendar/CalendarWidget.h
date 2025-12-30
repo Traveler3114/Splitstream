@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "ProceduralLevelGenerator.h"
+#include "Actors/ProceduralLevelGenerator.h"
 #include "CalendarWidget.generated.h"
 
 class UUniformGridPanel;

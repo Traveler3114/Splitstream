@@ -1,7 +1,6 @@
 #include "WirePuzzleManager.h"
 #include "Net/UnrealNetwork.h"
 #include "Interfaces/IPuzzleCompletionReceiver.h"
-#include "ProceduralLevelGenerator.h"
 #include "Engine/Engine.h"
 #include "WireActor.h"
 #include "WireDeviceActor.h"
