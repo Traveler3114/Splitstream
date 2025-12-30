@@ -82,23 +82,16 @@ void UNeonRunnerMiniGame::TickGame()
     float DeltaTime = 0.016f;
     SurvivalTime += DeltaTime;
 
-    // --- Difficulty tiers by progress ---
+    // --- Gradual speed-up by progress, using Blueprint variable ---
     float ProgressRatio = SurvivalTime / VictoryTime;
     ProgressRatio = FMath::Clamp(ProgressRatio, 0.f, 1.f);
 
-    // Difficulty: speed-up and more spikes over time
-    if (ProgressRatio < 0.25f) {
-        CurrentMoveSpeed = 720.f;
-    }
-    else if (ProgressRatio < 0.5f) {
-        CurrentMoveSpeed = 920.f;
-    }
-    else if (ProgressRatio < 0.75f) {
-        CurrentMoveSpeed = 920.f;
-    }
-    else {
-        CurrentMoveSpeed = 1100.f;
-    }
+    // Calculate percent [0, 100]
+    float percent = ProgressRatio * 100.0f;
+    // Start speed is 720, then add user-chosen increment per percent (default 3.8)
+    CurrentMoveSpeed = 720.f + SpeedIncreasePerPercent * percent;
+    // Clamp to 1100.f maximum
+    if (CurrentMoveSpeed > 1100.f) CurrentMoveSpeed = 1100.f;
 
     float totalScroll = CurrentMoveSpeed * DeltaTime;
     for (FNeonRunnerObstacle& Tile : Tiles)

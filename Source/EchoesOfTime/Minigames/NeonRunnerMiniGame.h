@@ -80,6 +80,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|Gameplay")
     float SpikeFloorAlignOffset = 0.f; // Adjust in editor as needed
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|Gameplay")
+    float SpeedIncreasePerPercent = 3.8f; // Default so final is 1100 at 100%, 720+(3.8*100)=1100
+
     UNeonRunnerMiniGame();
 
     UFUNCTION(BlueprintCallable, Category = "MiniGame") void StartGame(APlayerController* PlayerController);
