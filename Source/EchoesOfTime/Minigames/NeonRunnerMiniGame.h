@@ -123,6 +123,7 @@ private:
     void UpdatePlayer(float DeltaTime);
     void CheckCollisions();
     void UpdateWidget();
+	void Victory();
     void GameOver();
     FVector2D GetPlayAreaSize() const;
     FVector2D GetTextureSize(UTexture2D* Texture) const;

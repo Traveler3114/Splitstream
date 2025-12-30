@@ -88,6 +88,10 @@ void UNeonRunnerMiniGame::TickGame()
 
     float DeltaTime = 0.016f;
     SurvivalTime += DeltaTime;
+    if (SurvivalTime >= VictoryTime && !bIsGameOver) {
+        Victory();
+        return;
+    }
 
     // --- Gradual speed-up by progress, using Blueprint variable ---
     float ProgressRatio = SurvivalTime / VictoryTime;
@@ -171,9 +175,6 @@ void UNeonRunnerMiniGame::SpawnObstacle()
     }
     else if (ProgressRatio < 0.75f) {
         minSpikes = 3; maxSpikes = 4;
-    }
-    else {
-        minSpikes = 4; maxSpikes = 4;
     }
     int groupCount = FMath::RandRange(minSpikes, maxSpikes);
 
@@ -304,6 +305,14 @@ void UNeonRunnerMiniGame::CheckCollisions()
             return;
         }
     }
+}
+void UNeonRunnerMiniGame::Victory()
+{
+    if (bIsGameOver) return;
+    bIsGameOver = true;
+    if (WidgetRef) WidgetRef->ShowVictory();
+    OnMiniGameEnded.Broadcast(true);
+    EndGame();
 }
 
 void UNeonRunnerMiniGame::GameOver()
