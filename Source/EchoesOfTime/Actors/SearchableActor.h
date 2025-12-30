@@ -48,7 +48,7 @@ protected:
 	virtual bool IsProgressiveInteract_Implementation() override;
 	//virtual void SetHighlighted_Implementation(bool bHighlight) override;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadWrite,EditAnywhere)
 	class USearchComponent* SearchComponent = nullptr;
 
 

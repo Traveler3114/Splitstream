@@ -21,6 +21,7 @@ ASearchableActor::ASearchableActor()
     ActorMesh->SetupAttachment(DefaultSceneRoot);
 
     SearchComponent = CreateDefaultSubobject<USearchComponent>(TEXT("SearchComponent"));
+    SearchComponent->SearchDuration = 5.f;
     SearchComponent->SetIsReplicated(true);
 
 	bReplicates = true;
@@ -30,7 +31,6 @@ ASearchableActor::ASearchableActor()
 void ASearchableActor::BeginPlay()
 {
 	Super::BeginPlay();
-	SearchComponent->SearchDuration = 5.f;
     if (SearchComponent)
     {
         SearchComponent->OnSearchComplete.AddDynamic(this, &ASearchableActor::OnSearchComplete);
