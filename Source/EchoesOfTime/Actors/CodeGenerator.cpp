@@ -5,7 +5,12 @@
 #include "Components/TextRenderComponent.h"
 #include "DataAssets/ItemBase.h"
 #include "Net/UnrealNetwork.h"
+#include "Characters/CivilianCharacter.h"
 #include "TimerManager.h"
+#include "Kismet/GameplayStatics.h"
+#include "Engine/Engine.h"
+#include "DrawDebugHelpers.h"
+
 
 ACodeGenerator::ACodeGenerator()
 {
@@ -24,6 +29,7 @@ ACodeGenerator::ACodeGenerator()
     {
         CodesTextComp->SetText(FText::GetEmpty());
     }
+
 }
 
 void ACodeGenerator::BeginPlay()
@@ -33,7 +39,6 @@ void ACodeGenerator::BeginPlay()
 
     if (HasAuthority())
     {
-        // Check every 0.1s; adjust interval for your desired "responsiveness"
         GetWorldTimerManager().SetTimer(ExpireTimerHandle, this, &ACodeGenerator::ExpireOldCodes, 0.1f, true);
     }
 }
@@ -42,6 +47,7 @@ void ACodeGenerator::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     Super::EndPlay(EndPlayReason);
     GetWorldTimerManager().ClearTimer(ExpireTimerHandle);
+
 }
 
 void ACodeGenerator::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -49,25 +55,40 @@ void ACodeGenerator::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(ACodeGenerator, TargetCivilian);
     DOREPLIFETIME(ACodeGenerator, CodesDisplayText);
+
+    UE_LOG(LogTemp, Display, TEXT("[%s][%s] Lifetime replication set."), *GetNameSafe(this), TEXT(__FUNCTION__));
 }
 
 bool ACodeGenerator::IsCorrectItem_Implementation(UItemBase* Item) const
 {
     UItemBase* FP = Cast<UItemBase>(Item);
-    return FP && FP->OwnerCivilian == TargetCivilian;
+    bool bResult = FP && FP->OwnerCivilian == TargetCivilian;
+    return bResult;
 }
 
 void ACodeGenerator::Interact_Implementation(AActor* Interactor)
 {
-    if (!HasAuthority()) return;
-    if (!Interactor || !TargetCivilian)
+
+    if (!HasAuthority()) {
         return;
+    }
+    if (!Interactor || !TargetCivilian) {
+        return;
+    }
 
     StatusArray.Empty();
 
+    int32 CodesCreated = 0;
     for (AKeypadScanner* Keypad : ManagedKeypads)
     {
-        if (!Keypad || !Keypad->HasAuthority()) continue;
+        if (!Keypad)
+        {
+            continue;
+        }
+        if (!Keypad->HasAuthority())
+        {
+            continue;
+        }
 
         FString NewCode;
         for (int32 i = 0; i < Keypad->CodeLength; ++i)
@@ -81,6 +102,8 @@ void ACodeGenerator::Interact_Implementation(AActor* Interactor)
         Keypad->SetCodeWithExpiry(NewCode, Lifetime);
 
         StatusArray.Add(FKeypadCodeStatus(NewCode, Expiry, Keypad));
+
+        ++CodesCreated;
     }
 
     UpdateDisplayText();
@@ -91,45 +114,51 @@ void ACodeGenerator::ExpireOldCodes()
     if (!HasAuthority())
         return;
 
-    bool bChanged = false;
     float Now = GetWorld()->GetTimeSeconds();
+
+    // Print countdowns and status
+    FString LogSummary = FString::Printf(TEXT("ExpireOldCodes: StatusArray.Num=%d"), StatusArray.Num());
+    for (int32 i = 0; i < StatusArray.Num(); ++i)
+    {
+        FString Code = StatusArray[i].Code;
+        float Expiry = StatusArray[i].ExpiryTime;
+        float TimeLeft = FMath::Max(0.f, Expiry - Now);
+        FString KeypadName = StatusArray[i].Keypad ? StatusArray[i].Keypad->GetName() : TEXT("Unknown");
+        LogSummary += FString::Printf(TEXT("\n  [%d] Keypad: %s, Code: %s, TimeLeft: %.2fs, Expiry: %.2f"),
+            i, *KeypadName, *Code, TimeLeft, Expiry);
+    }
+
+    bool bChanged = false;
 
     for (int32 i = StatusArray.Num() - 1; i >= 0; --i)
     {
         if (StatusArray[i].ExpiryTime <= Now)
         {
+            FString ExpiredKeypad = StatusArray[i].Keypad ? StatusArray[i].Keypad->GetName() : TEXT("Unknown");
             StatusArray.RemoveAt(i);
             bChanged = true;
         }
     }
-
-    if (bChanged)
-    {
-        UpdateDisplayText();
-    }
+    UpdateDisplayText();
 }
 
 void ACodeGenerator::UpdateDisplayText()
 {
     FString DisplayText;
     float Now = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0f;
+
     for (const FKeypadCodeStatus& Status : StatusArray)
     {
         float TimeLeft = FMath::Max(0.f, Status.ExpiryTime - Now);
         FString KeypadName = Status.Keypad ? Status.Keypad->GetName() : TEXT("Unknown");
-        DisplayText += FString::Printf(TEXT("Keypad: %s\nCode: %s\nTime Left: %.0fs\n\n"),
+        DisplayText += FString::Printf(TEXT("Keypad: %s\nCode: %s\nTime Left: %.1fs\n\n"),
             *KeypadName, *Status.Code, TimeLeft);
     }
+    CodesDisplayText = DisplayText;
 
-    // Only update/replicate if changed
-    if (CodesDisplayText != DisplayText)
+    if (CodesTextComp && HasAuthority())
     {
-        CodesDisplayText = DisplayText;
-
-        if (CodesTextComp && HasAuthority())
-        {
-            CodesTextComp->SetText(FText::FromString(CodesDisplayText));
-        }
+        CodesTextComp->SetText(FText::FromString(CodesDisplayText));
     }
 }
 
