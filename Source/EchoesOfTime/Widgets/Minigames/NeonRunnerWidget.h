@@ -6,6 +6,7 @@
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Components/Image.h"
+#include "Components/ProgressBar.h"
 #include "Minigames/NeonRunnerMiniGame.h"
 #include "NeonRunnerWidget.generated.h"
 
@@ -19,9 +20,10 @@ public:
     UPROPERTY(meta = (BindWidget)) UCanvasPanel* GameCanvas;
     UPROPERTY(meta = (BindWidget)) UTextBlock* GameOverText;
     UPROPERTY(meta = (BindWidget)) UTextBlock* ProgressText;
+    UPROPERTY(meta = (BindWidget)) UProgressBar* HoverProgressBar;
 
     UFUNCTION(BlueprintCallable, Category = "MiniGame")
-    void DrawGameObjects(const FNeonRunnerPlayer& Player, const TArray<FNeonRunnerObstacle>& Obstacles, const TArray<FNeonRunnerObstacle>& Tiles, bool bGameOver, float SurvivalTime, float VictoryTime);
+    void DrawGameObjects(const FNeonRunnerPlayer& Player, const TArray<FNeonRunnerObstacle>& Obstacles, const TArray<FNeonRunnerObstacle>& Tiles, bool bGameOver, float SurvivalTime, float VictoryTime, float HoverFraction);
 
     UFUNCTION(BlueprintCallable, Category = "MiniGame")
     void ShowGameOver();

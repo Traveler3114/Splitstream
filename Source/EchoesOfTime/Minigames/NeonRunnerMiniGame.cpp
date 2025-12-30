@@ -6,10 +6,12 @@
 #include "EnhancedInputSubsystems.h"
 #include "Blueprint/UserWidget.h"
 #include "Engine/World.h"
+#include "InputActionValue.h"
 
 UNeonRunnerMiniGame::UNeonRunnerMiniGame()
     : TimeSinceLastObstacle(0.f), NextObsDistance(0.f), SurvivalTime(0.f),
-    bIsGameOver(false), WidgetRef(nullptr), OwningController(nullptr), CurrentMoveSpeed(720.f)
+    bIsGameOver(false), WidgetRef(nullptr), OwningController(nullptr), CurrentMoveSpeed(720.f),
+    HoverMeter(0.f), bHovering(false), HoverHeight(0.f)
 {
     PlayerStartX = 320.f;
 }
@@ -35,6 +37,11 @@ void UNeonRunnerMiniGame::StartGame(APlayerController* PlayerController)
     SurvivalTime = 0.f;
     TimeSinceLastObstacle = 0.f;
     NextObsDistance = FMath::FRandRange(700.f, 1050.f);
+
+    // HOVER
+    HoverMeter = MaxHoverTime;
+    bHovering = false;
+    HoverHeight = 0.f;
 
     if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
         ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(OwningController->GetLocalPlayer()))
@@ -197,49 +204,73 @@ void UNeonRunnerMiniGame::UpdatePlayer(float DeltaTime)
     FVector2D HalfSizeP = Player.Size * 0.5f;
     bool WasOnGround = Player.bIsOnGround;
 
-    if (!Player.bIsOnGround)
-        Player.Velocity.Y += Gravity * DeltaTime;
-    float AttemptY = Player.Position.Y + Player.Velocity.Y * DeltaTime;
-
-    // --- Ground check ---
-    float PlayerFootLeft = Player.Position.X - HalfSizeP.X * 0.8f;
-    float PlayerFootRight = Player.Position.X + HalfSizeP.X * 0.8f;
-
-    float DesiredY = AttemptY;
-    float BestTileTop = -FLT_MAX;
-    bool bFoundGround = false;
-
-    for (const FNeonRunnerObstacle& Tile : Tiles)
+    // --- Hover logic ---
+    if (bHovering && HoverMeter > 0.f)
     {
-        if (!Tile.bIsActive) continue;
-        float TileLeft = Tile.Position.X - Tile.Size.X * 0.5f;
-        float TileRight = Tile.Position.X + Tile.Size.X * 0.5f;
-        float TileTop = Tile.Position.Y - Tile.Size.Y * 0.5f;
-
-        float OverlapLeft = FMath::Max(PlayerFootLeft, TileLeft);
-        float OverlapRight = FMath::Min(PlayerFootRight, TileRight);
-        bool bOverFoot = (OverlapLeft < OverlapRight);
-
-        if (bOverFoot && AttemptY + HalfSizeP.Y >= TileTop && Player.Velocity.Y >= 0.0f)
+        // Lock Y and zero vertical velocity
+        Player.Position.Y = HoverHeight;
+        Player.Velocity.Y = 0.f;
+        HoverMeter -= DeltaTime;
+        if (HoverMeter <= 0.f)
         {
-            if (TileTop > BestTileTop)
-            {
-                BestTileTop = TileTop;
-                bFoundGround = true;
-            }
+            HoverMeter = 0.0f;
+            OnHoverEnd();
         }
-    }
-
-    if (bFoundGround)
-    {
-        Player.Position.Y = BestTileTop - HalfSizeP.Y;
-        Player.Velocity.Y = 0;
-        Player.bIsOnGround = true;
     }
     else
     {
-        Player.Position.Y = AttemptY;
-        Player.bIsOnGround = false;
+        // Gravity applies as usual
+        if (!Player.bIsOnGround)
+            Player.Velocity.Y += Gravity * DeltaTime;
+        float AttemptY = Player.Position.Y + Player.Velocity.Y * DeltaTime;
+
+        // --- Ground check ---
+        float PlayerFootLeft = Player.Position.X - HalfSizeP.X * 0.8f;
+        float PlayerFootRight = Player.Position.X + HalfSizeP.X * 0.8f;
+
+        float DesiredY = AttemptY;
+        float BestTileTop = -FLT_MAX;
+        bool bFoundGround = false;
+
+        for (const FNeonRunnerObstacle& Tile : Tiles)
+        {
+            if (!Tile.bIsActive) continue;
+            float TileLeft = Tile.Position.X - Tile.Size.X * 0.5f;
+            float TileRight = Tile.Position.X + Tile.Size.X * 0.5f;
+            float TileTop = Tile.Position.Y - Tile.Size.Y * 0.5f;
+
+            float OverlapLeft = FMath::Max(PlayerFootLeft, TileLeft);
+            float OverlapRight = FMath::Min(PlayerFootRight, TileRight);
+            bool bOverFoot = (OverlapLeft < OverlapRight);
+
+            if (bOverFoot && AttemptY + HalfSizeP.Y >= TileTop && Player.Velocity.Y >= 0.0f)
+            {
+                if (TileTop > BestTileTop)
+                {
+                    BestTileTop = TileTop;
+                    bFoundGround = true;
+                }
+            }
+        }
+
+        if (bFoundGround)
+        {
+            Player.Position.Y = BestTileTop - HalfSizeP.Y;
+            Player.Velocity.Y = 0;
+            Player.bIsOnGround = true;
+        }
+        else
+        {
+            Player.Position.Y = AttemptY;
+            Player.bIsOnGround = false;
+        }
+
+        // Recharge hover only on ground
+        if (Player.bIsOnGround && !bHovering)
+        {
+            float RechargeRate = MaxHoverTime / HoverRechargeRate;
+            HoverMeter = FMath::Min(MaxHoverTime, HoverMeter + DeltaTime * RechargeRate);
+        }
     }
 
     if (Player.Position.Y > GroundY + 300.f)
@@ -324,6 +355,8 @@ void UNeonRunnerMiniGame::SetupInput()
     if (EnhancedInput)
     {
         EnhancedInput->BindAction(JumpAction, ETriggerEvent::Started, this, &UNeonRunnerMiniGame::OnJump);
+        EnhancedInput->BindAction(HoverAction, ETriggerEvent::Triggered, this, &UNeonRunnerMiniGame::OnHoverStart);
+        EnhancedInput->BindAction(HoverAction, ETriggerEvent::Completed, this, &UNeonRunnerMiniGame::OnHoverEnd);
     }
 }
 
@@ -335,15 +368,30 @@ void UNeonRunnerMiniGame::CleanupInput()
 void UNeonRunnerMiniGame::OnJump()
 {
     if (bIsGameOver) return;
-    if (Player.bIsOnGround)
+    if (!bHovering && Player.bIsOnGround)
     {
         Player.Velocity.Y = JumpVelocity;
         Player.bIsOnGround = false;
     }
 }
 
+void UNeonRunnerMiniGame::OnHoverStart()
+{
+    if (HoverMeter > 0.f && !bHovering)
+    {
+        bHovering = true;
+        HoverHeight = Player.Position.Y;
+    }
+}
+
+void UNeonRunnerMiniGame::OnHoverEnd()
+{
+    bHovering = false;
+}
+
 void UNeonRunnerMiniGame::UpdateWidget()
 {
     if (!WidgetRef) return;
-    WidgetRef->DrawGameObjects(Player, Obstacles, Tiles, bIsGameOver, SurvivalTime, VictoryTime);
+    float hoverFrac = FMath::Clamp(HoverMeter / MaxHoverTime, 0.f, 1.f);
+    WidgetRef->DrawGameObjects(Player, Obstacles, Tiles, bIsGameOver, SurvivalTime, VictoryTime, hoverFrac);
 }

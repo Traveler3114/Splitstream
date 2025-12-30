@@ -60,6 +60,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UInputMappingContext* RunnerIMC;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UInputMappingContext* GameplayIMC;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UInputAction* JumpAction;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UInputAction* HoverAction;
 
     UPROPERTY(BlueprintAssignable) FNeonRunnerGameEnded OnMiniGameEnded;
 
@@ -83,6 +84,12 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|Gameplay")
     float SpeedIncreasePerPercent = 3.8f; // Default so final is 1100 at 100%, 720+(3.8*100)=1100
 
+    // HOVER ABILITY
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|Hover")
+    float MaxHoverTime = 2.0f;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|Hover")
+    float HoverRechargeRate = 1.2f; // seconds to recharge to full on ground
+
     UNeonRunnerMiniGame();
 
     UFUNCTION(BlueprintCallable, Category = "MiniGame") void StartGame(APlayerController* PlayerController);
@@ -103,6 +110,11 @@ private:
 
     float CurrentMoveSpeed = 720.f; // internal for difficulty bands
 
+    // HOVER
+    float HoverMeter = 0.f;
+    bool bHovering = false;
+    float HoverHeight = 0.f;
+
     void CreateWidget();
     void SetupInput();
     void CleanupInput();
@@ -115,7 +127,9 @@ private:
     FVector2D GetPlayAreaSize() const;
     FVector2D GetTextureSize(UTexture2D* Texture) const;
 
-    UFUNCTION() void OnJump();
+    UFUNCTION() void OnJump(); // Called when JumpAction pressed
+    UFUNCTION() void OnHoverStart(); // Called when HoverAction axis triggers
+    UFUNCTION() void OnHoverEnd(); // Called on HoverAction (Completed)
 
     float PlayerStartX = 320.f;
 };

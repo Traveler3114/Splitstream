@@ -1,6 +1,7 @@
 #include "NeonRunnerWidget.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Components/Image.h"
+#include "Components/ProgressBar.h"
 #include "Engine/Texture2D.h"
 
 void UNeonRunnerWidget::NativeConstruct()
@@ -8,6 +9,7 @@ void UNeonRunnerWidget::NativeConstruct()
     Super::NativeConstruct();
     if (GameOverText) GameOverText->SetVisibility(ESlateVisibility::Hidden);
     if (ProgressText) ProgressText->SetVisibility(ESlateVisibility::Visible);
+    if (HoverProgressBar) HoverProgressBar->SetPercent(1.0f);
 
     if (GameCanvas)
         InitialChildCount = GameCanvas->GetChildrenCount();
@@ -34,7 +36,7 @@ void UNeonRunnerWidget::NativeConstruct()
 
 // --- TILE SYSTEM ---
 // Remove GAP check
-void UNeonRunnerWidget::DrawGameObjects(const FNeonRunnerPlayer& Player, const TArray<FNeonRunnerObstacle>& Obstacles, const TArray<FNeonRunnerObstacle>& Tiles, bool bGameOver, float SurvivalTime, float VictoryTime)
+void UNeonRunnerWidget::DrawGameObjects(const FNeonRunnerPlayer& Player, const TArray<FNeonRunnerObstacle>& Obstacles, const TArray<FNeonRunnerObstacle>& Tiles, bool bGameOver, float SurvivalTime, float VictoryTime, float HoverFraction)
 {
     if (!GameCanvas) return;
 
@@ -79,9 +81,13 @@ void UNeonRunnerWidget::DrawGameObjects(const FNeonRunnerPlayer& Player, const T
     {
         ProgressText->SetText(FText::FromString(FString::Printf(TEXT("Progress: %d%%"), Percent)));
     }
+
+    if (HoverProgressBar)
+    {
+        HoverProgressBar->SetPercent(HoverFraction);
+    }
 }
 
-// No change needed below
 UImage* UNeonRunnerWidget::GetOrCreateSpriteWidget()
 {
     if (CurrentSpriteIndex < SpritePool.Num())
