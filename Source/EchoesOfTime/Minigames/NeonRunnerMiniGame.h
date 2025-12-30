@@ -74,6 +74,12 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|Tiles")
     float TileSize = 70.f; // One square side in px
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|Gameplay")
+    float VictoryTime = 40.f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|Gameplay")
+    float SpikeFloorAlignOffset = 0.f; // Adjust in editor as needed
+
     UNeonRunnerMiniGame();
 
     UFUNCTION(BlueprintCallable, Category = "MiniGame") void StartGame(APlayerController* PlayerController);
@@ -91,6 +97,8 @@ private:
     UPROPERTY() UNeonRunnerWidget* WidgetRef;
     UPROPERTY() APlayerController* OwningController;
     FTimerHandle TickTimerHandle;
+
+    float CurrentMoveSpeed = 720.f; // internal for difficulty bands
 
     void CreateWidget();
     void SetupInput();

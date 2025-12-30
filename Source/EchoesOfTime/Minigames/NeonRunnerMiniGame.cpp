@@ -9,7 +9,7 @@
 
 UNeonRunnerMiniGame::UNeonRunnerMiniGame()
     : TimeSinceLastObstacle(0.f), NextObsDistance(0.f), SurvivalTime(0.f),
-    bIsGameOver(false), WidgetRef(nullptr), OwningController(nullptr)
+    bIsGameOver(false), WidgetRef(nullptr), OwningController(nullptr), CurrentMoveSpeed(720.f)
 {
     PlayerStartX = 320.f;
 }
@@ -82,7 +82,25 @@ void UNeonRunnerMiniGame::TickGame()
     float DeltaTime = 0.016f;
     SurvivalTime += DeltaTime;
 
-    float totalScroll = PlayerMoveSpeed * DeltaTime;
+    // --- Difficulty tiers by progress ---
+    float ProgressRatio = SurvivalTime / VictoryTime;
+    ProgressRatio = FMath::Clamp(ProgressRatio, 0.f, 1.f);
+
+    // Difficulty: speed-up and more spikes over time
+    if (ProgressRatio < 0.25f) {
+        CurrentMoveSpeed = 720.f;
+    }
+    else if (ProgressRatio < 0.5f) {
+        CurrentMoveSpeed = 920.f;
+    }
+    else if (ProgressRatio < 0.75f) {
+        CurrentMoveSpeed = 920.f;
+    }
+    else {
+        CurrentMoveSpeed = 1100.f;
+    }
+
+    float totalScroll = CurrentMoveSpeed * DeltaTime;
     for (FNeonRunnerObstacle& Tile : Tiles)
     {
         Tile.Position.X -= totalScroll;
@@ -109,18 +127,23 @@ void UNeonRunnerMiniGame::TickGame()
 
     for (FNeonRunnerObstacle& Obs : Obstacles)
     {
-        Obs.Position.X -= PlayerMoveSpeed * DeltaTime;
+        Obs.Position.X -= CurrentMoveSpeed * DeltaTime;
         if (Obs.Position.X + Obs.Size.X < 0.f)
             Obs.bIsActive = false;
     }
     Obstacles.RemoveAll([](const FNeonRunnerObstacle& Obs) { return !Obs.bIsActive; });
 
-    TimeSinceLastObstacle += PlayerMoveSpeed * DeltaTime;
+    // Shorten gap slightly at higher difficulties (harder)
+    TimeSinceLastObstacle += CurrentMoveSpeed * DeltaTime;
     if (TimeSinceLastObstacle >= NextObsDistance)
     {
+        float baseMin = 700.f;
+        float baseMax = 1050.f;
+        float modifier = 1.0f - ProgressRatio * 0.45f; // 20-45% shorter/harder at endgame
+        NextObsDistance = FMath::FRandRange(baseMin, baseMax) * modifier;
+
         SpawnObstacle();
         TimeSinceLastObstacle = 0.f;
-        NextObsDistance = FMath::FRandRange(700.f, 1050.f);
     }
 
     UpdatePlayer(DeltaTime);
@@ -135,13 +158,45 @@ void UNeonRunnerMiniGame::SpawnObstacle()
 {
     FVector2D Area = GetPlayAreaSize();
     float baseX = Area.X + 80.0f;
-    FNeonRunnerObstacle spike;
-    spike.Type = EObstacleType::Spike;
-    spike.Texture = ObstacleTexture_Spike;
-    spike.Size = FVector2D(50.f + FMath::FRandRange(-7.f, 12.f), 90.f + FMath::FRandRange(-10.f, 10.f));
-    spike.Position = FVector2D(baseX, GroundY - spike.Size.Y * 0.5f + 4.0f);
-    spike.bIsActive = true;
-    Obstacles.Add(spike);
+
+    float ProgressRatio = SurvivalTime / VictoryTime;
+    ProgressRatio = FMath::Clamp(ProgressRatio, 0.f, 1.f);
+
+    int minSpikes = 1, maxSpikes = 2;
+    if (ProgressRatio < 0.25f) {
+        minSpikes = 1; maxSpikes = 2;
+    }
+    else if (ProgressRatio < 0.5f) {
+        minSpikes = 2; maxSpikes = 3;
+    }
+    else if (ProgressRatio < 0.75f) {
+        minSpikes = 3; maxSpikes = 4;
+    }
+    else {
+        minSpikes = 4; maxSpikes = 4;
+    }
+    int groupCount = FMath::RandRange(minSpikes, maxSpikes);
+
+    FVector2D spikeSize = GetTextureSize(ObstacleTexture_Spike);
+    float SpikeGap = spikeSize.X * 0.1f;
+
+    float lastRight = baseX;
+    for (int i = 0; i < groupCount; ++i)
+    {
+        FNeonRunnerObstacle spike;
+        spike.Type = EObstacleType::Spike;
+        spike.Texture = ObstacleTexture_Spike;
+        spike.Size = spikeSize;
+
+        spike.Position = FVector2D(
+            lastRight + spikeSize.X * 0.5f + (i > 0 ? SpikeGap : 0.0f),
+            GroundY - spikeSize.Y * 0.5f + SpikeFloorAlignOffset
+        );
+        spike.bIsActive = true;
+        Obstacles.Add(spike);
+
+        lastRight = spike.Position.X + spikeSize.X * 0.5f + SpikeGap;
+    }
 }
 
 void UNeonRunnerMiniGame::UpdatePlayer(float DeltaTime)
@@ -157,7 +212,6 @@ void UNeonRunnerMiniGame::UpdatePlayer(float DeltaTime)
     float PlayerFootLeft = Player.Position.X - HalfSizeP.X * 0.8f;
     float PlayerFootRight = Player.Position.X + HalfSizeP.X * 0.8f;
 
-    // Find the highest tile just below or touching the player's bottom
     float DesiredY = AttemptY;
     float BestTileTop = -FLT_MAX;
     bool bFoundGround = false;
@@ -173,7 +227,6 @@ void UNeonRunnerMiniGame::UpdatePlayer(float DeltaTime)
         float OverlapRight = FMath::Min(PlayerFootRight, TileRight);
         bool bOverFoot = (OverlapLeft < OverlapRight);
 
-        // This condition allows for snapping if falling and body is "at or below" floor
         if (bOverFoot && AttemptY + HalfSizeP.Y >= TileTop && Player.Velocity.Y >= 0.0f)
         {
             if (TileTop > BestTileTop)
@@ -196,7 +249,6 @@ void UNeonRunnerMiniGame::UpdatePlayer(float DeltaTime)
         Player.bIsOnGround = false;
     }
 
-    // Death if falls below ground
     if (Player.Position.Y > GroundY + 300.f)
     {
         GameOver();
@@ -300,5 +352,5 @@ void UNeonRunnerMiniGame::OnJump()
 void UNeonRunnerMiniGame::UpdateWidget()
 {
     if (!WidgetRef) return;
-    WidgetRef->DrawGameObjects(Player, Obstacles, Tiles, bIsGameOver, SurvivalTime, 100.f);
+    WidgetRef->DrawGameObjects(Player, Obstacles, Tiles, bIsGameOver, SurvivalTime, VictoryTime);
 }
