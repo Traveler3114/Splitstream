@@ -127,6 +127,20 @@ void AGuardCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
     if (Data.NewValue <= 0.f)
     {
         bIsDead = true;
+
+        if (HasAuthority() && AIPerceptionComponent)
+        {
+            TArray<AActor*> PerceivedActors;
+            AIPerceptionComponent->GetCurrentlyPerceivedActors(UAISense_Sight::StaticClass(), PerceivedActors);
+            for (AActor* Actor : PerceivedActors)
+            {
+                if (Actor && Actor->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
+                {
+                    IDetectable::Execute_OnLost(Actor, this);
+                }
+            }
+        }
+
         if (HasAuthority())
         {
             if (ADefaultGameState* GS = Cast<ADefaultGameState>(GetWorld()->GetGameState()))

@@ -4,6 +4,7 @@
 #include "VentBase.h"
 #include "ActorComponents/SearchComponent.h"
 #include "ActorComponents/DetectionComponent.h"
+#include "Net/UnrealNetwork.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 
 
@@ -46,7 +47,8 @@ void AVentBase::OnDetected_Implementation(AActor* Detector)
 }
 void AVentBase::OnLost_Implementation(AActor* Detector)
 {
-    if (DetectionComponent && !(DetectionComponent->bDetectionInProgress) && !(DetectionComponent->bFullyDetected) && bIsOpen) DetectionComponent->StopDetection(Detector);
+    //if (DetectionComponent && !(DetectionComponent->bDetectionInProgress) && !(DetectionComponent->bFullyDetected) && bIsOpen) DetectionComponent->StopDetection(Detector);
+    if (DetectionComponent) DetectionComponent->StopDetection(Detector);
 }
 
 void AVentBase::Interact_Implementation(AActor* Interactor)

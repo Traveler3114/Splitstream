@@ -1,5 +1,6 @@
 #include "DetectionComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "Interfaces/IDetectable.h"
 #include "DetectionRegistry.h"
 #include "GameFramework/Actor.h"
 
@@ -56,8 +57,6 @@ void UDetectionComponent::StopDetection(AActor* Detector)
 
     bDetectionInProgress = false;
     SetComponentTickEnabled(true);
-
-    MulticastUpdateRegistry(false);
     OnDetectionEnded.Broadcast(GetOwner());
 }
 
@@ -77,45 +76,30 @@ void UDetectionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-    bool bShow = false;
     if (bDetectionInProgress)
     {
+        // Progress bar moves up
         DetectionElapsed += DeltaTime;
         if (DetectionElapsed >= DetectionDuration)
         {
             DetectionElapsed = DetectionDuration;
             bDetectionInProgress = false;
             bFullyDetected = true;
-            FullyDetectedElapsed = 0.f; // Start "hold bar on full" timer
-            SetComponentTickEnabled(true); // Keep ticking until bar hide
             HandleFullyDetected();
-        }
-        bShow = true;
-    }
-    else if (bFullyDetected)
-    {
-        FullyDetectedElapsed += DeltaTime;
-        DetectionElapsed = DetectionDuration; // force bar to stay full
-        bShow = true;
-        if (FullyDetectedElapsed >= DetectionBarHideDelay)
-        {
-            bFullyDetected = false;
-            DetectionElapsed = 0.f;
-            FullyDetectedElapsed = 0.f;
-            SetComponentTickEnabled(false);
-            bShow = false;
         }
     }
     else
     {
+        // Bar decays down from its current value
         DetectionElapsed = FMath::Max(0.f, DetectionElapsed - DeltaTime);
-        if (DetectionElapsed > 0.f)
-            bShow = true;
-        else
-            SetComponentTickEnabled(false);
-    }
 
-    // NO WidgetComponent calls, UI is handled by HUD/player via registry
+        if (DetectionElapsed <= 0.f)
+        {
+            bFullyDetected = false;
+            SetComponentTickEnabled(false);
+            MulticastUpdateRegistry(false); // Clean up the widget
+        }
+    }
 }
 
 void UDetectionComponent::MulticastUpdateRegistry_Implementation(bool bRegister)
