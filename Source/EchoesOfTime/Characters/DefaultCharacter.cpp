@@ -605,6 +605,9 @@ void ADefaultCharacter::UpdateInteractHighlight()
 
 void ADefaultCharacter::HandleInteractHoldStart()
 {
+	if (ProgressiveActor)
+        return;
+
     FHitResult Hit;
     FVector TraceEnd;
     if (!GetForwardTraceResult(300.f, Hit, TraceEnd)) return;
