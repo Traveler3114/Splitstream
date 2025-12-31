@@ -16,6 +16,8 @@
 #include "Actors/RepairableBase.h"
 #include "Interfaces/IServerActionInterface.h"
 #include "Actors/Terminal.h"
+#include "GameFramework/Character.h"
+#include "Components/CapsuleComponent.h"
 #include "TimerManager.h"
 
 ADefaultPlayerController::ADefaultPlayerController()
@@ -388,37 +390,41 @@ void ADefaultPlayerController::Tick(float DeltaTime)
 void ADefaultPlayerController::ClientUpdateDetectionWidget_Implementation(AActor* Detector, float Progress, bool bIsLocked)
 {
     if (!Detector || !CharacterHUD || !CharacterHUD->CharacterOverlay)
-    {
         return;
+
+    FVector WidgetWorldLocation = Detector->GetActorLocation();
+
+    // For Character? Use Capsule Height for top
+    const ACharacter* Char = Cast<ACharacter>(Detector);
+    if (Char)
+    {
+        const UCapsuleComponent* Capsule = Char->GetCapsuleComponent();
+        if (Capsule)
+        {
+            WidgetWorldLocation += FVector(0.f, 0.f, Capsule->GetScaledCapsuleHalfHeight());
+        }
+    }
+    else
+    {
+        // Not a Character? Use bounds
+        const UPrimitiveComponent* Prim = Detector->FindComponentByClass<UPrimitiveComponent>();
+        if (Prim)
+        {
+            FVector Origin, BoxExtent;
+            Detector->GetActorBounds(true, Origin, BoxExtent);
+            WidgetWorldLocation = Origin + FVector(0.f, 0.f, BoxExtent.Z);
+        }
     }
 
-    FVector2D ViewportSize = UWidgetLayoutLibrary::GetViewportSize(CharacterHUD->CharacterOverlay);
-    FVector2D ViewportSize_gengine = GEngine && GEngine->GameViewport ? FVector2D(GEngine->GameViewport->Viewport->GetSizeXY()) : FVector2D(-1, -1);
-
-    FVector2D Center = ViewportSize * 0.5f;
-    const float EdgePadding = 32.f;
+    // Add a little extra so it's above the head, not intersecting it (tweak as needed)
+    WidgetWorldLocation.Z += 20.f;
 
     FVector2D ScreenPos;
-    bool bOnScreen = ProjectWorldLocationToScreen(Detector->GetActorLocation(), ScreenPos);
+    ProjectWorldLocationToScreen(WidgetWorldLocation, ScreenPos);
 
-
-    if (!bOnScreen ||
-        ScreenPos.X < 0 || ScreenPos.X > ViewportSize.X ||
-        ScreenPos.Y < 0 || ScreenPos.Y > ViewportSize.Y)
-    {
-        FVector2D Dir = (ScreenPos - Center).GetSafeNormal();
-        float HalfW = ViewportSize.X * 0.5f - EdgePadding;
-        float HalfH = ViewportSize.Y * 0.5f - EdgePadding;
-        float AngleRads = FMath::Atan2(Dir.Y, Dir.X);
-        ScreenPos.X = Center.X + HalfW * FMath::Cos(AngleRads);
-        ScreenPos.Y = Center.Y + HalfH * FMath::Sin(AngleRads);
-
-    }
-
-    // Pass placement to overlay
+    // Pass screen position to your overlay
     CharacterHUD->CharacterOverlay->UpdateDetectionWidget(Detector, Progress, bIsLocked, ScreenPos);
 }
-
 void ADefaultPlayerController::BindAttributeDelegates()
 {
     ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
