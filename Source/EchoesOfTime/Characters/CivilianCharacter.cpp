@@ -137,9 +137,20 @@ void ACivilianCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
     if (Data.NewValue <= 0.f)
     {
         bIsDead = true;
-        // Detach/Destroy controller removes AI or Player control and all brain logic
-        DetachFromControllerPendingDestroy();
+        if (HasAuthority() && AIPerceptionComponent)
+        {
+            TArray<AActor*> PerceivedActors;
+            AIPerceptionComponent->GetCurrentlyPerceivedActors(UAISense_Sight::StaticClass(), PerceivedActors);
+            for (AActor* Actor : PerceivedActors)
+            {
+                if (Actor && Actor->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
+                {
+                    IDetectable::Execute_OnForceDetectionEnd(Actor, this);
+                }
+            }
+        }
 
+        DetachFromControllerPendingDestroy();
         // Stop movement
         if (GetCharacterMovement())
         {
