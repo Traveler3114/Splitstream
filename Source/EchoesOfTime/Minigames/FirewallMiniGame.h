@@ -113,6 +113,17 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UTexture2D* HeavyEnemyBulletTexture;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame") UTexture2D* BossTexture;
 
+
+    // In FirewallMiniGame.h
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|EasterEgg") UTexture2D* EasterEggPlayerTexture;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|EasterEgg") UTexture2D* EasterEggEnemyTexture;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|EasterEgg") UTexture2D* EasterEggHeavyEnemyTexture;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|EasterEgg") UTexture2D* EasterEggProjectileTexture;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|EasterEgg") UTexture2D* EasterEggEnemyBulletTexture;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|EasterEgg") UTexture2D* EasterEggHeavyEnemyBulletTexture;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|EasterEgg") UTexture2D* EasterEggBossTexture;
+
     UPROPERTY(BlueprintAssignable)
     FFirewallMiniGameEnded OnMiniGameEnded;
 
@@ -171,6 +182,9 @@ public:
     void OnDifficultyIncrease(int32 NewDifficulty);
     UFUNCTION(BlueprintCallable, Category = "MiniGame")
     void OnBossFightStart();
+
+    UPROPERTY(BlueprintReadWrite, Category = "EasterEgg")
+    bool bUseEasterEggSprites = false;
 
 private:
     FMiniGamePlayer Player;

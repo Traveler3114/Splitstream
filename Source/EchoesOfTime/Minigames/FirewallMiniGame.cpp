@@ -32,7 +32,8 @@ UFirewallMiniGame::UFirewallMiniGame()
     , BossCurrentMode(0)
     , BossTimeInMode(0.0f)
     , TimeSinceBossBullet(0.0f)
-{}
+{
+}
 
 FVector2D UFirewallMiniGame::GetPlayAreaSize() const
 {
@@ -53,12 +54,11 @@ void UFirewallMiniGame::StartGame(APlayerController* PlayerController)
     if (!PlayerController) return;
     OwningController = PlayerController;
     if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
-            ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(OwningController->GetLocalPlayer()))
+        ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(OwningController->GetLocalPlayer()))
     {
         if (GameplayIMC) Subsystem->RemoveMappingContext(GameplayIMC);
         if (FirewallIMC) Subsystem->AddMappingContext(FirewallIMC, 100);
     }
-    
 
     bIsGameOver = false;
     TimeSinceLastEnemySpawn = 0.0f;
@@ -68,10 +68,10 @@ void UFirewallMiniGame::StartGame(APlayerController* PlayerController)
     bDidBossStart = false;
     bPendingBoss = false;
 
-    EnemySpawnInterval   = FixedEnemySpawnInterval;
-    EnemyFireInterval    = FixedEnemyFireInterval;
-    EnemyFallSpeed       = FixedEnemyFallSpeed;
-    HeavyEnemyFallSpeed  = FixedHeavyEnemyFallSpeed;
+    EnemySpawnInterval = FixedEnemySpawnInterval;
+    EnemyFireInterval = FixedEnemyFireInterval;
+    EnemyFallSpeed = FixedEnemyFallSpeed;
+    HeavyEnemyFallSpeed = FixedHeavyEnemyFallSpeed;
 
     bIsBossActive = false;
     BossHP = 0;
@@ -112,8 +112,8 @@ void UFirewallMiniGame::FinishInitAfterWidgetReady()
     FVector2D Area = GetPlayAreaSize();
     Player = FMiniGamePlayer();
     Player.Position = FVector2D(Area.X * 0.5f, Area.Y - Area.Y * 0.12f);
-    Player.Texture = PlayerTexture;
-    Player.Size = GetTextureSize(PlayerTexture);
+    Player.Texture = bUseEasterEggSprites ? EasterEggPlayerTexture : PlayerTexture;
+    Player.Size = GetTextureSize(Player.Texture);
     Player.MoveSpeed = 600.f;
 
     Enemies.Empty();
@@ -159,11 +159,12 @@ void UFirewallMiniGame::SpawnEnemy()
 
     if (FMath::FRand() < heavySpawnChance) {
         SpawnHeavyEnemy();
-    } else {
+    }
+    else {
         FMiniGameEnemy Enemy;
         Enemy.Position = FVector2D(RandX, 0.f + 32.0f);
-        Enemy.Texture = EnemyTexture;
-        Enemy.Size = GetTextureSize(EnemyTexture);
+        Enemy.Texture = bUseEasterEggSprites ? EasterEggEnemyTexture : EnemyTexture;
+        Enemy.Size = GetTextureSize(Enemy.Texture);
         Enemy.HP = 1;
         Enemy.bIsAlive = true;
         Enemies.Add(Enemy);
@@ -180,8 +181,8 @@ void UFirewallMiniGame::SpawnHeavyEnemy()
 
     FMiniGameHeavyEnemy HeavyEnemy;
     HeavyEnemy.Position = FVector2D(RandX, 0.f + 32.0f);
-    HeavyEnemy.Texture = HeavyEnemyTexture;
-    HeavyEnemy.Size = GetTextureSize(HeavyEnemyTexture);
+    HeavyEnemy.Texture = bUseEasterEggSprites ? EasterEggHeavyEnemyTexture : HeavyEnemyTexture;
+    HeavyEnemy.Size = GetTextureSize(HeavyEnemy.Texture);
     HeavyEnemy.HP = 3;
     HeavyEnemy.bIsAlive = true;
     HeavyEnemies.Add(HeavyEnemy);
@@ -191,8 +192,8 @@ void UFirewallMiniGame::SpawnPlayerBullet()
 {
     FMiniGameProjectile Projectile;
     Projectile.Position = Player.Position;
-    Projectile.Texture = ProjectileTexture;
-    Projectile.Size = GetTextureSize(ProjectileTexture);
+    Projectile.Texture = bUseEasterEggSprites ? EasterEggProjectileTexture : ProjectileTexture;
+    Projectile.Size = GetTextureSize(Projectile.Texture);
     Projectile.bIsActive = true;
     Projectiles.Add(Projectile);
 }
@@ -201,15 +202,16 @@ void UFirewallMiniGame::SpawnEnemyBullet(const FVector2D& EnemyPosition, UTextur
 {
     FMiniGameEnemyBullet Bullet;
     Bullet.Position = EnemyPosition;
-    Bullet.Texture = BulletTex;
-    Bullet.Size = GetTextureSize(BulletTex);
+    Bullet.Texture = bUseEasterEggSprites ? EasterEggEnemyBulletTexture : EnemyBulletTexture;
+    Bullet.Size = GetTextureSize(Bullet.Texture);
     Bullet.bIsActive = true;
     if (ExtraVelocity.IsNearlyZero()) {
         float speedY = GetPlayAreaSize().Y * 0.38f;
         float spread = speedY * 0.4f;
         float vx = FMath::FRandRange(-spread, spread);
         Bullet.Velocity = FVector2D(vx, speedY);
-    } else {
+    }
+    else {
         Bullet.Velocity = ExtraVelocity;
     }
     Bullet.LifeTime = 0.0f;
@@ -220,15 +222,16 @@ void UFirewallMiniGame::SpawnHeavyEnemyBullet(const FVector2D& EnemyPosition, UT
 {
     FMiniGameHeavyEnemyBullet Bullet;
     Bullet.Position = EnemyPosition;
-    Bullet.Texture = BulletTex;
-    Bullet.Size = GetTextureSize(BulletTex);
+    Bullet.Texture = bUseEasterEggSprites ? EasterEggHeavyEnemyBulletTexture : HeavyEnemyBulletTexture;
+    Bullet.Size = GetTextureSize(Bullet.Texture);
     Bullet.bIsActive = true;
     if (ExtraVelocity.IsNearlyZero()) {
         float speedY = GetPlayAreaSize().Y * 0.56f;
         float spread = speedY * 0.4f;
-        float vx = FMath::FRandRange(-spread, spread);
+        float vx = FMath::RandRange(-spread, spread);
         Bullet.Velocity = FVector2D(vx, speedY);
-    } else {
+    }
+    else {
         Bullet.Velocity = ExtraVelocity;
     }
     Bullet.LifeTime = 0.0f;
@@ -298,10 +301,10 @@ void UFirewallMiniGame::UpdateEnemyBullets(float DeltaTime)
 
         Bull.Position += Bull.Velocity * DeltaTime;
 
-        if (Bull.Position.X < Bull.Size.X*0.5f && Bull.Velocity.X < 0)  Bull.Velocity.X *= -1.0f;
-        if (Bull.Position.X > Area.X-Bull.Size.X*0.5f && Bull.Velocity.X > 0) Bull.Velocity.X *= -1.0f;
-        if (Bull.Position.Y < Bull.Size.Y*0.5f && Bull.Velocity.Y < 0)  Bull.Velocity.Y *= -1.0f;
-        if (Bull.Position.Y > Area.Y-Bull.Size.Y*0.5f && Bull.Velocity.Y > 0) Bull.Velocity.Y *= -1.0f;
+        if (Bull.Position.X < Bull.Size.X * 0.5f && Bull.Velocity.X < 0)  Bull.Velocity.X *= -1.0f;
+        if (Bull.Position.X > Area.X - Bull.Size.X * 0.5f && Bull.Velocity.X > 0) Bull.Velocity.X *= -1.0f;
+        if (Bull.Position.Y < Bull.Size.Y * 0.5f && Bull.Velocity.Y < 0)  Bull.Velocity.Y *= -1.0f;
+        if (Bull.Position.Y > Area.Y - Bull.Size.Y * 0.5f && Bull.Velocity.Y > 0) Bull.Velocity.Y *= -1.0f;
 
         Bull.LifeTime += DeltaTime;
         if (Bull.LifeTime > EnemyBulletLifespan)
@@ -320,10 +323,10 @@ void UFirewallMiniGame::UpdateHeavyEnemyBullets(float DeltaTime)
 
         Bull.Position += Bull.Velocity * DeltaTime;
 
-        if (Bull.Position.X < Bull.Size.X*0.5f && Bull.Velocity.X < 0) Bull.Velocity.X *= -1.0f;
-        if (Bull.Position.X > Area.X-Bull.Size.X*0.5f && Bull.Velocity.X > 0) Bull.Velocity.X *= -1.0f;
-        if (Bull.Position.Y < Bull.Size.Y*0.5f && Bull.Velocity.Y < 0) Bull.Velocity.Y *= -1.0f;
-        if (Bull.Position.Y > Area.Y-Bull.Size.Y*0.5f && Bull.Velocity.Y > 0) Bull.Velocity.Y *= -1.0f;
+        if (Bull.Position.X < Bull.Size.X * 0.5f && Bull.Velocity.X < 0) Bull.Velocity.X *= -1.0f;
+        if (Bull.Position.X > Area.X - Bull.Size.X * 0.5f && Bull.Velocity.X > 0) Bull.Velocity.X *= -1.0f;
+        if (Bull.Position.Y < Bull.Size.Y * 0.5f && Bull.Velocity.Y < 0) Bull.Velocity.Y *= -1.0f;
+        if (Bull.Position.Y > Area.Y - Bull.Size.Y * 0.5f && Bull.Velocity.Y > 0) Bull.Velocity.Y *= -1.0f;
 
         Bull.LifeTime += DeltaTime;
         if (Bull.LifeTime > HeavyEnemyBulletLifespan)
@@ -398,7 +401,7 @@ void UFirewallMiniGame::CheckCollisions()
             if (!Bull.bIsActive) continue;
             float Distance = FVector2D::Distance(Projectile.Position, Bull.Position);
             float CollisionRadius = FMath::Max(Projectile.Size.X, Projectile.Size.Y) * 0.5f +
-                                   FMath::Max(Bull.Size.X, Bull.Size.Y) * 0.5f;
+                FMath::Max(Bull.Size.X, Bull.Size.Y) * 0.5f;
             if (Distance < CollisionRadius)
             {
                 Projectile.bIsActive = false;
@@ -413,7 +416,7 @@ void UFirewallMiniGame::CheckCollisions()
             if (!HBull.bIsActive) continue;
             float Distance = FVector2D::Distance(Projectile.Position, HBull.Position);
             float CollisionRadius = FMath::Max(Projectile.Size.X, Projectile.Size.Y) * 0.5f +
-                                   FMath::Max(HBull.Size.X, HBull.Size.Y) * 0.5f;
+                FMath::Max(HBull.Size.X, HBull.Size.Y) * 0.5f;
             if (Distance < CollisionRadius)
             {
                 Projectile.bIsActive = false;
@@ -523,8 +526,11 @@ void UFirewallMiniGame::OnBossFightStart()
     BossHP = BossTotalHP;
     FVector2D Area = GetPlayAreaSize();
     Boss.Position = FVector2D(Area.X / 2.f, Area.Y * 0.22f);
-    Boss.Size = GetTextureSize(BossTexture ? BossTexture : HeavyEnemyTexture);
-    Boss.Texture = (BossTexture != nullptr) ? BossTexture : HeavyEnemyTexture;
+    Boss.Texture = bUseEasterEggSprites
+        ? (EasterEggBossTexture ? EasterEggBossTexture :
+            (EasterEggHeavyEnemyTexture ? EasterEggHeavyEnemyTexture : BossTexture))
+        : (BossTexture ? BossTexture : HeavyEnemyTexture);
+    Boss.Size = GetTextureSize(Boss.Texture);
     BossCurrentMode = 0;
     BossTimeInMode = 0.0f;
     TimeSinceBossBullet = 0.0f;
@@ -562,7 +568,7 @@ void UFirewallMiniGame::UpdateBoss(float DeltaTime)
                 float x = FMath::Lerp(left, right, frac);
                 FVector2D BulletPos(x, y);
                 FVector2D BulletVel(0.f, Area.Y * 0.38f);
-                SpawnEnemyBullet(BulletPos, EnemyBulletTexture, BulletVel);
+                SpawnEnemyBullet(BulletPos, bUseEasterEggSprites ? EasterEggEnemyBulletTexture : EnemyBulletTexture, BulletVel);
             }
             TimeSinceBossBullet = 0.0f;
         }
@@ -588,7 +594,7 @@ void UFirewallMiniGame::UpdateBoss(float DeltaTime)
                 float x = FMath::Lerp(left, right, frac);
                 FVector2D BulletPos(x, y);
                 FVector2D BulletVel(0.f, Area.Y * 0.56f);
-                SpawnHeavyEnemyBullet(BulletPos, HeavyEnemyBulletTexture, BulletVel);
+                SpawnHeavyEnemyBullet(BulletPos, bUseEasterEggSprites ? EasterEggHeavyEnemyBulletTexture : HeavyEnemyBulletTexture, BulletVel);
             }
             TimeSinceBossBullet = 0.0f;
         }
@@ -613,7 +619,7 @@ void UFirewallMiniGame::UpdateBoss(float DeltaTime)
                 float x = FMath::Lerp(left, right, frac);
                 FVector2D BulletPos(x, y);
                 FVector2D BulletVel(0.f, Area.Y * 0.56f);
-                SpawnHeavyEnemyBullet(BulletPos, HeavyEnemyBulletTexture, BulletVel);
+                SpawnHeavyEnemyBullet(BulletPos, bUseEasterEggSprites ? EasterEggHeavyEnemyBulletTexture : HeavyEnemyBulletTexture, BulletVel);
             }
             TimeSinceBossBullet = 0.0f;
         }
@@ -666,9 +672,9 @@ void UFirewallMiniGame::TickGame()
         {
             TimeSinceLastEnemyFire += DeltaTime;
             bool DoNormal = DifficultyLevel <= 1;
-            bool DoHeavy  = DifficultyLevel >= 1;
+            bool DoHeavy = DifficultyLevel >= 1;
             bool CanFireNormal = DoNormal && Enemies.Num() > 0;
-            bool CanFireHeavy  = DoHeavy  && HeavyEnemies.Num() > 0;
+            bool CanFireHeavy = DoHeavy && HeavyEnemies.Num() > 0;
             if (TimeSinceLastEnemyFire >= FixedEnemyFireInterval && (CanFireNormal || CanFireHeavy))
             {
                 if (CanFireNormal)
@@ -682,7 +688,7 @@ void UFirewallMiniGame::TickGame()
                     {
                         int32 RandomId = FMath::RandRange(0, AliveIndices.Num() - 1);
                         int32 EnemyIndex = AliveIndices[RandomId];
-                        SpawnEnemyBullet(Enemies[EnemyIndex].Position, EnemyBulletTexture, FVector2D::ZeroVector);
+                        SpawnEnemyBullet(Enemies[EnemyIndex].Position, bUseEasterEggSprites ? EasterEggEnemyBulletTexture : EnemyBulletTexture, FVector2D::ZeroVector);
                         AliveIndices.RemoveAt(RandomId);
                     }
                 }
@@ -697,7 +703,7 @@ void UFirewallMiniGame::TickGame()
                     {
                         int32 RandomId = FMath::RandRange(0, AliveIndices.Num() - 1);
                         int32 EnemyIndex = AliveIndices[RandomId];
-                        SpawnHeavyEnemyBullet(HeavyEnemies[EnemyIndex].Position, HeavyEnemyBulletTexture, FVector2D::ZeroVector);
+                        SpawnHeavyEnemyBullet(HeavyEnemies[EnemyIndex].Position, bUseEasterEggSprites ? EasterEggHeavyEnemyBulletTexture : HeavyEnemyBulletTexture, FVector2D::ZeroVector);
                         AliveIndices.RemoveAt(RandomId);
                     }
                 }

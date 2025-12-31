@@ -47,4 +47,10 @@ protected:
     // Enabled/disabled state
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
     bool bEnabled = true;
+
+    UPROPERTY(Replicated)
+    bool bFutureInteracted = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "EasterEgg")
+	bool bEasterEggActive = false;
 };

@@ -14,6 +14,8 @@ class ECHOESOFTIME_API APastPowerGenerator : public APowerGenerator
 public:
     APastPowerGenerator();
 
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
     virtual void BeginPlay() override;
     virtual void Interact_Implementation(AActor* Interactor) override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -21,6 +23,9 @@ public:
     // Fires when this generator becomes completed/searched
     UPROPERTY(BlueprintAssignable, Category = "PastPowerGenerator")
     FOnGeneratorCompleted OnGeneratorCompleted;
+
+    UPROPERTY(Replicated)
+    int32 ToggleCount = 0;
 
 protected:
     void OnSearchComplete() override;

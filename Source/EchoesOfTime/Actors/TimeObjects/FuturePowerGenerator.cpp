@@ -69,6 +69,24 @@ void AFuturePowerGenerator::HandlePastGeneratorCompleted(bool bPastSearched)
                 IPuzzleCompletionReceiver::Execute_OnPuzzleReset(CompletionTarget);
             }
         }
+
+
+        APastPowerGenerator* Past = PastGenerator.IsValid() ? PastGenerator.Get() : nullptr;
+        if (Past)
+        {
+            if (Past->ToggleCount == 2 && !bFutureInteracted)
+            {
+                bEasterEggActive = true;
+            }
+            else
+            {
+                bEasterEggActive = false;
+            }
+        }
+        else
+        {
+            bEasterEggActive = false;
+        }
     }
     else
     {
@@ -88,6 +106,7 @@ void AFuturePowerGenerator::HandlePastGeneratorCompleted(bool bPastSearched)
 
 void AFuturePowerGenerator::Interact_Implementation(AActor* Interactor)
 {
+    bFutureInteracted = true;
     if (!bEnabled || !Interactor)
         return;
 
@@ -106,6 +125,7 @@ void AFuturePowerGenerator::Interact_Implementation(AActor* Interactor)
     MiniGameInstance = NewObject<UFirewallMiniGame>(this, FirewallMiniGameClass);
     if (MiniGameInstance)
     {
+        MiniGameInstance->bUseEasterEggSprites = bEasterEggActive;
         MiniGameInstance->OnMiniGameEnded.AddDynamic(this, &AFuturePowerGenerator::OnMiniGameEnded);
         MiniGameInstance->StartGame(PC);
         LastInteractingPC = PC;
@@ -206,6 +226,8 @@ void AFuturePowerGenerator::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AFuturePowerGenerator, bEnabled);
+	DOREPLIFETIME(AFuturePowerGenerator, bFutureInteracted);
+    DOREPLIFETIME(AFuturePowerGenerator, bEasterEggActive);
 }
 
 bool AFuturePowerGenerator::IsProgressiveInteract_Implementation()
