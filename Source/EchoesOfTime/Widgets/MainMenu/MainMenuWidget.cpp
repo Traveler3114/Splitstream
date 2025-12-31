@@ -5,7 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "GameFramework/PlayerController.h"
-#include "Widgets/SettingsWidget.h"
+#include "Widgets/Settings/SettingsWidget.h"
 #include "DefaultGameInstance.h"
 
 void UMainMenuWidget::NativeConstruct()

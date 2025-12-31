@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "SettingsWidget.generated.h"
+#include "GraphicsWidget.generated.h"
 
 class UTextBlock;
 class UButton;
@@ -10,20 +10,15 @@ class USlider;
 class UCheckBox;
 
 UCLASS()
-class ECHOESOFTIME_API USettingsWidget : public UUserWidget
+class ECHOESOFTIME_API UGraphicsWidget : public UUserWidget
 {
     GENERATED_BODY()
 
 public:
     virtual void NativeConstruct() override;
 
+        void ApplySettings();
 protected:
-    // Bindings to UMG widgets (must match variable names in designer)
-    UPROPERTY(meta = (BindWidget))
-    UButton* ApplyButton;
-
-    UPROPERTY(meta = (BindWidget))
-    UButton* BackButton;
 
     UPROPERTY(meta = (BindWidget))
     UButton* ResolutionLeftButton;
@@ -139,13 +134,6 @@ protected:
     float FPSMax;      // Slider max; if slider == FPSMax => unlimited
     bool bFPSUnlimited;
 
-    // Handlers
-    UFUNCTION()
-    void OnApplyClicked();
-
-    UFUNCTION()
-    void OnBackClicked();
-
     UFUNCTION()
     void OnResolutionLeft();
 
@@ -196,5 +184,4 @@ protected:
     void OnFPSLimitChanged(float Value);
 
     void UpdateTexts();
-    void ApplySettings();
 };

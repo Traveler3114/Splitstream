@@ -35,11 +35,24 @@ void UDetectionComponent::StartDetection(AActor* Detector)
     if (!GetOwner() || !Detector) return;
     if (GetOwnerRole() != ROLE_Authority) return;
 
-    FDetectionState& State = DetectionStates.FindOrAdd(Detector);
-    State.bDetectionInProgress = true;
-    State.bFullyDetected = false;
-    State.Progress = 0.f;
-    State.Direction = 1;
+    FDetectionState* ExistingState = DetectionStates.Find(Detector);
+    if (ExistingState)
+    {
+        ExistingState->bDetectionInProgress = true;
+        ExistingState->bFullyDetected = false;
+        ExistingState->Direction = 1; // building
+        // Do NOT reset progress: ExistingState->Progress stays as is
+    }
+    else
+    {
+        // Only for new detectors, start fresh
+        FDetectionState& NewState = DetectionStates.FindOrAdd(Detector);
+        NewState.bDetectionInProgress = true;
+        NewState.bFullyDetected = false;
+        NewState.Progress = 0.f;
+        NewState.Direction = 1;
+    }
+
     SetComponentTickEnabled(true);
     OnDetectionBegan.Broadcast(GetOwner());
 }

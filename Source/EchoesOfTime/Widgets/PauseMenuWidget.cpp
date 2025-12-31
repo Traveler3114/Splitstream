@@ -1,6 +1,6 @@
 #include "PauseMenuWidget.h"
 #include "Components/Button.h"
-#include "SettingsWidget.h"
+#include "Widgets/Settings/SettingsWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 

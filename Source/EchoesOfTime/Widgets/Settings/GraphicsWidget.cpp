@@ -1,4 +1,4 @@
-#include "SettingsWidget.h"
+#include "GraphicsWidget.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "Components/Slider.h"
@@ -7,7 +7,7 @@
 #include "Misc/EnumRange.h"
 #include "HAL/IConsoleManager.h"   // for console variable t.MaxFPS
 
-void USettingsWidget::NativeConstruct()
+void UGraphicsWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
@@ -104,30 +104,21 @@ void USettingsWidget::NativeConstruct()
         }
     }
 
-    // ----- Bind buttons -----
-    if (ApplyButton) {
-        ApplyButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnApplyClicked);
-        ApplyButton->OnClicked.AddDynamic(this, &USettingsWidget::OnApplyClicked);
-    }
-    if (BackButton) {
-        BackButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnBackClicked);
-        BackButton->OnClicked.AddDynamic(this, &USettingsWidget::OnBackClicked);
-    }
     if (ResolutionLeftButton) {
-        ResolutionLeftButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnResolutionLeft);
-        ResolutionLeftButton->OnClicked.AddDynamic(this, &USettingsWidget::OnResolutionLeft);
+        ResolutionLeftButton->OnClicked.RemoveDynamic(this, &UGraphicsWidget::OnResolutionLeft);
+        ResolutionLeftButton->OnClicked.AddDynamic(this, &UGraphicsWidget::OnResolutionLeft);
     }
     if (ResolutionRightButton) {
-        ResolutionRightButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnResolutionRight);
-        ResolutionRightButton->OnClicked.AddDynamic(this, &USettingsWidget::OnResolutionRight);
+        ResolutionRightButton->OnClicked.RemoveDynamic(this, &UGraphicsWidget::OnResolutionRight);
+        ResolutionRightButton->OnClicked.AddDynamic(this, &UGraphicsWidget::OnResolutionRight);
     }
     if (WindowModeLeftButton) {
-        WindowModeLeftButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnWindowModeLeft);
-        WindowModeLeftButton->OnClicked.AddDynamic(this, &USettingsWidget::OnWindowModeLeft);
+        WindowModeLeftButton->OnClicked.RemoveDynamic(this, &UGraphicsWidget::OnWindowModeLeft);
+        WindowModeLeftButton->OnClicked.AddDynamic(this, &UGraphicsWidget::OnWindowModeLeft);
     }
     if (WindowModeRightButton) {
-        WindowModeRightButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnWindowModeRight);
-        WindowModeRightButton->OnClicked.AddDynamic(this, &USettingsWidget::OnWindowModeRight);
+        WindowModeRightButton->OnClicked.RemoveDynamic(this, &UGraphicsWidget::OnWindowModeRight);
+        WindowModeRightButton->OnClicked.AddDynamic(this, &UGraphicsWidget::OnWindowModeRight);
     }
     if (RenderScaleSlider)
     {
@@ -135,47 +126,47 @@ void USettingsWidget::NativeConstruct()
         RenderScaleSlider->SetMaxValue(RenderScaleMax);
         RenderScaleSlider->SetValue(RenderScale);
 
-        RenderScaleSlider->OnValueChanged.RemoveDynamic(this, &USettingsWidget::OnRenderScaleChanged);
-        RenderScaleSlider->OnValueChanged.AddDynamic(this, &USettingsWidget::OnRenderScaleChanged);
+        RenderScaleSlider->OnValueChanged.RemoveDynamic(this, &UGraphicsWidget::OnRenderScaleChanged);
+        RenderScaleSlider->OnValueChanged.AddDynamic(this, &UGraphicsWidget::OnRenderScaleChanged);
     }
     if (ShadowsLeftButton) {
-        ShadowsLeftButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnShadowsLeft);
-        ShadowsLeftButton->OnClicked.AddDynamic(this, &USettingsWidget::OnShadowsLeft);
+        ShadowsLeftButton->OnClicked.RemoveDynamic(this, &UGraphicsWidget::OnShadowsLeft);
+        ShadowsLeftButton->OnClicked.AddDynamic(this, &UGraphicsWidget::OnShadowsLeft);
     }
     if (ShadowsRightButton) {
-        ShadowsRightButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnShadowsRight);
-        ShadowsRightButton->OnClicked.AddDynamic(this, &USettingsWidget::OnShadowsRight);
+        ShadowsRightButton->OnClicked.RemoveDynamic(this, &UGraphicsWidget::OnShadowsRight);
+        ShadowsRightButton->OnClicked.AddDynamic(this, &UGraphicsWidget::OnShadowsRight);
     }
     if (TexturesLeftButton) {
-        TexturesLeftButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnTexturesLeft);
-        TexturesLeftButton->OnClicked.AddDynamic(this, &USettingsWidget::OnTexturesLeft);
+        TexturesLeftButton->OnClicked.RemoveDynamic(this, &UGraphicsWidget::OnTexturesLeft);
+        TexturesLeftButton->OnClicked.AddDynamic(this, &UGraphicsWidget::OnTexturesLeft);
     }
     if (TexturesRightButton) {
-        TexturesRightButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnTexturesRight);
-        TexturesRightButton->OnClicked.AddDynamic(this, &USettingsWidget::OnTexturesRight);
+        TexturesRightButton->OnClicked.RemoveDynamic(this, &UGraphicsWidget::OnTexturesRight);
+        TexturesRightButton->OnClicked.AddDynamic(this, &UGraphicsWidget::OnTexturesRight);
     }
     if (AALeftButton) {
-        AALeftButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnAALeft);
-        AALeftButton->OnClicked.AddDynamic(this, &USettingsWidget::OnAALeft);
+        AALeftButton->OnClicked.RemoveDynamic(this, &UGraphicsWidget::OnAALeft);
+        AALeftButton->OnClicked.AddDynamic(this, &UGraphicsWidget::OnAALeft);
     }
     if (AARightButton) {
-        AARightButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnAARight);
-        AARightButton->OnClicked.AddDynamic(this, &USettingsWidget::OnAARight);
+        AARightButton->OnClicked.RemoveDynamic(this, &UGraphicsWidget::OnAARight);
+        AARightButton->OnClicked.AddDynamic(this, &UGraphicsWidget::OnAARight);
     }
     if (PPLeftButton) {
-        PPLeftButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnPPLeft);
-        PPLeftButton->OnClicked.AddDynamic(this, &USettingsWidget::OnPPLeft);
+        PPLeftButton->OnClicked.RemoveDynamic(this, &UGraphicsWidget::OnPPLeft);
+        PPLeftButton->OnClicked.AddDynamic(this, &UGraphicsWidget::OnPPLeft);
     }
     if (PPRightButton) {
-        PPRightButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnPPRight);
-        PPRightButton->OnClicked.AddDynamic(this, &USettingsWidget::OnPPRight);
+        PPRightButton->OnClicked.RemoveDynamic(this, &UGraphicsWidget::OnPPRight);
+        PPRightButton->OnClicked.AddDynamic(this, &UGraphicsWidget::OnPPRight);
     }
 
     // --- VSync ---
     if (VSyncCheckBox)
     {
-        VSyncCheckBox->OnCheckStateChanged.RemoveDynamic(this, &USettingsWidget::OnVSyncChanged);
-        VSyncCheckBox->OnCheckStateChanged.AddDynamic(this, &USettingsWidget::OnVSyncChanged);
+        VSyncCheckBox->OnCheckStateChanged.RemoveDynamic(this, &UGraphicsWidget::OnVSyncChanged);
+        VSyncCheckBox->OnCheckStateChanged.AddDynamic(this, &UGraphicsWidget::OnVSyncChanged);
         VSyncCheckBox->SetIsChecked(bVSyncEnabled);
     }
 
@@ -189,14 +180,14 @@ void USettingsWidget::NativeConstruct()
         float SliderValue = bFPSUnlimited ? FPSMax : FPSLimit;
         FPSLimitSlider->SetValue(SliderValue);
 
-        FPSLimitSlider->OnValueChanged.RemoveDynamic(this, &USettingsWidget::OnFPSLimitChanged);
-        FPSLimitSlider->OnValueChanged.AddDynamic(this, &USettingsWidget::OnFPSLimitChanged);
+        FPSLimitSlider->OnValueChanged.RemoveDynamic(this, &UGraphicsWidget::OnFPSLimitChanged);
+        FPSLimitSlider->OnValueChanged.AddDynamic(this, &UGraphicsWidget::OnFPSLimitChanged);
     }
 
     UpdateTexts();
 }
 
-void USettingsWidget::UpdateTexts()
+void UGraphicsWidget::UpdateTexts()
 {
     if (ResolutionValueText)
         ResolutionValueText->SetText(FText::FromString(ResolutionLabels[ResolutionIndex]));
@@ -236,95 +227,95 @@ void USettingsWidget::UpdateTexts()
     }
 }
 
-void USettingsWidget::OnResolutionLeft()
+void UGraphicsWidget::OnResolutionLeft()
 {
     ResolutionIndex = (ResolutionIndex - 1 + ResolutionOptions.Num()) % ResolutionOptions.Num();
     UpdateTexts();
 }
 
-void USettingsWidget::OnResolutionRight()
+void UGraphicsWidget::OnResolutionRight()
 {
     ResolutionIndex = (ResolutionIndex + 1) % ResolutionOptions.Num();
     UpdateTexts();
 }
 
 // --- Window Mode ---
-void USettingsWidget::OnWindowModeLeft()
+void UGraphicsWidget::OnWindowModeLeft()
 {
     WindowModeIndex = (WindowModeIndex - 1 + WindowModeOptions.Num()) % WindowModeOptions.Num();
     UpdateTexts();
 }
 
-void USettingsWidget::OnWindowModeRight()
+void UGraphicsWidget::OnWindowModeRight()
 {
     WindowModeIndex = (WindowModeIndex + 1) % WindowModeOptions.Num();
     UpdateTexts();
 }
 
 // --- Render Scale ---
-void USettingsWidget::OnRenderScaleChanged(float Value)
+void UGraphicsWidget::OnRenderScaleChanged(float Value)
 {
     RenderScale = Value;
     UpdateTexts();
 }
 
 // --- Quality ---
-void USettingsWidget::OnShadowsLeft()
+void UGraphicsWidget::OnShadowsLeft()
 {
     ShadowsIndex = (ShadowsIndex - 1 + ShadowsOptions.Num()) % ShadowsOptions.Num();
     UpdateTexts();
 }
 
-void USettingsWidget::OnShadowsRight()
+void UGraphicsWidget::OnShadowsRight()
 {
     ShadowsIndex = (ShadowsIndex + 1) % ShadowsOptions.Num();
     UpdateTexts();
 }
 
-void USettingsWidget::OnTexturesLeft()
+void UGraphicsWidget::OnTexturesLeft()
 {
     TexturesIndex = (TexturesIndex - 1 + TexturesOptions.Num()) % TexturesOptions.Num();
     UpdateTexts();
 }
 
-void USettingsWidget::OnTexturesRight()
+void UGraphicsWidget::OnTexturesRight()
 {
     TexturesIndex = (TexturesIndex + 1) % TexturesOptions.Num();
     UpdateTexts();
 }
 
-void USettingsWidget::OnAALeft()
+void UGraphicsWidget::OnAALeft()
 {
     AAIndex = (AAIndex - 1 + AAOptions.Num()) % AAOptions.Num();
     UpdateTexts();
 }
 
-void USettingsWidget::OnAARight()
+void UGraphicsWidget::OnAARight()
 {
     AAIndex = (AAIndex + 1) % AAOptions.Num();
     UpdateTexts();
 }
 
-void USettingsWidget::OnPPLeft()
+void UGraphicsWidget::OnPPLeft()
 {
     PPIndex = (PPIndex - 1 + PPOptions.Num()) % PPOptions.Num();
     UpdateTexts();
 }
 
-void USettingsWidget::OnPPRight()
+void UGraphicsWidget::OnPPRight()
 {
     PPIndex = (PPIndex + 1) % PPOptions.Num();
     UpdateTexts();
 }
 
 // --- VSync / FPS ---
-void USettingsWidget::OnVSyncChanged(bool bIsChecked)
+void UGraphicsWidget::OnVSyncChanged(bool bIsChecked)
 {
     bVSyncEnabled = bIsChecked;
     UpdateTexts();
 }
 
-void USettingsWidget::OnFPSLimitChanged(float Value)
+void UGraphicsWidget::OnFPSLimitChanged(float Value)
 {
     // Value will be between FPSMin and FPSMax
     if (Value >= FPSMax - KINDA_SMALL_NUMBER)
@@ -341,17 +332,8 @@ void USettingsWidget::OnFPSLimitChanged(float Value)
     UpdateTexts();
 }
 
-void USettingsWidget::OnApplyClicked()
-{
-    ApplySettings();
-}
 
-void USettingsWidget::OnBackClicked()
-{
-    SetVisibility(ESlateVisibility::Hidden);
-}
-
-void USettingsWidget::ApplySettings()
+void UGraphicsWidget::ApplySettings()
 {
     UGameUserSettings* Settings = GEngine->GetGameUserSettings();
     if (!Settings) return;
