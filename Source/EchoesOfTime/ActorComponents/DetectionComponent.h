@@ -47,6 +47,9 @@ public:
     void StopDetection(AActor* Detector);
 
     UFUNCTION(BlueprintCallable, Category = "Detection")
+    void ForceImmediateDetectionEnd(AActor* Detector);
+
+    UFUNCTION(BlueprintCallable, Category = "Detection")
     float GetDetectionProgress() const;
 
     UFUNCTION(NetMulticast, Reliable)

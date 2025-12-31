@@ -136,7 +136,7 @@ void AGuardCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
             {
                 if (Actor && Actor->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
                 {
-                    IDetectable::Execute_OnLost(Actor, this);
+                    IDetectable::Execute_OnForceDetectionEnd(Actor, this);
                 }
             }
         }

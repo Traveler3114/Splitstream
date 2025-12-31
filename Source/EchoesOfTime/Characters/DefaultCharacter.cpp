@@ -329,6 +329,33 @@ void ADefaultCharacter::OnLost_Implementation(AActor* Detector)
     // (Optional UI update for controller/overlay)
 }
 
+void ADefaultCharacter::OnForceDetectionEnd_Implementation(AActor* Detector)
+{
+    if (!Detector)
+        return;
+    // Remove the guard from map (if was present)
+    DetectionProgressMap.Remove(Detector);
+
+    // Trigger widget cleanup:
+    if (APlayerController* PC = Cast<APlayerController>(GetController()))
+    {
+        if (ADefaultPlayerController* DefPC = Cast<ADefaultPlayerController>(PC))
+        {
+            float Angle = 0.f;
+            if (Detector)
+            {
+                Angle = CalculateDetectionAngle(
+                    Detector->GetActorLocation(),
+                    PC->PlayerCameraManager->GetCameraRotation(),
+                    GetActorLocation());
+            }
+            DefPC->ClientUpdateDetectionWidget(
+                Detector, 0.f, false, Angle
+            );
+        }
+    }
+}
+
 void ADefaultCharacter::OnFullyDetected_Implementation(AActor* Detector)
 {
     if (!Detector) return;

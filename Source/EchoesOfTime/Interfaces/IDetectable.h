@@ -24,6 +24,9 @@ public:
     void OnFullyDetected(AActor* DetectingActor);
 
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Detection")
+    void OnForceDetectionEnd(AActor* Detector);
+
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Detection")
     bool IsActorAlreadyDetected(AActor* DetectingActor) const;
 
 };

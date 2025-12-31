@@ -70,6 +70,8 @@ public:
 	UFUNCTION(Server, Reliable)
     void ServerExecuteAction(UObject* Target, const FServerActionPayload& Payload);
 private:
+    TSet<AActor*> LastFrameDetectedActors;
+
     UPROPERTY()
     class ACharacterHUD* CharacterHUD;
 

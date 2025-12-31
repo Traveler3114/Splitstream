@@ -182,6 +182,8 @@ public:
     UFUNCTION(BlueprintCallable)
     virtual void OnLost_Implementation(AActor* Detector) override;
     UFUNCTION(BlueprintCallable)
+    virtual void OnForceDetectionEnd_Implementation(AActor* Detector) override;
+    UFUNCTION(BlueprintCallable)
     virtual void OnFullyDetected_Implementation(AActor* Detector) override;
 
     UFUNCTION()

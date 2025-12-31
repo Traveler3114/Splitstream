@@ -49,6 +49,7 @@ protected:
 
 	virtual void OnDetected_Implementation(AActor* Detector) override;
 	virtual void OnLost_Implementation(AActor* Detector) override;
+	virtual void OnForceDetectionEnd_Implementation(AActor* Detector) override;
 
 	UFUNCTION()
 	virtual void OnSearchComplete();

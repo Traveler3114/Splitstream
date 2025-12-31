@@ -47,8 +47,12 @@ void AVentBase::OnDetected_Implementation(AActor* Detector)
 }
 void AVentBase::OnLost_Implementation(AActor* Detector)
 {
-    //if (DetectionComponent && !(DetectionComponent->bDetectionInProgress) && !(DetectionComponent->bFullyDetected) && bIsOpen) DetectionComponent->StopDetection(Detector);
     if (DetectionComponent) DetectionComponent->StopDetection(Detector);
+}
+
+void AVentBase::OnForceDetectionEnd_Implementation(AActor* Detector)
+{
+    if (DetectionComponent) DetectionComponent->ForceImmediateDetectionEnd(Detector);
 }
 
 void AVentBase::Interact_Implementation(AActor* Interactor)

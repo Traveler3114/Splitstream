@@ -161,8 +161,10 @@ void AItemPickup::OnDetected_Implementation(AActor* Detector)
 
 void AItemPickup::OnLost_Implementation(AActor* Detector)
 {
-    if (ItemData && ItemData->bAlertGuardsWhenSeen && Detector)
-    {
-        DetectionComponent->StopDetection(Detector);
-    }
+    if (DetectionComponent) DetectionComponent->StopDetection(Detector);
+}
+
+void AItemPickup::OnForceDetectionEnd_Implementation(AActor* Detector)
+{
+    if (DetectionComponent) DetectionComponent->ForceImmediateDetectionEnd(Detector);
 }

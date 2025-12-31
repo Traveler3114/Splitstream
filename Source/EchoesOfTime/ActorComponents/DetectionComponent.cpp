@@ -60,6 +60,19 @@ void UDetectionComponent::StopDetection(AActor* Detector)
     OnDetectionEnded.Broadcast(GetOwner());
 }
 
+void UDetectionComponent::ForceImmediateDetectionEnd(AActor* Detector)
+{
+    // Instantly kill detection with NO reversal/decay, unregister and UI/registry cleanup
+    if (GetOwnerRole() != ROLE_Authority) return;
+
+    bDetectionInProgress = false;
+    bFullyDetected = false;
+    DetectionElapsed = 0.f;
+    SetComponentTickEnabled(false); // we’re done ticking now!
+
+    MulticastUpdateRegistry(false); // removes from DetectionRegistry, client clears widget
+    OnDetectionEnded.Broadcast(GetOwner());
+}
 
 void UDetectionComponent::MulticastResetDetectionElapsed_Implementation()
 {
@@ -76,30 +89,46 @@ void UDetectionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+    bool bShow = false;
     if (bDetectionInProgress)
     {
-        // Progress bar moves up
         DetectionElapsed += DeltaTime;
         if (DetectionElapsed >= DetectionDuration)
         {
             DetectionElapsed = DetectionDuration;
             bDetectionInProgress = false;
             bFullyDetected = true;
+            FullyDetectedElapsed = 0.f; // Start "hold bar on full" timer
+            SetComponentTickEnabled(true); // Keep ticking until bar hide
             HandleFullyDetected();
+        }
+        bShow = true;
+    }
+    else if (bFullyDetected)
+    {
+        FullyDetectedElapsed += DeltaTime;
+        DetectionElapsed = DetectionDuration; // force bar to stay full
+        bShow = true;
+        if (FullyDetectedElapsed >= DetectionBarHideDelay)
+        {
+            bFullyDetected = false;
+            DetectionElapsed = 0.f;
+            FullyDetectedElapsed = 0.f;
+            SetComponentTickEnabled(false);
+            bShow = false;
+            MulticastUpdateRegistry(false);
         }
     }
     else
     {
-        // Bar decays down from its current value
         DetectionElapsed = FMath::Max(0.f, DetectionElapsed - DeltaTime);
-
-        if (DetectionElapsed <= 0.f)
-        {
-            bFullyDetected = false;
+        if (DetectionElapsed > 0.f)
+            bShow = true;
+        else
             SetComponentTickEnabled(false);
-            MulticastUpdateRegistry(false); // Clean up the widget
-        }
     }
+
+    // NO WidgetComponent calls, UI is handled by HUD/player via registry
 }
 
 void UDetectionComponent::MulticastUpdateRegistry_Implementation(bool bRegister)

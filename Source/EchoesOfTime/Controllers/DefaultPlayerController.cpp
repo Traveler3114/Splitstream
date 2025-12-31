@@ -394,14 +394,30 @@ void ADefaultPlayerController::Tick(float DeltaTime)
     UDetectionRegistry* Registry = GetWorld() ? GetWorld()->GetSubsystem<UDetectionRegistry>() : nullptr;
     if (!Registry || !CharacterHUD || !CharacterHUD->CharacterOverlay) return;
 
+    TSet<AActor*> ThisFrameDetectedActors;
+
+    // Usual update—only call for currently detected actors:
     for (TWeakObjectPtr<AActor> WeakActor : Registry->GetDetectedActors())
     {
         AActor* Actor = WeakActor.Get();
         if (!Actor) continue;
         UDetectionComponent* DetComp = Actor->FindComponentByClass<UDetectionComponent>();
         if (!DetComp) continue;
+        ThisFrameDetectedActors.Add(Actor);
         ClientUpdateDetectionActorWidget(Actor, DetComp->GetDetectionProgress(), DetComp->bFullyDetected);
     }
+
+    // After updating current, remove widgets for actors no longer detected:
+    for (AActor* PrevActor : LastFrameDetectedActors)
+    {
+        if (!ThisFrameDetectedActors.Contains(PrevActor))
+        {
+            // This actor was unregistered/lost! Force its bar to zero now.
+            ClientUpdateDetectionActorWidget(PrevActor, 0.0f, false);
+        }
+    }
+
+    LastFrameDetectedActors = ThisFrameDetectedActors;
 }
 
 
