@@ -157,7 +157,7 @@ void UCharacterOverlay::NativeDestruct()
 }
 
 
-void UCharacterOverlay::UpdateDetectionWidget(AActor* Detector, float Progress, bool bIsLocked, FVector2D ScreenPosition)
+void UCharacterOverlay::UpdateDetectionWidget(AActor* Detector, float Progress, bool bIsLocked, FVector2D ScreenPosition, bool bIsOnScreen)
 {
     if (!CanvasPanel || !Detector) return;
 
@@ -172,32 +172,68 @@ void UCharacterOverlay::UpdateDetectionWidget(AActor* Detector, float Progress, 
         }
     }
 
-    if (Widget)
+    if (!Widget) return;
+    Widget->SetDetectionProgress(Progress, bIsLocked);
+
+    FVector2D CanvasSize = CanvasPanel->GetCachedGeometry().GetLocalSize();
+    FVector2D ViewportSize = UWidgetLayoutLibrary::GetViewportSize(this);
+
+    // Prepare local screen position in canvas space
+    FVector2D LocalPosition = ScreenPosition;
+    if (!ViewportSize.IsNearlyZero() && !CanvasSize.IsNearlyZero() && !CanvasSize.Equals(ViewportSize, 1.0f))
     {
-        Widget->SetDetectionProgress(Progress, bIsLocked);
+        LocalPosition.X = (ScreenPosition.X / ViewportSize.X) * CanvasSize.X;
+        LocalPosition.Y = (ScreenPosition.Y / ViewportSize.Y) * CanvasSize.Y;
+    }
 
-        FVector2D CanvasSize = CanvasPanel->GetCachedGeometry().GetLocalSize();
-        FVector2D ViewportSize = UWidgetLayoutLibrary::GetViewportSize(this);
+    const float Margin = 32.0f;
+    FVector2D Center(CanvasSize.X / 2.f, CanvasSize.Y / 2.f);
 
-        FVector2D LocalPosition = ScreenPosition;
-        // Only scale if sizes are not (nearly) equal
-        if (!ViewportSize.IsNearlyZero() && !CanvasSize.IsNearlyZero()
-            && !CanvasSize.Equals(ViewportSize, 1.0f)) // 1 pixel tolerance
+    if (!bIsOnScreen)
+    {
+        FVector2D Dir = (LocalPosition - Center);
+
+        // If direction is ambiguous or zero (e.g. directly behind), default to bottom center
+        if (Dir.IsNearlyZero())
         {
-            LocalPosition.X = (ScreenPosition.X / ViewportSize.X) * CanvasSize.X;
-            LocalPosition.Y = (ScreenPosition.Y / ViewportSize.Y) * CanvasSize.Y;
+            Dir = FVector2D(0.f, 1.f);
+        }
+        else
+        {
+            Dir.Normalize();
         }
 
-        if (UCanvasPanelSlot* CanvasSlot = Cast<UCanvasPanelSlot>(Widget->Slot))
-        {
-            CanvasSlot->SetPosition(LocalPosition);
-            CanvasSlot->SetAlignment(FVector2D(0.5f, 0.5f));
-        }
+        // Clamp out to box edge with margin
+        float ScaleX = (Dir.X > 0.f) ? (CanvasSize.X - Center.X - Margin) / FMath::Max(Dir.X, 0.0001f)
+                                     : (0.f + Margin - Center.X) / FMath::Min(Dir.X, -0.0001f);
+        float ScaleY = (Dir.Y > 0.f) ? (CanvasSize.Y - Center.Y - Margin) / FMath::Max(Dir.Y, 0.0001f)
+                                     : (0.f + Margin - Center.Y) / FMath::Min(Dir.Y, -0.0001f);
 
-        if (Progress <= 0.001f && !bIsLocked)
-        {
-            Widget->RemoveFromParent();
-            DetectionWidgets.Remove(Detector);
-        }
+        float Scale = FMath::Min(FMath::Abs(ScaleX), FMath::Abs(ScaleY));
+        FVector2D EdgePosition = Center + Dir * Scale;
+
+        // Final clamp to be perfectly safe
+        EdgePosition.X = FMath::Clamp(EdgePosition.X, Margin, CanvasSize.X - Margin);
+        EdgePosition.Y = FMath::Clamp(EdgePosition.Y, Margin, CanvasSize.Y - Margin);
+
+        LocalPosition = EdgePosition;
+    }
+    else
+    {
+        // On screen (still clamp, to avoid edge "bleed")
+        LocalPosition.X = FMath::Clamp(LocalPosition.X, Margin, CanvasSize.X - Margin);
+        LocalPosition.Y = FMath::Clamp(LocalPosition.Y, Margin, CanvasSize.Y - Margin);
+    }
+
+    if (UCanvasPanelSlot* CanvasSlot = Cast<UCanvasPanelSlot>(Widget->Slot))
+    {
+        CanvasSlot->SetPosition(LocalPosition);
+        CanvasSlot->SetAlignment(FVector2D(0.5f, 0.5f));
+    }
+
+    if (Progress <= 0.001f && !bIsLocked)
+    {
+        Widget->RemoveFromParent();
+        DetectionWidgets.Remove(Detector);
     }
 }

@@ -392,39 +392,107 @@ void ADefaultPlayerController::ClientUpdateDetectionWidget_Implementation(AActor
     if (!Detector || !CharacterHUD || !CharacterHUD->CharacterOverlay)
         return;
 
-    FVector WidgetWorldLocation = Detector->GetActorLocation();
+    FVector DetectorLocation = Detector->GetActorLocation();
 
     // For Character? Use Capsule Height for top
     const ACharacter* Char = Cast<ACharacter>(Detector);
     if (Char)
     {
         const UCapsuleComponent* Capsule = Char->GetCapsuleComponent();
-        if (Capsule)
-        {
-            WidgetWorldLocation += FVector(0.f, 0.f, Capsule->GetScaledCapsuleHalfHeight());
+        if (Capsule) {
+            DetectorLocation += FVector(0.f, 0.f, Capsule->GetScaledCapsuleHalfHeight());
         }
     }
     else
     {
-        // Not a Character? Use bounds
         const UPrimitiveComponent* Prim = Detector->FindComponentByClass<UPrimitiveComponent>();
-        if (Prim)
-        {
+        if (Prim) {
             FVector Origin, BoxExtent;
             Detector->GetActorBounds(true, Origin, BoxExtent);
-            WidgetWorldLocation = Origin + FVector(0.f, 0.f, BoxExtent.Z);
+            DetectorLocation = Origin + FVector(0.f, 0.f, BoxExtent.Z);
+        }
+    }
+    DetectorLocation.Z += 20.f;
+
+    // --- Camera facing math ---
+    FVector CameraLoc;
+    FRotator CameraRot;
+    GetPlayerViewPoint(CameraLoc, CameraRot);
+
+    FVector ToTarget = DetectorLocation - CameraLoc;
+    ToTarget.Normalize();
+
+    const FVector CameraForward = CameraRot.Vector();
+    float Dot = FVector::DotProduct(CameraForward, ToTarget);
+
+    // We'll use this to flag that the target is behind the camera
+    bool bIsBehind = (Dot < 0.f);
+
+    FVector2D ViewportSize(0, 0);
+    if (GEngine && GEngine->GameViewport)
+        GEngine->GameViewport->GetViewportSize(ViewportSize);
+
+    FVector2D ScreenPos;
+    ProjectWorldLocationToScreen(DetectorLocation, ScreenPos, false);
+
+    // We'll treat negative z in camera space as "behind"
+    bool bIsOnScreen = false;
+    const float Margin = 1.0f;
+    if (ScreenPos.X >= Margin && ScreenPos.X <= ViewportSize.X - Margin &&
+        ScreenPos.Y >= Margin && ScreenPos.Y <= ViewportSize.Y - Margin && !bIsBehind)
+    {
+        bIsOnScreen = true;
+    }
+    else
+    {
+        // If behind, flip to front of camera for screen placement, then clamp to border.
+        if (bIsBehind && ViewportSize.X > 1 && ViewportSize.Y > 1)
+        {
+            // This maps the target to the closest border from the center using the -camera->target direction in screen space
+            FVector CamToTargetWS = (DetectorLocation - CameraLoc).GetSafeNormal();
+
+            // Direction from camera, in camera space
+            FVector CamSpaceForward = CameraRot.Vector();
+            FVector RightVector = FRotationMatrix(CameraRot).GetUnitAxis(EAxis::Y);
+            FVector UpVector = FRotationMatrix(CameraRot).GetUnitAxis(EAxis::Z);
+
+            float X = FVector::DotProduct(RightVector, CamToTargetWS);
+            float Y = FVector::DotProduct(UpVector, CamToTargetWS);
+
+            FVector2D ToTarget2D(X, Y);
+
+            // Invert Y for screen-space (UE screen Y+ is down)
+            ToTarget2D.Y *= -1.f;
+
+            // Normalize to get direction; fallback to bottom if zero
+            if (ToTarget2D.IsNearlyZero())
+                ToTarget2D = FVector2D(0.f, 1.f);
+
+            ToTarget2D.Normalize();
+
+            // Find how far we can go before reaching screen edge with margin
+            FVector2D Center(ViewportSize.X / 2.f, ViewportSize.Y / 2.f);
+
+            // "Box cast" border
+            float ScaleX = (ToTarget2D.X > 0.f) ? (ViewportSize.X - Center.X - Margin) / FMath::Max(ToTarget2D.X, 0.0001f)
+                                                : (0.f + Margin - Center.X) / FMath::Min(ToTarget2D.X, -0.0001f);
+            float ScaleY = (ToTarget2D.Y > 0.f) ? (ViewportSize.Y - Center.Y - Margin) / FMath::Max(ToTarget2D.Y, 0.0001f)
+                                                : (0.f + Margin - Center.Y) / FMath::Min(ToTarget2D.Y, -0.0001f);
+
+            float Scale = FMath::Min(FMath::Abs(ScaleX), FMath::Abs(ScaleY));
+            ScreenPos = Center + ToTarget2D * Scale;
+
+            // Clamp, just in case
+            ScreenPos.X = FMath::Clamp(ScreenPos.X, Margin, ViewportSize.X - Margin);
+            ScreenPos.Y = FMath::Clamp(ScreenPos.Y, Margin, ViewportSize.Y - Margin);
+
+            bIsOnScreen = false;
         }
     }
 
-    // Add a little extra so it's above the head, not intersecting it (tweak as needed)
-    WidgetWorldLocation.Z += 20.f;
-
-    FVector2D ScreenPos;
-    ProjectWorldLocationToScreen(WidgetWorldLocation, ScreenPos);
-
-    // Pass screen position to your overlay
-    CharacterHUD->CharacterOverlay->UpdateDetectionWidget(Detector, Progress, bIsLocked, ScreenPos);
+    CharacterHUD->CharacterOverlay->UpdateDetectionWidget(Detector, Progress, bIsLocked, ScreenPos, bIsOnScreen);
 }
+
 void ADefaultPlayerController::BindAttributeDelegates()
 {
     ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();

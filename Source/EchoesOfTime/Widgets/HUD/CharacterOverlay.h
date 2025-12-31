@@ -73,7 +73,7 @@ public:
     TMap<AActor*, class UDetectionWidget*> DetectionWidgets;
 
     UFUNCTION(BlueprintCallable)
-    void UpdateDetectionWidget(AActor* Detector, float Progress, bool bIsLocked, FVector2D ScreenPosition);
+    void UpdateDetectionWidget(AActor* Detector, float Progress, bool bIsLocked, FVector2D ScreenPosition, bool bIsOnScreen);
 
     UPROPERTY(BlueprintReadWrite)
     TMap<AActor*, float> CompletionTargetRepairEndTimes;
