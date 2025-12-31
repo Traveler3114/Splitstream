@@ -605,28 +605,44 @@ void ADefaultCharacter::UpdateInteractHighlight()
 
 void ADefaultCharacter::HandleInteractHoldStart()
 {
-	if (ProgressiveActor)
+    static AActor* const DummySentinel = (AActor*)0x1; // Invalid pointer, used only for comparisons
+
+    if (ProgressiveActor)
         return;
 
     FHitResult Hit;
     FVector TraceEnd;
-    if (!GetForwardTraceResult(300.f, Hit, TraceEnd)) return;
+    if (!GetForwardTraceResult(300.f, Hit, TraceEnd))
+    {
+        ProgressiveActor = DummySentinel;
+        return;
+    }
     AActor* HitActor = Hit.GetActor();
-    if (!HitActor) return;
+    if (!HitActor)
+    {
+        ProgressiveActor = DummySentinel;
+        return;
+    }
+
+    ProgressiveActor = HitActor;
 
     if (HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()) &&
         IInteractable::Execute_IsProgressiveInteract(HitActor))
     {
         IInteractable::Execute_Interact(HitActor, this);
-        ProgressiveActor = HitActor;
     }
 }
 
 void ADefaultCharacter::HandleInteractHoldStop()
 {
+    static AActor* const DummySentinel = (AActor*)0x1;
     if (ProgressiveActor)
     {
-        IInteractable::Execute_CancelInteract(ProgressiveActor, this);
+        if (ProgressiveActor != DummySentinel &&
+            ProgressiveActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
+        {
+            IInteractable::Execute_CancelInteract(ProgressiveActor, this);
+        }
         ProgressiveActor = nullptr;
     }
 }
