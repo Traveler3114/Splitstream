@@ -21,8 +21,6 @@
 #include "ActorComponents/HackComponent.h"
 #include "ActorComponents/SearchComponent.h"
 #include "ActorComponents/LockPickComponent.h"
-#include "TimerManager.h"
-
 
 ADefaultCharacter::ADefaultCharacter()
 {
@@ -47,6 +45,7 @@ ADefaultCharacter::ADefaultCharacter()
     SetReplicateMovement(true);
 
     bIsSprinting = false;
+
     InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 
     EquippedItemMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("EquippedItemMeshComp"));
@@ -83,15 +82,12 @@ void ADefaultCharacter::BeginPlay()
     }
 
     UpdateEquippedItemMesh();
-
-    // Start detection timer for performance
-    GetWorldTimerManager().SetTimer(DetectionUpdateTimerHandle, this, &ADefaultCharacter::UpdateDetectionTimer, 0.05f, true);
 }
 
 void ADefaultCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     Super::EndPlay(EndPlayReason);
-    GetWorldTimerManager().ClearTimer(DetectionUpdateTimerHandle);
+    DetectionStates.Empty();
 }
 
 void ADefaultCharacter::Tick(float DeltaTime)
@@ -103,71 +99,75 @@ void ADefaultCharacter::Tick(float DeltaTime)
     {
         UpdateInteractHighlight();
     }
-}
 
-// --- PERFORMANCE: Detection logic moved to timer-based update
-void ADefaultCharacter::UpdateDetectionTimer()
-{
-    float DeltaTime = 0.05f; // Matches timer interval
-    TArray<AActor*> ToRemove;
-
-    for (auto& Elem : DetectionProgressMap)
+    // --- Detection logic (event-driven, not timer-driven) ---
+    if (DetectionStates.Num())
     {
-        AActor* Detector = Elem.Key;
-        float& Progress = Elem.Value;
-
-        bool bInVision = Detector && Detector->GetClass()->ImplementsInterface(UDetectable::StaticClass())
-            && IDetectable::Execute_IsActorAlreadyDetected(Detector, this);
-
-        bool bIsIllegal = AbilitySystemComponent && AbilitySystemComponent->HasMatchingGameplayTag(TAG_Character_Status_Illegal);
-
-        float Rate = DeltaTime * 0.5f;
-
-        if (bInVision && bIsIllegal)
+        TArray<AActor*> ToRemove;
+        for (auto& Elem : DetectionStates)
         {
-            Progress += Rate;
-            if (Progress >= 1.f)
+            AActor* Detector = Elem.Key;
+            FDetectionState& State = Elem.Value;
+
+            if (State.Direction == 0)
+                continue;
+
+            bool bInVision = false;
+            if (Detector && Detector->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
+                bInVision = IDetectable::Execute_IsActorAlreadyDetected(Detector, this);
+
+            bool bIsIllegal = AbilitySystemComponent && AbilitySystemComponent->HasMatchingGameplayTag(TAG_Character_Status_Illegal);
+
+            float Rate = 0.5f * DeltaTime;
+
+            if (State.Direction > 0 && bInVision && bIsIllegal)
             {
-                Progress = 1.f;
-                if (Detector && Detector->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
+                State.Progress += Rate;
+                if (State.Progress >= 1.f)
                 {
-                    IDetectable::Execute_OnFullyDetected(Detector, this);
+                    State.Progress = 1.f;
+                    State.Direction = 0;
+                    // Fully detected
+                    if (Detector->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
+                        IDetectable::Execute_OnFullyDetected(Detector, this);
+                    OnFullyDetected_Implementation(Detector);
                 }
-                OnFullyDetected_Implementation(Detector);
             }
-        }
-        else
-        {
-            Progress -= Rate;
-            if (Progress <= 0.f) Progress = 0.f;
-        }
-
-        if (APlayerController* PC = Cast<APlayerController>(GetController()))
-        {
-            if (ADefaultPlayerController* DefPC = Cast<ADefaultPlayerController>(PC))
+            else if (State.Direction < 0 || !bInVision || !bIsIllegal)
             {
-                float Angle = CalculateDetectionAngle(
-                    Detector->GetActorLocation(),
-                    PC->PlayerCameraManager->GetCameraRotation(),
-                    GetActorLocation());
-                DefPC->ClientUpdateDetectionWidget(
-                    Detector,
-                    Progress,
-                    Progress >= 1.0f,
-                    Angle
-                );
+                State.Progress -= Rate;
+                if (State.Progress <= 0.f)
+                {
+                    State.Progress = 0.f;
+                    State.Direction = 0;
+                    ToRemove.Add(Detector);
+                }
+            }
+
+            // Update UI regardless of which way we were moving
+            if (APlayerController* PC = Cast<APlayerController>(GetController()))
+            {
+                if (ADefaultPlayerController* DefPC = Cast<ADefaultPlayerController>(PC))
+                {
+                    float Angle = CalculateDetectionAngle(
+                        Detector->GetActorLocation(),
+                        PC->PlayerCameraManager->GetCameraRotation(),
+                        GetActorLocation()
+                    );
+                    DefPC->ClientUpdateDetectionWidget(
+                        Detector,
+                        State.Progress,
+                        State.Progress >= 1.0f,
+                        Angle
+                    );
+                }
             }
         }
 
-        if (Progress == 0.f)
+        for (AActor* Detector : ToRemove)
         {
-            ToRemove.Add(Detector);
+            DetectionStates.Remove(Detector);
         }
-    }
-
-    for (AActor* Detector : ToRemove)
-    {
-        DetectionProgressMap.Remove(Detector);
     }
 }
 
@@ -185,7 +185,7 @@ void ADefaultCharacter::InitializeAbilitySystem()
                 TAG_Character_Status_Illegal,
                 EGameplayTagEventType::NewOrRemoved
             ).AddUObject(this, &ADefaultCharacter::OnIllegalTagChanged);
-            
+
             AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
                 UPlayerAttributeSet::GetWalkSpeedAttribute()
             ).AddUObject(this, &ADefaultCharacter::OnWalkSpeedChanged);
@@ -216,7 +216,6 @@ void ADefaultCharacter::InitializeAbilitySystem()
 
 void ADefaultCharacter::OnWalkSpeedChanged(const FOnAttributeChangeData& ChangeData)
 {
-    // Only update this if NOT sprinting/crouching
     if (!bIsSprinting && !GetCharacterMovement()->IsCrouching())
     {
         GetCharacterMovement()->MaxWalkSpeed = ChangeData.NewValue;
@@ -233,8 +232,7 @@ void ADefaultCharacter::OnCrouchSpeedChanged(const FOnAttributeChangeData& Chang
 {
     if (GetCharacterMovement()->IsCrouching())
         GetCharacterMovement()->MaxWalkSpeed = ChangeData.NewValue;
-        
-    GetCharacterMovement()->MaxWalkSpeedCrouched = ChangeData.NewValue; // Always update this property
+    GetCharacterMovement()->MaxWalkSpeedCrouched = ChangeData.NewValue;
 }
 
 void ADefaultCharacter::GrantAbilitiesFromDefaultSet()
@@ -252,8 +250,6 @@ void ADefaultCharacter::GrantAbilitiesFromDefaultSet()
     }
 }
 
-
-
 void ADefaultCharacter::GrantAbilitiesFromInputSet()
 {
     ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
@@ -261,7 +257,6 @@ void ADefaultCharacter::GrantAbilitiesFromInputSet()
     UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
     if (!ASC) return;
 
-    // Grant future abilities ONLY if Team.Future tag
     if (FutureGASet && ASC->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("Team.Future")))
     {
         for (const FAbilityInputSetEntry& Entry : FutureGASet->Abilities)
@@ -276,7 +271,6 @@ void ADefaultCharacter::GrantAbilitiesFromInputSet()
         }
     }
 
-    // Grant solo abilities ONLY if there is only one player
     if (ASC->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("Team.Solo")))
     {
         for (const FAbilityInputSetEntry& Entry : SoloGASet->Abilities)
@@ -302,41 +296,41 @@ void ADefaultCharacter::GrantAbilitiesFromInputSet()
     }
 }
 
-
 UAbilitySystemComponent* ADefaultCharacter::GetAbilitySystemComponent() const
 {
     return AbilitySystemComponent;
 }
 
-// ---------------- DETECTION MECHANICS ------------------
+// ------------------ DETECTION SYSTEM EVENT-DRIVEN --------------------
 void ADefaultCharacter::OnDetected_Implementation(AActor* Detector)
 {
     if (!Detector) return;
-
-    if (!AbilitySystemComponent || !AbilitySystemComponent->HasMatchingGameplayTag(TAG_Character_Status_Illegal))
+    FDetectionState* State = DetectionStates.Find(Detector);
+    if (!State)
     {
-        return;
+        DetectionStates.Add(Detector, FDetectionState(0.f, +1));
     }
-
-    if (!DetectionProgressMap.Contains(Detector))
+    else
     {
-        DetectionProgressMap.Add(Detector, 0.f);
+        State->Direction = +1;
     }
 }
 
 void ADefaultCharacter::OnLost_Implementation(AActor* Detector)
 {
-    // (Optional UI update for controller/overlay)
+    FDetectionState* State = DetectionStates.Find(Detector);
+    if (State)
+    {
+        State->Direction = -1;
+    }
 }
 
 void ADefaultCharacter::OnForceDetectionEnd_Implementation(AActor* Detector)
 {
     if (!Detector)
         return;
-    // Remove the guard from map (if was present)
-    DetectionProgressMap.Remove(Detector);
+    DetectionStates.Remove(Detector);
 
-    // Trigger widget cleanup:
     if (APlayerController* PC = Cast<APlayerController>(GetController()))
     {
         if (ADefaultPlayerController* DefPC = Cast<ADefaultPlayerController>(PC))
@@ -358,14 +352,11 @@ void ADefaultCharacter::OnForceDetectionEnd_Implementation(AActor* Detector)
 
 void ADefaultCharacter::OnFullyDetected_Implementation(AActor* Detector)
 {
+    // Optionally handle the fully detected event on the character
     if (!Detector) return;
-    if (DetectionProgressMap.Contains(Detector))
-    {
-        DetectionProgressMap[Detector] = 1.f;
-        // Alarm logic, UI etc
-    }
 }
 
+// -- Called on illegal tag state change; triggers OnDetected for all legitimate detectors
 void ADefaultCharacter::OnIllegalTagChanged(const FGameplayTag Tag, int32 NewCount)
 {
     UWorld* World = GetWorld();
@@ -383,10 +374,6 @@ void ADefaultCharacter::OnIllegalTagChanged(const FGameplayTag Tag, int32 NewCou
                 }
             }
         }
-    }
-    else
-    {
-        // Don't remove detectors instantly; handled in detection timer.
     }
 }
 
@@ -419,9 +406,8 @@ void ADefaultCharacter::UpdateEquippedItemMesh()
         EquippedItemMeshComp->SetRelativeRotation(FRotator(0.528160, -3.449450, 8.694707));
     }
 
-    // 2) ALL (server + clients): compute ADS socket -> aim coordinates
-    //    (by the time this runs on clients, the mesh from the server should have replicated)
-    if (EquippedItemMeshComp->GetStaticMesh()) // defend against nullptr mesh on client
+    // Compute ADS if we have a mesh
+    if (EquippedItemMeshComp->GetStaticMesh())
     {
         static const FName ADSSocket(TEXT("ADS"));
         if (EquippedItemMeshComp->DoesSocketExist(ADSSocket))
@@ -480,7 +466,6 @@ void ADefaultCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
     PlayerInputComponent->BindKey(EKeys::Zero, IE_Pressed, this, &ADefaultCharacter::HandleNumberKey);
 }
 
-// ------------- INPUT HANDLING ---------------
 void ADefaultCharacter::HandleAbilityInput(const FInputActionInstance& Instance, FGameplayTag InputTag)
 {
     if (AbilitySystemComponent)
@@ -523,7 +508,7 @@ void ADefaultCharacter::HandleNumberKey(FKey PressedKey)
     }
     else
     {
-        static const TMap<FName, int32> KeyToSlot {
+        static const TMap<FName, int32> KeyToSlot{
             {EKeys::One.GetFName(), 0},
             {EKeys::Two.GetFName(), 1},
             {EKeys::Three.GetFName(), 2},
@@ -555,7 +540,6 @@ void ADefaultCharacter::SelectInventorySlot(int32 SlotNumber)
     }
 }
 
-// ----------- CONTROLLED TRACE ---------------
 bool ADefaultCharacter::GetForwardTraceResult(float TraceDistance, FHitResult& OutHit, FVector& OutTraceEnd) const
 {
     if (!CameraComponent) return false;
@@ -568,7 +552,6 @@ bool ADefaultCharacter::GetForwardTraceResult(float TraceDistance, FHitResult& O
     return GetWorld()->LineTraceSingleByChannel(OutHit, Start, End, ECC_Visibility, Params);
 }
 
-// ----------- INVENTORY ACTIONS --------------
 void ADefaultCharacter::DropActiveItem()
 {
     if (!InventoryComponent) return;
@@ -601,7 +584,6 @@ void ADefaultCharacter::DropActiveItem()
     InventoryComponent->ServerDropActiveItem(DropLocation);
 }
 
-// ------------ INTERACT MECHANICS -----------
 void ADefaultCharacter::UpdateInteractHighlight()
 {
     if (!IsLocallyControlled())
@@ -629,10 +611,9 @@ void ADefaultCharacter::UpdateInteractHighlight()
     }
 }
 
-
 void ADefaultCharacter::HandleInteractHoldStart()
 {
-    static AActor* const DummySentinel = (AActor*)0x1; // Invalid pointer, used only for comparisons
+    static AActor* const DummySentinel = (AActor*)0x1;
 
     if (ProgressiveActor)
         return;
@@ -711,7 +692,6 @@ void ADefaultCharacter::HandleInteractInstant()
 
                 if (bRequiresItem)
                 {
-                    // If requires item, check for correct item
                     if (HasAuthority() && !IInteractable::Execute_IsCorrectItem(HitActor, ActiveItem))
                     {
                         return;
@@ -723,14 +703,13 @@ void ADefaultCharacter::HandleInteractInstant()
                 }
             }
 
-            // If does NOT require item, just interact
             IInteractable::Execute_Interact(HitActor, this);
 
-            // Always call server to handle authoritative interaction
             ServerHandleInteract(HitActor);
         }
     }
 }
+
 void ADefaultCharacter::ServerHandleInteract_Implementation(AActor* TargetActor)
 {
     if (!TargetActor)
@@ -758,11 +737,10 @@ void ADefaultCharacter::ServerHandleInteract_Implementation(AActor* TargetActor)
                 }
             }
         }
-
-        // If does NOT require item, just interact
         IInteractable::Execute_Interact(TargetActor, this);
     }
 }
+
 // ---------------- MOVEMENT --------------
 void ADefaultCharacter::Move(const FInputActionValue& Value)
 {
@@ -825,7 +803,6 @@ void ADefaultCharacter::StartCrouch()
     if (!GetCharacterMovement()->IsFalling())
         Crouch();
 
-    // Set crouch speed from GAS attribute
     const UPlayerAttributeSet* AttrSet = GetPlayerAttributeSet();
     if (AttrSet && GetCharacterMovement())
     {
@@ -838,7 +815,6 @@ void ADefaultCharacter::StopCrouching()
 {
     UnCrouch();
 
-    // Restore speed from GAS attribute
     const UPlayerAttributeSet* AttrSet = GetPlayerAttributeSet();
     if (AttrSet && GetCharacterMovement())
     {
@@ -851,7 +827,6 @@ void ADefaultCharacter::StopCrouching()
     }
 }
 
-// ----------- SPRINT & CAMERA ROTATION -----------
 void ADefaultCharacter::StartSprint()
 {
     if (!GetCharacterMovement()->IsCrouching() && GetCharacterMovement()->Velocity.Size() > 0)
@@ -895,7 +870,6 @@ void ADefaultCharacter::OnRep_SprintState()
     {
         GetCharacterMovement()->MaxWalkSpeed = AttrSet->GetWalkSpeed();
     }
-    // Always update crouch speed property
     GetCharacterMovement()->MaxWalkSpeedCrouched = AttrSet->GetCrouchSpeed();
 }
 
@@ -938,7 +912,6 @@ void ADefaultCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
     DOREPLIFETIME(ADefaultCharacter, Pitch);
 }
 
-// ------------- BlueprintPure (Detection Angle) -------------
 float ADefaultCharacter::CalculateDetectionAngle(const FVector& CameraLocation, const FRotator& PlayerCameraRotation, const FVector& SelfLocation)
 {
     FVector ToDetector = CameraLocation - SelfLocation;

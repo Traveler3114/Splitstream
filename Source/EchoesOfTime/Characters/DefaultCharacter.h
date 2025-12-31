@@ -23,6 +23,17 @@ class UStaticMeshComponent;
 class UInventoryComponent;
 class AItemPickup;
 
+// Detection state struct for better readability/maintainability
+USTRUCT()
+struct FDetectionState
+{
+    GENERATED_BODY()
+    float Progress = 0.f;
+    int8 Direction = 0; // +1 (building), -1 (cooling), 0 == idle
+    FDetectionState() : Progress(0.f), Direction(0) {}
+    FDetectionState(float P, int8 D) : Progress(P), Direction(D) {}
+};
+
 UCLASS()
 class ECHOESOFTIME_API ADefaultCharacter : public ACharacter, public IInteractable, public IAbilitySystemInterface, public IDetectable
 {
@@ -30,7 +41,7 @@ class ECHOESOFTIME_API ADefaultCharacter : public ACharacter, public IInteractab
 public:
     ADefaultCharacter();
 
-    AActor* ProgressiveActor=nullptr;
+    AActor* ProgressiveActor = nullptr;
 
     void OnWalkSpeedChanged(const FOnAttributeChangeData& ChangeData);
     void OnRunSpeedChanged(const FOnAttributeChangeData& ChangeData);
@@ -173,9 +184,9 @@ public:
     AActor* HighlightedActor = nullptr;
     void UpdateInteractHighlight();
 
-    // Detection system
-    UPROPERTY(BlueprintReadOnly)
-    TMap<AActor*, float> DetectionProgressMap;
+    // --- NEW Detection system ---
+    UPROPERTY()
+    TMap<AActor*, FDetectionState> DetectionStates;
 
     UFUNCTION(BlueprintCallable)
     virtual void OnDetected_Implementation(AActor* Detector) override;
@@ -203,8 +214,4 @@ public:
 private:
     void GrantAbilitiesFromInputSet();
     void GrantAbilitiesFromDefaultSet();
-
-    // --- Performance: Timer-driven detection instead of Tick
-    FTimerHandle DetectionUpdateTimerHandle;
-    void UpdateDetectionTimer();
 };
