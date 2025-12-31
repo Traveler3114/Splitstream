@@ -693,10 +693,17 @@ void ADefaultCharacter::Look(const FInputActionValue& Value)
         return;
 
     FVector2D LookAxisVector = Value.Get<FVector2D>();
+
+    // --- Add this block ---
+    float Sensitivity = 1.0f;
+    GConfig->GetFloat(TEXT("InputWidget"), TEXT("MouseSensitivity"), Sensitivity, GGameUserSettingsIni);
+    // OR use: float Sensitivity = GetMouseSensitivityFromConfig();
+    // ---
+
     if (Controller != nullptr)
     {
-        AddControllerYawInput(LookAxisVector.X);
-        AddControllerPitchInput(LookAxisVector.Y);
+        AddControllerYawInput(LookAxisVector.X * Sensitivity);
+        AddControllerPitchInput(LookAxisVector.Y * Sensitivity);
         if (CameraComponent) {
             ServerCameraRotationUpdate(CameraComponent->GetComponentRotation().Pitch);
         }
