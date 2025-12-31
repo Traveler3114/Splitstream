@@ -4,8 +4,21 @@
 #include "Components/ActorComponent.h"
 #include "DetectionComponent.generated.h"
 
-class UDetectionActorWidget;
+class UDetectionWidget;
 
+USTRUCT()
+struct FDetectionState
+{
+    GENERATED_BODY()
+    float Progress = 0.f;
+    int8 Direction = 0; // +1 (building), -1 (cooling), 0 == idle
+    bool bDetectionInProgress = false;
+    bool bFullyDetected = false;
+
+    FDetectionState() : Progress(0.f), Direction(0), bDetectionInProgress(false), bFullyDetected(false) {}
+    FDetectionState(float P, int8 D, bool InDetection = false, bool InFullyDetected = false)
+        : Progress(P), Direction(D), bDetectionInProgress(InDetection), bFullyDetected(InFullyDetected) {}
+};
 // Event delegates to notify UI/Registry (OPTIONAL, for UI update hooks)
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDetectionBegan, AActor*, OwnerActor);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDetectionEnded, AActor*, OwnerActor);
@@ -25,20 +38,8 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection")
     float DetectionDuration = 2.5f;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection")
-    float DetectionBarHideDelay = 10.f;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection")
-    TSubclassOf<UDetectionActorWidget> DetectionWidgetClass;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "Detection")
-    bool bDetectionInProgress = false;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "Detection")
-    bool bFullyDetected = false;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "Detection")
-    AActor* CurrentDetector = nullptr;
+    UPROPERTY()
+    TMap<AActor*, FDetectionState> DetectionStates;
 
     UFUNCTION(BlueprintCallable, Category = "Detection")
     void StartDetection(AActor* Detector);
@@ -50,24 +51,22 @@ public:
     void ForceImmediateDetectionEnd(AActor* Detector);
 
     UFUNCTION(BlueprintCallable, Category = "Detection")
-    float GetDetectionProgress() const;
+    float GetDetectionProgress(AActor* Detector) const;
 
-    UFUNCTION(NetMulticast, Reliable)
-    void MulticastResetDetectionElapsed();
+    UFUNCTION(BlueprintCallable, Category = "Detection")
+    bool IsDetectionInProgress(AActor* Detector) const;
 
-    // Optional UI/Registry delegates
+    UFUNCTION(BlueprintCallable, Category = "Detection")
+    bool IsFullyDetected(AActor* Detector) const;
+
+    UFUNCTION(BlueprintCallable, Category = "Detection")
+    TArray<AActor*> GetActiveDetectors() const;
+
     UPROPERTY(BlueprintAssignable)
     FOnDetectionBegan OnDetectionBegan;
-
     UPROPERTY(BlueprintAssignable)
     FOnDetectionEnded OnDetectionEnded;
 
 protected:
-    float DetectionElapsed = 0.f;
-    float FullyDetectedElapsed = 0.f;
-
-	UFUNCTION(NetMulticast, Reliable)
-    void MulticastUpdateRegistry(bool bRegister);
-
-    void HandleFullyDetected();
+    void HandleFullyDetected(AActor* Detector);
 };

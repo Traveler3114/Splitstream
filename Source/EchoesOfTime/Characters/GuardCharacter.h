@@ -127,6 +127,7 @@ public:
 
     virtual void OnDetected_Implementation(AActor* Detector) override;
     virtual void OnLost_Implementation(AActor* Detector) override;
+    virtual void OnForceDetectionEnd_Implementation(AActor* Detector) override;
     virtual void OnFullyDetected_Implementation(AActor* DetectingActor) override;
     virtual bool IsActorAlreadyDetected_Implementation(AActor* DetectingActor) const override;
 

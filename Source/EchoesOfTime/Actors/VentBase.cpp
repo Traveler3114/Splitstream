@@ -43,7 +43,8 @@ void AVentBase::BeginPlay()
 
 void AVentBase::OnDetected_Implementation(AActor* Detector)
 {
-    if (DetectionComponent && !(DetectionComponent->bDetectionInProgress) && !(DetectionComponent->bFullyDetected)&& bIsOpen) DetectionComponent->StartDetection(Detector);
+    if (DetectionComponent && !DetectionComponent->IsDetectionInProgress(Detector) && !DetectionComponent->IsFullyDetected(Detector) && bIsOpen)
+        DetectionComponent->StartDetection(Detector);
 }
 void AVentBase::OnLost_Implementation(AActor* Detector)
 {

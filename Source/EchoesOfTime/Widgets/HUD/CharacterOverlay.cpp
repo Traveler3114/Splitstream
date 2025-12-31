@@ -12,8 +12,8 @@
 #include "Components/SizeBox.h"
 #include "Engine/Engine.h"
 #include "Widgets/DetectionWidget.h"
-#include "Widgets/DetectionActorWidget.h"
 #include "Components/Border.h"
+#include "Blueprint/WidgetLayoutLibrary.h" 
 
 void UCharacterOverlay::OnInventoryChanged(const TArray<FInventorySlot>& Items)
 {
@@ -156,64 +156,16 @@ void UCharacterOverlay::NativeDestruct()
     Super::NativeDestruct();
 }
 
-void UCharacterOverlay::UpdateDetectionWidget(AActor* DetectorActor, float Progress, bool bIsLocked, float AngleDegrees)
+
+void UCharacterOverlay::UpdateDetectionWidget(AActor* Detector, float Progress, bool bIsLocked, FVector2D ScreenPosition)
 {
-    if (!DetectorActor) return;
+    if (!CanvasPanel || !Detector) return;
 
-    UDetectionWidget*& WidgetInstance = DetectionWidgets.FindOrAdd(DetectorActor);
-
-    if (!WidgetInstance && DetectionWidgetClass && CanvasPanel && (Progress > 0.0f || bIsLocked))
-    {
-        WidgetInstance = CreateWidget<UDetectionWidget>(GetWorld(), DetectionWidgetClass);
-        if (WidgetInstance)
-        {
-            CanvasPanel->AddChild(WidgetInstance);
-        }
-    }
-
-    if (WidgetInstance)
-    {
-        WidgetInstance->SetDetectionProgress(Progress, bIsLocked);
-
-        UCanvasPanelSlot* CanvasSlot = Cast<UCanvasPanelSlot>(WidgetInstance->Slot);
-        if (CanvasSlot && CanvasPanel)
-        {
-            FVector2D CanvasSize = CanvasPanel->GetCachedGeometry().GetLocalSize();
-            FVector2D Center = CanvasSize * 0.5f;
-
-            float MyPadding = 32.0f;
-            float Radius = (FMath::Min(CanvasSize.X, CanvasSize.Y) * 0.4f) - MyPadding;
-
-            float AngleRad = FMath::DegreesToRadians(-AngleDegrees + 90.0f);
-
-            float WidgetX = Center.X + FMath::Cos(AngleRad) * Radius;
-            float WidgetY = Center.Y - FMath::Sin(AngleRad) * Radius;
-
-            CanvasSlot->SetPosition(FVector2D(WidgetX, WidgetY));
-            CanvasSlot->SetAlignment(FVector2D(0.5f, 0.5f));
-
-            WidgetInstance->SetDetectionBarAngle(AngleDegrees);
-        }
-
-        if ((Progress <= 0.0f && !bIsLocked) || bIsLocked)
-        {
-            WidgetInstance->RemoveFromParent();
-            DetectionWidgets.Remove(DetectorActor);
-        }
-    }
-}
-
-
-
-void UCharacterOverlay::UpdateDetectionActorWidget(AActor* DetectorActor, float Progress, bool bIsLocked, FVector2D ScreenPosition)
-{
-    if (!CanvasPanel || !DetectorActor) return;
-
-    UDetectionActorWidget*& Widget = DetectionActorWidgets.FindOrAdd(DetectorActor);
+    UDetectionWidget*& Widget = DetectionWidgets.FindOrAdd(Detector);
     if (!Widget)
     {
-        if (!DetectionActorWidgetClass) return;
-        Widget = CreateWidget<UDetectionActorWidget>(GetWorld(), DetectionActorWidgetClass);
+        if (!DetectionWidgetClass) return;
+        Widget = CreateWidget<UDetectionWidget>(GetWorld(), DetectionWidgetClass);
         if (Widget)
         {
             CanvasPanel->AddChild(Widget);
@@ -245,7 +197,7 @@ void UCharacterOverlay::UpdateDetectionActorWidget(AActor* DetectorActor, float 
         if (Progress <= 0.001f && !bIsLocked)
         {
             Widget->RemoveFromParent();
-            DetectionActorWidgets.Remove(DetectorActor);
+            DetectionWidgets.Remove(Detector);
         }
     }
 }

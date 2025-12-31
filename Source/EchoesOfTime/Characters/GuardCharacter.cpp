@@ -280,7 +280,7 @@ void AGuardCharacter::OnDetected_Implementation(AActor* Detector)
     {
         SpawnedGhost->UpdateGhostVisibility();
     }
-    if (DetectionComponent && !(DetectionComponent->bDetectionInProgress) && !(DetectionComponent->bFullyDetected) && bIsDead) DetectionComponent->StartDetection(Detector);
+    if (DetectionComponent && !DetectionComponent->IsDetectionInProgress(Detector) && !DetectionComponent->IsFullyDetected(Detector) && bIsDead) DetectionComponent->StartDetection(Detector);
 }
 
 void AGuardCharacter::OnLost_Implementation(AActor* Detector)
@@ -290,8 +290,14 @@ void AGuardCharacter::OnLost_Implementation(AActor* Detector)
     {
         SpawnedGhost->UpdateGhostVisibility();
     }
-    if (DetectionComponent && !(DetectionComponent->bDetectionInProgress) && !(DetectionComponent->bFullyDetected) && bIsDead) DetectionComponent->StopDetection(Detector);
+    if (DetectionComponent && !DetectionComponent->IsDetectionInProgress(Detector) && !DetectionComponent->IsFullyDetected(Detector) && bIsDead) DetectionComponent->StopDetection(Detector);
 }
+
+void AGuardCharacter::OnForceDetectionEnd_Implementation(AActor* Detector)
+{
+    if (DetectionComponent) DetectionComponent->ForceImmediateDetectionEnd(Detector);
+}
+
 
 void AGuardCharacter::OnFullyDetected_Implementation(AActor* ActorDetected)
 {

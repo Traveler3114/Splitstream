@@ -1,10 +1,31 @@
 #include "DetectionWidget.h"
 #include "Components/ProgressBar.h"
+#include "Styling/SlateBrush.h"
 
 void UDetectionWidget::SetDetectionProgress(float Progress, bool bIsLocked)
 {
     if (!DetectionProgressBar) return;
     Progress = FMath::Clamp(Progress, 0.0f, 1.0f);
+
+    // Copy the current style
+    FProgressBarStyle BarStyle = DetectionProgressBar->GetWidgetStyle();
+
+    // Switch texture/brush and background based on whether full or not.
+    if (Progress >= 1.0f)
+    {
+        BarStyle.FillImage = FullBrush;
+        // Hide background when full
+        BarStyle.BackgroundImage = FSlateNoResource();
+    }
+    else
+    {
+        BarStyle.FillImage = NormalBrush;
+        // Restore background when not full
+        BarStyle.BackgroundImage = NormalBackgroundBrush;
+    }
+
+    // Set the modified style back
+    DetectionProgressBar->SetWidgetStyle(BarStyle);
 
     if (bIsLocked)
     {
@@ -15,6 +36,7 @@ void UDetectionWidget::SetDetectionProgress(float Progress, bool bIsLocked)
 
     DetectionProgressBar->SetPercent(Progress);
 
+    // (You can keep your color interpolation code here as desired)
     FLinearColor BarColor;
     if (Progress < 0.5f)
     {
@@ -33,12 +55,4 @@ void UDetectionWidget::SetDetectionProgress(float Progress, bool bIsLocked)
     }
 
     DetectionProgressBar->SetFillColorAndOpacity(BarColor);
-}
-
-void UDetectionWidget::SetDetectionBarAngle(float AngleDegrees)
-{
-    if (DetectionProgressBar)
-    {
-        DetectionProgressBar->SetRenderTransformAngle(AngleDegrees);
-    }
 }

@@ -44,11 +44,18 @@ ACivilianCharacter::ACivilianCharacter()
 
 void ACivilianCharacter::OnDetected_Implementation(AActor* Detector)
 {
-    if (DetectionComponent && !(DetectionComponent->bDetectionInProgress) && !(DetectionComponent->bFullyDetected) && bIsDead) DetectionComponent->StartDetection(Detector);
+    if (DetectionComponent && !DetectionComponent->IsDetectionInProgress(Detector) && !DetectionComponent->IsFullyDetected(Detector) && bIsDead)
+        DetectionComponent->StartDetection(Detector);
 }
 void ACivilianCharacter::OnLost_Implementation(AActor* Detector)
 {
-    if (DetectionComponent && !(DetectionComponent->bDetectionInProgress) && !(DetectionComponent->bFullyDetected) && bIsDead) DetectionComponent->StopDetection(Detector);
+    if (DetectionComponent && !DetectionComponent->IsDetectionInProgress(Detector) && !DetectionComponent->IsFullyDetected(Detector) && bIsDead) 
+        DetectionComponent->StopDetection(Detector);
+}
+
+void ACivilianCharacter::OnForceDetectionEnd_Implementation(AActor* Detector)
+{
+    if (DetectionComponent) DetectionComponent->ForceImmediateDetectionEnd(Detector);
 }
 
 void ACivilianCharacter::BeginPlay()

@@ -10,7 +10,6 @@
 #include "Blueprint/WidgetLayoutLibrary.h"
 #include "Widgets/HUD/CharacterOverlay.h"
 #include "AbilitySystem/EOTGameplayTags.h"
-#include "DetectionRegistry.h"
 #include "ActorComponents/DetectionComponent.h"
 #include "GameStates/DefaultGameState.h"
 #include "GameplayEffectTypes.h"
@@ -379,51 +378,16 @@ void ADefaultPlayerController::ClientShowCalendarWidget_Implementation(const TAr
     }
 }
 
-void ADefaultPlayerController::ClientUpdateDetectionWidget_Implementation(AActor* DetectorActor, float Progress, bool bIsLocked, float AngleDegrees)
-{
-    if (CharacterHUD && CharacterHUD->CharacterOverlay)
-    {
-        CharacterHUD->CharacterOverlay->UpdateDetectionWidget(DetectorActor, Progress, bIsLocked, AngleDegrees);
-    }
-}
 
 void ADefaultPlayerController::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
-
-    UDetectionRegistry* Registry = GetWorld() ? GetWorld()->GetSubsystem<UDetectionRegistry>() : nullptr;
-    if (!Registry || !CharacterHUD || !CharacterHUD->CharacterOverlay) return;
-
-    TSet<AActor*> ThisFrameDetectedActors;
-
-    // Usual update—only call for currently detected actors:
-    for (TWeakObjectPtr<AActor> WeakActor : Registry->GetDetectedActors())
-    {
-        AActor* Actor = WeakActor.Get();
-        if (!Actor) continue;
-        UDetectionComponent* DetComp = Actor->FindComponentByClass<UDetectionComponent>();
-        if (!DetComp) continue;
-        ThisFrameDetectedActors.Add(Actor);
-        ClientUpdateDetectionActorWidget(Actor, DetComp->GetDetectionProgress(), DetComp->bFullyDetected);
-    }
-
-    // After updating current, remove widgets for actors no longer detected:
-    for (AActor* PrevActor : LastFrameDetectedActors)
-    {
-        if (!ThisFrameDetectedActors.Contains(PrevActor))
-        {
-            // This actor was unregistered/lost! Force its bar to zero now.
-            ClientUpdateDetectionActorWidget(PrevActor, 0.0f, false);
-        }
-    }
-
-    LastFrameDetectedActors = ThisFrameDetectedActors;
 }
 
 
-void ADefaultPlayerController::ClientUpdateDetectionActorWidget_Implementation(AActor* DetectorActor, float Progress, bool bIsLocked)
+void ADefaultPlayerController::ClientUpdateDetectionWidget_Implementation(AActor* Detector, float Progress, bool bIsLocked)
 {
-    if (!DetectorActor || !CharacterHUD || !CharacterHUD->CharacterOverlay)
+    if (!Detector || !CharacterHUD || !CharacterHUD->CharacterOverlay)
     {
         return;
     }
@@ -435,7 +399,7 @@ void ADefaultPlayerController::ClientUpdateDetectionActorWidget_Implementation(A
     const float EdgePadding = 32.f;
 
     FVector2D ScreenPos;
-    bool bOnScreen = ProjectWorldLocationToScreen(DetectorActor->GetActorLocation(), ScreenPos);
+    bool bOnScreen = ProjectWorldLocationToScreen(Detector->GetActorLocation(), ScreenPos);
 
 
     if (!bOnScreen ||
@@ -452,7 +416,7 @@ void ADefaultPlayerController::ClientUpdateDetectionActorWidget_Implementation(A
     }
 
     // Pass placement to overlay
-    CharacterHUD->CharacterOverlay->UpdateDetectionActorWidget(DetectorActor, Progress, bIsLocked, ScreenPos);
+    CharacterHUD->CharacterOverlay->UpdateDetectionWidget(Detector, Progress, bIsLocked, ScreenPos);
 }
 
 void ADefaultPlayerController::BindAttributeDelegates()

@@ -1,8 +1,11 @@
 #include "DetectionComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Interfaces/IDetectable.h"
-#include "DetectionRegistry.h"
 #include "GameFramework/Actor.h"
+#include "Engine/World.h"
+#include "EngineUtils.h"
+#include "GameFramework/PlayerController.h"
+#include "Controllers/DefaultPlayerController.h"
 
 UDetectionComponent::UDetectionComponent()
 {
@@ -13,27 +16,18 @@ UDetectionComponent::UDetectionComponent()
 void UDetectionComponent::BeginPlay()
 {
     Super::BeginPlay();
-
-    DetectionElapsed = 0.f;
-    bFullyDetected = false;
-    bDetectionInProgress = false;
-    CurrentDetector = nullptr;
+    DetectionStates.Empty();
 }
 
 void UDetectionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     Super::EndPlay(EndPlayReason);
-
-    // Unregister from registry if still present
-    MulticastUpdateRegistry(false);
+    DetectionStates.Empty();
 }
 
 void UDetectionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-    DOREPLIFETIME(UDetectionComponent, bDetectionInProgress);
-    DOREPLIFETIME(UDetectionComponent, bFullyDetected);
-    DOREPLIFETIME(UDetectionComponent, CurrentDetector);
 }
 
 void UDetectionComponent::StartDetection(AActor* Detector)
@@ -41,120 +35,162 @@ void UDetectionComponent::StartDetection(AActor* Detector)
     if (!GetOwner() || !Detector) return;
     if (GetOwnerRole() != ROLE_Authority) return;
 
-    CurrentDetector = Detector;
-    bFullyDetected = false;
-    bDetectionInProgress = true;
-    MulticastResetDetectionElapsed();
+    FDetectionState& State = DetectionStates.FindOrAdd(Detector);
+    State.bDetectionInProgress = true;
+    State.bFullyDetected = false;
+    State.Progress = 0.f;
+    State.Direction = 1;
     SetComponentTickEnabled(true);
-
-    MulticastUpdateRegistry(true);
     OnDetectionBegan.Broadcast(GetOwner());
 }
 
 void UDetectionComponent::StopDetection(AActor* Detector)
 {
+    if (!Detector) return;
     if (GetOwnerRole() != ROLE_Authority) return;
 
-    bDetectionInProgress = false;
-    SetComponentTickEnabled(true);
-    OnDetectionEnded.Broadcast(GetOwner());
+    FDetectionState* State = DetectionStates.Find(Detector);
+    if (State)
+    {
+        State->bDetectionInProgress = false;
+        State->Direction = -1; // decay mode
+        SetComponentTickEnabled(true);
+        OnDetectionEnded.Broadcast(GetOwner());
+    }
 }
 
 void UDetectionComponent::ForceImmediateDetectionEnd(AActor* Detector)
 {
-    // Instantly kill detection with NO reversal/decay, unregister and UI/registry cleanup
     if (GetOwnerRole() != ROLE_Authority) return;
 
-    bDetectionInProgress = false;
-    bFullyDetected = false;
-    DetectionElapsed = 0.f;
-    SetComponentTickEnabled(false); // we’re done ticking now!
+    if (Detector)
+    {
+        // Instantly notify all clients to hide widget
+        UWorld* World = GetWorld();
+        if (World)
+        {
+            for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
+            {
+                if (APlayerController* PC = It->Get())
+                {
+                    if (ADefaultPlayerController* DefaultPC = Cast<ADefaultPlayerController>(PC))
+                    {
+                        DefaultPC->ClientUpdateDetectionWidget(Detector, 0.0f, false); // Hide widget!
+                    }
+                }
+            }
+        }
 
-    MulticastUpdateRegistry(false); // removes from DetectionRegistry, client clears widget
+        DetectionStates.Remove(Detector); // Remove state for this detector immediately
+        SetComponentTickEnabled(DetectionStates.Num() > 0);
+    }
+
     OnDetectionEnded.Broadcast(GetOwner());
 }
 
-void UDetectionComponent::MulticastResetDetectionElapsed_Implementation()
+float UDetectionComponent::GetDetectionProgress(AActor* Detector) const
 {
-    DetectionElapsed = 0.f;
-    SetComponentTickEnabled(true);
+    const FDetectionState* State = DetectionStates.Find(Detector);
+    if (!State) return 0.f;
+    return FMath::Clamp(State->Progress / FMath::Max(DetectionDuration, 0.01f), 0.f, 1.f);
 }
 
-float UDetectionComponent::GetDetectionProgress() const
+bool UDetectionComponent::IsDetectionInProgress(AActor* Detector) const
 {
-    return FMath::Clamp(DetectionElapsed / FMath::Max(DetectionDuration, 0.01f), 0.f, 1.f);
+    const FDetectionState* State = DetectionStates.Find(Detector);
+    return State ? State->bDetectionInProgress : false;
+}
+
+bool UDetectionComponent::IsFullyDetected(AActor* Detector) const
+{
+    const FDetectionState* State = DetectionStates.Find(Detector);
+    return State ? State->bFullyDetected : false;
+}
+
+TArray<AActor*> UDetectionComponent::GetActiveDetectors() const
+{
+    TArray<AActor*> Result;
+    for (const TPair<AActor*, FDetectionState>& Pair : DetectionStates)
+    {
+        Result.Add(Pair.Key);
+    }
+    return Result;
 }
 
 void UDetectionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-    bool bShow = false;
-    if (bDetectionInProgress)
-    {
-        DetectionElapsed += DeltaTime;
-        if (DetectionElapsed >= DetectionDuration)
-        {
-            DetectionElapsed = DetectionDuration;
-            bDetectionInProgress = false;
-            bFullyDetected = true;
-            FullyDetectedElapsed = 0.f; // Start "hold bar on full" timer
-            SetComponentTickEnabled(true); // Keep ticking until bar hide
-            HandleFullyDetected();
-        }
-        bShow = true;
-    }
-    else if (bFullyDetected)
-    {
-        FullyDetectedElapsed += DeltaTime;
-        DetectionElapsed = DetectionDuration; // force bar to stay full
-        bShow = true;
-        if (FullyDetectedElapsed >= DetectionBarHideDelay)
-        {
-            bFullyDetected = false;
-            DetectionElapsed = 0.f;
-            FullyDetectedElapsed = 0.f;
-            SetComponentTickEnabled(false);
-            bShow = false;
-            MulticastUpdateRegistry(false);
-        }
-    }
-    else
-    {
-        DetectionElapsed = FMath::Max(0.f, DetectionElapsed - DeltaTime);
-        if (DetectionElapsed > 0.f)
-            bShow = true;
-        else
-            SetComponentTickEnabled(false);
-    }
+    bool bAnyActive = false;
 
-    // NO WidgetComponent calls, UI is handled by HUD/player via registry
-}
-
-void UDetectionComponent::MulticastUpdateRegistry_Implementation(bool bRegister)
-{
-    if (GetWorld())
+    for (auto& Elem : DetectionStates)
     {
-        UDetectionRegistry* Registry = GetWorld()->GetSubsystem<UDetectionRegistry>();
-        if (Registry)
+        AActor* Detector = Elem.Key;
+        FDetectionState& State = Elem.Value;
+
+        // If detection in progress and not fully detected
+        if (State.bDetectionInProgress && !State.bFullyDetected)
         {
-            if (bRegister)
+            State.Progress += DeltaTime;
+            if (State.Progress >= DetectionDuration)
             {
-                Registry->RegisterDetectedActor(GetOwner());
+                State.Progress = DetectionDuration;
+                State.bDetectionInProgress = false;
+                State.bFullyDetected = true;
+                State.Direction = 0;
+                HandleFullyDetected(Detector);
+            }
+            bAnyActive = true;
+        }
+        // Decay phase
+        else if (!State.bDetectionInProgress && !State.bFullyDetected)
+        {
+            if (State.Progress > 0.f)
+            {
+                State.Progress = FMath::Max(0.f, State.Progress - DeltaTime);
+                State.Direction = (State.Progress > 0.f) ? -1 : 0;
+                if (State.Progress > 0.f) bAnyActive = true;
             }
             else
             {
-                Registry->UnregisterDetectedActor(GetOwner());
+                State.Direction = 0;
+            }
+        }
+        // Fully detected phase (bar stays full forever, or until force-removed)
+        else if (State.bFullyDetected)
+        {
+            State.Progress = DetectionDuration; // force bar full
+            bAnyActive = true;
+        }
+
+        // Propagate to all PlayerControllers every tick
+        float ProgressPct = FMath::Clamp(State.Progress / FMath::Max(DetectionDuration, 0.01f), 0.f, 1.f);
+        bool bIsLocked = State.bFullyDetected;
+
+        UWorld* World = GetWorld();
+        if (World)
+        {
+            for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
+            {
+                if (APlayerController* PC = It->Get())
+                {
+                    if (ADefaultPlayerController* DefaultPC = Cast<ADefaultPlayerController>(PC))
+                    {
+                        DefaultPC->ClientUpdateDetectionWidget(Detector, ProgressPct, bIsLocked);
+                    }
+                }
             }
         }
     }
+
+    SetComponentTickEnabled(bAnyActive);
 }
 
-void UDetectionComponent::HandleFullyDetected()
+void UDetectionComponent::HandleFullyDetected(AActor* Detector)
 {
-    if (CurrentDetector && CurrentDetector->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
+    if (Detector && Detector->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
     {
-        IDetectable::Execute_OnFullyDetected(CurrentDetector, GetOwner());
+        IDetectable::Execute_OnFullyDetected(Detector, GetOwner());
     }
-    // Registry and OnDetectionBegan still already notified
+    // OnDetectionBegan already fired at start, OnDetectionEnded already fires on StopDetection
 }

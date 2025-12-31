@@ -52,11 +52,8 @@ public:
     UFUNCTION(Client, Reliable)
     void ClientShowCalendarWidget(const TArray<FCalendarDateRecord>& CivilianDateRecords);
 
-    UFUNCTION(Client, Reliable, BlueprintCallable)
-    void ClientUpdateDetectionWidget(AActor* DetectorActor, float Progress, bool bIsLocked = false, float AngleDegrees = 0.0f);
-
     UFUNCTION(Client, Reliable)
-    void ClientUpdateDetectionActorWidget(AActor* DetectorActor, float Progress, bool bIsLocked);
+    void ClientUpdateDetectionWidget(AActor* Detector, float Progress, bool bIsLocked);
 
     UFUNCTION(Client, Reliable)
     void ClientShowLoadingScreen();

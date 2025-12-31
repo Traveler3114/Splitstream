@@ -153,15 +153,19 @@ void AItemPickup::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedE
 
 void AItemPickup::OnDetected_Implementation(AActor* Detector)
 {
-    if (ItemData && ItemData->bAlertGuardsWhenSeen && Detector)
+    if (ItemData && ItemData->bAlertGuardsWhenSeen && Detector && DetectionComponent)
     {
-        DetectionComponent->StartDetection(Detector);
+        if (!DetectionComponent->IsDetectionInProgress(Detector) && !DetectionComponent->IsFullyDetected(Detector))
+        {
+            DetectionComponent->StartDetection(Detector);
+        }
     }
 }
 
 void AItemPickup::OnLost_Implementation(AActor* Detector)
 {
-    if (DetectionComponent) DetectionComponent->StopDetection(Detector);
+    if (DetectionComponent)
+        DetectionComponent->StopDetection(Detector);
 }
 
 void AItemPickup::OnForceDetectionEnd_Implementation(AActor* Detector)

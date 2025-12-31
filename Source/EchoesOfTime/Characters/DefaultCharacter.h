@@ -21,18 +21,10 @@ class UInputAction;
 class UAbilitySystemComponent;
 class UStaticMeshComponent;
 class UInventoryComponent;
+class UDetectionComponent;
 class AItemPickup;
 
 // Detection state struct for better readability/maintainability
-USTRUCT()
-struct FDetectionState
-{
-    GENERATED_BODY()
-    float Progress = 0.f;
-    int8 Direction = 0; // +1 (building), -1 (cooling), 0 == idle
-    FDetectionState() : Progress(0.f), Direction(0) {}
-    FDetectionState(float P, int8 D) : Progress(P), Direction(D) {}
-};
 
 UCLASS()
 class ECHOESOFTIME_API ADefaultCharacter : public ACharacter, public IInteractable, public IAbilitySystemInterface, public IDetectable
@@ -164,6 +156,9 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
     UInventoryComponent* InventoryComponent;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detection")
+    UDetectionComponent* DetectionComponent;
+
     // Input handlers for interaction
     UFUNCTION()
     void HandleInteractHoldStart();
@@ -184,9 +179,6 @@ public:
     AActor* HighlightedActor = nullptr;
     void UpdateInteractHighlight();
 
-    // --- NEW Detection system ---
-    UPROPERTY()
-    TMap<AActor*, FDetectionState> DetectionStates;
 
     UFUNCTION(BlueprintCallable)
     virtual void OnDetected_Implementation(AActor* Detector) override;

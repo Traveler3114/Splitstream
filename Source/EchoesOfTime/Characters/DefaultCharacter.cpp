@@ -21,6 +21,7 @@
 #include "ActorComponents/HackComponent.h"
 #include "ActorComponents/SearchComponent.h"
 #include "ActorComponents/LockPickComponent.h"
+#include "ActorComponents/DetectionComponent.h"
 
 ADefaultCharacter::ADefaultCharacter()
 {
@@ -47,6 +48,8 @@ ADefaultCharacter::ADefaultCharacter()
     bIsSprinting = false;
 
     InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
+
+    DetectionComponent = CreateDefaultSubobject<UDetectionComponent>(TEXT("DetectionComponent"));
 
     EquippedItemMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("EquippedItemMeshComp"));
     EquippedItemMeshComp->SetupAttachment(GetMesh(), TEXT("HandGrip_R"));
@@ -87,7 +90,6 @@ void ADefaultCharacter::BeginPlay()
 void ADefaultCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     Super::EndPlay(EndPlayReason);
-    DetectionStates.Empty();
 }
 
 void ADefaultCharacter::Tick(float DeltaTime)
@@ -98,76 +100,6 @@ void ADefaultCharacter::Tick(float DeltaTime)
     if (IsLocallyControlled())
     {
         UpdateInteractHighlight();
-    }
-
-    // --- Detection logic (event-driven, not timer-driven) ---
-    if (DetectionStates.Num())
-    {
-        TArray<AActor*> ToRemove;
-        for (auto& Elem : DetectionStates)
-        {
-            AActor* Detector = Elem.Key;
-            FDetectionState& State = Elem.Value;
-
-            if (State.Direction == 0)
-                continue;
-
-            bool bInVision = false;
-            if (Detector && Detector->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
-                bInVision = IDetectable::Execute_IsActorAlreadyDetected(Detector, this);
-
-            bool bIsIllegal = AbilitySystemComponent && AbilitySystemComponent->HasMatchingGameplayTag(TAG_Character_Status_Illegal);
-
-            float Rate = 0.5f * DeltaTime;
-
-            if (State.Direction > 0 && bInVision && bIsIllegal)
-            {
-                State.Progress += Rate;
-                if (State.Progress >= 1.f)
-                {
-                    State.Progress = 1.f;
-                    State.Direction = 0;
-                    // Fully detected
-                    if (Detector->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
-                        IDetectable::Execute_OnFullyDetected(Detector, this);
-                    OnFullyDetected_Implementation(Detector);
-                }
-            }
-            else if (State.Direction < 0 || !bInVision || !bIsIllegal)
-            {
-                State.Progress -= Rate;
-                if (State.Progress <= 0.f)
-                {
-                    State.Progress = 0.f;
-                    State.Direction = 0;
-                    ToRemove.Add(Detector);
-                }
-            }
-
-            // Update UI regardless of which way we were moving
-            if (APlayerController* PC = Cast<APlayerController>(GetController()))
-            {
-                if (ADefaultPlayerController* DefPC = Cast<ADefaultPlayerController>(PC))
-                {
-                    float Angle = CalculateDetectionAngle(
-                        Detector->GetActorLocation(),
-                        PC->PlayerCameraManager->GetCameraRotation(),
-                        GetActorLocation()
-                    );
-                    DefPC->ClientUpdateDetectionWidget(
-                        Detector,
-                        State.Progress,
-                        State.Progress >= 1.0f,
-                        Angle
-                    );
-                }
-            }
-        }
-
-        for (AActor* Detector : ToRemove)
-        {
-            DetectionStates.Remove(Detector);
-        }
     }
 }
 
@@ -304,56 +236,31 @@ UAbilitySystemComponent* ADefaultCharacter::GetAbilitySystemComponent() const
 // ------------------ DETECTION SYSTEM EVENT-DRIVEN --------------------
 void ADefaultCharacter::OnDetected_Implementation(AActor* Detector)
 {
-    if (!Detector) return;
-    FDetectionState* State = DetectionStates.Find(Detector);
-    if (!State)
+    if (!DetectionComponent || !AbilitySystemComponent)
+        return;
+
+    // Assuming TAG_Character_Status_Illegal is somewhere in scope:
+    if (AbilitySystemComponent->HasMatchingGameplayTag(TAG_Character_Status_Illegal))
     {
-        DetectionStates.Add(Detector, FDetectionState(0.f, +1));
-    }
-    else
-    {
-        State->Direction = +1;
+        DetectionComponent->StartDetection(Detector);
     }
 }
 
 void ADefaultCharacter::OnLost_Implementation(AActor* Detector)
 {
-    FDetectionState* State = DetectionStates.Find(Detector);
-    if (State)
-    {
-        State->Direction = -1;
-    }
+    if(DetectionComponent)
+        DetectionComponent->StopDetection(Detector);
 }
 
 void ADefaultCharacter::OnForceDetectionEnd_Implementation(AActor* Detector)
 {
-    if (!Detector)
-        return;
-    DetectionStates.Remove(Detector);
-
-    if (APlayerController* PC = Cast<APlayerController>(GetController()))
-    {
-        if (ADefaultPlayerController* DefPC = Cast<ADefaultPlayerController>(PC))
-        {
-            float Angle = 0.f;
-            if (Detector)
-            {
-                Angle = CalculateDetectionAngle(
-                    Detector->GetActorLocation(),
-                    PC->PlayerCameraManager->GetCameraRotation(),
-                    GetActorLocation());
-            }
-            DefPC->ClientUpdateDetectionWidget(
-                Detector, 0.f, false, Angle
-            );
-        }
-    }
+    if (DetectionComponent) DetectionComponent->ForceImmediateDetectionEnd(Detector);
 }
+
 
 void ADefaultCharacter::OnFullyDetected_Implementation(AActor* Detector)
 {
-    // Optionally handle the fully detected event on the character
-    if (!Detector) return;
+
 }
 
 // -- Called on illegal tag state change; triggers OnDetected for all legitimate detectors
@@ -364,6 +271,7 @@ void ADefaultCharacter::OnIllegalTagChanged(const FGameplayTag Tag, int32 NewCou
 
     if (NewCount > 0)
     {
+        // Tag ADDED: Notify all guards who are "seeing" us that we are now illegal
         for (TActorIterator<AActor> ActorItr(World); ActorItr; ++ActorItr)
         {
             if (ActorItr->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
@@ -371,6 +279,20 @@ void ADefaultCharacter::OnIllegalTagChanged(const FGameplayTag Tag, int32 NewCou
                 if (IDetectable::Execute_IsActorAlreadyDetected(*ActorItr, this))
                 {
                     IDetectable::Execute_OnDetected(this, *ActorItr);
+                }
+            }
+        }
+    }
+    else
+    {
+        // Tag REMOVED: Notify all guards who are "seeing" us to cancel detection
+        for (TActorIterator<AActor> ActorItr(World); ActorItr; ++ActorItr)
+        {
+            if (ActorItr->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
+            {
+                if (IDetectable::Execute_IsActorAlreadyDetected(*ActorItr, this))
+                {
+                    IDetectable::Execute_OnLost(this, *ActorItr);
                 }
             }
         }
