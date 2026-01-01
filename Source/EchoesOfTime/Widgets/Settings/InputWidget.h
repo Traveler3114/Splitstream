@@ -10,6 +10,7 @@ class UButton;
 class UVerticalBox;
 class UInputMappingContext;
 class UInputAction;
+class UKeybindWidget;
 
 USTRUCT(BlueprintType)
 struct FKeybindDefinition
@@ -21,16 +22,6 @@ struct FKeybindDefinition
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Keybinding")
     FText DisplayName;
-};
-
-USTRUCT()
-struct FKeybindRowWidgets
-{
-    GENERATED_BODY()
-    UPROPERTY() UTextBlock* DisplayNameLabel = nullptr;
-    UPROPERTY() UButton* ChangeKeyButton = nullptr;
-    UPROPERTY() UTextBlock* KeyInsideButton = nullptr;
-    UPROPERTY() UInputAction* InputAction = nullptr;
 };
 
 UCLASS()
@@ -66,14 +57,18 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     TArray<FKeybindDefinition> KeybindsToExpose;
 
-    TArray<FKeybindRowWidgets> KeyRows;
+    // UMG class for row
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    TSubclassOf<UKeybindWidget> KeybindWidgetClass;
+
+    TArray<UKeybindWidget*> KeybindWidgets;
     UInputAction* PendingRebindAction;
 
     void BuildKeybindList();
     void UpdateKeybindDisplay(UInputAction* InputAction);
 
     UFUNCTION()
-    void OnChangeKeyClicked();
+    void HandleRowClicked(UKeybindWidget* Source);
 
     void SaveUserSettings();
     void LoadUserSettings();

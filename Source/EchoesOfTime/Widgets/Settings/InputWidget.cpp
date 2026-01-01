@@ -1,17 +1,13 @@
 #include "InputWidget.h"
 #include "Saving/UserSettingsSaveGame.h"
+#include "KeybindWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/Slider.h"
 #include "Components/TextBlock.h"
-#include "Components/Button.h"
 #include "Components/VerticalBox.h"
-#include "Components/HorizontalBox.h"
-#include "Components/HorizontalBoxSlot.h"
 #include "EnhancedInputSubsystems.h"
-#include "EnhancedInputComponent.h"
 #include "InputMappingContext.h"
 #include "InputAction.h"
-#include "Engine/Engine.h"
 
 void UInputWidget::NativeConstruct()
 {
@@ -25,7 +21,6 @@ void UInputWidget::NativeConstruct()
     if (!InputMappingContextRuntime && InputMappingContext)
     {
         InputMappingContextRuntime = DuplicateObject<UInputMappingContext>(InputMappingContext, this);
-
         if (APlayerController* PC = GetOwningPlayer())
         {
             if (ULocalPlayer* LP = Cast<ULocalPlayer>(PC->Player))
@@ -56,92 +51,69 @@ void UInputWidget::NativeConstruct()
 
 void UInputWidget::BuildKeybindList()
 {
-    if (!KeybindsList || !InputMappingContextRuntime) return;
+    if (!KeybindsList || !InputMappingContextRuntime || !KeybindWidgetClass) return;
     KeybindsList->ClearChildren();
-    KeyRows.Empty();
+    KeybindWidgets.Empty();
 
     for (const FKeybindDefinition& Def : KeybindsToExpose)
     {
         if (!Def.InputAction) continue;
 
-        FText RowDisplayName = Def.DisplayName.IsEmpty() ? FText::FromName(Def.InputAction->GetFName()) : Def.DisplayName;
-        UInputAction* InputAction = Def.InputAction;
-        UHorizontalBox* Row = NewObject<UHorizontalBox>(this);
+        // Get key for this input action
+        FString KeyStr = TEXT("None");
+        for (const FEnhancedActionKeyMapping& Mapping : InputMappingContextRuntime->GetMappings())
+        {
+            if (Mapping.Action == Def.InputAction)
+            {
+                KeyStr = Mapping.Key.ToString();
+                break;
+            }
+        }
 
-        UTextBlock* Label = NewObject<UTextBlock>(this);
-        Label->SetText(RowDisplayName);
-        Label->SetJustification(ETextJustify::Left);
+        UKeybindWidget* RowWidget = CreateWidget<UKeybindWidget>(this, KeybindWidgetClass);
+        RowWidget->Setup(
+            Def.DisplayName.IsEmpty() ? FText::FromName(Def.InputAction->GetFName()) : Def.DisplayName,
+            Def.InputAction,
+            FText::FromString(KeyStr)
+        );
+        RowWidget->OnChangeKeyClicked.AddDynamic(this, &UInputWidget::HandleRowClicked);
 
-        UHorizontalBoxSlot* LabelSlot = Row->AddChildToHorizontalBox(Label);
-        LabelSlot->SetPadding(FMargin(2, 2, 16, 2));
-        LabelSlot->SetHorizontalAlignment(HAlign_Left);
-        LabelSlot->SetSize(ESlateSizeRule::Automatic);
+        KeybindsList->AddChild(RowWidget);
+        KeybindWidgets.Add(RowWidget);
+    }
+}
 
-        UButton* KeyButton = NewObject<UButton>(this);
-        UTextBlock* KeyButtonText = NewObject<UTextBlock>(KeyButton);
-        KeyButtonText->SetText(FText::FromString(TEXT("Key")));
-        KeyButtonText->SetJustification(ETextJustify::Center);
-        KeyButton->AddChild(KeyButtonText);
+void UInputWidget::HandleRowClicked(UKeybindWidget* Source)
+{
+    PendingRebindAction = Source->InputAction;
+    if (Source->KeyInsideButton)
+        Source->KeyInsideButton->SetText(FText::FromString(TEXT("Press any key...")));
 
-        UHorizontalBoxSlot* BtnSlot = Row->AddChildToHorizontalBox(KeyButton);
-        BtnSlot->SetPadding(FMargin(2, 2, 2, 2));
-        BtnSlot->SetHorizontalAlignment(HAlign_Fill);
-        BtnSlot->SetSize(ESlateSizeRule::Fill);
-
-        KeyButton->OnClicked.AddDynamic(this, &UInputWidget::OnChangeKeyClicked);
-
-        KeybindsList->AddChild(Row);
-
-        FKeybindRowWidgets RowWidgets;
-        RowWidgets.DisplayNameLabel = Label;
-        RowWidgets.ChangeKeyButton = KeyButton;
-        RowWidgets.KeyInsideButton = KeyButtonText;
-        RowWidgets.InputAction = InputAction;
-        KeyRows.Add(RowWidgets);
-
-        UpdateKeybindDisplay(InputAction);
+    if (APlayerController* PC = GetOwningPlayer())
+    {
+        FInputModeUIOnly UIOnly;
+        PC->SetInputMode(UIOnly);
     }
 }
 
 void UInputWidget::UpdateKeybindDisplay(UInputAction* InputAction)
 {
     if (!InputMappingContextRuntime || !InputAction) return;
-    for (FKeybindRowWidgets& Row : KeyRows)
+    FString KeyStr = TEXT("None");
+    for (const FEnhancedActionKeyMapping& Mapping : InputMappingContextRuntime->GetMappings())
     {
-        if (Row.InputAction == InputAction)
+        if (Mapping.Action == InputAction)
         {
-            FString KeyStr = TEXT("None");
-            for (const FEnhancedActionKeyMapping& Mapping : InputMappingContextRuntime->GetMappings())
-            {
-                if (Mapping.Action == InputAction)
-                {
-                    KeyStr = Mapping.Key.ToString();
-                    break;
-                }
-            }
-            if (Row.KeyInsideButton)
-                Row.KeyInsideButton->SetText(FText::FromString(KeyStr));
-            return;
-        }
-    }
-}
-
-void UInputWidget::OnChangeKeyClicked()
-{
-    for (FKeybindRowWidgets& Row : KeyRows)
-    {
-        if (Row.ChangeKeyButton && Row.ChangeKeyButton->HasKeyboardFocus())
-        {
-            PendingRebindAction = Row.InputAction;
-            if (Row.KeyInsideButton)
-                Row.KeyInsideButton->SetText(FText::FromString(TEXT("Press any key...")));
+            KeyStr = Mapping.Key.ToString();
             break;
         }
     }
-    if (APlayerController* PC = GetOwningPlayer())
+    for (UKeybindWidget* Widget : KeybindWidgets)
     {
-        FInputModeUIOnly UIOnly;
-        PC->SetInputMode(UIOnly);
+        if (Widget->InputAction == InputAction && Widget->KeyInsideButton)
+        {
+            Widget->KeyInsideButton->SetText(FText::FromString(KeyStr));
+        }
     }
 }
 
