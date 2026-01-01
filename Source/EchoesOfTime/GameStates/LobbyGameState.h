@@ -1,20 +1,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/GameState.h"
+#include "BaseGameState.h"
 #include "LobbyGameState.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FLobbyOnAggregateReadyChanged);
 
 UCLASS()
-class ECHOESOFTIME_API ALobbyGameState : public AGameState
+class ECHOESOFTIME_API ALobbyGameState : public ABaseGameState
 {
 	GENERATED_BODY()
 public:
 	ALobbyGameState();
-
-	    UPROPERTY(EditDefaultsOnly, Category = "Maps")
-    FString MainMenuMapPath = TEXT("/Game/Maps/MainMenuMap");
 
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_ReadyAggregates, Category = "Lobby|Ready")
 	int32 TotalPlayers = 0;

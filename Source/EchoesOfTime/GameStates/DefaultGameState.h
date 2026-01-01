@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/GameState.h"
+#include "BaseGameState.h"
 #include "DefaultGameState.generated.h"
 
 class AActor;
@@ -29,18 +29,14 @@ struct FGuardRepairCountdown
 };
 
 UCLASS()
-class ECHOESOFTIME_API ADefaultGameState : public AGameState
+class ECHOESOFTIME_API ADefaultGameState : public ABaseGameState
 {
     GENERATED_BODY()
 
 public:
     ADefaultGameState();
 
-    UPROPERTY(EditDefaultsOnly, Category = "Maps")
-    FString MainMenuMapPath = TEXT("/Game/Maps/MainMenuMap");
 
-    UPROPERTY(EditDefaultsOnly, Category = "Maps")
-    FString LobbyMapPath = TEXT("/Game/Maps/LobbyMap");
 
     UPROPERTY(ReplicatedUsing = OnRep_AlarmStarted, BlueprintReadOnly, Category = "Alarm")
     float AlarmEndTime;

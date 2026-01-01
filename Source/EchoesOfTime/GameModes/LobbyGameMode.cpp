@@ -273,27 +273,6 @@ void ALobbyGameMode::DoServerTravelToMatch()
 }
 
 
-
-void ALobbyGameMode::HostLeaveLobby()
-{
-	if (!HasAuthority())
-		return;
-
-	FString MenuURL = TEXT("/Game/Maps/MainMenuMap");
-	if (ALobbyGameState* GS = GetGameState<ALobbyGameState>())
-	{
-		if (!GS->MainMenuMapPath.IsEmpty())
-			MenuURL = GS->MainMenuMapPath;
-	}
-	PendingMenuURL = MenuURL;
-
-	// Do not call session destroy or client travel from GameMode: use GameInstance!
-	if (UDefaultGameInstance* GI = Cast<UDefaultGameInstance>(GetGameInstance()))
-	{
-		GI->HostLeaveToMainMenu(PendingMenuURL);
-	}
-}
-
 void ALobbyGameMode::HandleDestroySessionComplete(FName SessionName, bool bWasSuccessful)
 {
     IOnlineSessionPtr Session;

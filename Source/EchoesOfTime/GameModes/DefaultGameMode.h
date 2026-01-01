@@ -1,11 +1,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/GameMode.h"
+#include "BaseGameMode.h"
 #include "DefaultGameMode.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API ADefaultGameMode : public AGameMode
+class ECHOESOFTIME_API ADefaultGameMode : public ABaseGameMode
 {
 	GENERATED_BODY()
 public:
@@ -14,9 +14,6 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void RestartLevel();
-
-	UFUNCTION(BlueprintCallable)
-	void HostLeaveLobby();
 
 protected:
 	FTimerHandle RestartTimerHandle;

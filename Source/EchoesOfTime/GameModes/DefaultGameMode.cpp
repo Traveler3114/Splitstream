@@ -23,25 +23,6 @@ void ADefaultGameMode::BeginPlay()
 	}
 }
 
-void ADefaultGameMode::HostLeaveLobby()
-{
-	if (!HasAuthority())
-		return;
-
-	FString MenuURL = TEXT("/Game/Maps/MainMenuMap");
-	if (ADefaultGameState* GS = GetGameState<ADefaultGameState>())
-	{
-		if (!GS->MainMenuMapPath.IsEmpty())
-			MenuURL = GS->MainMenuMapPath;
-	}
-	PendingMenuURL = MenuURL;
-
-	// Do not call session destroy or client travel from GameMode: use GameInstance!
-	if (UDefaultGameInstance* GI = Cast<UDefaultGameInstance>(GetGameInstance()))
-	{
-		GI->HostLeaveToMainMenu(PendingMenuURL);
-	}
-}
 
 AActor* ADefaultGameMode::ChoosePlayerStart_Implementation(AController* Player)
 {

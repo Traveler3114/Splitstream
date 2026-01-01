@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/GameMode.h"
+#include "BaseGameMode.h"
 #include "LobbyGameMode.generated.h"
 
 class ALobbyPlatformActor;
@@ -11,7 +11,7 @@ class ALobbyGameState;
 class APlayerState;
 
 UCLASS()
-class ECHOESOFTIME_API ALobbyGameMode : public AGameMode
+class ECHOESOFTIME_API ALobbyGameMode : public ABaseGameMode
 {
     GENERATED_BODY()
 
@@ -54,11 +54,6 @@ protected:
 public:
     // Called by PlayerController server RPC to start the game
     void StartGameIfAllowed(ALobbyPlayerController* RequestingPC);
-
-    // Host leaves the lobby: show loading on all, instruct clients to leave,
-    // destroy session on server, then host travels to main menu alone.
-    void HostLeaveLobby();
-
     // Kick a specific player (by PlayerState)
     void KickPlayerByPlayerState(APlayerState* TargetPS);
 
