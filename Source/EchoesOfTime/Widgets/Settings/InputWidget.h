@@ -57,12 +57,12 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     TArray<FKeybindDefinition> KeybindsToExpose;
 
-    // UMG class for row
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     TSubclassOf<UKeybindWidget> KeybindWidgetClass;
 
     TArray<UKeybindWidget*> KeybindWidgets;
     UInputAction* PendingRebindAction;
+    UKeybindWidget* PendingRebindWidget = nullptr; // TRACKS ACTIVE ROW
 
     void BuildKeybindList();
     void UpdateKeybindDisplay(UInputAction* InputAction);

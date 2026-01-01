@@ -17,6 +17,7 @@ void UInputWidget::NativeConstruct()
     MouseSensitivityMax = 10.0f;
     MouseSensitivity = 1.0f;
     PendingRebindAction = nullptr;
+    PendingRebindWidget = nullptr;
 
     if (!InputMappingContextRuntime && InputMappingContext)
     {
@@ -85,7 +86,15 @@ void UInputWidget::BuildKeybindList()
 
 void UInputWidget::HandleRowClicked(UKeybindWidget* Source)
 {
+    // --- Cancel previous pending row if needed
+    if (PendingRebindWidget && PendingRebindWidget != Source)
+    {
+        UpdateKeybindDisplay(PendingRebindWidget->InputAction); // Restore previous row's key string
+    }
+
     PendingRebindAction = Source->InputAction;
+    PendingRebindWidget = Source;
+
     if (Source->KeyInsideButton)
         Source->KeyInsideButton->SetText(FText::FromString(TEXT("Press any key...")));
 
@@ -153,6 +162,7 @@ FReply UInputWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEven
         }
         UpdateKeybindDisplay(PendingRebindAction);
         PendingRebindAction = nullptr;
+        PendingRebindWidget = nullptr;
         SaveUserSettings();
         return FReply::Handled();
     }

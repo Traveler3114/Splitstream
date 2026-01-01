@@ -16,7 +16,6 @@ class ECHOESOFTIME_API UKeybindWidget : public UUserWidget
 {
     GENERATED_BODY()
 public:
-    // Set these up for BindWidget in your UMG designer, or instantiate if pure C++
     UPROPERTY(meta = (BindWidget))
     UTextBlock* DisplayNameText;
 
