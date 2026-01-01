@@ -4,184 +4,80 @@
 #include "Blueprint/UserWidget.h"
 #include "GraphicsWidget.generated.h"
 
-class UTextBlock;
-class UButton;
-class USlider;
 class UCheckBox;
+class UEnumOptionWidget;
+class USliderWidget;
 
 UCLASS()
 class ECHOESOFTIME_API UGraphicsWidget : public UUserWidget
 {
     GENERATED_BODY()
-
 public:
     virtual void NativeConstruct() override;
+    void ApplySettings();
 
-        void ApplySettings();
 protected:
-
+    // Bind these in your UMG editor (drag/drop/reparent as needed!)
     UPROPERTY(meta = (BindWidget))
-    UButton* ResolutionLeftButton;
-
+    UEnumOptionWidget* ResolutionWidget;
     UPROPERTY(meta = (BindWidget))
-    UButton* ResolutionRightButton;
-
+    UEnumOptionWidget* WindowModeWidget;
     UPROPERTY(meta = (BindWidget))
-    UTextBlock* ResolutionValueText;
-
-    // --- Window Mode ---
+    USliderWidget* RenderScaleWidget;
     UPROPERTY(meta = (BindWidget))
-    UButton* WindowModeLeftButton;
-
+    UEnumOptionWidget* ShadowsWidget;
     UPROPERTY(meta = (BindWidget))
-    UButton* WindowModeRightButton;
-
+    UEnumOptionWidget* TexturesWidget;
     UPROPERTY(meta = (BindWidget))
-    UTextBlock* WindowModeValueText;
-
-    // --- Render Scale ---
+    UEnumOptionWidget* AAWidget;
     UPROPERTY(meta = (BindWidget))
-    USlider* RenderScaleSlider;
-
+    UEnumOptionWidget* PPWidget;
     UPROPERTY(meta = (BindWidget))
-    UTextBlock* RenderScaleValueText;
-
-    // --- Shadows ---
-    UPROPERTY(meta = (BindWidget))
-    UButton* ShadowsLeftButton;
-
-    UPROPERTY(meta = (BindWidget))
-    UButton* ShadowsRightButton;
-
-    UPROPERTY(meta = (BindWidget))
-    UTextBlock* ShadowsValueText;
-
-    // --- Textures ---
-    UPROPERTY(meta = (BindWidget))
-    UButton* TexturesLeftButton;
-
-    UPROPERTY(meta = (BindWidget))
-    UButton* TexturesRightButton;
-
-    UPROPERTY(meta = (BindWidget))
-    UTextBlock* TexturesValueText;
-
-    // --- Anti-Aliasing ---
-    UPROPERTY(meta = (BindWidget))
-    UButton* AALeftButton;
-
-    UPROPERTY(meta = (BindWidget))
-    UButton* AARightButton;
-
-    UPROPERTY(meta = (BindWidget))
-    UTextBlock* AAValueText;
-
-    // --- Post Processing ---
-    UPROPERTY(meta = (BindWidget))
-    UButton* PPLeftButton;
-
-    UPROPERTY(meta = (BindWidget))
-    UButton* PPRightButton;
-
-    UPROPERTY(meta = (BindWidget))
-    UTextBlock* PPValueText;
-
-    // --- VSync ---
+    USliderWidget* FPSLimitWidget;
     UPROPERTY(meta = (BindWidget))
     UCheckBox* VSyncCheckBox;
-
-    // --- FPS Limit ---
-    UPROPERTY(meta = (BindWidget))
-    USlider* FPSLimitSlider;
-
-    UPROPERTY(meta = (BindWidget))
-    UTextBlock* FPSLimitValueText;
 
     // Option data
     int32 ResolutionIndex;
     TArray<FIntPoint> ResolutionOptions;
     TArray<FString> ResolutionLabels;
-
-    // --- Window Mode ---
     int32 WindowModeIndex;
     TArray<EWindowMode::Type> WindowModeOptions;
     TArray<FString> WindowModeLabels;
-
-    // --- Render Scale ---
     float RenderScale; // 0.25f - 1.0f
     float RenderScaleMin;
     float RenderScaleMax;
-
-    // --- Quality ---
     int32 ShadowsIndex;
     TArray<FString> ShadowsOptions;
-
     int32 TexturesIndex;
     TArray<FString> TexturesOptions;
-
     int32 AAIndex;
     TArray<FString> AAOptions;
-
     int32 PPIndex;
     TArray<FString> PPOptions;
-
-    // --- VSync / FPS Limit Data ---
     bool bVSyncEnabled;
-
-    // FPS limit in frames per second
     float FPSLimit;
     float FPSMin;
-    float FPSMax;      // Slider max; if slider == FPSMax => unlimited
-    bool bFPSUnlimited;
+    float FPSMax;
+    bool bFPSUnlimited; // true if 'unlimited' is checked on slider
 
+    void SetupWidgets();
     UFUNCTION()
-    void OnResolutionLeft();
-
+    void OnResolutionChanged(int32 Index);
     UFUNCTION()
-    void OnResolutionRight();
-
-    // --- Window Mode ---
-    UFUNCTION()
-    void OnWindowModeLeft();
-
-    UFUNCTION()
-    void OnWindowModeRight();
-
-    // --- Render Scale ---
+    void OnWindowModeChanged(int32 Index);
     UFUNCTION()
     void OnRenderScaleChanged(float Value);
-
-    // --- Quality ---
     UFUNCTION()
-    void OnShadowsLeft();
-
+    void OnShadowsChanged(int32 Index);
     UFUNCTION()
-    void OnShadowsRight();
-
+    void OnTexturesChanged(int32 Index);
     UFUNCTION()
-    void OnTexturesLeft();
-
+    void OnAAChanged(int32 Index);
     UFUNCTION()
-    void OnTexturesRight();
-
+    void OnPPChanged(int32 Index);
     UFUNCTION()
-    void OnAALeft();
-
-    UFUNCTION()
-    void OnAARight();
-
-    UFUNCTION()
-    void OnPPLeft();
-
-    UFUNCTION()
-    void OnPPRight();
-
-    // --- VSync / FPS ---
-    UFUNCTION()
-    void OnVSyncChanged(bool bIsChecked);
-
+    void OnVSyncChanged(bool bChecked);
     UFUNCTION()
     void OnFPSLimitChanged(float Value);
-
-    void UpdateTexts();
 };

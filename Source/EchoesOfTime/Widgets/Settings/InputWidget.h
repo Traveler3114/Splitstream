@@ -4,13 +4,11 @@
 #include "Blueprint/UserWidget.h"
 #include "InputWidget.generated.h"
 
-class UTextBlock;
-class USlider;
-class UButton;
+class USliderWidget;
 class UVerticalBox;
+class UKeybindWidget;
 class UInputMappingContext;
 class UInputAction;
-class UKeybindWidget;
 
 USTRUCT(BlueprintType)
 struct FKeybindDefinition
@@ -36,17 +34,7 @@ public:
 
 protected:
     UPROPERTY(meta = (BindWidget))
-    USlider* MouseSensitivitySlider;
-    UPROPERTY(meta = (BindWidget))
-    UTextBlock* MouseSensitivityValueText;
-    float MouseSensitivity;
-    float MouseSensitivityMin;
-    float MouseSensitivityMax;
-
-    UFUNCTION()
-    void OnMouseSensitivityChanged(float Value);
-    void UpdateTexts();
-
+    USliderWidget* MouseSensitivityWidget; // place in UMG
     UPROPERTY(meta = (BindWidget))
     UVerticalBox* KeybindsList;
 
@@ -61,10 +49,17 @@ protected:
     TSubclassOf<UKeybindWidget> KeybindWidgetClass;
 
     TArray<UKeybindWidget*> KeybindWidgets;
-    UInputAction* PendingRebindAction;
-    UKeybindWidget* PendingRebindWidget = nullptr; // TRACKS ACTIVE ROW
+    UInputAction* PendingRebindAction = nullptr;
+    UKeybindWidget* PendingRebindWidget = nullptr;
 
+    float MouseSensitivity;
+    float MouseSensitivityMin;
+    float MouseSensitivityMax;
+
+    void SetupWidgets();
     void BuildKeybindList();
+    UFUNCTION()
+    void OnMouseSensitivityChanged(float Value);
     void UpdateKeybindDisplay(UInputAction* InputAction);
 
     UFUNCTION()
@@ -72,4 +67,5 @@ protected:
 
     void SaveUserSettings();
     void LoadUserSettings();
+    void UpdateTexts();
 };

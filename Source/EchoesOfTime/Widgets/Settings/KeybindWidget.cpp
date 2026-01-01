@@ -9,6 +9,7 @@ void UKeybindWidget::NativeConstruct()
 
     if (KeyChangeButton)
     {
+        KeyChangeButton->OnClicked.RemoveDynamic(this, &UKeybindWidget::HandleChangeKeyClicked); // <-- Add this line
         KeyChangeButton->OnClicked.AddDynamic(this, &UKeybindWidget::HandleChangeKeyClicked);
     }
 }

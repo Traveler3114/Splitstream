@@ -1,10 +1,10 @@
 #include "InputWidget.h"
 #include "Saving/UserSettingsSaveGame.h"
 #include "KeybindWidget.h"
+#include "SliderWidget.h"
 #include "Kismet/GameplayStatics.h"
-#include "Components/Slider.h"
-#include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
+#include "Components/TextBlock.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
 #include "InputAction.h"
@@ -36,18 +36,32 @@ void UInputWidget::NativeConstruct()
     }
 
     LoadUserSettings();
-
-    if (MouseSensitivitySlider)
-    {
-        MouseSensitivitySlider->SetMinValue(MouseSensitivityMin);
-        MouseSensitivitySlider->SetMaxValue(MouseSensitivityMax);
-        MouseSensitivitySlider->SetValue(MouseSensitivity);
-        MouseSensitivitySlider->OnValueChanged.RemoveDynamic(this, &UInputWidget::OnMouseSensitivityChanged);
-        MouseSensitivitySlider->OnValueChanged.AddDynamic(this, &UInputWidget::OnMouseSensitivityChanged);
-    }
-
+    SetupWidgets();
     BuildKeybindList();
     UpdateTexts();
+}
+
+void UInputWidget::SetupWidgets()
+{
+    if (MouseSensitivityWidget)
+    {
+        MouseSensitivityWidget->Setup(
+            FText::FromString(TEXT("Mouse Sensitivity")),
+            MouseSensitivityMin,
+            MouseSensitivityMax,
+            MouseSensitivity,
+            2
+        );
+        MouseSensitivityWidget->OnValueChanged.RemoveDynamic(this, &UInputWidget::OnMouseSensitivityChanged);
+        MouseSensitivityWidget->OnValueChanged.AddDynamic(this, &UInputWidget::OnMouseSensitivityChanged);
+    }
+}
+
+void UInputWidget::OnMouseSensitivityChanged(float Value)
+{
+    MouseSensitivity = Value;
+    UpdateTexts();
+    SaveUserSettings();
 }
 
 void UInputWidget::BuildKeybindList()
@@ -60,7 +74,6 @@ void UInputWidget::BuildKeybindList()
     {
         if (!Def.InputAction) continue;
 
-        // Get key for this input action
         FString KeyStr = TEXT("None");
         for (const FEnhancedActionKeyMapping& Mapping : InputMappingContextRuntime->GetMappings())
         {
@@ -86,10 +99,9 @@ void UInputWidget::BuildKeybindList()
 
 void UInputWidget::HandleRowClicked(UKeybindWidget* Source)
 {
-    // --- Cancel previous pending row if needed
     if (PendingRebindWidget && PendingRebindWidget != Source)
     {
-        UpdateKeybindDisplay(PendingRebindWidget->InputAction); // Restore previous row's key string
+        UpdateKeybindDisplay(PendingRebindWidget->InputAction);
     }
 
     PendingRebindAction = Source->InputAction;
@@ -169,17 +181,9 @@ FReply UInputWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEven
     return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
 }
 
-void UInputWidget::OnMouseSensitivityChanged(float Value)
-{
-    MouseSensitivity = Value;
-    UpdateTexts();
-    SaveUserSettings();
-}
-
 void UInputWidget::UpdateTexts()
 {
-    if (MouseSensitivityValueText)
-        MouseSensitivityValueText->SetText(FText::FromString(FString::Printf(TEXT("%.2f"), MouseSensitivity)));
+    // No-op, slider widget handles its own value text already
 }
 
 void UInputWidget::ApplySettings()
@@ -239,4 +243,14 @@ void UInputWidget::LoadUserSettings()
         }
     }
     MouseSensitivity = SaveGameInstance->MouseSensitivity;
+    if (MouseSensitivityWidget)
+    {
+        MouseSensitivityWidget->Setup(
+            FText::FromString(TEXT("Mouse Sensitivity")),
+            MouseSensitivityMin,
+            MouseSensitivityMax,
+            MouseSensitivity,
+            2
+        );
+    }
 }
