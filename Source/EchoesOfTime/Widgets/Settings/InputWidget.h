@@ -70,6 +70,9 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     UInputMappingContext* InputMappingContext;
 
+    // The runtime-duplicated context used for rebinding!
+    UInputMappingContext* InputMappingContextRuntime = nullptr;
+
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     TArray<FKeybindDefinition> KeybindsToExpose; // Unified array for BP!
 

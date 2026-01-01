@@ -22,6 +22,25 @@ void UInputWidget::NativeConstruct()
 
     LoadSensitivity();
 
+    // --- RUNTIME DUPLICATE LOGIC ---
+    if (!InputMappingContextRuntime && InputMappingContext)
+    {
+        InputMappingContextRuntime = DuplicateObject<UInputMappingContext>(InputMappingContext, this);
+
+        // Remove asset context, add runtime one (for this player/session)
+        if (APlayerController* PC = GetOwningPlayer())
+        {
+            if (ULocalPlayer* LP = Cast<ULocalPlayer>(PC->Player))
+            {
+                if (UEnhancedInputLocalPlayerSubsystem* Subsys = LP->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
+                {
+                    Subsys->RemoveMappingContext(InputMappingContext);
+                    Subsys->AddMappingContext(InputMappingContextRuntime, 0);
+                }
+            }
+        }
+    }
+
     if (MouseSensitivitySlider)
     {
         MouseSensitivitySlider->SetMinValue(MouseSensitivityMin);
@@ -37,7 +56,7 @@ void UInputWidget::NativeConstruct()
 
 void UInputWidget::BuildKeybindList()
 {
-    if (!KeybindsList || !InputMappingContext) return;
+    if (!KeybindsList || !InputMappingContextRuntime) return;
     KeybindsList->ClearChildren();
     KeyRows.Empty();
 
@@ -92,13 +111,13 @@ void UInputWidget::BuildKeybindList()
 
 void UInputWidget::UpdateKeybindDisplay(UInputAction* InputAction)
 {
-    if (!InputMappingContext || !InputAction) return;
+    if (!InputMappingContextRuntime || !InputAction) return;
     for (FKeybindRowWidgets& Row : KeyRows)
     {
         if (Row.InputAction == InputAction)
         {
             FString KeyStr = TEXT("None");
-            for (const FEnhancedActionKeyMapping& Mapping : InputMappingContext->GetMappings())
+            for (const FEnhancedActionKeyMapping& Mapping : InputMappingContextRuntime->GetMappings())
             {
                 if (Mapping.Action == InputAction)
                 {
@@ -134,40 +153,39 @@ void UInputWidget::OnChangeKeyClicked()
 
 FReply UInputWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
 {
-    if (PendingRebindAction && InputMappingContext)
+    if (PendingRebindAction && InputMappingContextRuntime)
     {
         FKey NewKey = InKeyEvent.GetKey();
 
-        // Workaround for UE < 5.2: Remove and readd
-        TArray<FEnhancedActionKeyMapping> OldMappings = InputMappingContext->GetMappings();
-        TArray<const UInputAction*> ToRemove;
+        // Remove ALL old keys for this action:
+        TArray<FEnhancedActionKeyMapping> OldMappings = InputMappingContextRuntime->GetMappings();
+        TArray<FKey> OldKeys;
         for (const FEnhancedActionKeyMapping& Mapping : OldMappings)
         {
             if (Mapping.Action == PendingRebindAction)
             {
-                ToRemove.Add(Mapping.Action);
+                OldKeys.Add(Mapping.Key);
             }
         }
-        for (const UInputAction* MappingAction : ToRemove)
+        for (const FKey& OldKey : OldKeys)
         {
-            InputMappingContext->UnmapKey(MappingAction, EKeys::AnyKey);
+            InputMappingContextRuntime->UnmapKey(PendingRebindAction, OldKey);
         }
         // Add new mapping
-        const UInputAction* ActionToMap = PendingRebindAction;
-        if (ActionToMap)
+        if (PendingRebindAction)
         {
-            InputMappingContext->MapKey(ActionToMap, NewKey);
+            InputMappingContextRuntime->MapKey(PendingRebindAction, NewKey);
         }
 
-        // Apply live to subsystem
+        // Remove/re-add in subsystem for immediate effect
         if (APlayerController* PC = GetOwningPlayer())
         {
             if (ULocalPlayer* LP = Cast<ULocalPlayer>(PC->Player))
             {
                 if (UEnhancedInputLocalPlayerSubsystem* Subsys = LP->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
                 {
-                    Subsys->RemoveMappingContext(InputMappingContext);
-                    Subsys->AddMappingContext(InputMappingContext, 0);
+                    Subsys->RemoveMappingContext(InputMappingContextRuntime);
+                    Subsys->AddMappingContext(InputMappingContextRuntime, 0);
                 }
             }
         }
