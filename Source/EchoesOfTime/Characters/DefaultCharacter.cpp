@@ -14,6 +14,7 @@
 #include "GameplayEffectTypes.h"
 #include "Kismet/GameplayStatics.h"
 #include "AbilitySystem/AttributeSets/PlayerAttributeSet.h"
+#include "DefaultGameInstance.h"
 #include "AbilitySystem/EOTGameplayTags.h"
 #include "Interfaces/IDetectable.h"
 #include "EngineUtils.h"
@@ -69,11 +70,21 @@ void ADefaultCharacter::BeginPlay()
 {
     Super::BeginPlay();
 
+    UDefaultGameInstance* GI = GetWorld() ? GetWorld()->GetGameInstance<UDefaultGameInstance>() : nullptr;
+
     if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
     {
         if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
         {
-            Subsystem->AddMappingContext(DefaultMappingContext, 0);
+            // Remove any old mapping contexts to prevent duplicates/conflicts
+            Subsystem->ClearAllMappings();
+
+            // Always use the runtime mapping context from GameInstance if available
+            UInputMappingContext* MappingContext = GI ? GI->GetCurrentInputMappingContext() : DefaultMappingContext;
+            if (MappingContext)
+            {
+                Subsystem->AddMappingContext(MappingContext, 0);
+            }
         }
     }
 
@@ -694,11 +705,10 @@ void ADefaultCharacter::Look(const FInputActionValue& Value)
 
     FVector2D LookAxisVector = Value.Get<FVector2D>();
 
-    // --- Add this block ---
     float Sensitivity = 1.0f;
-    GConfig->GetFloat(TEXT("InputWidget"), TEXT("MouseSensitivity"), Sensitivity, GGameUserSettingsIni);
-    // OR use: float Sensitivity = GetMouseSensitivityFromConfig();
-    // ---
+    UDefaultGameInstance* GI = GetWorld() ? GetWorld()->GetGameInstance<UDefaultGameInstance>() : nullptr;
+    if (GI)
+        Sensitivity = GI->GetMouseSensitivity();
 
     if (Controller != nullptr)
     {
@@ -709,6 +719,7 @@ void ADefaultCharacter::Look(const FInputActionValue& Value)
         }
     }
 }
+
 
 void ADefaultCharacter::Jump()
 {

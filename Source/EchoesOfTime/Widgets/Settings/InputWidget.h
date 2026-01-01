@@ -9,6 +9,7 @@ class UVerticalBox;
 class UKeybindWidget;
 class UInputMappingContext;
 class UInputAction;
+class UDefaultGameInstance;
 
 USTRUCT(BlueprintType)
 struct FKeybindDefinition
@@ -39,10 +40,6 @@ protected:
     UVerticalBox* KeybindsList;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-    UInputMappingContext* InputMappingContext;
-    UInputMappingContext* InputMappingContextRuntime = nullptr;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     TArray<FKeybindDefinition> KeybindsToExpose;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
@@ -65,7 +62,7 @@ protected:
     UFUNCTION()
     void HandleRowClicked(UKeybindWidget* Source);
 
-    void SaveUserSettings();
-    void LoadUserSettings();
+    void SaveUserSettingsToGameInstance();
+    void LoadUserSettingsFromGameInstance();
     void UpdateTexts();
 };

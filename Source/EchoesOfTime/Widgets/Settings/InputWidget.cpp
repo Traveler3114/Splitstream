@@ -8,6 +8,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
 #include "InputAction.h"
+#include "DefaultGameInstance.h"
 
 void UInputWidget::NativeConstruct()
 {
@@ -19,23 +20,7 @@ void UInputWidget::NativeConstruct()
     PendingRebindAction = nullptr;
     PendingRebindWidget = nullptr;
 
-    if (!InputMappingContextRuntime && InputMappingContext)
-    {
-        InputMappingContextRuntime = DuplicateObject<UInputMappingContext>(InputMappingContext, this);
-        if (APlayerController* PC = GetOwningPlayer())
-        {
-            if (ULocalPlayer* LP = Cast<ULocalPlayer>(PC->Player))
-            {
-                if (UEnhancedInputLocalPlayerSubsystem* Subsys = LP->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
-                {
-                    Subsys->RemoveMappingContext(InputMappingContext);
-                    Subsys->AddMappingContext(InputMappingContextRuntime, 0);
-                }
-            }
-        }
-    }
-
-    LoadUserSettings();
+    LoadUserSettingsFromGameInstance();
     SetupWidgets();
     BuildKeybindList();
     UpdateTexts();
@@ -61,12 +46,13 @@ void UInputWidget::OnMouseSensitivityChanged(float Value)
 {
     MouseSensitivity = Value;
     UpdateTexts();
-    SaveUserSettings();
+    SaveUserSettingsToGameInstance();
 }
 
 void UInputWidget::BuildKeybindList()
 {
-    if (!KeybindsList || !InputMappingContextRuntime || !KeybindWidgetClass) return;
+    UDefaultGameInstance* GI = GetWorld() ? GetWorld()->GetGameInstance<UDefaultGameInstance>() : nullptr;
+    if (!KeybindsList || !GI || !GI->GetCurrentInputMappingContext() || !KeybindWidgetClass) return;
     KeybindsList->ClearChildren();
     KeybindWidgets.Empty();
 
@@ -75,7 +61,7 @@ void UInputWidget::BuildKeybindList()
         if (!Def.InputAction) continue;
 
         FString KeyStr = TEXT("None");
-        for (const FEnhancedActionKeyMapping& Mapping : InputMappingContextRuntime->GetMappings())
+        for (const FEnhancedActionKeyMapping& Mapping : GI->GetCurrentInputMappingContext()->GetMappings())
         {
             if (Mapping.Action == Def.InputAction)
             {
@@ -99,6 +85,8 @@ void UInputWidget::BuildKeybindList()
 
 void UInputWidget::HandleRowClicked(UKeybindWidget* Source)
 {
+    UDefaultGameInstance* GI = GetWorld() ? GetWorld()->GetGameInstance<UDefaultGameInstance>() : nullptr;
+
     if (PendingRebindWidget && PendingRebindWidget != Source)
     {
         UpdateKeybindDisplay(PendingRebindWidget->InputAction);
@@ -119,9 +107,10 @@ void UInputWidget::HandleRowClicked(UKeybindWidget* Source)
 
 void UInputWidget::UpdateKeybindDisplay(UInputAction* InputAction)
 {
-    if (!InputMappingContextRuntime || !InputAction) return;
+    UDefaultGameInstance* GI = GetWorld() ? GetWorld()->GetGameInstance<UDefaultGameInstance>() : nullptr;
+    if (!GI || !GI->GetCurrentInputMappingContext() || !InputAction) return;
     FString KeyStr = TEXT("None");
-    for (const FEnhancedActionKeyMapping& Mapping : InputMappingContextRuntime->GetMappings())
+    for (const FEnhancedActionKeyMapping& Mapping : GI->GetCurrentInputMappingContext()->GetMappings())
     {
         if (Mapping.Action == InputAction)
         {
@@ -138,12 +127,20 @@ void UInputWidget::UpdateKeybindDisplay(UInputAction* InputAction)
     }
 }
 
+// Handles input rebinding event for a key
 FReply UInputWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
 {
-    if (PendingRebindAction && InputMappingContextRuntime)
+    UDefaultGameInstance* GI = GetWorld() ? GetWorld()->GetGameInstance<UDefaultGameInstance>() : nullptr;
+    if (!GI || !GI->GetCurrentInputMappingContext())
+        return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
+
+    if (PendingRebindAction)
     {
         FKey NewKey = InKeyEvent.GetKey();
-        TArray<FEnhancedActionKeyMapping> OldMappings = InputMappingContextRuntime->GetMappings();
+        UInputMappingContext* MappingContext = GI->GetCurrentInputMappingContext();
+
+        // Remove all keys for this action
+        TArray<FEnhancedActionKeyMapping> OldMappings = MappingContext->GetMappings();
         TArray<FKey> OldKeys;
         for (const FEnhancedActionKeyMapping& Mapping : OldMappings)
         {
@@ -154,28 +151,26 @@ FReply UInputWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEven
         }
         for (const FKey& OldKey : OldKeys)
         {
-            InputMappingContextRuntime->UnmapKey(PendingRebindAction, OldKey);
+            MappingContext->UnmapKey(PendingRebindAction, OldKey);
         }
-        if (PendingRebindAction)
-        {
-            InputMappingContextRuntime->MapKey(PendingRebindAction, NewKey);
-        }
+        MappingContext->MapKey(PendingRebindAction, NewKey);
 
+        // Refresh subsystem
         if (APlayerController* PC = GetOwningPlayer())
         {
             if (ULocalPlayer* LP = Cast<ULocalPlayer>(PC->Player))
             {
                 if (UEnhancedInputLocalPlayerSubsystem* Subsys = LP->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
                 {
-                    Subsys->RemoveMappingContext(InputMappingContextRuntime);
-                    Subsys->AddMappingContext(InputMappingContextRuntime, 0);
+                    Subsys->RemoveMappingContext(MappingContext);
+                    Subsys->AddMappingContext(MappingContext, 0);
                 }
             }
         }
         UpdateKeybindDisplay(PendingRebindAction);
         PendingRebindAction = nullptr;
         PendingRebindWidget = nullptr;
-        SaveUserSettings();
+        SaveUserSettingsToGameInstance();
         return FReply::Handled();
     }
     return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
@@ -188,61 +183,35 @@ void UInputWidget::UpdateTexts()
 
 void UInputWidget::ApplySettings()
 {
-    SaveUserSettings();
+    SaveUserSettingsToGameInstance();
 }
 
-void UInputWidget::SaveUserSettings()
+void UInputWidget::SaveUserSettingsToGameInstance()
 {
-    UUserSettingsSaveGame* SaveGameInstance = Cast<UUserSettingsSaveGame>(
-        UGameplayStatics::CreateSaveGameObject(UUserSettingsSaveGame::StaticClass()));
-    if (!SaveGameInstance || !InputMappingContextRuntime)
-        return;
-    SaveGameInstance->SavedKeybinds.Empty();
-    for (const FEnhancedActionKeyMapping& Mapping : InputMappingContextRuntime->GetMappings())
+    UDefaultGameInstance* GI = GetWorld() ? GetWorld()->GetGameInstance<UDefaultGameInstance>() : nullptr;
+    if (!GI || !GI->GetCurrentInputMappingContext()) return;
+
+    TArray<FSavedKeybind> Keybinds;
+    for (const FEnhancedActionKeyMapping& Mapping : GI->GetCurrentInputMappingContext()->GetMappings())
     {
         if (Mapping.Action)
         {
             FSavedKeybind Saved;
             Saved.ActionName = Mapping.Action->GetFName();
             Saved.Key = Mapping.Key;
-            SaveGameInstance->SavedKeybinds.Add(Saved);
+            Keybinds.Add(Saved);
         }
     }
-    SaveGameInstance->MouseSensitivity = MouseSensitivity;
-    UGameplayStatics::SaveGameToSlot(SaveGameInstance, TEXT("UserSettingsSave"), 0);
+    GI->SaveUserSettings(Keybinds, MouseSensitivity);
+    // Optionally reload GameInstance to reflect new context.
+    GI->LoadUserSettings();
 }
 
-void UInputWidget::LoadUserSettings()
+void UInputWidget::LoadUserSettingsFromGameInstance()
 {
-    USaveGame* LoadedGame = UGameplayStatics::LoadGameFromSlot(TEXT("UserSettingsSave"), 0);
-    UUserSettingsSaveGame* SaveGameInstance = Cast<UUserSettingsSaveGame>(LoadedGame);
-    if (!SaveGameInstance || !InputMappingContextRuntime)
-        return;
-    for (const FSavedKeybind& Saved : SaveGameInstance->SavedKeybinds)
-    {
-        UInputAction* Action = nullptr;
-        for (const FKeybindDefinition& Def : KeybindsToExpose)
-        {
-            if (Def.InputAction && Def.InputAction->GetFName() == Saved.ActionName)
-            {
-                Action = Def.InputAction;
-                break;
-            }
-        }
-        if (Action)
-        {
-            TArray<FEnhancedActionKeyMapping> OldMappings = InputMappingContextRuntime->GetMappings();
-            for (const FEnhancedActionKeyMapping& Mapping : OldMappings)
-            {
-                if (Mapping.Action == Action)
-                {
-                    InputMappingContextRuntime->UnmapKey(Action, Mapping.Key);
-                }
-            }
-            InputMappingContextRuntime->MapKey(Action, Saved.Key);
-        }
-    }
-    MouseSensitivity = SaveGameInstance->MouseSensitivity;
+    UDefaultGameInstance* GI = GetWorld() ? GetWorld()->GetGameInstance<UDefaultGameInstance>() : nullptr;
+    MouseSensitivity = GI ? GI->GetMouseSensitivity() : 1.0f;
+    // No other action needed; all mappings read from runtime context.
     if (MouseSensitivityWidget)
     {
         MouseSensitivityWidget->Setup(
