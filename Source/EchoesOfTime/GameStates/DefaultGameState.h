@@ -39,6 +39,9 @@ public:
     UPROPERTY(EditDefaultsOnly, Category = "Maps")
     FString MainMenuMapPath = TEXT("/Game/Maps/MainMenuMap");
 
+    UPROPERTY(EditDefaultsOnly, Category = "Maps")
+    FString LobbyMapPath = TEXT("/Game/Maps/LobbyMap");
+
     UPROPERTY(ReplicatedUsing = OnRep_AlarmStarted, BlueprintReadOnly, Category = "Alarm")
     float AlarmEndTime;
 

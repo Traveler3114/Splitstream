@@ -9,6 +9,8 @@
 #include "GameStates/DefaultGameState.h"
 #include "GameplayTagContainer.h"
 #include "TimerManager.h"
+#include "OnlineSubsystem.h"
+#include "Interfaces/OnlineSessionInterface.h"
 #include "Controllers/DefaultPlayerController.h"
 
 void ADefaultGameMode::BeginPlay()
@@ -25,24 +27,21 @@ void ADefaultGameMode::BeginPlay()
 	}
 }
 
-// DefaultGameMode.cpp
 
 void ADefaultGameMode::HostLeaveLobby()
 {
 	if (!HasAuthority())
 		return;
 
-	// Default/fallback value
 	FString MenuURL = TEXT("/Game/Maps/MainMenuMap");
-
-	// Read value set and replicated in GameState (single source of truth)
 	if (ADefaultGameState* GS = GetGameState<ADefaultGameState>())
 	{
 		if (!GS->MainMenuMapPath.IsEmpty())
 			MenuURL = GS->MainMenuMapPath;
 	}
+	PendingMenuURL = MenuURL;
 
-	// Tell all *clients* to travel and show loading
+	// Notify all remote clients
 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 	{
 		APlayerController* PC = It->Get();
@@ -55,19 +54,71 @@ void ADefaultGameMode::HostLeaveLobby()
 			PC->ClientTravel(MenuURL, TRAVEL_Absolute);
 		}
 	}
-
-	// (Optionally) show loading for host
+	// Host loading screen
 	APlayerController* HostPC = UGameplayStatics::GetPlayerController(this, 0);
 	if (HostPC)
-	{
 		if (ADefaultPlayerController* HostDefPC = Cast<ADefaultPlayerController>(HostPC))
-		{
 			HostDefPC->ClientShowLoadingScreen();
+
+	// --- Session destruction logic
+	IOnlineSessionPtr Session;
+	if (IOnlineSubsystem* OSS = IOnlineSubsystem::Get())
+		Session = OSS->GetSessionInterface();
+
+	if (Session.IsValid())
+	{
+		if (!bDestroyingSession)
+		{
+			bDestroyingSession = true;
+			FOnDestroySessionCompleteDelegate Delegate = FOnDestroySessionCompleteDelegate::CreateUObject(
+				this, &ADefaultGameMode::HandleDestroySessionComplete);
+			DestroySessionCompleteHandle.Handle = Session->AddOnDestroySessionCompleteDelegate_Handle(Delegate);
+			DestroySessionCompleteHandle.bBound = true;
+
+			const bool bDestroyCalled = Session->DestroySession(NAME_GameSession);
+			if (!bDestroyCalled)
+			{
+				// fallback if session destroy could not be initiated
+				GetWorldTimerManager().SetTimer(
+					LeaveTimerHandle, this, &ADefaultGameMode::DoServerTravelToMenu, 0.5f, false);
+			}
+			else
+			{
+				// fallback in case delegate never fires
+				GetWorldTimerManager().SetTimer(
+					LeaveTimerHandle, this, &ADefaultGameMode::DoServerTravelToMenu, 5.0f, false);
+			}
 		}
 	}
+	else
+	{
+		// No sessions, just travel after short delay
+		GetWorldTimerManager().SetTimer(
+			LeaveTimerHandle, this, &ADefaultGameMode::DoServerTravelToMenu, 0.25f, false);
+	}
+}
 
-	// Host/server travels to main menu (disconnects all)
-	GetWorld()->ServerTravel(MenuURL);
+void ADefaultGameMode::HandleDestroySessionComplete(FName SessionName, bool bWasSuccessful)
+{
+	IOnlineSessionPtr Session;
+	if (IOnlineSubsystem* OSS = IOnlineSubsystem::Get())
+		Session = OSS->GetSessionInterface();
+
+	if (Session.IsValid() && DestroySessionCompleteHandle.bBound)
+	{
+		Session->ClearOnDestroySessionCompleteDelegate_Handle(DestroySessionCompleteHandle.Handle);
+		DestroySessionCompleteHandle.bBound = false;
+	}
+	bDestroyingSession = false;
+
+	// Cancel the fallback timer and travel now
+	GetWorldTimerManager().ClearTimer(LeaveTimerHandle);
+	DoServerTravelToMenu();
+}
+
+void ADefaultGameMode::DoServerTravelToMenu()
+{
+	GetWorld()->ServerTravel(PendingMenuURL);
 }
 
 AActor* ADefaultGameMode::ChoosePlayerStart_Implementation(AController* Player)
@@ -188,25 +239,16 @@ void ADefaultGameMode::RestartLevel()
 		return;
 	}
 
+	FString LobbyURL = TEXT("/Game/Maps/LobbyMap");
 	if (ADefaultGameState* GS = GetGameState<ADefaultGameState>())
 	{
-		if (!GS->bAlarmActive)
+		if (!GS->LobbyMapPath.IsEmpty())
 		{
-			return;
-		}
-
-		const float Now = GetWorld()->GetTimeSeconds();
-		const float Tolerance = 0.2f;
-		if (GS->AlarmEndTime > 0.f && (GS->AlarmEndTime - Now) > Tolerance)
-		{
-			return;
+			LobbyURL = GS->LobbyMapPath;
 		}
 	}
-	else
-	{
-		return;
-	}
 
+	// Show loading for all players before travel
 	for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
 	{
 		if (ADefaultPlayerController* PC = Cast<ADefaultPlayerController>(Iterator->Get()))
@@ -215,18 +257,6 @@ void ADefaultGameMode::RestartLevel()
 		}
 	}
 
-	UWorld* World = GetWorld();
-	if (World)
-	{
-		FString CurrentLevel = World->GetMapName();
-		CurrentLevel.RemoveFromStart(World->StreamingLevelsPrefix);
-
-		FString URL = CurrentLevel;
-		if (!URL.Contains(TEXT("?")))
-			URL += TEXT("?listen");
-		else if (!URL.Contains(TEXT("listen")))
-			URL += TEXT("&listen");
-
-		World->ServerTravel(URL);
-	}
+	// Send everyone to the lobby map (disconnects all)
+	GetWorld()->ServerTravel(LobbyURL);
 }
