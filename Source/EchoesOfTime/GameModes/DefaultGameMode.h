@@ -17,6 +17,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void RestartLevel();
 
+	UFUNCTION(BlueprintCallable)
+	void HostLeaveLobby();
+
 protected:
 	FTimerHandle RestartTimerHandle;
 	FTimerHandle PreAlarmTimerHandle;

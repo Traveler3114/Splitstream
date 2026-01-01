@@ -22,6 +22,9 @@ public:
     virtual void OnRep_PlayerState() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     
+    UFUNCTION(BlueprintCallable)
+    void RequestLeaveToMainMenu();
+
 	void SetupOverlay();
 
     void TogglePauseMenu();

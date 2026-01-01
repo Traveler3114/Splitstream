@@ -2,6 +2,7 @@
 #include "Components/Button.h"
 #include "Widgets/Settings/SettingsWidget.h"
 #include "Kismet/GameplayStatics.h"
+#include "Controllers/DefaultPlayerController.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 void UPauseMenuWidget::NativeConstruct()
@@ -16,6 +17,11 @@ void UPauseMenuWidget::NativeConstruct()
     if (settings_btn) {
         settings_btn->OnClicked.RemoveDynamic(this, &UPauseMenuWidget::OnSettingsClicked);
         settings_btn->OnClicked.AddDynamic(this, &UPauseMenuWidget::OnSettingsClicked);
+    }
+
+    if (mainmenu_btn) {
+        mainmenu_btn->OnClicked.RemoveDynamic(this, &UPauseMenuWidget::OnMainMenuClicked);
+        mainmenu_btn->OnClicked.AddDynamic(this, &UPauseMenuWidget::OnMainMenuClicked);
     }
 
     if (quit_btn) {
@@ -38,6 +44,17 @@ void UPauseMenuWidget::OnSettingsClicked()
 {
     if (SettingsWidget)
         SettingsWidget->SetVisibility(ESlateVisibility::Visible);
+}
+
+void UPauseMenuWidget::OnMainMenuClicked()
+{
+    if (APlayerController* PC = GetOwningPlayer())
+    {
+        if (ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(PC))
+        {
+            MyPC->RequestLeaveToMainMenu();
+        }
+    }
 }
 
 void UPauseMenuWidget::OnQuitClicked()

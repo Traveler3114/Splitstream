@@ -17,6 +17,7 @@
 #include "Interfaces/IServerActionInterface.h"
 #include "Actors/Terminal.h"
 #include "GameFramework/Character.h"
+#include "GameModes/DefaultGameMode.h"
 #include "Components/CapsuleComponent.h"
 #include "TimerManager.h"
 
@@ -90,6 +91,26 @@ void ADefaultPlayerController::SetupOverlay()
         {
             HandleAlarmCanceled();
             HandlePreAlarmCanceled();
+        }
+    }
+}
+
+void ADefaultPlayerController::RequestLeaveToMainMenu()
+{
+    if (HasAuthority() && IsLocalController())
+    {
+        // Host: tell GameMode
+        if (ADefaultGameMode* GM = GetWorld()->GetAuthGameMode<ADefaultGameMode>())
+        {
+            GM->HostLeaveLobby();
+        }
+    }
+    else
+    {
+        if (ADefaultGameState* GS = GetWorld()->GetGameState<ADefaultGameState>())
+        {
+            ClientShowLoadingScreen();
+            ClientTravel(GS->MainMenuMapPath, TRAVEL_Absolute);
         }
     }
 }

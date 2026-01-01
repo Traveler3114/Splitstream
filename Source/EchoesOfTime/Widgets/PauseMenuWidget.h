@@ -29,6 +29,9 @@ protected:
     UButton* settings_btn;
 
     UPROPERTY(meta = (BindWidget))
+	UButton* mainmenu_btn;
+
+    UPROPERTY(meta = (BindWidget))
     UButton* quit_btn;
 
     UPROPERTY(meta = (BindWidgetOptional))
@@ -39,6 +42,9 @@ protected:
 
     UFUNCTION()
     void OnSettingsClicked();
+
+    UFUNCTION()
+    void OnMainMenuClicked();
 
     UFUNCTION()
     void OnQuitClicked();

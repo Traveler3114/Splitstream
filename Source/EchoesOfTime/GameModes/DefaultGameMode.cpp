@@ -25,6 +25,51 @@ void ADefaultGameMode::BeginPlay()
 	}
 }
 
+// DefaultGameMode.cpp
+
+void ADefaultGameMode::HostLeaveLobby()
+{
+	if (!HasAuthority())
+		return;
+
+	// Default/fallback value
+	FString MenuURL = TEXT("/Game/Maps/MainMenuMap");
+
+	// Read value set and replicated in GameState (single source of truth)
+	if (ADefaultGameState* GS = GetGameState<ADefaultGameState>())
+	{
+		if (!GS->MainMenuMapPath.IsEmpty())
+			MenuURL = GS->MainMenuMapPath;
+	}
+
+	// Tell all *clients* to travel and show loading
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		APlayerController* PC = It->Get();
+		if (PC && !PC->IsLocalController())
+		{
+			if (ADefaultPlayerController* MyPC = Cast<ADefaultPlayerController>(PC))
+			{
+				MyPC->ClientShowLoadingScreen();
+			}
+			PC->ClientTravel(MenuURL, TRAVEL_Absolute);
+		}
+	}
+
+	// (Optionally) show loading for host
+	APlayerController* HostPC = UGameplayStatics::GetPlayerController(this, 0);
+	if (HostPC)
+	{
+		if (ADefaultPlayerController* HostDefPC = Cast<ADefaultPlayerController>(HostPC))
+		{
+			HostDefPC->ClientShowLoadingScreen();
+		}
+	}
+
+	// Host/server travels to main menu (disconnects all)
+	GetWorld()->ServerTravel(MenuURL);
+}
+
 AActor* ADefaultGameMode::ChoosePlayerStart_Implementation(AController* Player)
 {
 	ADefaultPlayerState* PS = Player->GetPlayerState<ADefaultPlayerState>();

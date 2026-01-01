@@ -36,6 +36,9 @@ class ECHOESOFTIME_API ADefaultGameState : public AGameState
 public:
     ADefaultGameState();
 
+    UPROPERTY(EditDefaultsOnly, Category = "Maps")
+    FString MainMenuMapPath = TEXT("/Game/Maps/MainMenuMap");
+
     UPROPERTY(ReplicatedUsing = OnRep_AlarmStarted, BlueprintReadOnly, Category = "Alarm")
     float AlarmEndTime;
 
