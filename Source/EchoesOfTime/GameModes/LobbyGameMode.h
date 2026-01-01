@@ -17,6 +17,7 @@ class ECHOESOFTIME_API ALobbyGameMode : public AGameMode
 
 public:
     ALobbyGameMode();
+    virtual void BeginPlay() override;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Lobby|Seating")
     bool bAutoSeatOnLogin = true;
