@@ -107,6 +107,7 @@ void ADefaultPlayerController::RequestLeaveToMainMenu()
     }
     else
     {
+        // CLIENT: only disconnect self, do NOT trigger session/network destroy
         if (ADefaultGameState* GS = GetWorld()->GetGameState<ADefaultGameState>())
         {
             ClientShowLoadingScreen();
@@ -114,7 +115,6 @@ void ADefaultPlayerController::RequestLeaveToMainMenu()
         }
     }
 }
-
 void ADefaultPlayerController::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);

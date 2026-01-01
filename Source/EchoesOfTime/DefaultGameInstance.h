@@ -1,5 +1,5 @@
-
 #pragma once
+
 #include "CoreMinimal.h"
 #include "AdvancedFriendsGameInstance.h"
 #include "InputMappingContext.h"
@@ -11,19 +11,16 @@ UCLASS()
 class ECHOESOFTIME_API UDefaultGameInstance : public UAdvancedFriendsGameInstance
 {
     GENERATED_BODY()
-
 public:
     UFUNCTION(BlueprintImplementableEvent, Category = "GameInstance")
     void CreateSession(const FString& LevelName, const TSoftObjectPtr<UWorld>& Level);
-    // Runtime mapping context (duplicated from default asset and merged with saved changes)
+
     UPROPERTY()
     UInputMappingContext* RuntimeInputMappingContext = nullptr;
 
-    // Used to reconstruct InputMappingContext runtime on load/save
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
-    UInputMappingContext* DefaultMappingContext = nullptr; // (Assign this in editor or constructor!)
+    UInputMappingContext* DefaultMappingContext = nullptr;
 
-    // List of all InputActions you want to expose to the UI and bind (populate in editor)
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
     TArray<UInputAction*> AllInputActions;
 
@@ -35,8 +32,28 @@ public:
     void LoadUserSettings();
     void SaveUserSettings(const TArray<FSavedKeybind>& Keybinds, float NewMouseSensitivity);
 
-    // Helpers
     UInputAction* FindInputActionByName(const FName& ActionName) const;
     UInputMappingContext* GetCurrentInputMappingContext() const { return RuntimeInputMappingContext ? RuntimeInputMappingContext : DefaultMappingContext; }
     float GetMouseSensitivity() const { return MouseSensitivity; }
+
+    // ---- Multiplayer/session-centric logic ----
+    UFUNCTION()
+    void HostLeaveToMainMenu(const FString& MainMenuMapPath = TEXT("/Game/Maps/MainMenuMap"));
+
+    UFUNCTION()
+    void RequestDestroySessionAndCleanup(bool bTravelAfterDestroy, const FString& InPendingMenuURL);
+
+    UFUNCTION()
+    void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
+
+    UFUNCTION()
+    void CleanupNetDriver();
+    UFUNCTION()
+    void CleanupOSSDelegates();
+
+private:
+    FString PendingMenuURL;
+    bool bTravelAfterSessionDestroy = false;
+    FDelegateHandle OnDestroySessionCompleteDelegateHandle;
+    bool bSessionDestroyInProgress = false;
 };

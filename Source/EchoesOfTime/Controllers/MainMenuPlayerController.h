@@ -18,6 +18,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TSubclassOf<class UMainMenuWidget> MainMenuUIClass;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class UUserWidget> LoadingWidgetClass;
+
+	UFUNCTION(BlueprintCallable)
+	void ShowLoadingWidget();
+
 private:
 	UPROPERTY()
 	UUserWidget* MainMenuInstance = nullptr;

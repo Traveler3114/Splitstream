@@ -1,5 +1,3 @@
-// DefaultGameMode.h
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -39,13 +37,5 @@ protected:
 	void PreAlarmTimeout();
 
 private:
-	struct FDelegateHandleWrapper { FDelegateHandle Handle; bool bBound = false; };
-	FDelegateHandleWrapper DestroySessionCompleteHandle;
-	bool bDestroyingSession = false;
-	FTimerHandle LeaveTimerHandle;
 	FString PendingMenuURL;
-
-	UFUNCTION()
-	void HandleDestroySessionComplete(FName SessionName, bool bWasSuccessful);
-	void DoServerTravelToMenu();
 };

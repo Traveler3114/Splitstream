@@ -5,6 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "GameFramework/PlayerController.h"
+#include "Controllers/MainMenuPlayerController.h"
 #include "Widgets/Settings/SettingsWidget.h"
 #include "DefaultGameInstance.h"
 
@@ -70,6 +71,15 @@ void UMainMenuWidget::OnMapSelected(const FString& LevelName, const TSoftObjectP
     if (MapSelectionWidgetInstance)
     {
         MapSelectionWidgetInstance->SetVisibility(ESlateVisibility::Collapsed);
+    }
+
+    // SHOW LOADING WIDGET HERE!
+    if (APlayerController* PC = GetOwningPlayer())
+    {
+        if (AMainMenuPlayerController* MainPC = Cast<AMainMenuPlayerController>(PC))
+        {
+            MainPC->ShowLoadingWidget();
+        }
     }
 
     if (UGameInstance* GI = UGameplayStatics::GetGameInstance(this))
