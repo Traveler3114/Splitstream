@@ -1,4 +1,6 @@
 #include "InputWidget.h"
+#include "Saving/UserSettingsSaveGame.h"
+#include "Kismet/GameplayStatics.h"
 #include "Components/Slider.h"
 #include "Components/TextBlock.h"
 #include "Components/Button.h"
@@ -20,14 +22,10 @@ void UInputWidget::NativeConstruct()
     MouseSensitivity = 1.0f;
     PendingRebindAction = nullptr;
 
-    LoadSensitivity();
-
-    // --- RUNTIME DUPLICATE LOGIC ---
     if (!InputMappingContextRuntime && InputMappingContext)
     {
         InputMappingContextRuntime = DuplicateObject<UInputMappingContext>(InputMappingContext, this);
 
-        // Remove asset context, add runtime one (for this player/session)
         if (APlayerController* PC = GetOwningPlayer())
         {
             if (ULocalPlayer* LP = Cast<ULocalPlayer>(PC->Player))
@@ -40,6 +38,8 @@ void UInputWidget::NativeConstruct()
             }
         }
     }
+
+    LoadUserSettings();
 
     if (MouseSensitivitySlider)
     {
@@ -64,14 +64,10 @@ void UInputWidget::BuildKeybindList()
     {
         if (!Def.InputAction) continue;
 
-        FText RowDisplayName = Def.DisplayName.IsEmpty()
-            ? FText::FromName(Def.InputAction->GetFName())
-            : Def.DisplayName;
+        FText RowDisplayName = Def.DisplayName.IsEmpty() ? FText::FromName(Def.InputAction->GetFName()) : Def.DisplayName;
         UInputAction* InputAction = Def.InputAction;
-
         UHorizontalBox* Row = NewObject<UHorizontalBox>(this);
 
-        // Label
         UTextBlock* Label = NewObject<UTextBlock>(this);
         Label->SetText(RowDisplayName);
         Label->SetJustification(ETextJustify::Left);
@@ -81,9 +77,7 @@ void UInputWidget::BuildKeybindList()
         LabelSlot->SetHorizontalAlignment(HAlign_Left);
         LabelSlot->SetSize(ESlateSizeRule::Automatic);
 
-        // Keybind button
         UButton* KeyButton = NewObject<UButton>(this);
-
         UTextBlock* KeyButtonText = NewObject<UTextBlock>(KeyButton);
         KeyButtonText->SetText(FText::FromString(TEXT("Key")));
         KeyButtonText->SetJustification(ETextJustify::Center);
@@ -156,8 +150,6 @@ FReply UInputWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEven
     if (PendingRebindAction && InputMappingContextRuntime)
     {
         FKey NewKey = InKeyEvent.GetKey();
-
-        // Remove ALL old keys for this action:
         TArray<FEnhancedActionKeyMapping> OldMappings = InputMappingContextRuntime->GetMappings();
         TArray<FKey> OldKeys;
         for (const FEnhancedActionKeyMapping& Mapping : OldMappings)
@@ -171,13 +163,11 @@ FReply UInputWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEven
         {
             InputMappingContextRuntime->UnmapKey(PendingRebindAction, OldKey);
         }
-        // Add new mapping
         if (PendingRebindAction)
         {
             InputMappingContextRuntime->MapKey(PendingRebindAction, NewKey);
         }
 
-        // Remove/re-add in subsystem for immediate effect
         if (APlayerController* PC = GetOwningPlayer())
         {
             if (ULocalPlayer* LP = Cast<ULocalPlayer>(PC->Player))
@@ -191,6 +181,7 @@ FReply UInputWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEven
         }
         UpdateKeybindDisplay(PendingRebindAction);
         PendingRebindAction = nullptr;
+        SaveUserSettings();
         return FReply::Handled();
     }
     return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
@@ -200,6 +191,7 @@ void UInputWidget::OnMouseSensitivityChanged(float Value)
 {
     MouseSensitivity = Value;
     UpdateTexts();
+    SaveUserSettings();
 }
 
 void UInputWidget::UpdateTexts()
@@ -210,24 +202,59 @@ void UInputWidget::UpdateTexts()
 
 void UInputWidget::ApplySettings()
 {
-    SaveSensitivity();
+    SaveUserSettings();
 }
 
-void UInputWidget::SaveSensitivity()
+void UInputWidget::SaveUserSettings()
 {
-    GConfig->SetFloat(
-        SensitivityConfigSection,
-        SensitivityConfigKey,
-        MouseSensitivity,
-        GGameUserSettingsIni
-    );
-}
-
-void UInputWidget::LoadSensitivity()
-{
-    float LoadedSensitivity = 1.0f;
-    if (GConfig->GetFloat(SensitivityConfigSection, SensitivityConfigKey, LoadedSensitivity, GGameUserSettingsIni))
+    UUserSettingsSaveGame* SaveGameInstance = Cast<UUserSettingsSaveGame>(
+        UGameplayStatics::CreateSaveGameObject(UUserSettingsSaveGame::StaticClass()));
+    if (!SaveGameInstance || !InputMappingContextRuntime)
+        return;
+    SaveGameInstance->SavedKeybinds.Empty();
+    for (const FEnhancedActionKeyMapping& Mapping : InputMappingContextRuntime->GetMappings())
     {
-        MouseSensitivity = FMath::Clamp(LoadedSensitivity, MouseSensitivityMin, MouseSensitivityMax);
+        if (Mapping.Action)
+        {
+            FSavedKeybind Saved;
+            Saved.ActionName = Mapping.Action->GetFName();
+            Saved.Key = Mapping.Key;
+            SaveGameInstance->SavedKeybinds.Add(Saved);
+        }
     }
+    SaveGameInstance->MouseSensitivity = MouseSensitivity;
+    UGameplayStatics::SaveGameToSlot(SaveGameInstance, TEXT("UserSettingsSave"), 0);
+}
+
+void UInputWidget::LoadUserSettings()
+{
+    USaveGame* LoadedGame = UGameplayStatics::LoadGameFromSlot(TEXT("UserSettingsSave"), 0);
+    UUserSettingsSaveGame* SaveGameInstance = Cast<UUserSettingsSaveGame>(LoadedGame);
+    if (!SaveGameInstance || !InputMappingContextRuntime)
+        return;
+    for (const FSavedKeybind& Saved : SaveGameInstance->SavedKeybinds)
+    {
+        UInputAction* Action = nullptr;
+        for (const FKeybindDefinition& Def : KeybindsToExpose)
+        {
+            if (Def.InputAction && Def.InputAction->GetFName() == Saved.ActionName)
+            {
+                Action = Def.InputAction;
+                break;
+            }
+        }
+        if (Action)
+        {
+            TArray<FEnhancedActionKeyMapping> OldMappings = InputMappingContextRuntime->GetMappings();
+            for (const FEnhancedActionKeyMapping& Mapping : OldMappings)
+            {
+                if (Mapping.Action == Action)
+                {
+                    InputMappingContextRuntime->UnmapKey(Action, Mapping.Key);
+                }
+            }
+            InputMappingContextRuntime->MapKey(Action, Saved.Key);
+        }
+    }
+    MouseSensitivity = SaveGameInstance->MouseSensitivity;
 }

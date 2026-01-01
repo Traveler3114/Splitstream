@@ -30,7 +30,7 @@ struct FKeybindRowWidgets
     UPROPERTY() UTextBlock* DisplayNameLabel = nullptr;
     UPROPERTY() UButton* ChangeKeyButton = nullptr;
     UPROPERTY() UTextBlock* KeyInsideButton = nullptr;
-    UPROPERTY() UInputAction* InputAction = nullptr; // Link the row to the definition
+    UPROPERTY() UInputAction* InputAction = nullptr;
 };
 
 UCLASS()
@@ -44,7 +44,6 @@ public:
     void ApplySettings();
 
 protected:
-    // --- Mouse Sensitivity ---
     UPROPERTY(meta = (BindWidget))
     USlider* MouseSensitivitySlider;
     UPROPERTY(meta = (BindWidget))
@@ -53,31 +52,21 @@ protected:
     float MouseSensitivityMin;
     float MouseSensitivityMax;
 
-    static constexpr const TCHAR* SensitivityConfigSection = TEXT("InputWidget");
-    static constexpr const TCHAR* SensitivityConfigKey = TEXT("MouseSensitivity");
-
     UFUNCTION()
     void OnMouseSensitivityChanged(float Value);
-
     void UpdateTexts();
-    void LoadSensitivity();
-    void SaveSensitivity();
 
-    // --- Keybinds ---
     UPROPERTY(meta = (BindWidget))
     UVerticalBox* KeybindsList;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     UInputMappingContext* InputMappingContext;
-
-    // The runtime-duplicated context used for rebinding!
     UInputMappingContext* InputMappingContextRuntime = nullptr;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-    TArray<FKeybindDefinition> KeybindsToExpose; // Unified array for BP!
+    TArray<FKeybindDefinition> KeybindsToExpose;
 
     TArray<FKeybindRowWidgets> KeyRows;
-
     UInputAction* PendingRebindAction;
 
     void BuildKeybindList();
@@ -85,4 +74,7 @@ protected:
 
     UFUNCTION()
     void OnChangeKeyClicked();
+
+    void SaveUserSettings();
+    void LoadUserSettings();
 };
