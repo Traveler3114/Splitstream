@@ -32,8 +32,8 @@ public:
     void ClientShowLoadingScreen();
 
     // Called by UI when user presses Leave
-    UFUNCTION(Server, Reliable)
-    void ServerLeaveLobby();
+    UFUNCTION()
+    void RequestLeaveToMainMenu();
 
     // Host-only: kick a player by PlayerState (called from PlayerLobbyInfo)
     UFUNCTION(Server, Reliable)

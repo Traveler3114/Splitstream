@@ -3,6 +3,7 @@
 #include "Actors/LobbyPlatformActor.h"
 #include "DefaultPlayerState.h"
 #include "Controllers/LobbyPlayerController.h"
+#include "DefaultGameInstance.h"
 #include "EngineUtils.h"
 #include "TimerManager.h"
 #include "Widgets/Lobby/LobbyUI.h"
@@ -271,82 +272,26 @@ void ALobbyGameMode::DoServerTravelToMatch()
     GetWorld()->ServerTravel(URL);
 }
 
+
+
 void ALobbyGameMode::HostLeaveLobby()
 {
-    if (bLeaveTravelScheduled)
-    {
-        return;
-    }
+	if (!HasAuthority())
+		return;
 
-    PendingMenuURL = MainMenuMapPath;
+	FString MenuURL = TEXT("/Game/Maps/MainMenuMap");
+	if (ALobbyGameState* GS = GetGameState<ALobbyGameState>())
+	{
+		if (!GS->MainMenuMapPath.IsEmpty())
+			MenuURL = GS->MainMenuMapPath;
+	}
+	PendingMenuURL = MenuURL;
 
-    // 1) Tell all remote clients to show loading and leave to main menu (each will be on their own)
-    for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
-    {
-        if (ALobbyPlayerController* LPC = Cast<ALobbyPlayerController>(It->Get()))
-        {
-            if (!LPC->IsLocalController()) // remote client
-            {
-                LPC->ClientShowLoadingScreen();
-                LPC->ClientTravel(PendingMenuURL, TRAVEL_Absolute);
-            }
-        }
-    }
-
-    // 2) Show loading for the host locally (nice UX)
-    if (ALobbyPlayerController* HostPC = GetHostLobbyController())
-    {
-        HostPC->ClientShowLoadingScreen();
-    }
-
-    // 3) Destroy the online session (if any), then travel host after completion
-    IOnlineSessionPtr Session;
-    if (IOnlineSubsystem* OSS = IOnlineSubsystem::Get())
-    {
-        Session = OSS->GetSessionInterface();
-    }
-
-    if (Session.IsValid())
-    {
-        if (!bDestroyingSession)
-        {
-            bDestroyingSession = true;
-
-            FOnDestroySessionCompleteDelegate Delegate = FOnDestroySessionCompleteDelegate::CreateUObject(
-                this, &ALobbyGameMode::HandleDestroySessionComplete);
-            DestroySessionCompleteHandle.Handle = Session->AddOnDestroySessionCompleteDelegate_Handle(Delegate);
-            DestroySessionCompleteHandle.bBound = true;
-
-            const bool bDestroyCalled = Session->DestroySession(NAME_GameSession);
-            if (!bDestroyCalled)
-            {
-                if (!bLeaveTravelScheduled)
-                {
-                    bLeaveTravelScheduled = true;
-                    GetWorld()->GetTimerManager().SetTimer(
-                        LeaveTimerHandle, this, &ALobbyGameMode::DoServerTravelToMenu, 0.5f, false);
-                }
-            }
-            else
-            {
-                if (!bLeaveTravelScheduled)
-                {
-                    bLeaveTravelScheduled = true;
-                    GetWorld()->GetTimerManager().SetTimer(
-                        LeaveTimerHandle, this, &ALobbyGameMode::DoServerTravelToMenu, 5.0f, false);
-                }
-            }
-        }
-    }
-    else
-    {
-        if (!bLeaveTravelScheduled)
-        {
-            bLeaveTravelScheduled = true;
-            GetWorld()->GetTimerManager().SetTimer(
-                LeaveTimerHandle, this, &ALobbyGameMode::DoServerTravelToMenu, 0.25f, false);
-        }
-    }
+	// Do not call session destroy or client travel from GameMode: use GameInstance!
+	if (UDefaultGameInstance* GI = Cast<UDefaultGameInstance>(GetGameInstance()))
+	{
+		GI->HostLeaveToMainMenu(PendingMenuURL);
+	}
 }
 
 void ALobbyGameMode::HandleDestroySessionComplete(FName SessionName, bool bWasSuccessful)

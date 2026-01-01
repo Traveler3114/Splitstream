@@ -2,6 +2,7 @@
 #include "Widgets/Lobby/LobbyUI.h"
 #include "Blueprint/UserWidget.h"
 #include "GameModes/LobbyGameMode.h"
+#include "GameStates/LobbyGameState.h"
 #include "GameFramework/PlayerState.h"
 #include "AdvancedSessionsLibrary.h"
 #include "OnlineSessionSettings.h"
@@ -79,13 +80,11 @@ void ALobbyPlayerController::ClientShowLoadingScreen_Implementation()
     }
 }
 
-void ALobbyPlayerController::ServerLeaveLobby_Implementation()
+void ALobbyPlayerController::RequestLeaveToMainMenu()
 {
-    if (!HasAuthority()) return;
-
-    // If this is the listen server host, leave for everyone (GameMode handles showing loading + travel)
-    if (IsLocalController())
+    if (HasAuthority() && IsLocalController())
     {
+        // Host: tell GameMode
         if (ALobbyGameMode* GM = GetWorld()->GetAuthGameMode<ALobbyGameMode>())
         {
             GM->HostLeaveLobby();
@@ -93,19 +92,14 @@ void ALobbyPlayerController::ServerLeaveLobby_Implementation()
     }
     else
     {
-        // Remote client leaving: show loading screen, then travel this client to main menu
-        FString MenuPath = TEXT("/Game/Maps/MainMenuMap");
-        if (const ALobbyGameMode* GM = GetWorld()->GetAuthGameMode<ALobbyGameMode>())
+        // CLIENT: only disconnect self, do NOT trigger session/network destroy
+        if (ALobbyGameState* GS = GetWorld()->GetGameState<ALobbyGameState>())
         {
-            MenuPath = GM->MainMenuMapPath;
+            ClientShowLoadingScreen();
+            ClientTravel(GS->MainMenuMapPath, TRAVEL_Absolute);
         }
-
-        ClientShowLoadingScreen();
-        ClientTravel(MenuPath, TRAVEL_Absolute);
-        // Server will receive disconnect and process Logout() cleanup
     }
 }
-
 void ALobbyPlayerController::ServerKickPlayer_Implementation(APlayerState* TargetPS)
 {
     if (!HasAuthority() || !TargetPS) return;

@@ -13,6 +13,9 @@ class ECHOESOFTIME_API ALobbyGameState : public AGameState
 public:
 	ALobbyGameState();
 
+	    UPROPERTY(EditDefaultsOnly, Category = "Maps")
+    FString MainMenuMapPath = TEXT("/Game/Maps/MainMenuMap");
+
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_ReadyAggregates, Category = "Lobby|Ready")
 	int32 TotalPlayers = 0;
 

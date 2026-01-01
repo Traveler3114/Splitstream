@@ -82,10 +82,13 @@ void ULobbyUI::SetStartButtonVisibility(ESlateVisibility InVisibility)
 
 void ULobbyUI::OnLeaveButtonClicked()
 {
-	if (ALobbyPlayerController* LPC = Cast<ALobbyPlayerController>(GetOwningPlayer()))
-	{
-		LPC->ServerLeaveLobby();
-	}
+    if (APlayerController* PC = GetOwningPlayer())
+    {
+        if (ALobbyPlayerController* MyPC = Cast<ALobbyPlayerController>(PC))
+        {
+            MyPC->RequestLeaveToMainMenu();
+        }
+    }
 }
 
 void ULobbyUI::OnStartButtonClicked()
