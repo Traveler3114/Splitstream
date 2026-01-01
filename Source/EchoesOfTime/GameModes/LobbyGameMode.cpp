@@ -37,6 +37,7 @@ void ALobbyGameMode::BeginPlay()
             {
                 DPS->SetReadyLocal(false); // Reset ready state
                 DPS->SetTeamLocal("Past"); // Or your default team. "Past"/"Future"
+                BindReadyDelegateIfNeeded(DPS);
             }
         }
     }
