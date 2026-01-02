@@ -38,11 +38,6 @@ void AItemPickup::BeginPlay()
 {
     Super::BeginPlay();
 
-    if (OverrideMeshComp && !OverrideMeshComp->GetStaticMesh() && ItemData && ItemData->ItemMesh)
-    {
-        OverrideMeshComp->SetStaticMesh(ItemData->ItemMesh);
-    }
-
     // Find optional search component and bind delegate
     SearchComp = FindComponentByClass<USearchComponent>();
     if (SearchComp)
@@ -61,18 +56,11 @@ void AItemPickup::InitFromItemData(UItemBase* InItemData, FGuid InInstanceID)
 {
     ItemData = InItemData;
     ItemInstanceID = InInstanceID;
-    if (OverrideMeshComp && !OverrideMeshComp->GetStaticMesh() && ItemData && ItemData->ItemMesh)
-    {
-        OverrideMeshComp->SetStaticMesh(ItemData->ItemMesh);
-    }
 }
 
 void AItemPickup::RefreshMeshFromItemData()
 {
-    if (OverrideMeshComp && ItemData && ItemData->ItemMesh)
-    {
-        OverrideMeshComp->SetStaticMesh(ItemData->ItemMesh);
-    }
+
 }
 
 void AItemPickup::OnSearchComplete()
@@ -138,11 +126,6 @@ void AItemPickup::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedE
     if (!ItemInstanceID.IsValid())
     {
         ItemInstanceID = FGuid::NewGuid();
-    }
-
-    if (OverrideMeshComp && !OverrideMeshComp->GetStaticMesh() && ItemData && ItemData->ItemMesh)
-    {
-        OverrideMeshComp->SetStaticMesh(ItemData->ItemMesh);
     }
 }
 #endif

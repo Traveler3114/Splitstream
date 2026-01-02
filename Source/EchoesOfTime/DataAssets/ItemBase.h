@@ -42,9 +42,6 @@ public:
     UTexture2D* ItemIcon;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
-    UStaticMesh* ItemMesh;
-
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
     EItemType ItemType;
 
     // In ItemBase.h, add:

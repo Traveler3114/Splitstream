@@ -11,6 +11,7 @@
 #include "ActorComponents/InventoryComponent.h"
 #include "InputActionValue.h"
 #include "Net/UnrealNetwork.h"
+#include "Actors/ItemPickup.h"
 #include "GameplayEffectTypes.h"
 #include "Kismet/GameplayStatics.h"
 #include "AbilitySystem/AttributeSets/PlayerAttributeSet.h"
@@ -323,18 +324,36 @@ void ADefaultCharacter::UpdateEquippedItemMesh()
 
     FInventorySlot ActiveSlot = InventoryComponent->GetActiveItem();
     UItemBase* ItemAsset = ActiveSlot.ItemAsset;
-    UStaticMesh* NewMesh = (ItemAsset && ItemAsset->ItemMesh) ? ItemAsset->ItemMesh : nullptr;
 
+    UStaticMesh* NewMesh = nullptr;
+    FVector RelativeLocation = FVector::ZeroVector;
+    FRotator RelativeRotation = FRotator::ZeroRotator;
+
+    // Try to get mesh and transform from the Pickup class defaults (if set)
+    if (ItemAsset && ItemAsset->ItemPickupToSpawn)
+    {
+        // "CDO" = Class Default Object (the archetype)
+        if (const AItemPickup* PickupCDO = Cast<AItemPickup>(ItemAsset->ItemPickupToSpawn->GetDefaultObject()))
+        {
+            if (PickupCDO->OverrideMeshComp)
+            {
+                NewMesh = PickupCDO->OverrideMeshComp->GetStaticMesh();
+                RelativeLocation = PickupCDO->OverrideMeshComp->GetRelativeLocation();
+                RelativeRotation = PickupCDO->OverrideMeshComp->GetRelativeRotation();
+            }
+        }
+    }
+    // Only update the mesh if needed
     if (EquippedItemMeshComp->GetStaticMesh() != NewMesh)
     {
         EquippedItemMeshComp->SetStaticMesh(nullptr);
         EquippedItemMeshComp->SetStaticMesh(NewMesh);
     }
 
-    if (NewMesh && ItemAsset)
+    if (NewMesh)
     {
-        EquippedItemMeshComp->SetRelativeLocation(FVector(-0.000000, 0.500000, 2.208336));
-        EquippedItemMeshComp->SetRelativeRotation(FRotator(0.528160, -3.449450, 8.694707));
+        EquippedItemMeshComp->SetRelativeLocation(RelativeLocation);
+        EquippedItemMeshComp->SetRelativeRotation(RelativeRotation);
     }
 
     // Compute ADS if we have a mesh
