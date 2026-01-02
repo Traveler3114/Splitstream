@@ -13,6 +13,7 @@
 #include "ActorComponents/DetectionComponent.h"
 #include "ActorComponents/SearchComponent.h"
 #include "ActorComponents/ProximityHackComponent.h"
+#include "GameStates/DefaultGameState.h"
 #include "AbilitySystem/EOTGameplayTags.h"
 #include "Components/StateTreeComponent.h"
 
@@ -119,6 +120,14 @@ void AAICharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
     if (Data.NewValue <= 0.f)
     {
         bIsDead = true;
+
+        if (HasAuthority())
+        {
+            if (ADefaultGameState* GameState = GetWorld()->GetGameState<ADefaultGameState>())
+            {
+                GameState->AddCollectedMoney(MoneyToSubtract);
+            }
+        }
 
         if (HasAuthority() && AIPerceptionComponent)
         {

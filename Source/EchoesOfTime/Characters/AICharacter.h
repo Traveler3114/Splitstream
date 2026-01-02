@@ -87,6 +87,9 @@ public:
     UPROPERTY(BlueprintReadOnly)
     bool bIsDead = false;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	int32 MoneyToSubtract = -10000;
+
 protected:
     /** Called from AttributeSet health delegate, handles death state */
     virtual void OnHealthChanged(const struct FOnAttributeChangeData& Data);
