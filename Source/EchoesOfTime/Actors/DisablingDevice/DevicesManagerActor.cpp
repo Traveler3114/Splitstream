@@ -11,14 +11,10 @@ void ADevicesManagerActor::BeginPlay()
 {
     Super::BeginPlay();
 
-    // Just bind signals, don't call RegisterDevice
     for (ADisablingDeviceActor* Device : Devices)
     {
-        if (Device && HasAuthority())
-        {
-            Device->OnDeviceStateChanged.RemoveDynamic(this, &ADevicesManagerActor::OnDeviceStateChanged);
-            Device->OnDeviceStateChanged.AddDynamic(this, &ADevicesManagerActor::OnDeviceStateChanged);
-        }
+        if (Device)
+			RegisterDevice(Device);
     }
 }
 
