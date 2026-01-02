@@ -14,6 +14,8 @@ public:
     ADronePawn();
     virtual void OnConstruction(const FTransform& Transform) override;
 
+    UPROPERTY(BlueprintReadWrite,EditAnywhere)
+    bool bCanMove;
 protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
