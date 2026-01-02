@@ -333,8 +333,6 @@ void ADefaultCharacter::UpdateEquippedItemMesh()
 
     if (NewMesh && ItemAsset)
     {
-        EquippedItemMeshComp->SetWorldScale3D(ItemAsset->PickupMeshScale);
-        EquippedItemMeshComp->SetRelativeRotation(ItemAsset->PickupMeshRotation);
         EquippedItemMeshComp->SetRelativeLocation(FVector(-0.000000, 0.500000, 2.208336));
         EquippedItemMeshComp->SetRelativeRotation(FRotator(0.528160, -3.449450, 8.694707));
     }

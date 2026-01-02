@@ -41,7 +41,6 @@ void AItemPickup::BeginPlay()
     if (OverrideMeshComp && !OverrideMeshComp->GetStaticMesh() && ItemData && ItemData->ItemMesh)
     {
         OverrideMeshComp->SetStaticMesh(ItemData->ItemMesh);
-        OverrideMeshComp->SetWorldScale3D(ItemData->PickupMeshScale);
     }
 
     // Find optional search component and bind delegate
@@ -65,7 +64,6 @@ void AItemPickup::InitFromItemData(UItemBase* InItemData, FGuid InInstanceID)
     if (OverrideMeshComp && !OverrideMeshComp->GetStaticMesh() && ItemData && ItemData->ItemMesh)
     {
         OverrideMeshComp->SetStaticMesh(ItemData->ItemMesh);
-        OverrideMeshComp->SetWorldScale3D(ItemData->PickupMeshScale);
     }
 }
 
@@ -74,7 +72,6 @@ void AItemPickup::RefreshMeshFromItemData()
     if (OverrideMeshComp && ItemData && ItemData->ItemMesh)
     {
         OverrideMeshComp->SetStaticMesh(ItemData->ItemMesh);
-        OverrideMeshComp->SetWorldScale3D(ItemData->PickupMeshScale);
     }
 }
 
@@ -146,7 +143,6 @@ void AItemPickup::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedE
     if (OverrideMeshComp && !OverrideMeshComp->GetStaticMesh() && ItemData && ItemData->ItemMesh)
     {
         OverrideMeshComp->SetStaticMesh(ItemData->ItemMesh);
-        OverrideMeshComp->SetWorldScale3D(ItemData->PickupMeshScale);
     }
 }
 #endif
