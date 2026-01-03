@@ -194,9 +194,10 @@ void AAICharacter::OnDetected_Implementation(AActor* Detector)
 }
 void AAICharacter::OnLost_Implementation(AActor* Detector)
 {
-    if (DetectionComponent && !DetectionComponent->IsDetectionInProgress(Detector) && !DetectionComponent->IsFullyDetected(Detector) && bIsDead)
+    if (DetectionComponent && DetectionComponent->IsDetectionInProgress(Detector) && !DetectionComponent->IsFullyDetected(Detector) && bIsDead)
         DetectionComponent->StopDetection(Detector);
 }
+
 void AAICharacter::OnForceDetectionEnd_Implementation(AActor* Detector)
 {
     if (DetectionComponent) DetectionComponent->ForceImmediateDetectionEnd(Detector);

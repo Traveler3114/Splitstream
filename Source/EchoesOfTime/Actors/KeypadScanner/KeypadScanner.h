@@ -38,6 +38,12 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KeypadScanner")
     FVector ButtonGridOffset = FVector(-190.0f, -5.0f, 0.0f);
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KeypadScanner")
+    int32 Rows = 4;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KeypadScanner")
+    int32 Columns = 3;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Linked")
     AActor* LinkedActor;
 

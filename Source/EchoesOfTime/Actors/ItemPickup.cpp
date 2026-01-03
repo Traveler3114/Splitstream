@@ -143,8 +143,7 @@ void AItemPickup::OnDetected_Implementation(AActor* Detector)
 
 void AItemPickup::OnLost_Implementation(AActor* Detector)
 {
-    if (DetectionComponent)
-        DetectionComponent->StopDetection(Detector);
+    if (DetectionComponent && DetectionComponent->IsDetectionInProgress(Detector) && !DetectionComponent->IsFullyDetected(Detector)) DetectionComponent->StopDetection(Detector);
 }
 
 void AItemPickup::OnForceDetectionEnd_Implementation(AActor* Detector)

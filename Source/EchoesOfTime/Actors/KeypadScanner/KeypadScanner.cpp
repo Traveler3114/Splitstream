@@ -36,21 +36,26 @@ void AKeypadScanner::SpawnKeypadButtons()
 {
     if (!KeypadButtonClass) return;
 
-    const int Rows = 4;
-    const int Cols = 3;
     const float ButtonSpacing = 60.f;
     FVector StartLocation = ButtonGridOffset;
 
-    FString ButtonLabels[Rows][Cols] = {
+    // Button labels for a 4x3 keypad (fixed size)
+    static const TCHAR* ButtonLabels[4][3] = {
         {TEXT("1"), TEXT("2"), TEXT("3")},
         {TEXT("4"), TEXT("5"), TEXT("6")},
         {TEXT("7"), TEXT("8"), TEXT("9")},
         {TEXT("*"), TEXT("0"), TEXT("#")}
     };
 
-    for (int row = 0; row < Rows; ++row)
+    // Clamp Max Rows and Columns to the ButtonLabels array size
+    const int MaxRows = 4;
+    const int MaxCols = 3;
+    int NumRows = FMath::Min(Rows, MaxRows);
+    int NumCols = FMath::Min(Columns, MaxCols);
+
+    for (int row = 0; row < NumRows; ++row)
     {
-        for (int col = 0; col < Cols; ++col)
+        for (int col = 0; col < NumCols; ++col)
         {
             FVector LocalOffset = StartLocation + FVector(col * ButtonSpacing, 0, -row * ButtonSpacing);
 

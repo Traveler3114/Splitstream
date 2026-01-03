@@ -159,6 +159,18 @@ void UCharacterOverlay::NativeDestruct()
 
 void UCharacterOverlay::UpdateDetectionWidget(AActor* Detector, float Progress, bool bIsLocked, FVector2D ScreenPosition, bool bIsOnScreen)
 {
+    // --- CLEANUP ORPHAN WIDGETS ---
+    for (auto It = DetectionWidgets.CreateIterator(); It; ++It)
+    {
+        AActor* KeyActor = It.Key();
+        if (!KeyActor || KeyActor->IsPendingKillPending())
+        {
+            UDetectionWidget* Widget = It.Value();
+            if (Widget) Widget->RemoveFromParent();
+            It.RemoveCurrent();
+        }
+    }
+
     if (!CanvasPanel || !Detector) return;
 
     UDetectionWidget*& Widget = DetectionWidgets.FindOrAdd(Detector);
@@ -205,9 +217,9 @@ void UCharacterOverlay::UpdateDetectionWidget(AActor* Detector, float Progress, 
 
         // Clamp out to box edge with margin
         float ScaleX = (Dir.X > 0.f) ? (CanvasSize.X - Center.X - Margin) / FMath::Max(Dir.X, 0.0001f)
-                                     : (0.f + Margin - Center.X) / FMath::Min(Dir.X, -0.0001f);
+            : (0.f + Margin - Center.X) / FMath::Min(Dir.X, -0.0001f);
         float ScaleY = (Dir.Y > 0.f) ? (CanvasSize.Y - Center.Y - Margin) / FMath::Max(Dir.Y, 0.0001f)
-                                     : (0.f + Margin - Center.Y) / FMath::Min(Dir.Y, -0.0001f);
+            : (0.f + Margin - Center.Y) / FMath::Min(Dir.Y, -0.0001f);
 
         float Scale = FMath::Min(FMath::Abs(ScaleX), FMath::Abs(ScaleY));
         FVector2D EdgePosition = Center + Dir * Scale;

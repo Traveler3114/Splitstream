@@ -38,6 +38,8 @@ void UDetectionComponent::StartDetection(AActor* Detector)
     FDetectionState* ExistingState = DetectionStates.Find(Detector);
     if (ExistingState)
     {
+        if (ExistingState->bFullyDetected)
+            return;
         ExistingState->bDetectionInProgress = true;
         ExistingState->bFullyDetected = false;
         ExistingState->Direction = 1; // building
