@@ -50,6 +50,9 @@ void ABullet::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
     bool bFromSweep, const FHitResult& SweepResult)
 {
+    //if (!(OtherComp->IsA(USkeletalMeshComponent::StaticClass()))) return;
+
+
     if (!OtherActor)
     {
         return;
@@ -79,12 +82,20 @@ void ABullet::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
         return;
     }
 
+    float DamageAmount = -20.0f;
+    if (SweepResult.BoneName == FName("head")) {
+        DamageAmount = -100.0f;
+    }
+
+    static FGameplayTag DamageTag = FGameplayTag::RequestGameplayTag(FName("Data.Damage"));
+
     FGameplayEffectContextHandle EffectContext = ASC->MakeEffectContext();
     EffectContext.AddSourceObject(this);
 
     FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(DamageEffectClass, 1, EffectContext);
     if (SpecHandle.IsValid())
     {
+        SpecHandle.Data->SetSetByCallerMagnitude(DamageTag, DamageAmount);
         ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
     }
 
