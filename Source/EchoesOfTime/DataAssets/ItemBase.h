@@ -19,6 +19,7 @@ enum class EItemType : uint8
     Pistol        UMETA(DisplayName = "Pistol"),
     PowerCell     UMETA(DisplayName = "PowerCell"),
     BodyBag       UMETA(DisplayName = "BodyBag"),
+    QRCode        UMETA(DisplayName = "QRCode"),
     Other         UMETA(DisplayName = "Other")
 };
 

@@ -34,7 +34,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Proximity Hack|UI")
     TSubclassOf<UProximityHackWidget> ProximityHackWidgetClass;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Proximity Hack|Reward")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Proximity Hack|Reward")
     UItemBase* RewardItem = nullptr;
 
 protected:
