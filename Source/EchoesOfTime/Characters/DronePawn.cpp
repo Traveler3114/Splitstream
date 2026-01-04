@@ -66,42 +66,40 @@ void ADronePawn::OnHealthChanged(const FOnAttributeChangeData& Data)
         bIsDead = true;
         DetachFromControllerPendingDestroy();
 
-        // Perform a downward trace to "land" the drone on the floor
-        FVector Start = GetActorLocation();
-        FVector End = Start - FVector(0, 0, 2000); // Trace down 2000 units
+        if (DroneMesh)
+        {
+            DroneMesh->SetCollisionProfileName(TEXT("Ragdoll"));
+            DroneMesh->SetSimulatePhysics(true);
+            DroneMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+            DroneMesh->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 
+            // For AI nav: remove pawn/blocking collision but keep sim.
+            DroneMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+            DroneMesh->SetCanEverAffectNavigation(false);
+        }
+
+        // --- Put root/capsule on nav floor so robots navigate to root, not mesh
+        FVector Start = GetActorLocation();
+        FVector End = Start - FVector(0, 0, 2000);
         FHitResult Hit;
         FCollisionQueryParams Params;
         Params.AddIgnoredActor(this);
-
         bool bHit = GetWorld()->LineTraceSingleByChannel(
-            Hit,
-            Start,
-            End,
-            ECC_Visibility,
-            Params
-        );
-
+            Hit, Start, End, ECC_Visibility, Params);
         if (bHit)
         {
             SetActorLocation(Hit.Location);
-
-            // Optionally align vertical rotation:
             FRotator MyRot = GetActorRotation();
             SetActorRotation(FRotator(0.f, MyRot.Yaw, 0.f));
         }
 
-        // Optionally, only show where the trace landed in debug:
-        // DrawDebugSphere(GetWorld(), Hit.Location, 16, 8, FColor::Red, false, 5);
-
-        // Leave these lines out so you don't ragdoll:
-        // if (DroneMesh)
-        // {
-        //     DroneMesh->SetCollisionProfileName(TEXT("Ragdoll"));
-        //     DroneMesh->SetSimulatePhysics(true);
-        //     DroneMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-        //     DroneMesh->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
-        // }
+        // Critically: keep capsule/root collision enabled for nav!
+        if (UCapsuleComponent* Capsule = FindComponentByClass<UCapsuleComponent>())
+        {
+            Capsule->SetCollisionEnabled(ECollisionEnabled::QueryOnly); // or QueryAndPhysics if needed
+            Capsule->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+            Capsule->SetCanEverAffectNavigation(true);
+        }
 
         if (AbilitySystemComponent && AttributeSet)
         {
