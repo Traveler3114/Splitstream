@@ -5,6 +5,7 @@
 #include "AbilitySystem/AttributeSets/PlayerAttributeSet.h"
 #include "AbilitySystemComponent.h"
 #include "GameplayEffectTypes.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/SpotLightComponent.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
