@@ -30,17 +30,16 @@ void APowerGenerator::OnSearchComplete()
 {
     SetHighlighted_Implementation(false);
 
-    // Fire puzzle completion, if any
     if (CompletionTarget && CompletionTarget->GetClass()->ImplementsInterface(UPuzzleCompletionReceiver::StaticClass()))
     {
         IPuzzleCompletionReceiver::Execute_OnPuzzleCompleted(CompletionTarget);
     }
 
-    // Notify robot guards/repair system
-    OnRequestRepair.Broadcast(this);
+    // Notify robot guards/repair system via generic interface
+    OnRepairRequested.Broadcast(this);
 }
 
-void APowerGenerator::RequestRepair(AActor* RepairInstigator)
+void APowerGenerator::RequestRepair_Implementation(AActor* RepairInstigator)
 {
     if (SearchComponent)
     {
@@ -50,12 +49,6 @@ void APowerGenerator::RequestRepair(AActor* RepairInstigator)
     {
         IPuzzleCompletionReceiver::Execute_OnPuzzleReset(CompletionTarget);
     }
-}
-
-float APowerGenerator::GetRepairTime() const
-{
-    // This could be dynamic/per-instance if you wish
-    return RepairTime;
 }
 
 void APowerGenerator::Interact_Implementation(AActor* Interactor)

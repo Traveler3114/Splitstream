@@ -5,7 +5,6 @@
 #include "DefaultGameState.generated.h"
 
 class AActor;
-class ARepairableBase;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAlarmStarted, float, AlarmEndTime);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAlarmCanceled);
@@ -14,7 +13,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPreAlarmStarted, float, PreAlarm
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPreAlarmCanceled);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnMoneyCollectedChanged, int32, CurrentMoney, int32, TargetMoney);
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGuardRepairETAStarted, ARepairableBase*, TargetActor, float, Duration);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGuardRepairETAStarted, AActor*, TargetActor, float, Duration);
 
 USTRUCT(BlueprintType)
 struct FGuardRepairCountdown
@@ -22,7 +21,7 @@ struct FGuardRepairCountdown
     GENERATED_BODY()
 
     UPROPERTY(BlueprintReadWrite)
-    ARepairableBase* TargetActor = nullptr;
+    AActor* TargetActor = nullptr;
 
     UPROPERTY(BlueprintReadWrite)
     float ETA = 0.f;
@@ -57,7 +56,7 @@ public:
     FOnGuardRepairETAStarted OnGuardRepairETAStarted;
 
     UFUNCTION(BlueprintCallable)
-    void StartGuardRepairCountdown(ARepairableBase* Repairable, float Duration);
+    void StartGuardRepairCountdown(AActor* Repairable, float Duration);
 
     UPROPERTY(BlueprintAssignable)
     FOnAlarmStarted OnAlarmStarted;

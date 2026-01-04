@@ -1,32 +1,50 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Characters/RepairablePawn.h"
+#include "GameFramework/Pawn.h"
 #include "AbilitySystemInterface.h"
 #include "Components/SpotLightComponent.h"
+#include "TimelineEra.h"
+#include "GameplayEffect.h"
+#include "Interfaces/IRepairable.h"
 #include "DronePawn.generated.h"
-
-
 
 class UPlayerAttributeSet;
 
 UCLASS()
-class ECHOESOFTIME_API ADronePawn : public ARepairablePawn, public IAbilitySystemInterface
+class ECHOESOFTIME_API ADronePawn : public APawn, public IAbilitySystemInterface, public IRepairable
 {
     GENERATED_BODY()
-
 public:
     ADronePawn();
     virtual void OnConstruction(const FTransform& Transform) override;
 
-    UPROPERTY(BlueprintReadWrite,EditAnywhere)
+    // IAbilitySystemInterface
+    virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
+
+    // IRepairable interface (all required implementations)
+    virtual void RequestRepair_Implementation(AActor* RepairInstigator) override;
+    virtual float GetRepairTime_Implementation() const override { return RepairTime; }
+    virtual ETimelineEra GetTimelineEra_Implementation() const override { return TimelineEra; }
+    virtual AActor* GetCompletionTarget_Implementation() const override { return const_cast<ADronePawn*>(this); }
+    virtual FOnRepairRequested& GetOnRepairRequested() override { return OnRepairRequested; }
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
+    ETimelineEra TimelineEra = ETimelineEra::Past;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Repair")
+    float RepairTime = 5.0f;
+
+    UPROPERTY(BlueprintAssignable, Category = "Repair")
+    FOnRepairRequested OnRepairRequested;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere)
     bool bCanMove;
+
 protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-    virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
     virtual void OnHealthChanged(const struct FOnAttributeChangeData& Data);
-
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     UAbilitySystemComponent* AbilitySystemComponent;
@@ -37,15 +55,13 @@ protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
     TSubclassOf<UGameplayEffect> AttributeInitGE;
 
-    virtual void RequestPawnRepair(AActor* RepairInstigator) override;
-
-    UPROPERTY(EditAnywhere,BlueprintReadWrite)
-    bool bIsDead=false;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    bool bIsDead = false;
 
     FTimerHandle DetectionTimerHandle;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection")
-    float DetectionInterval = 0.2f; // seconds
+    float DetectionInterval = 0.2f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection")
     float DetectionDistance = 800.0f;
@@ -68,7 +84,6 @@ protected:
     void DetectionUpdate();
 
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Idle")
     float BaseStayChance = 0.5f;

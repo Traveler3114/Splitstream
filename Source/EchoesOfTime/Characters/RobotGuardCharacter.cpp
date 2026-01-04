@@ -1,94 +1,85 @@
 #include "RobotGuardCharacter.h"
 #include "Components/StateTreeComponent.h"
 #include "AbilitySystem/EOTGameplayTags.h"
-#include "Actors/RepairableBase.h"
 #include "Kismet/GameplayStatics.h"
+#include "Interfaces/IRepairable.h"
 #include "AbilitySystemComponent.h"
 #include "Engine/World.h"
 
 ARobotGuardCharacter::ARobotGuardCharacter()
 {
-    // Set default value if needed
     CurrentRepairTarget = nullptr;
 }
 
 void ARobotGuardCharacter::BeginPlay()
 {
     Super::BeginPlay();
-
     TArray<AActor*> FoundActors;
-    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ARepairableBase::StaticClass(), FoundActors);
-
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), FoundActors);
     for (AActor* Actor : FoundActors)
     {
-        ARepairableBase* Repairable = Cast<ARepairableBase>(Actor);
-        if (Repairable && Repairable->TimelineEra == TimelineEra)
+        if (Actor && Actor->GetClass()->ImplementsInterface(URepairable::StaticClass()))
         {
-            Repairable->OnRequestRepair.AddDynamic(this, &ARobotGuardCharacter::OnRepairRequested);
+            if (IRepairable::Execute_GetTimelineEra(Actor) == TimelineEra)
+            {
+                // Get the delegate (must cast here!):
+                IRepairable* Repairable = Cast<IRepairable>(Actor);
+                if (Repairable)
+                {
+                    Repairable->GetOnRepairRequested().AddDynamic(this, &ARobotGuardCharacter::OnRepairRequested);
+                }
+            }
         }
     }
 }
 
-void ARobotGuardCharacter::OnRepairRequested(ARepairableBase* RepairableActor)
+void ARobotGuardCharacter::OnRepairRequested(AActor* Repairable)
 {
-    QueueRepair(RepairableActor);
+    QueueRepair(Repairable);
     TryStartNextRepair();
 }
 
-void ARobotGuardCharacter::QueueRepair(ARepairableBase* RepairableActor)
+void ARobotGuardCharacter::QueueRepair(AActor* Repairable)
 {
-    if (!RepairableActor || RepairQueue.Contains(RepairableActor) || RepairableActor->TimelineEra != TimelineEra)
-        return;
-    RepairQueue.Add(RepairableActor);
+    if (!Repairable || RepairQueue.Contains(Repairable)) return;
+
+    // TimelineEra check (optional)
+    if (Repairable->GetClass()->ImplementsInterface(URepairable::StaticClass()))
+    {
+        if (IRepairable::Execute_GetTimelineEra(Repairable) != TimelineEra)
+            return;
+    }
+    RepairQueue.Add(Repairable);
 }
 
 void ARobotGuardCharacter::TryStartNextRepair()
 {
-    if (AbilitySystemComponent->HasMatchingGameplayTag(TAG_Guard_Status_Repair))
-        return; // Already repairing
-
+    if (AbilitySystemComponent && AbilitySystemComponent->HasMatchingGameplayTag(TAG_Guard_Status_Repair))
+        return;
     if (CurrentRepairTarget)
-        return; // Defensive, for double protection
-
+        return;
     if (RepairQueue.Num() == 0)
-        return; // Nothing to do
-
-    // Get next
-    ARepairableBase* NextRepair = RepairQueue[0];
+        return;
+    AActor* NextRepair = RepairQueue[0];
     RepairQueue.RemoveAt(0);
     CurrentRepairTarget = NextRepair;
-
-    // Send StateTree event with NextRepair as "payload"
-    // If you use a variable (easier): set a BP-accessible property "CurrentRepairTarget" and read that in your StateTree BP task.
-
     AController* GuardController = GetController();
     if (GuardController)
     {
         UStateTreeComponent* StateTreeComp = GuardController->FindComponentByClass<UStateTreeComponent>();
         if (StateTreeComp)
         {
-            // Optionally, if your StateTree event can take a payload in C++:
-            // FStateTreeEvent MyEvent(TAG_StateTree_Event_RepairNeeded, NextRepair); // if you support payloads
-            // StateTreeComp->SendStateTreeEvent(MyEvent);
-
-            // Or just use the "CurrentRepairTarget" property—set above—for Blueprint to read in StateTree Task
             FStateTreeEvent MyEvent(TAG_StateTree_Event_RepairNeeded);
             StateTreeComp->SendStateTreeEvent(MyEvent);
         }
     }
 }
-
 void ARobotGuardCharacter::OnRepairFinished()
 {
-    // Call this from your StateTree repair task/BP when the repair is actually completed
-
     CurrentRepairTarget = nullptr;
-
     if (AbilitySystemComponent)
     {
         AbilitySystemComponent->RemoveLooseGameplayTag(TAG_Guard_Status_Repair);
     }
-
-    // See if there's another repair waiting
     TryStartNextRepair();
 }

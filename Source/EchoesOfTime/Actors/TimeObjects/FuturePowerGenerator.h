@@ -21,9 +21,10 @@ public:
     virtual void CancelInteract_Implementation(AActor* Interactor) override;
     virtual void SetHighlighted_Implementation(bool bHighlight) override;
 
-    virtual void RequestRepair(AActor* RepairInstigator) override;
+    // Correct repair interface implementation!
+    virtual void RequestRepair_Implementation(AActor* RepairInstigator) override;
 
-    // NEW: Universal server action interface implementation
+    // Universal server action interface implementation
     virtual void ExecuteServerAction_Implementation(const FServerActionPayload& Payload) override;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PastPowerGenerator")
@@ -51,6 +52,6 @@ protected:
     UPROPERTY(Replicated)
     bool bFutureInteracted = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "EasterEgg")
-	bool bEasterEggActive = false;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "EasterEgg")
+    bool bEasterEggActive = false;
 };

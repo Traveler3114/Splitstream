@@ -17,7 +17,7 @@ ADefaultGameState::ADefaultGameState()
     PreAlarmDuration = 3.f;
 }
 
-void ADefaultGameState::StartGuardRepairCountdown(ARepairableBase* Repairable, float Duration)
+void ADefaultGameState::StartGuardRepairCountdown(AActor* Repairable, float Duration)
 {
     if (!HasAuthority()) return;
     bool bFound = false;
