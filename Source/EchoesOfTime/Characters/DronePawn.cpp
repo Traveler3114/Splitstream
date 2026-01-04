@@ -71,12 +71,17 @@ void ADronePawn::RequestRepair_Implementation(AActor* RepairInstigator)
         DroneMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
         DroneMesh->SetCanEverAffectNavigation(false);
 
-        // ---- ALIGN THE MESH TO ROOT ----
-        DroneMesh->SetRelativeLocation(FVector::ZeroVector);
-        DroneMesh->SetRelativeRotation(FRotator::ZeroRotator);
-        DroneMesh->ResetAllBodiesSimulatePhysics();
-        DroneMesh->RefreshBoneTransforms();
-        DroneMesh->UpdateComponentToWorld();
+        // --- Start smooth mesh alignment ---
+        MeshAlignStartLocation = DroneMesh->GetRelativeLocation();
+        MeshAlignStartRotation = DroneMesh->GetRelativeRotation();
+        MeshAlignTargetLocation = FVector::ZeroVector;
+        MeshAlignTargetRotation = FRotator::ZeroRotator;
+        MeshAlignElapsed = 0.f;
+
+        // Start timer to interpolate mesh to root
+        GetWorld()->GetTimerManager().SetTimer(
+            MeshAlignTimerHandle, this, &ADronePawn::UpdateMeshAlignInterp, 0.02f, true
+        );
     }
     if (UCapsuleComponent* Capsule = FindComponentByClass<UCapsuleComponent>())
     {
@@ -108,6 +113,36 @@ void ADronePawn::RequestRepair_Implementation(AActor* RepairInstigator)
             .AddUObject(this, &ADronePawn::OnHealthChanged);
     }
 }
+
+void ADronePawn::UpdateMeshAlignInterp()
+{
+    MeshAlignElapsed += 0.02f;
+    float Alpha = FMath::Clamp(MeshAlignElapsed / MeshAlignDuration, 0.f, 1.f);
+
+    if (DroneMesh)
+    {
+        float S = FMath::SmoothStep(0.f, 1.f, Alpha);
+        FVector NewLoc = FMath::Lerp(MeshAlignStartLocation, MeshAlignTargetLocation, S);
+        FRotator NewRot = FMath::Lerp(MeshAlignStartRotation, MeshAlignTargetRotation, S);
+
+        DroneMesh->SetRelativeLocation(NewLoc);
+        DroneMesh->SetRelativeRotation(NewRot);
+    }
+
+    if (Alpha >= 1.f)
+    {
+        if (DroneMesh)
+        {
+            DroneMesh->SetRelativeLocation(MeshAlignTargetLocation);
+            DroneMesh->SetRelativeRotation(MeshAlignTargetRotation);
+            DroneMesh->ResetAllBodiesSimulatePhysics();
+            DroneMesh->RefreshBoneTransforms();
+            DroneMesh->UpdateComponentToWorld();
+        }
+        GetWorld()->GetTimerManager().ClearTimer(MeshAlignTimerHandle);
+    }
+}
+
 void ADronePawn::OnHealthChanged(const FOnAttributeChangeData& Data)
 {
     if (Data.NewValue <= 0.f)
@@ -195,6 +230,7 @@ void ADronePawn::BeginPlay()
 void ADronePawn::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     GetWorldTimerManager().ClearTimer(DetectionTimerHandle);
+    GetWorldTimerManager().ClearTimer(MeshAlignTimerHandle);
     Super::EndPlay(EndPlayReason);
 }
 
@@ -214,8 +250,8 @@ static bool IsBoundsPointInCone(
 
 void ADronePawn::DetectionUpdate()
 {
-    if(bIsDead)
-		return;
+    if (bIsDead)
+        return;
     if (DetectedActor)
         return;
 
@@ -251,7 +287,7 @@ void ADronePawn::DetectionUpdate()
             continue;
 
         UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(DefaultChar->GetRootComponent());
-        FBox Bounds = PrimComp ? PrimComp->Bounds.GetBox() : FBox::BuildAABB(DefaultChar->GetActorLocation(), FVector(0,0,0));
+        FBox Bounds = PrimComp ? PrimComp->Bounds.GetBox() : FBox::BuildAABB(DefaultChar->GetActorLocation(), FVector(0, 0, 0));
         TArray<FVector> TestPoints;
         TestPoints.Add(Bounds.GetCenter());
         TestPoints.Add(Bounds.Min); TestPoints.Add(Bounds.Max);

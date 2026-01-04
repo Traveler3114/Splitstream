@@ -46,6 +46,8 @@ protected:
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     virtual void OnHealthChanged(const struct FOnAttributeChangeData& Data);
 
+    void DetectionUpdate();
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     UAbilitySystemComponent* AbilitySystemComponent;
 
@@ -72,7 +74,7 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone")
     USkeletalMeshComponent* DroneMesh;
 
-    UPROPERTY(ReplicatedUsing=OnRep_DetectedActor, VisibleAnywhere, BlueprintReadOnly, Category = "AI")
+    UPROPERTY(ReplicatedUsing = OnRep_DetectedActor, VisibleAnywhere, BlueprintReadOnly, Category = "AI")
     AActor* DetectedActor = nullptr;
 
     UFUNCTION()
@@ -81,10 +83,18 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone|Visual")
     USpotLightComponent* DroneSpotLight;
 
-    void DetectionUpdate();
+    // --- Smooth mesh alignment ---
+    FTimerHandle MeshAlignTimerHandle;
+    FVector MeshAlignStartLocation;
+    FRotator MeshAlignStartRotation;
+    FVector MeshAlignTargetLocation;
+    FRotator MeshAlignTargetRotation;
+    float MeshAlignElapsed = 0.f;
+    float MeshAlignDuration = 0.5f; // Blend duration in seconds (tweak as desired)
+    UFUNCTION()
+    void UpdateMeshAlignInterp();
 
-    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
+    // Idle options and navigation nodes
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Idle")
     float BaseStayChance = 0.5f;
 
