@@ -1,12 +1,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Pawn.h"
+#include "Characters/RepairablePawn.h"
+#include "AbilitySystemInterface.h"
 #include "Components/SpotLightComponent.h"
 #include "DronePawn.generated.h"
 
+
+
+class UPlayerAttributeSet;
+
 UCLASS()
-class ECHOESOFTIME_API ADronePawn : public APawn
+class ECHOESOFTIME_API ADronePawn : public ARepairablePawn, public IAbilitySystemInterface
 {
     GENERATED_BODY()
 
@@ -19,6 +24,23 @@ public:
 protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+    virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
+    virtual void OnHealthChanged(const struct FOnAttributeChangeData& Data);
+
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    UAbilitySystemComponent* AbilitySystemComponent;
+
+    UPROPERTY()
+    UPlayerAttributeSet* AttributeSet;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
+    TSubclassOf<UGameplayEffect> AttributeInitGE;
+
+    virtual void RequestPawnRepair(AActor* RepairInstigator) override;
+
+    UPROPERTY(EditAnywhere,BlueprintReadWrite)
+    bool bIsDead=false;
 
     FTimerHandle DetectionTimerHandle;
 

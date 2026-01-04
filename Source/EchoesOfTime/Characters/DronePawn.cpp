@@ -2,8 +2,10 @@
 #include "DefaultCharacter.h"
 #include "Components/SceneComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "AbilitySystem/AttributeSets/PlayerAttributeSet.h"
+#include "AbilitySystemComponent.h"
+#include "GameplayEffectTypes.h"
 #include "Components/SpotLightComponent.h"
-#include "GameFramework/Pawn.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -35,6 +37,9 @@ ADronePawn::ADronePawn()
     DroneSpotLight->InnerConeAngle = ViewConeAngle * 0.5f; // Make it a hard edge to help tune detection math
     DroneSpotLight->CastShadows = false;
     DroneSpotLight->SetVisibility(true);
+
+    AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+    AttributeSet = CreateDefaultSubobject<UPlayerAttributeSet>(TEXT("AttributeSet"));
 }
 
 void ADronePawn::OnConstruction(const FTransform& Transform)
@@ -48,11 +53,57 @@ void ADronePawn::OnConstruction(const FTransform& Transform)
     }
 }
 
+void ADronePawn::RequestPawnRepair(AActor* RepairInstigator)
+{
+    bIsDead=false;
+}
+
+
+void ADronePawn::OnHealthChanged(const FOnAttributeChangeData& Data)
+{
+    if (Data.NewValue <= 0.f)
+    {
+        bIsDead = true;
+        OnPawnRequestRepair.Broadcast(this);
+        DetachFromControllerPendingDestroy();
+
+        // Enable ragdoll on mesh
+        USkeletalMeshComponent* SkelMesh = DroneMesh;
+        if (SkelMesh)
+        {
+            SkelMesh->SetCollisionProfileName(TEXT("Ragdoll"));
+            SkelMesh->SetSimulatePhysics(true);
+            SkelMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics); // Traces + physics
+            SkelMesh->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+        }
+
+        if (AbilitySystemComponent && AttributeSet)
+        {
+            AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute())
+                .RemoveAll(this);
+        }
+
+    }
+}
+
+
 void ADronePawn::BeginPlay()
 {
     Super::BeginPlay();
     GetWorldTimerManager().SetTimer(DetectionTimerHandle, this, &ADronePawn::DetectionUpdate, DetectionInterval, true);
     OnRep_DetectedActor();
+    if (HasAuthority() && AttributeInitGE)
+    {
+        if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+        {
+            FGameplayEffectContextHandle EffectContext = ASC->MakeEffectContext();
+            FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(AttributeInitGE, 1, EffectContext);
+            if (SpecHandle.IsValid())
+            {
+                ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+            }
+        }
+    }
 }
 
 void ADronePawn::EndPlay(const EEndPlayReason::Type EndPlayReason)
