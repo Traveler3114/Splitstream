@@ -5,6 +5,8 @@
 #include "AbilitySystem/AttributeSets/PlayerAttributeSet.h"
 #include "AbilitySystemComponent.h"
 #include "GameplayEffectTypes.h"
+#include "AIController.h"
+#include "Components/StateTreeComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SpotLightComponent.h"
 #include "Engine/World.h"
@@ -57,7 +59,43 @@ void ADronePawn::OnConstruction(const FTransform& Transform)
 void ADronePawn::RequestRepair_Implementation(AActor* RepairInstigator)
 {
     bIsDead = false;
-    // Optionally reset visuals, status.
+    if (DroneSpotLight)
+    {
+        DroneSpotLight->SetVisibility(true);
+    }
+    if (DroneMesh)
+    {
+        DroneMesh->SetSimulatePhysics(false);
+        DroneMesh->SetCollisionProfileName(TEXT("Pawn"));
+        DroneMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+        DroneMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+        DroneMesh->SetCanEverAffectNavigation(false);
+    }
+    if (UCapsuleComponent* Capsule = FindComponentByClass<UCapsuleComponent>())
+    {
+        Capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+        Capsule->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+        Capsule->SetCanEverAffectNavigation(true);
+    }
+    // Optionally re-bind health triggers/restore movement/components...
+
+    // (Re)start AI StateTree logic
+    AController* C = GetController();
+    if (!C)
+    {
+        // Optionally respawn controller if none found
+        C = GetWorld()->SpawnActor<AAIController>(AAIController::StaticClass(), GetActorLocation(), GetActorRotation());
+        if (C)
+        {
+            C->Possess(this);
+        }
+    }
+    // Rebind OnHealthChanged etc if needed
+    if (AbilitySystemComponent && AttributeSet)
+    {
+        AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute())
+            .AddUObject(this, &ADronePawn::OnHealthChanged);
+    }
 }
 
 void ADronePawn::OnHealthChanged(const FOnAttributeChangeData& Data)
@@ -66,6 +104,10 @@ void ADronePawn::OnHealthChanged(const FOnAttributeChangeData& Data)
     {
         bIsDead = true;
         DetachFromControllerPendingDestroy();
+        if (DroneSpotLight)
+        {
+            DroneSpotLight->SetVisibility(false);
+        }
 
         if (DroneMesh)
         {
@@ -154,6 +196,8 @@ static bool IsBoundsPointInCone(
 
 void ADronePawn::DetectionUpdate()
 {
+    if(bIsDead)
+		return;
     if (DetectedActor)
         return;
 
