@@ -70,6 +70,13 @@ void ADronePawn::RequestRepair_Implementation(AActor* RepairInstigator)
         DroneMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
         DroneMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
         DroneMesh->SetCanEverAffectNavigation(false);
+
+        // ---- ALIGN THE MESH TO ROOT ----
+        DroneMesh->SetRelativeLocation(FVector::ZeroVector);
+        DroneMesh->SetRelativeRotation(FRotator::ZeroRotator);
+        DroneMesh->ResetAllBodiesSimulatePhysics();
+        DroneMesh->RefreshBoneTransforms();
+        DroneMesh->UpdateComponentToWorld();
     }
     if (UCapsuleComponent* Capsule = FindComponentByClass<UCapsuleComponent>())
     {
@@ -77,33 +84,44 @@ void ADronePawn::RequestRepair_Implementation(AActor* RepairInstigator)
         Capsule->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
         Capsule->SetCanEverAffectNavigation(true);
     }
-    // Optionally re-bind health triggers/restore movement/components...
 
-    // (Re)start AI StateTree logic
+    // (Re)start AI StateTree logic as before...
     AController* C = GetController();
     if (!C)
     {
-        // Optionally respawn controller if none found
         C = GetWorld()->SpawnActor<AAIController>(AAIController::StaticClass(), GetActorLocation(), GetActorRotation());
         if (C)
         {
             C->Possess(this);
         }
     }
-    // Rebind OnHealthChanged etc if needed
+    if (C)
+    {
+        if (UStateTreeComponent* StateTreeComp = C->FindComponentByClass<UStateTreeComponent>())
+        {
+            StateTreeComp->StartLogic();
+        }
+    }
     if (AbilitySystemComponent && AttributeSet)
     {
         AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute())
             .AddUObject(this, &ADronePawn::OnHealthChanged);
     }
 }
-
 void ADronePawn::OnHealthChanged(const FOnAttributeChangeData& Data)
 {
     if (Data.NewValue <= 0.f)
     {
         bIsDead = true;
-        DetachFromControllerPendingDestroy();
+        // Stop StateTree logic when drone dies
+        AController* C = GetController();
+        if (C)
+        {
+            if (UStateTreeComponent* StateTreeComp = C->FindComponentByClass<UStateTreeComponent>())
+            {
+                StateTreeComp->StopLogic(TEXT("Drone died"));
+            }
+        }
         if (DroneSpotLight)
         {
             DroneSpotLight->SetVisibility(false);
