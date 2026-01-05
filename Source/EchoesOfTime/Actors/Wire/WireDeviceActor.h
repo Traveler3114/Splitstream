@@ -25,15 +25,6 @@ class ECHOESOFTIME_API AWireDeviceActor : public AActor
     GENERATED_BODY()
 
 public:
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wires")
-    TArray<FVector> WireRelativeLocations;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wires")
-    FVector WireRelativeScale = FVector(1.0f, 1.0f, 1.0f);
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wires")
-    FRotator WireRelativeRotation = FRotator::ZeroRotator;
-
     AWireDeviceActor();
 
     UFUNCTION(BlueprintCallable)
@@ -47,9 +38,6 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     UStaticMeshComponent* DeviceMesh;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    TSubclassOf<AWireActor> WireClass;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated)
     TArray<AWireActor*> WireActors;

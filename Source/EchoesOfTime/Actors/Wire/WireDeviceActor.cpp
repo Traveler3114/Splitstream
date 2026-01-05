@@ -25,35 +25,21 @@ void AWireDeviceActor::BeginPlay()
 
     if (HasAuthority())
     {
-        int32 NumWires = WireRelativeLocations.Num();
-        for (int32 i = 0; i < NumWires; ++i)
+        WireActors.Empty();
+        TArray<UChildActorComponent*> ChildActorComponents;
+        GetComponents(ChildActorComponents);
+
+        for (UChildActorComponent* CAC : ChildActorComponents)
         {
-            if (!WireClass) continue;
-
-            FActorSpawnParameters Params;
-            Params.Owner = this;
-            Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-            FVector SpawnLoc = GetActorLocation();
-            FRotator SpawnRot = GetActorRotation();
-            AWireActor* NewWire = GetWorld()->SpawnActor<AWireActor>(WireClass, SpawnLoc, SpawnRot, Params);
-
-            if (NewWire)
+            if (AWireActor* Wire = Cast<AWireActor>(CAC->GetChildActor()))
             {
-                NewWire->AttachToComponent(SceneRoot, FAttachmentTransformRules::KeepRelativeTransform);
-
-                if (WireRelativeLocations.IsValidIndex(i))
-                    NewWire->SetActorRelativeLocation(WireRelativeLocations[i]);
-                else
-                    NewWire->SetActorRelativeLocation(FVector::ZeroVector);
-
-                NewWire->SetActorRelativeScale3D(WireRelativeScale);
-                NewWire->SetActorRelativeRotation(WireRelativeRotation);
-
-                WireActors.Add(NewWire);
+                WireActors.Add(Wire);
             }
         }
     }
 }
+
+
 
 void AWireDeviceActor::ApplyColorConfiguration(const FWireDeviceColorConfig& Config)
 {
