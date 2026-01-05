@@ -3,23 +3,40 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Interfaces/IInteractable.h"
+#include "Interfaces/IRepairable.h"
 #include "TimelineEra.h"
+#include "DataAssets/ItemBase.h"
 #include "DroneSpawner.generated.h"
 
 class UTextRenderComponent;
 class ADronePawn;
 
 UCLASS()
-class ECHOESOFTIME_API ADroneSpawner : public AActor
+class ECHOESOFTIME_API ADroneSpawner : public AActor, public IInteractable, public IRepairable
 {
 	GENERATED_BODY()
 
 public:
 	ADroneSpawner();
 
+	virtual void Interact_Implementation(AActor* Interactor) override;
+	virtual void CancelInteract_Implementation(AActor* Interactor) override;
+	virtual void SetHighlighted_Implementation(bool bHighlight) override;
+	virtual bool IsProgressiveInteract_Implementation() override { return true; }
+	void OnSearchComplete();
+
+	//virtual void RequestRepair_Implementation(AActor* RepairInstigator) override;
+	
+
 protected:
 	virtual void BeginPlay() override;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Proximity Hack|Reward")
+	UItemBase* RewardItem = nullptr;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone")
+	class USearchComponent* SearchComponent;
 	// Components
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone")
 	UStaticMeshComponent* PrinterMesh;

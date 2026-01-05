@@ -5,6 +5,8 @@
 #include "Actors/PointActors/NavNode.h"
 #include "Components/TextRenderComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "ActorComponents/SearchComponent.h"
+#include "ActorComponents/InventoryComponent.h"
 #include "TimerManager.h"
 
 // Sets default values
@@ -19,11 +21,65 @@ ADroneSpawner::ADroneSpawner()
 	PlatformMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PlatformMesh"));
 	PlatformMesh->SetupAttachment(PrinterMesh);
 
+	SearchComponent = CreateDefaultSubobject<USearchComponent>(TEXT("SearchComponent"));
+	SearchComponent->SetIsReplicated(true);
+
 	CountdownText = CreateDefaultSubobject<UTextRenderComponent>(TEXT("CountdownText"));
 	CountdownText->SetupAttachment(PrinterMesh);
 	CountdownText->SetText(FText::GetEmpty());
 	CountdownText->SetHorizontalAlignment(EHTA_Center);
 	CountdownText->SetVisibility(false);
+}
+
+void ADroneSpawner::Interact_Implementation(AActor* Interactor)
+{
+	if(SearchComponent)
+	{
+		SearchComponent->Interact(Interactor);
+	}
+}
+
+void ADroneSpawner::CancelInteract_Implementation(AActor* Interactor)
+{
+	if (SearchComponent)
+	{
+		SearchComponent->CancelInteract(Interactor);
+	}
+}
+
+void ADroneSpawner::SetHighlighted_Implementation(bool bHighlight)
+{
+	if (PrinterMesh && !SearchComponent->bSearched)
+	{
+		PrinterMesh->SetRenderCustomDepth(bHighlight);
+		PrinterMesh->CustomDepthStencilValue = bHighlight ? 1 : 0;
+	}
+}
+
+void ADroneSpawner::OnSearchComplete() 
+{
+	if (!RewardItem) return;
+
+	if (!HasAuthority()) return; // Ensure only server gives the item
+
+	// Null check for SearchComponent
+	if (!SearchComponent) {
+		return;
+	}
+
+	// Null check for LastInteractor
+	AActor* LastInteractor = SearchComponent->LastInteractor.Get();
+	if (!LastInteractor) {
+		return;
+	}
+
+	UInventoryComponent* Inventory = LastInteractor->FindComponentByClass<UInventoryComponent>();
+	if (!Inventory) {
+		return;
+	}
+
+	FGuid NewInstanceID = FGuid::NewGuid();
+	bool bAdded = Inventory->AddItem(RewardItem, NewInstanceID);
 }
 
 void ADroneSpawner::BeginPlay()
@@ -44,6 +100,11 @@ void ADroneSpawner::BeginPlay()
 			BindToDroneDeath(Drone);
 			SpawnedDrones.Add(Drone);
 		}
+	}
+
+	if (SearchComponent)
+	{
+		SearchComponent->OnSearchComplete.AddDynamic(this, &ADroneSpawner::OnSearchComplete);
 	}
 }
 
