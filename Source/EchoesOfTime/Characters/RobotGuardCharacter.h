@@ -4,8 +4,6 @@
 #include "Characters/GuardCharacter.h"
 #include "RobotGuardCharacter.generated.h"
 
-class ARepairableBase;
-
 UCLASS()
 class ECHOESOFTIME_API ARobotGuardCharacter : public AGuardCharacter
 {
@@ -14,29 +12,19 @@ class ECHOESOFTIME_API ARobotGuardCharacter : public AGuardCharacter
 public:
     ARobotGuardCharacter();
 
-    // Holds all pending repairs
     UPROPERTY(BlueprintReadWrite, EditAnywhere)
-    TArray<ARepairableBase*> RepairQueue;
-
-    // Holds the current actor being repaired (nullptr if idle)
+    TArray<AActor*> RepairQueue;
     UPROPERTY(BlueprintReadWrite)
-    ARepairableBase* CurrentRepairTarget = nullptr;
+    AActor* CurrentRepairTarget = nullptr;
 
     virtual void BeginPlay() override;
-
-    // Called to request robot repair a destroyed object (already bound by Repairable)
     UFUNCTION()
-    void OnRepairRequested(ARepairableBase* RepairableActor);
-
-    // Called at *end* of repair task from StateTree (via Event or direct call)
+    void OnRepairRequested(AActor* Repairable);
     UFUNCTION(BlueprintCallable)
     void OnRepairFinished();
-
-    // Starts the next repair if possible (can also be BlueprintCallable)
     UFUNCTION(BlueprintCallable)
     void TryStartNextRepair();
 
 protected:
-    // Helper to queue and start
-    void QueueRepair(ARepairableBase* RepairableActor);
+    void QueueRepair(AActor* Repairable);
 };

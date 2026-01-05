@@ -13,7 +13,7 @@
 #include "ActorComponents/DetectionComponent.h"
 #include "GameStates/DefaultGameState.h"
 #include "GameplayEffectTypes.h"
-#include "Actors/RepairableBase.h"
+#include "Interfaces/IRepairable.h"
 #include "Interfaces/IServerActionInterface.h"
 #include "Actors/Terminal.h"
 #include "GameFramework/Character.h"
@@ -127,10 +127,16 @@ void ADefaultPlayerController::BeginPlay()
     SetupOverlay();
 }
 
-void ADefaultPlayerController::HandleRepairETAStarted(ARepairableBase* Repairable, float Duration)
+void ADefaultPlayerController::HandleRepairETAStarted(AActor* Repairable, float Duration)
 {
     if (!Repairable || !CharacterHUD || !CharacterHUD->CharacterOverlay) return;
-    AActor* CompletionTarget = Repairable->CompletionTarget;
+
+    AActor* CompletionTarget = IRepairable::Execute_GetCompletionTarget(Repairable);
+
+    // fallback if null
+    if (!CompletionTarget)
+        CompletionTarget = Repairable;
+
     float EndTime = GetWorld()->GetTimeSeconds() + Duration;
     ActiveRepairCountdowns.Add(CompletionTarget, EndTime);
 

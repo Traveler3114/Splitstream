@@ -65,7 +65,7 @@ public:
     void OnMoneyCollectedChanged(int32 Current, int32 Target);
 
     UFUNCTION()
-    void HandleRepairETAStarted(class ARepairableBase* Repairable, float Duration);
+    void HandleRepairETAStarted(AActor* Repairable, float Duration);
 
 	UFUNCTION(Server, Reliable)
     void ServerExecuteAction(UObject* Target, const FServerActionPayload& Payload);

@@ -35,8 +35,6 @@ void ATerminal::Interact_Implementation(AActor* Interactor)
     {
         MiniGameInstance->OnMiniGameEnded.AddDynamic(this, &ATerminal::OnMiniGameEnded);
         MiniGameInstance->StartGame(PC);
-
-        // --- Store the interacting PC for delegate callback later ---
         LastInteractingPC = PC;
     }
 }
@@ -73,7 +71,7 @@ void ATerminal::HandleMiniGameEnded_Internal(bool bWasVictory)
         {
             IPuzzleCompletionReceiver::Execute_OnPuzzleCompleted(CompletionTarget);
         }
-        OnRequestRepair.Broadcast(this);
+        OnRepairRequested.Broadcast(this);
     }
     else
     {
@@ -113,7 +111,7 @@ void ATerminal::ExecuteServerAction_Implementation(const FServerActionPayload& P
     HandleMiniGameEnded_Internal(Payload.BoolValue);
 }
 
-void ATerminal::RequestRepair(AActor* RepairInstigator)
+void ATerminal::RequestRepair_Implementation(AActor* RepairInstigator)
 {
     bEnabled = true;
     if (CompletionTarget && CompletionTarget->GetClass()->ImplementsInterface(UPuzzleCompletionReceiver::StaticClass()))
@@ -125,6 +123,5 @@ void ATerminal::RequestRepair(AActor* RepairInstigator)
 void ATerminal::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
     DOREPLIFETIME(ATerminal, bEnabled);
 }

@@ -60,7 +60,8 @@ void AFuturePowerGenerator::HandlePastGeneratorCompleted(bool bPastSearched)
                 IPuzzleCompletionReceiver::Execute_OnPuzzleCompleted(CompletionTarget);
             }
             SetHighlighted_Implementation(false);
-            OnRequestRepair.Broadcast(this);
+            // Broadcast for repair, using CORRECT delegate
+            OnRepairRequested.Broadcast(this);
         }
         else // bPastSearched == false
         {
@@ -69,7 +70,6 @@ void AFuturePowerGenerator::HandlePastGeneratorCompleted(bool bPastSearched)
                 IPuzzleCompletionReceiver::Execute_OnPuzzleReset(CompletionTarget);
             }
         }
-
 
         APastPowerGenerator* Past = PastGenerator.IsValid() ? PastGenerator.Get() : nullptr;
         if (Past)
@@ -138,7 +138,7 @@ void AFuturePowerGenerator::ExecuteServerAction_Implementation(const FServerActi
     UE_LOG(LogTemp, Warning, TEXT("AFuturePowerGenerator::ExecuteServerAction_Implementation called! Payload.BoolValue=%s"),
         Payload.BoolValue ? TEXT("true") : TEXT("false"));
     bEnabled = Payload.BoolValue;
-	if (!bEnabled)
+    if (!bEnabled)
     {
         SetHighlighted_Implementation(false);
         // Fire puzzle completion / repair like Terminal
@@ -146,7 +146,7 @@ void AFuturePowerGenerator::ExecuteServerAction_Implementation(const FServerActi
         {
             IPuzzleCompletionReceiver::Execute_OnPuzzleCompleted(CompletionTarget);
         }
-        OnRequestRepair.Broadcast(this);
+        OnRepairRequested.Broadcast(this);
     }
     else
     {
@@ -200,7 +200,7 @@ void AFuturePowerGenerator::OnMiniGameEnded(bool bWasVictory)
             {
                 IPuzzleCompletionReceiver::Execute_OnPuzzleCompleted(CompletionTarget);
             }
-            OnRequestRepair.Broadcast(this);
+            OnRepairRequested.Broadcast(this);
         }
         else
         {
@@ -226,7 +226,7 @@ void AFuturePowerGenerator::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AFuturePowerGenerator, bEnabled);
-	DOREPLIFETIME(AFuturePowerGenerator, bFutureInteracted);
+    DOREPLIFETIME(AFuturePowerGenerator, bFutureInteracted);
     DOREPLIFETIME(AFuturePowerGenerator, bEasterEggActive);
 }
 
@@ -235,7 +235,7 @@ bool AFuturePowerGenerator::IsProgressiveInteract_Implementation()
     return false;
 }
 
-void AFuturePowerGenerator::RequestRepair(AActor* RepairInstigator)
+void AFuturePowerGenerator::RequestRepair_Implementation(AActor* RepairInstigator)
 {
     if (HasAuthority())
     {

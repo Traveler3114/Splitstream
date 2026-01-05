@@ -2,12 +2,17 @@
 #include "DefaultCharacter.h"
 #include "Components/SceneComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "AbilitySystem/AttributeSets/PlayerAttributeSet.h"
+#include "AbilitySystemComponent.h"
+#include "GameplayEffectTypes.h"
+#include "AIController.h"
+#include "Components/StateTreeComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/SpotLightComponent.h"
-#include "GameFramework/Pawn.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
 #include "Kismet/KismetSystemLibrary.h"
-#include "GameStates/DefaultGameState.h" 
+#include "GameStates/DefaultGameState.h"
 #include "Actors/PointActors/NavNode.h"
 #include "Net/UnrealNetwork.h"
 #include "AbilitySystemComponent.h"
@@ -31,10 +36,38 @@ ADronePawn::ADronePawn()
     DroneSpotLight->SetIntensity(5000.f);
     DroneSpotLight->SetLightColor(FLinearColor::Green);
     DroneSpotLight->AttenuationRadius = DetectionDistance;
-    DroneSpotLight->OuterConeAngle = ViewConeAngle * 0.5f; // Use half angle for SpotLight!
-    DroneSpotLight->InnerConeAngle = ViewConeAngle * 0.5f; // Make it a hard edge to help tune detection math
+    DroneSpotLight->OuterConeAngle = ViewConeAngle * 0.5f;
+    DroneSpotLight->InnerConeAngle = ViewConeAngle * 0.5f;
     DroneSpotLight->CastShadows = false;
     DroneSpotLight->SetVisibility(true);
+
+    AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+    AttributeSet = CreateDefaultSubobject<UPlayerAttributeSet>(TEXT("AttributeSet"));
+}
+
+void ADronePawn::StartStateTreeAtNode(ANavNode* Node)
+{
+    if (Node)
+    {
+        CurrentNode = Node;
+    }
+    AController* C = GetController();
+    if (!C)
+    {
+        C = GetWorld()->SpawnActor<AAIController>(AIControllerClass, GetActorLocation(), GetActorRotation());
+        if (C)
+        {
+            C->Possess(this);
+        }
+    }
+    if (C)
+    {
+        UStateTreeComponent* StateTreeComp = C->FindComponentByClass<UStateTreeComponent>();
+        if (StateTreeComp)
+        {
+            StateTreeComp->StartLogic();
+        }
+    }
 }
 
 void ADronePawn::OnConstruction(const FTransform& Transform)
@@ -48,20 +81,185 @@ void ADronePawn::OnConstruction(const FTransform& Transform)
     }
 }
 
+void ADronePawn::RequestRepair_Implementation(AActor* RepairInstigator)
+{
+    bIsDead = false;
+    if (DroneSpotLight)
+    {
+        DroneSpotLight->SetVisibility(true);
+    }
+    if (DroneMesh)
+    {
+        DroneMesh->SetSimulatePhysics(false);
+        DroneMesh->SetCollisionProfileName(TEXT("Pawn"));
+        DroneMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+        DroneMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+        DroneMesh->SetCanEverAffectNavigation(false);
+
+        // --- Start smooth mesh alignment ---
+        MeshAlignStartLocation = DroneMesh->GetRelativeLocation();
+        MeshAlignStartRotation = DroneMesh->GetRelativeRotation();
+        MeshAlignTargetLocation = FVector::ZeroVector;
+        MeshAlignTargetRotation = FRotator::ZeroRotator;
+        MeshAlignElapsed = 0.f;
+
+        // Start timer to interpolate mesh to root
+        GetWorld()->GetTimerManager().SetTimer(
+            MeshAlignTimerHandle, this, &ADronePawn::UpdateMeshAlignInterp, 0.02f, true
+        );
+    }
+    if (UCapsuleComponent* Capsule = FindComponentByClass<UCapsuleComponent>())
+    {
+        Capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+        Capsule->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+        Capsule->SetCanEverAffectNavigation(true);
+    }
+
+    // (Re)start AI StateTree logic as before...
+    AController* C = GetController();
+    if (!C)
+    {
+        C = GetWorld()->SpawnActor<AAIController>(AAIController::StaticClass(), GetActorLocation(), GetActorRotation());
+        if (C)
+        {
+            C->Possess(this);
+        }
+    }
+    if (C)
+    {
+        if (UStateTreeComponent* StateTreeComp = C->FindComponentByClass<UStateTreeComponent>())
+        {
+            StateTreeComp->StartLogic();
+        }
+    }
+    if (AbilitySystemComponent && AttributeSet)
+    {
+        AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute())
+            .AddUObject(this, &ADronePawn::OnHealthChanged);
+    }
+}
+
+void ADronePawn::UpdateMeshAlignInterp()
+{
+    MeshAlignElapsed += 0.02f;
+    float Alpha = FMath::Clamp(MeshAlignElapsed / MeshAlignDuration, 0.f, 1.f);
+
+    if (DroneMesh)
+    {
+        float S = FMath::SmoothStep(0.f, 1.f, Alpha);
+        FVector NewLoc = FMath::Lerp(MeshAlignStartLocation, MeshAlignTargetLocation, S);
+        FRotator NewRot = FMath::Lerp(MeshAlignStartRotation, MeshAlignTargetRotation, S);
+
+        DroneMesh->SetRelativeLocation(NewLoc);
+        DroneMesh->SetRelativeRotation(NewRot);
+    }
+
+    if (Alpha >= 1.f)
+    {
+        if (DroneMesh)
+        {
+            DroneMesh->SetRelativeLocation(MeshAlignTargetLocation);
+            DroneMesh->SetRelativeRotation(MeshAlignTargetRotation);
+            DroneMesh->ResetAllBodiesSimulatePhysics();
+            DroneMesh->RefreshBoneTransforms();
+            DroneMesh->UpdateComponentToWorld();
+        }
+        GetWorld()->GetTimerManager().ClearTimer(MeshAlignTimerHandle);
+    }
+}
+
+void ADronePawn::OnHealthChanged(const FOnAttributeChangeData& Data)
+{
+    if (Data.NewValue <= 0.f)
+    {
+        bIsDead = true;
+        // Stop StateTree logic when drone dies
+        AController* C = GetController();
+        if (C)
+        {
+            if (UStateTreeComponent* StateTreeComp = C->FindComponentByClass<UStateTreeComponent>())
+            {
+                StateTreeComp->StopLogic(TEXT("Drone died"));
+            }
+        }
+        if (DroneSpotLight)
+        {
+            DroneSpotLight->SetVisibility(false);
+        }
+
+        if (DroneMesh)
+        {
+            DroneMesh->SetCollisionProfileName(TEXT("Ragdoll"));
+            DroneMesh->SetSimulatePhysics(true);
+            DroneMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+            DroneMesh->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+
+            // For AI nav: remove pawn/blocking collision but keep sim.
+            DroneMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+            DroneMesh->SetCanEverAffectNavigation(false);
+        }
+
+        // --- Put root/capsule on nav floor so robots navigate to root, not mesh
+        FVector Start = GetActorLocation();
+        FVector End = Start - FVector(0, 0, 2000);
+        FHitResult Hit;
+        FCollisionQueryParams Params;
+        Params.AddIgnoredActor(this);
+        bool bHit = GetWorld()->LineTraceSingleByChannel(
+            Hit, Start, End, ECC_Visibility, Params);
+        if (bHit)
+        {
+            SetActorLocation(Hit.Location);
+            FRotator MyRot = GetActorRotation();
+            SetActorRotation(FRotator(0.f, MyRot.Yaw, 0.f));
+        }
+
+        // Critically: keep capsule/root collision enabled for nav!
+        if (UCapsuleComponent* Capsule = FindComponentByClass<UCapsuleComponent>())
+        {
+            Capsule->SetCollisionEnabled(ECollisionEnabled::QueryOnly); // or QueryAndPhysics if needed
+            Capsule->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+            Capsule->SetCanEverAffectNavigation(true);
+        }
+
+        if (AbilitySystemComponent && AttributeSet)
+        {
+            AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute())
+                .RemoveAll(this);
+        }
+        OnRepairRequested.Broadcast(this);
+        OnDroneDeath.Broadcast(this);
+    }
+}
+
 void ADronePawn::BeginPlay()
 {
     Super::BeginPlay();
     GetWorldTimerManager().SetTimer(DetectionTimerHandle, this, &ADronePawn::DetectionUpdate, DetectionInterval, true);
     OnRep_DetectedActor();
+    AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute())
+        .AddUObject(this, &ADronePawn::OnHealthChanged);
+    if (HasAuthority() && AttributeInitGE)
+    {
+        if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+        {
+            FGameplayEffectContextHandle EffectContext = ASC->MakeEffectContext();
+            FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(AttributeInitGE, 1, EffectContext);
+            if (SpecHandle.IsValid())
+            {
+                ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+            }
+        }
+    }
 }
 
 void ADronePawn::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     GetWorldTimerManager().ClearTimer(DetectionTimerHandle);
+    GetWorldTimerManager().ClearTimer(MeshAlignTimerHandle);
     Super::EndPlay(EndPlayReason);
 }
 
-// Helper: Find if any bounds point is in cone
 static bool IsBoundsPointInCone(
     FVector BoundsPoint, FVector ConeOrigin, FVector ConeForward,
     float ConeLength, float ConeHalfAngleDeg)
@@ -78,7 +276,8 @@ static bool IsBoundsPointInCone(
 
 void ADronePawn::DetectionUpdate()
 {
-    // If we've already detected someone, stay detected—no more detection checks
+    if (bIsDead)
+        return;
     if (DetectedActor)
         return;
 
@@ -99,7 +298,6 @@ void ADronePawn::DetectionUpdate()
         OverlappedActors
     );
 
-    // Find closest DefaultCharacter with any bounds inside cone
     float ClosestDist = DetectionDistance + 1.f;
     ADefaultCharacter* NewlyDetected = nullptr;
     for (AActor* Candidate : OverlappedActors)
@@ -115,11 +313,11 @@ void ADronePawn::DetectionUpdate()
             continue;
 
         UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(DefaultChar->GetRootComponent());
-        FBox Bounds = PrimComp ? PrimComp->Bounds.GetBox() : FBox::BuildAABB(DefaultChar->GetActorLocation(), FVector(0,0,0));
+        FBox Bounds = PrimComp ? PrimComp->Bounds.GetBox() : FBox::BuildAABB(DefaultChar->GetActorLocation(), FVector(0, 0, 0));
         TArray<FVector> TestPoints;
         TestPoints.Add(Bounds.GetCenter());
         TestPoints.Add(Bounds.Min); TestPoints.Add(Bounds.Max);
-        TestPoints.Add(FVector(Bounds.Min.X, Bounds.Min.Y, Bounds.Max.Z)); // 6 corners
+        TestPoints.Add(FVector(Bounds.Min.X, Bounds.Min.Y, Bounds.Max.Z));
         TestPoints.Add(FVector(Bounds.Min.X, Bounds.Max.Y, Bounds.Min.Z));
         TestPoints.Add(FVector(Bounds.Max.X, Bounds.Min.Y, Bounds.Min.Z));
         TestPoints.Add(FVector(Bounds.Min.X, Bounds.Max.Y, Bounds.Max.Z));
@@ -132,7 +330,6 @@ void ADronePawn::DetectionUpdate()
         {
             if (IsBoundsPointInCone(Point, DroneLocation, Forward, DetectionDistance, ViewConeAngle * 0.5f))
             {
-                // Optional: line-of-sight check
                 FHitResult Hit;
                 FCollisionQueryParams Params;
                 Params.AddIgnoredActor(this);
@@ -141,7 +338,7 @@ void ADronePawn::DetectionUpdate()
                     Hit, DroneLocation, Point, ECC_Visibility, Params
                 );
                 if (bHit && Hit.GetActor() != DefaultChar)
-                    continue; // blocked
+                    continue;
 
                 bDetected = true;
                 float Dist = (Point - DroneLocation).Size();
@@ -155,7 +352,6 @@ void ADronePawn::DetectionUpdate()
         }
     }
 
-    // Only set DetectedActor ONCE!
     if (NewlyDetected)
     {
         DetectedActor = NewlyDetected;
@@ -164,10 +360,8 @@ void ADronePawn::DetectionUpdate()
         {
             if (ADefaultGameState* GS = Cast<ADefaultGameState>(GetWorld()->GetGameState()))
             {
-                // You may or may not want PreAlarm or direct Alarm:
-                // GS->StartPreAlarm(this, 3.0f); // if you want a delay/timer
-                GS->CancelPreAlarm(this); // Guards usually do this if needed
-                GS->StartAlarm(this);     // Directly trigger alarm
+                GS->CancelPreAlarm(this);
+                GS->StartAlarm(this);
             }
         }
     }
@@ -178,9 +372,9 @@ void ADronePawn::OnRep_DetectedActor()
     if (DroneSpotLight)
     {
         if (DetectedActor)
-            DroneSpotLight->SetLightColor(FLinearColor::Red);   // Detected - red
+            DroneSpotLight->SetLightColor(FLinearColor::Red);
         else
-            DroneSpotLight->SetLightColor(FLinearColor::Green); // Not detected (should never run after first detection)
+            DroneSpotLight->SetLightColor(FLinearColor::Green);
     }
 }
 
