@@ -18,11 +18,20 @@ public:
 	AGarageDoor();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UStaticMeshComponent* GarageMesh;
+	UStaticMeshComponent* GarageBase;
+
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UStaticMeshComponent* GarageDoor;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
 	ETimelineEra TimelineEra = ETimelineEra::Past;
 
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Door")
+	void OpenDoor();
+
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Door")
+	void CloseDoor();
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
