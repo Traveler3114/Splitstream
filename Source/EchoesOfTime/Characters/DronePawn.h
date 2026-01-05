@@ -38,9 +38,6 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "Repair")
     FOnRepairRequested OnRepairRequested;
 
-    UPROPERTY(BlueprintReadWrite, EditAnywhere)
-    bool bCanMove;
-
 protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -90,6 +87,7 @@ protected:
     FVector MeshAlignTargetLocation;
     FRotator MeshAlignTargetRotation;
     float MeshAlignElapsed = 0.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drone|Visual")
     float MeshAlignDuration = 0.5f; // Blend duration in seconds (tweak as desired)
     UFUNCTION()
     void UpdateMeshAlignInterp();
