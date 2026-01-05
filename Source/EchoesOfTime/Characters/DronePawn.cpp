@@ -45,6 +45,59 @@ ADronePawn::ADronePawn()
     AttributeSet = CreateDefaultSubobject<UPlayerAttributeSet>(TEXT("AttributeSet"));
 }
 
+void ADronePawn::ActivateDrone(ANavNode* Node)
+{
+    //SetActorEnableCollision(true);
+    if (DroneSpotLight) DroneSpotLight->SetVisibility(true);
+
+    // Prepare to lerp from current location up
+    PendingLaunchNode = Node;
+    LaunchStartLocation = GetActorLocation();
+    LaunchTargetLocation = LaunchStartLocation + FVector(0, 0, LaunchUpDistance);
+    LaunchAnimTimeElapsed = 0.f;
+
+    // Start timer to lerp upward
+    GetWorld()->GetTimerManager().SetTimer(
+        LaunchMoveTimerHandle,
+        this,
+        &ADronePawn::MoveUpForLaunch,
+        0.02f,
+        true
+    );
+}
+
+// Called every tick while launching upward
+void ADronePawn::MoveUpForLaunch()
+{
+    LaunchAnimTimeElapsed += 0.02f;
+    float Alpha = FMath::Clamp(LaunchAnimTimeElapsed / LaunchUpDuration, 0.f, 1.f);
+    float S = FMath::SmoothStep(0.f, 1.f, Alpha);
+
+    FVector NewLoc = FMath::Lerp(LaunchStartLocation, LaunchTargetLocation, S);
+    SetActorLocation(NewLoc);
+
+    if (Alpha >= 1.f)
+    {
+        // End timer
+        GetWorld()->GetTimerManager().ClearTimer(LaunchMoveTimerHandle);
+
+        // Now start AI logic at node, if provided
+        if (PendingLaunchNode)
+        {
+            StartStateTreeAtNode(PendingLaunchNode);
+            PendingLaunchNode = nullptr;
+        }
+    }
+}
+
+void ADronePawn::DeactivateDrone()
+{
+    // Disable logic/tick/collision
+    //SetActorEnableCollision(false);
+    if (DroneSpotLight) DroneSpotLight->SetVisibility(false);
+
+}
+
 void ADronePawn::StartStateTreeAtNode(ANavNode* Node)
 {
     if (Node)

@@ -1,3 +1,4 @@
+// DroneSpawner.h
 #pragma once
 
 #include "CoreMinimal.h"
@@ -17,56 +18,66 @@ public:
 	ADroneSpawner();
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
-	ETimelineEra TimelineEra = ETimelineEra::Past;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
-	TSubclassOf<ADronePawn> DroneClass;
-
 	virtual void BeginPlay() override;
 
-	// Handle when a drone dies
-	UFUNCTION()
-	void HandleDroneDeath(ADronePawn* DeadDrone);
-
-	// Helper to bind delegate
-	void BindToDroneDeath(ADronePawn* Drone);
-
-	// Spawns a new drone
-	void SpawnDrone();
-
-	// Store spawned drones for later tracking if needed
-	UPROPERTY()
-	TArray<ADronePawn*> SpawnedDrones;
-
+	// Components
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone")
 	UStaticMeshComponent* PrinterMesh;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone")
 	UStaticMeshComponent* PlatformMesh;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone")
-	UStaticMeshComponent* OpeningMesh;
-
 	UPROPERTY(VisibleAnywhere)
 	UTextRenderComponent* CountdownText;
 
-	// Time between death and respawn, configurable in editor
+	// Config
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
+	ETimelineEra TimelineEra = ETimelineEra::Past;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
+	TSubclassOf<ADronePawn> DroneClass;
+
 	UPROPERTY(EditAnywhere, Category = "Spawning")
 	float RespawnDelay = 5.0f;
 
-	// Time left until spawn
+	UPROPERTY(EditAnywhere, Category = "Spawning")
+	float PlatformRiseOffset = 85.f;
+
+	// State
+	UPROPERTY()
+	TArray<ADronePawn*> SpawnedDrones;
+
+	UPROPERTY()
+	ADronePawn* PendingDrone = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "Spawning")
+	FVector DroneSpawnOffset = FVector(0.f, -10.f, 5.f);
+
 	float RespawnTimeLeft = 0.0f;
+	float PlatformStartZ;
+	float TimerAnimElapsed = 0.0f;      // For up
+	float PlatformDownAnimElapsed = 0.f; // For down
 
-	// Timer to trigger respawn
+	bool bIsPlatformReverse = false; // false = up, true = down
+
 	FTimerHandle RespawnTimerHandle;
-
-	// Timer to update the text every second
 	FTimerHandle TextUpdateTimerHandle;
+	FTimerHandle PlatformAnimTimerHandle;
 
-	// Called repeatedly to update countdown text
+	// Spawning and animation
+	UFUNCTION()
+	void HandleDroneDeath(ADronePawn* DeadDrone);
+
+	void BindToDroneDeath(ADronePawn* Drone);
+
+	void ActivatePendingDrone();
+
 	void UpdateCountdownText();
+	void TickPlatformAnim();
 
-	// Called after RespawnDelay to actually spawn the drone
+	// Called after RespawnDelay
 	void OnRespawnTimerFinished();
+
+	// For safety, resets
+	void ResetPlatform();
 };

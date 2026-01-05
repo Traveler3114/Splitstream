@@ -20,7 +20,11 @@ class ECHOESOFTIME_API ADronePawn : public APawn, public IAbilitySystemInterface
 public:
     ADronePawn();
     virtual void OnConstruction(const FTransform& Transform) override;
+    UFUNCTION(BlueprintCallable)
+    void ActivateDrone(ANavNode* Node);
 
+    UFUNCTION(BlueprintCallable)
+    void DeactivateDrone();
     // IAbilitySystemInterface
     virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
 
@@ -86,6 +90,23 @@ protected:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone|Visual")
     USpotLightComponent* DroneSpotLight;
+
+
+    FTimerHandle LaunchMoveTimerHandle;
+    FVector LaunchStartLocation;
+    FVector LaunchTargetLocation;
+    float LaunchAnimTimeElapsed = 0.f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drone|Launch")
+    float LaunchUpDistance = 60.f; // How far up the drone flies after activation
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drone|Launch")
+    float LaunchUpDuration = 1.2f; // Seconds for the lerp up before logic starts
+
+    ANavNode* PendingLaunchNode = nullptr; // Store node to use after move up
+
+    UFUNCTION()
+    void MoveUpForLaunch();
 
     // --- Smooth mesh alignment ---
     FTimerHandle MeshAlignTimerHandle;
