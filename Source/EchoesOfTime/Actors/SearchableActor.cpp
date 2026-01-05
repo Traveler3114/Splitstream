@@ -100,6 +100,7 @@ void ASearchableActor::OnSearchComplete()
     RewardItem->OwnerCivilian = LinkedCivilian;
     FGuid NewInstanceID = FGuid::NewGuid();
     bool bAdded = Inventory->AddItem(RewardItem, NewInstanceID);
+    SetHighlighted_Implementation(false);
 }
 
 

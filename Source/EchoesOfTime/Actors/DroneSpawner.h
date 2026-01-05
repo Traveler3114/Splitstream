@@ -1,4 +1,3 @@
-// DroneSpawner.h
 #pragma once
 
 #include "CoreMinimal.h"
@@ -24,20 +23,31 @@ public:
 	virtual void CancelInteract_Implementation(AActor* Interactor) override;
 	virtual void SetHighlighted_Implementation(bool bHighlight) override;
 	virtual bool IsProgressiveInteract_Implementation() override { return true; }
+	UFUNCTION()
 	void OnSearchComplete();
 
-	//virtual void RequestRepair_Implementation(AActor* RepairInstigator) override;
-	
+	// IRepairable interface required overrides
+	virtual void RequestRepair_Implementation(AActor* RepairInstigator) override;
+	virtual float GetRepairTime_Implementation() const override { return RepairTime; }
+	virtual ETimelineEra GetTimelineEra_Implementation() const override { return TimelineEra; }
+	virtual AActor* GetCompletionTarget_Implementation() const override { return const_cast<ADroneSpawner*>(this); }
+	virtual FOnRepairRequested& GetOnRepairRequested() override { return OnRepairRequested; }
+
+	UPROPERTY(BlueprintAssignable, Category = "Repair")
+	FOnRepairRequested OnRepairRequested;
 
 protected:
 	virtual void BeginPlay() override;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Repair")
+	float RepairTime = 5.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Proximity Hack|Reward")
 	UItemBase* RewardItem = nullptr;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone")
 	class USearchComponent* SearchComponent;
-	// Components
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone")
 	UStaticMeshComponent* PrinterMesh;
 
@@ -47,7 +57,6 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	UTextRenderComponent* CountdownText;
 
-	// Config
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
 	ETimelineEra TimelineEra = ETimelineEra::Past;
 
@@ -60,7 +69,6 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Spawning")
 	float PlatformRiseOffset = 85.f;
 
-	// State
 	UPROPERTY()
 	TArray<ADronePawn*> SpawnedDrones;
 
@@ -71,15 +79,21 @@ protected:
 	FVector DroneSpawnOffset = FVector(0.f, -10.f, 5.f);
 
 	float RespawnTimeLeft = 0.0f;
-	float PlatformStartZ;
-	float TimerAnimElapsed = 0.0f;      // For up
-	float PlatformDownAnimElapsed = 0.f; // For down
+	float PlatformStartZ = 0.0f;
+	float TimerAnimElapsed = 0.0f;
+	float PlatformDownAnimElapsed = 0.f;
 
-	bool bIsPlatformReverse = false; // false = up, true = down
+	bool bIsPlatformReverse = false;
 
 	FTimerHandle RespawnTimerHandle;
 	FTimerHandle TextUpdateTimerHandle;
 	FTimerHandle PlatformAnimTimerHandle;
+
+	//** NEW: PAUSE/RESUME STATE
+	bool bPausedFromSearchOrDestroy = false;
+	float PausedRespawnTimeLeft = 0.0f;
+	float PausedTimerAnimElapsed = 0.0f;
+	float PausedPlatformDownAnimElapsed = 0.0f;
 
 	// Spawning and animation
 	UFUNCTION()
@@ -89,12 +103,18 @@ protected:
 
 	void ActivatePendingDrone();
 
+	UFUNCTION()
 	void UpdateCountdownText();
+
+	UFUNCTION()
 	void TickPlatformAnim();
 
-	// Called after RespawnDelay
+	UFUNCTION()
 	void OnRespawnTimerFinished();
 
-	// For safety, resets
 	void ResetPlatform();
+
+	//** NEW: Pause/resume helpers
+	void PauseAllTimers();
+	void ResumeAllTimers();
 };

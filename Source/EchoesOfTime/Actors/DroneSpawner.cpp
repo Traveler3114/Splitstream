@@ -1,4 +1,3 @@
-// DroneSpawner.cpp
 #include "DroneSpawner.h"
 #include "Characters/DronePawn.h"
 #include "Kismet/GameplayStatics.h"
@@ -9,12 +8,10 @@
 #include "ActorComponents/InventoryComponent.h"
 #include "TimerManager.h"
 
-// Sets default values
 ADroneSpawner::ADroneSpawner()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
-	// Make PrinterMesh the root
 	PrinterMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PrinterMesh"));
 	RootComponent = PrinterMesh;
 
@@ -31,11 +28,29 @@ ADroneSpawner::ADroneSpawner()
 	CountdownText->SetVisibility(false);
 }
 
+void ADroneSpawner::RequestRepair_Implementation(AActor* RepairInstigator)
+{
+	// Un-destroy/unsearch and resume timers
+	if (SearchComponent)
+	{
+		SearchComponent->bSearched = false;
+	}
+	if (bPausedFromSearchOrDestroy)
+	{
+		ResumeAllTimers();
+	}
+}
+
 void ADroneSpawner::Interact_Implementation(AActor* Interactor)
 {
-	if(SearchComponent)
+	if (SearchComponent)
 	{
 		SearchComponent->Interact(Interactor);
+	}
+	// If bSearched became true, PAUSE timers (don't reset)
+	if (SearchComponent && SearchComponent->bSearched)
+	{
+		PauseAllTimers();
 	}
 }
 
@@ -45,41 +60,54 @@ void ADroneSpawner::CancelInteract_Implementation(AActor* Interactor)
 	{
 		SearchComponent->CancelInteract(Interactor);
 	}
+	// If bSearched became true, PAUSE timers
+	if (SearchComponent && SearchComponent->bSearched)
+	{
+		PauseAllTimers();
+	}
 }
 
 void ADroneSpawner::SetHighlighted_Implementation(bool bHighlight)
 {
-	if (PrinterMesh && !SearchComponent->bSearched)
+	if (PrinterMesh && SearchComponent)
 	{
-		PrinterMesh->SetRenderCustomDepth(bHighlight);
-		PrinterMesh->CustomDepthStencilValue = bHighlight ? 1 : 0;
+		if (SearchComponent->bSearched)
+		{
+			PrinterMesh->SetRenderCustomDepth(false);
+			PrinterMesh->CustomDepthStencilValue = 0;
+			PauseAllTimers();
+		}
+		else
+		{
+			PrinterMesh->SetRenderCustomDepth(bHighlight);
+			PrinterMesh->CustomDepthStencilValue = bHighlight ? 1 : 0;
+			ResumeAllTimers();
+		}
 	}
 }
 
-void ADroneSpawner::OnSearchComplete() 
+void ADroneSpawner::OnSearchComplete()
 {
 	if (!RewardItem) return;
+	if (!HasAuthority()) return;
 
-	if (!HasAuthority()) return; // Ensure only server gives the item
+	if (!SearchComponent) return;
 
-	// Null check for SearchComponent
-	if (!SearchComponent) {
-		return;
-	}
-
-	// Null check for LastInteractor
 	AActor* LastInteractor = SearchComponent->LastInteractor.Get();
-	if (!LastInteractor) {
-		return;
-	}
+	if (!LastInteractor) return;
 
 	UInventoryComponent* Inventory = LastInteractor->FindComponentByClass<UInventoryComponent>();
-	if (!Inventory) {
-		return;
-	}
+	if (!Inventory) return;
 
 	FGuid NewInstanceID = FGuid::NewGuid();
 	bool bAdded = Inventory->AddItem(RewardItem, NewInstanceID);
+
+	OnRepairRequested.Broadcast(this);
+
+	// Set highlight off and pause timers if searched
+	SetHighlighted_Implementation(false);
+
+	PauseAllTimers();
 }
 
 void ADroneSpawner::BeginPlay()
@@ -89,7 +117,6 @@ void ADroneSpawner::BeginPlay()
 	if (PlatformMesh)
 		PlatformStartZ = PlatformMesh->GetRelativeLocation().Z;
 
-	// Optionally, catch already existing drones at runtime
 	TArray<AActor*> FoundDrones;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADronePawn::StaticClass(), FoundDrones);
 	for (AActor* Actor : FoundDrones)
@@ -121,19 +148,16 @@ void ADroneSpawner::HandleDroneDeath(ADronePawn* DeadDrone)
 {
 	SpawnedDrones.Remove(DeadDrone);
 
-	// Start respawn timer
 	RespawnTimeLeft = RespawnDelay;
 	TimerAnimElapsed = 0.f;
-	bIsPlatformReverse = false; // Rising up
+	bIsPlatformReverse = false;
 
-	// Only one pending drone at once
 	if (PendingDrone)
 	{
 		PendingDrone->Destroy();
 		PendingDrone = nullptr;
 	}
 
-	// Spawn PendingDrone as INACTIVE, on platform
 	if (DroneClass && PlatformMesh)
 	{
 		FVector SpawnLoc = PlatformMesh->GetComponentLocation() + DroneSpawnOffset;
@@ -149,14 +173,12 @@ void ADroneSpawner::HandleDroneDeath(ADronePawn* DeadDrone)
 		}
 	}
 
-	// Show countdown
 	if (CountdownText)
 	{
 		CountdownText->SetText(FText::Format(NSLOCTEXT("DroneSpawner", "RespawnIn", "Spawning Drone in {0}"), FText::AsNumber((int32)RespawnTimeLeft)));
 		CountdownText->SetVisibility(true);
 	}
 
-	// Start timers: platform up anim, text, countdown
 	GetWorldTimerManager().SetTimer(RespawnTimerHandle, this, &ADroneSpawner::OnRespawnTimerFinished, RespawnDelay, false);
 	GetWorldTimerManager().SetTimer(TextUpdateTimerHandle, this, &ADroneSpawner::UpdateCountdownText, 1.0f, true);
 	GetWorldTimerManager().SetTimer(PlatformAnimTimerHandle, this, &ADroneSpawner::TickPlatformAnim, 0.02f, true);
@@ -168,9 +190,7 @@ void ADroneSpawner::UpdateCountdownText()
 	if (RespawnTimeLeft > 0)
 	{
 		if (CountdownText)
-		{
 			CountdownText->SetText(FText::AsNumber((int32)RespawnTimeLeft));
-		}
 	}
 	else
 	{
@@ -187,7 +207,6 @@ void ADroneSpawner::TickPlatformAnim()
 		float Alpha = FMath::Clamp(TimerAnimElapsed / RespawnDelay, 0.f, 1.f);
 		float S = FMath::SmoothStep(0.f, 1.f, Alpha);
 
-		// Move platform up
 		if (PlatformMesh)
 		{
 			FVector RelLoc = PlatformMesh->GetRelativeLocation();
@@ -195,24 +214,17 @@ void ADroneSpawner::TickPlatformAnim()
 			PlatformMesh->SetRelativeLocation(RelLoc);
 		}
 
-		// Move pending drone with platform
 		if (PendingDrone && PlatformMesh)
 		{
 			FVector PlatLoc = PlatformMesh->GetComponentLocation() + DroneSpawnOffset;
 			PendingDrone->SetActorLocation(PlatLoc);
 		}
-
-		if (Alpha >= 1.f)
-		{
-			// Don't clear timer here; let it keep ticking until reverse is done.
-			// Timer will be reversed after ActivatePendingDrone is called!
-		}
 	}
-	else // Going down
+	else
 	{
 		PlatformDownAnimElapsed += TickInterval;
 		float Alpha = FMath::Clamp(PlatformDownAnimElapsed / RespawnDelay, 0.f, 1.f);
-		float S = 1.f - FMath::SmoothStep(0.f, 1.f, Alpha); // invert
+		float S = 1.f - FMath::SmoothStep(0.f, 1.f, Alpha);
 
 		if (PlatformMesh)
 		{
@@ -223,7 +235,6 @@ void ADroneSpawner::TickPlatformAnim()
 
 		if (Alpha >= 1.f)
 		{
-			// Fully down, stop anim and snap to original just to be exact
 			ResetPlatform();
 			GetWorldTimerManager().ClearTimer(PlatformAnimTimerHandle);
 		}
@@ -232,27 +243,21 @@ void ADroneSpawner::TickPlatformAnim()
 
 void ADroneSpawner::OnRespawnTimerFinished()
 {
-	// Stop platform going up (it will reverse in ActivatePendingDrone)
 	GetWorldTimerManager().ClearTimer(RespawnTimerHandle);
 	GetWorldTimerManager().ClearTimer(TextUpdateTimerHandle);
 
-	// Hide the countdown text
 	if (CountdownText)
 		CountdownText->SetVisibility(false);
 
 	RespawnTimeLeft = 0.0f;
 
-	// Activate the drone and start moving platform down
 	ActivatePendingDrone();
 }
 
 void ADroneSpawner::ActivatePendingDrone()
 {
-	// Activate real spawned drone.
 	if (PendingDrone)
 	{
-
-		// Usual navigation assignment
 		TArray<AActor*> FoundNodes;
 		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ANavNode::StaticClass(), FoundNodes);
 
@@ -286,18 +291,55 @@ void ADroneSpawner::ActivatePendingDrone()
 	GetWorldTimerManager().SetTimer(PlatformAnimTimerHandle, this, &ADroneSpawner::TickPlatformAnim, 0.02f, true);
 }
 
-
 void ADroneSpawner::ResetPlatform()
 {
-	// Reset platform Z
 	if (PlatformMesh)
 	{
 		FVector RelLoc = PlatformMesh->GetRelativeLocation();
 		RelLoc.Z = PlatformStartZ;
 		PlatformMesh->SetRelativeLocation(RelLoc);
 	}
-	// Ready for the next cycle
 	bIsPlatformReverse = false;
 	TimerAnimElapsed = 0.f;
 	PlatformDownAnimElapsed = 0.f;
+}
+
+// ----------- PAUSE/RESUME LOGIC ----------------------
+
+void ADroneSpawner::PauseAllTimers()
+{
+	if (bPausedFromSearchOrDestroy) return; // Already paused
+
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	// Store all remaining/progress state
+	bPausedFromSearchOrDestroy = true;
+	PausedRespawnTimeLeft = RespawnTimeLeft;
+	PausedTimerAnimElapsed = TimerAnimElapsed;
+	PausedPlatformDownAnimElapsed = PlatformDownAnimElapsed;
+
+	World->GetTimerManager().PauseTimer(RespawnTimerHandle);
+	World->GetTimerManager().PauseTimer(TextUpdateTimerHandle);
+	World->GetTimerManager().PauseTimer(PlatformAnimTimerHandle);
+}
+
+void ADroneSpawner::ResumeAllTimers()
+{
+	if (!bPausedFromSearchOrDestroy) return; // Not paused
+
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	// Resume all timers from their paused state
+	bPausedFromSearchOrDestroy = false;
+
+	World->GetTimerManager().UnPauseTimer(RespawnTimerHandle);
+	World->GetTimerManager().UnPauseTimer(TextUpdateTimerHandle);
+	World->GetTimerManager().UnPauseTimer(PlatformAnimTimerHandle);
+
+	// Restore the time values for internal logic
+	RespawnTimeLeft = PausedRespawnTimeLeft;
+	TimerAnimElapsed = PausedTimerAnimElapsed;
+	PlatformDownAnimElapsed = PausedPlatformDownAnimElapsed;
 }
