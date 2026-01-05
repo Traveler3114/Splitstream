@@ -9,6 +9,8 @@
 #include "Interfaces/IRepairable.h"
 #include "DronePawn.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDroneDeath, ADronePawn*, DeadDrone);
+
 class UPlayerAttributeSet;
 
 UCLASS()
@@ -37,6 +39,9 @@ public:
 
     UPROPERTY(BlueprintAssignable, Category = "Repair")
     FOnRepairRequested OnRepairRequested;
+
+    UPROPERTY(BlueprintAssignable, Category = "Death")
+    FOnDroneDeath OnDroneDeath;
 
 protected:
     virtual void BeginPlay() override;

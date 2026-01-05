@@ -203,6 +203,7 @@ void ADronePawn::OnHealthChanged(const FOnAttributeChangeData& Data)
                 .RemoveAll(this);
         }
         OnRepairRequested.Broadcast(this);
+        OnDroneDeath.Broadcast(this);
     }
 }
 
