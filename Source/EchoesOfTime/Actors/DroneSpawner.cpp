@@ -1,6 +1,7 @@
 #include "DroneSpawner.h"
 #include "Characters/DronePawn.h"
 #include "Kismet/GameplayStatics.h"
+#include "Actors/PointActors/NavNode.h"
 #include "Components/TextRenderComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "TimerManager.h"
@@ -103,15 +104,39 @@ void ADroneSpawner::OnRespawnTimerFinished()
 
 void ADroneSpawner::SpawnDrone()
 {
-	FVector SpawnLocation = GetActorLocation();
-	FRotator SpawnRotation = GetActorRotation();
-
+	FVector TempSpawnLocation = GetActorLocation();
+	FRotator TempSpawnRotation = GetActorRotation();
 	FActorSpawnParameters SpawnParams;
-	ADronePawn* NewDrone = GetWorld()->SpawnActor<ADronePawn>(ADronePawn::StaticClass(), SpawnLocation, SpawnRotation, SpawnParams);
+	ADronePawn* NewDrone = GetWorld()->SpawnActor<ADronePawn>(DroneClass, TempSpawnLocation, TempSpawnRotation, SpawnParams);
+	NewDrone->TimelineEra = TimelineEra;
 
-	if (NewDrone)
+	if (!NewDrone)
+		return;
+
+	TArray<AActor*> FoundNodes;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ANavNode::StaticClass(), FoundNodes);
+
+	TArray<ANavNode*> MatchingNodes;
+
+	for (AActor* Actor : FoundNodes)
 	{
-		BindToDroneDeath(NewDrone);
-		SpawnedDrones.Add(NewDrone);
+		ANavNode* Node = Cast<ANavNode>(Actor);
+		if (Node && Node->TimelineEra == NewDrone->TimelineEra && Node->NodeType == ENavNodeType::Sky)
+		{
+			MatchingNodes.Add(Node);
+		}
+	}
+
+	BindToDroneDeath(NewDrone);
+	SpawnedDrones.Add(NewDrone);
+
+	if (MatchingNodes.Num() > 0)
+	{
+		ANavNode* SpawnNode = MatchingNodes[FMath::RandHelper(MatchingNodes.Num())];
+		NewDrone->StartStateTreeAtNode(SpawnNode);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No NavNodes found for TimelineEra and NodeType that matches the drone! Drone will remain at spawn location."));
 	}
 }

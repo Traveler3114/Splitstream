@@ -30,6 +30,8 @@ public:
     virtual ETimelineEra GetTimelineEra_Implementation() const override { return TimelineEra; }
     virtual AActor* GetCompletionTarget_Implementation() const override { return const_cast<ADronePawn*>(this); }
     virtual FOnRepairRequested& GetOnRepairRequested() override { return OnRepairRequested; }
+    UFUNCTION(BlueprintCallable, Category = "AI")
+    void StartStateTreeAtNode(class ANavNode* Node);
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
     ETimelineEra TimelineEra = ETimelineEra::Past;
@@ -111,7 +113,7 @@ protected:
     bool bOnlyStayOnMarkedNodes = true;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Nodes")
-    class ANavNode* CurrentNode = nullptr;
+    ANavNode* CurrentNode = nullptr;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Nodes")
     ANavNode* PreviousNode = nullptr;

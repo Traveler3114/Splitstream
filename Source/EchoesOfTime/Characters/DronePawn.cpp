@@ -45,6 +45,31 @@ ADronePawn::ADronePawn()
     AttributeSet = CreateDefaultSubobject<UPlayerAttributeSet>(TEXT("AttributeSet"));
 }
 
+void ADronePawn::StartStateTreeAtNode(ANavNode* Node)
+{
+    if (Node)
+    {
+        CurrentNode = Node;
+    }
+    AController* C = GetController();
+    if (!C)
+    {
+        C = GetWorld()->SpawnActor<AAIController>(AIControllerClass, GetActorLocation(), GetActorRotation());
+        if (C)
+        {
+            C->Possess(this);
+        }
+    }
+    if (C)
+    {
+        UStateTreeComponent* StateTreeComp = C->FindComponentByClass<UStateTreeComponent>();
+        if (StateTreeComp)
+        {
+            StateTreeComp->StartLogic();
+        }
+    }
+}
+
 void ADronePawn::OnConstruction(const FTransform& Transform)
 {
     Super::OnConstruction(Transform);

@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "TimelineEra.h"
 #include "DroneSpawner.generated.h"
 
 class UTextRenderComponent;
@@ -16,6 +17,12 @@ public:
 	ADroneSpawner();
 
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
+	ETimelineEra TimelineEra = ETimelineEra::Past;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
+	TSubclassOf<ADronePawn> DroneClass;
+
 	virtual void BeginPlay() override;
 
 	// Handle when a drone dies
