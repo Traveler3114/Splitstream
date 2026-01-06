@@ -6,6 +6,7 @@
 #include "Actors/Computers/Computer.h"
 #include "Actors/KeypadScanner/KeypadScanner.h"
 #include "Actors/NewspaperActor.h"
+#include "Actors/PointActors/RefPointActor.h"
 #include "Actors/PointActors/RandomPointActor.h"
 #include "Actors/PointActors/SearchableItemSpawnPoint.h"
 #include "Actors/SearchableActor.h"
@@ -602,6 +603,34 @@ void AProceduralLevelGenerator::SetupDroneSpawnerDisabler()
         TArray<AActor*> DroneSpawners;
         UGameplayStatics::GetAllActorsOfClass(World, ADroneSpawner::StaticClass(), DroneSpawners);
         Device->CompletionTargets = DroneSpawners;
+    }
+
+    // --------- SPAWN VISUAL ACTOR IN FUTURE MAP ----------
+    // Get location offset from RefPointActor
+    FVector LocationOffset = ARefPointActor::GetOffsetBetweenFirstTwoRefPoints(World);
+
+    FVector FutureLocation = Point->GetActorLocation() + LocationOffset;
+    FRotator FutureRotation = SpawnRotation;
+
+    // This actor will only be visual in Future
+    ADisablingDeviceActor* VisualFutureDevice = World->SpawnActor<ADisablingDeviceActor>(
+        DisablingDeviceBPClass,
+        FutureLocation,
+        FutureRotation
+    );
+
+    if (VisualFutureDevice)
+    {
+        VisualFutureDevice->TimelineEra = ETimelineEra::Future;
+        VisualFutureDevice->SetIsSolo(true);
+        if (Point->Tags.Num() > 1)
+        {
+            VisualFutureDevice->SpawnLocationName = Point->Tags[1].ToString();
+        }
+
+        // Tag or configure as visual-only if you wish, e.g.
+        // VisualFutureDevice->SetActorHiddenInGame(false);
+        // VisualFutureDevice->SetActorEnableCollision(false); // if desired
     }
 }
 
