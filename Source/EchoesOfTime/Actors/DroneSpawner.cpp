@@ -1,3 +1,4 @@
+// DroneSpawner.cpp
 #include "DroneSpawner.h"
 #include "Characters/DronePawn.h"
 #include "Kismet/GameplayStatics.h"
@@ -30,7 +31,6 @@ ADroneSpawner::ADroneSpawner()
 
 void ADroneSpawner::RequestRepair_Implementation(AActor* RepairInstigator)
 {
-	// Un-destroy/unsearch and resume timers
 	if (SearchComponent)
 	{
 		SearchComponent->bSearched = false;
@@ -47,7 +47,6 @@ void ADroneSpawner::Interact_Implementation(AActor* Interactor)
 	{
 		SearchComponent->Interact(Interactor);
 	}
-	// If bSearched became true, PAUSE timers (don't reset)
 	if (SearchComponent && SearchComponent->bSearched)
 	{
 		PauseAllTimers();
@@ -60,7 +59,6 @@ void ADroneSpawner::CancelInteract_Implementation(AActor* Interactor)
 	{
 		SearchComponent->CancelInteract(Interactor);
 	}
-	// If bSearched became true, PAUSE timers
 	if (SearchComponent && SearchComponent->bSearched)
 	{
 		PauseAllTimers();
@@ -90,7 +88,6 @@ void ADroneSpawner::OnSearchComplete()
 {
 	if (!RewardItem) return;
 	if (!HasAuthority()) return;
-
 	if (!SearchComponent) return;
 
 	AActor* LastInteractor = SearchComponent->LastInteractor.Get();
@@ -104,7 +101,6 @@ void ADroneSpawner::OnSearchComplete()
 
 	OnRepairRequested.Broadcast(this);
 
-	// Set highlight off and pause timers if searched
 	SetHighlighted_Implementation(false);
 
 	PauseAllTimers();
@@ -117,15 +113,23 @@ void ADroneSpawner::BeginPlay()
 	if (PlatformMesh)
 		PlatformStartZ = PlatformMesh->GetRelativeLocation().Z;
 
-	TArray<AActor*> FoundDrones;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADronePawn::StaticClass(), FoundDrones);
-	for (AActor* Actor : FoundDrones)
+	//TArray<AActor*> FoundDrones;
+	//UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADronePawn::StaticClass(), FoundDrones);
+	//for (AActor* Actor : FoundDrones)
+	//{
+	//	ADronePawn* Drone = Cast<ADronePawn>(Actor);
+	//	if (Drone)
+	//	{
+	//		BindToDroneDeath(Drone);
+	//		SpawnedDrones.Add(Drone);
+	//	}
+	//}
+
+	for (ADronePawn* Drone : SpawnedDrones)
 	{
-		ADronePawn* Drone = Cast<ADronePawn>(Actor);
 		if (Drone)
 		{
 			BindToDroneDeath(Drone);
-			SpawnedDrones.Add(Drone);
 		}
 	}
 
@@ -146,17 +150,19 @@ void ADroneSpawner::BindToDroneDeath(ADronePawn* Drone)
 
 void ADroneSpawner::HandleDroneDeath(ADronePawn* DeadDrone)
 {
-	SpawnedDrones.Remove(DeadDrone);
+	// Queue up another spawn request
+	PendingSpawnCount++;
 
-	RespawnTimeLeft = RespawnDelay;
-	TimerAnimElapsed = 0.f;
-	bIsPlatformReverse = false;
-
-	if (PendingDrone)
+	// If we aren't already spawning, start! Otherwise let the queue handle next
+	if (!PendingDrone)
 	{
-		PendingDrone->Destroy();
-		PendingDrone = nullptr;
+		StartNextPendingSpawn();
 	}
+}
+
+void ADroneSpawner::StartNextPendingSpawn()
+{
+	if (PendingSpawnCount <= 0) return;
 
 	if (DroneClass && PlatformMesh)
 	{
@@ -178,6 +184,10 @@ void ADroneSpawner::HandleDroneDeath(ADronePawn* DeadDrone)
 		CountdownText->SetText(FText::Format(NSLOCTEXT("DroneSpawner", "RespawnIn", "Spawning Drone in {0}"), FText::AsNumber((int32)RespawnTimeLeft)));
 		CountdownText->SetVisibility(true);
 	}
+
+	RespawnTimeLeft = RespawnDelay;
+	TimerAnimElapsed = 0.f;
+	bIsPlatformReverse = false;
 
 	GetWorldTimerManager().SetTimer(RespawnTimerHandle, this, &ADroneSpawner::OnRespawnTimerFinished, RespawnDelay, false);
 	GetWorldTimerManager().SetTimer(TextUpdateTimerHandle, this, &ADroneSpawner::UpdateCountdownText, 1.0f, true);
@@ -252,6 +262,14 @@ void ADroneSpawner::OnRespawnTimerFinished()
 	RespawnTimeLeft = 0.0f;
 
 	ActivatePendingDrone();
+
+	// One spawn done, decrement
+	PendingSpawnCount--;
+	if (PendingSpawnCount > 0)
+	{
+		// Spawn next, if there's another pending
+		StartNextPendingSpawn();
+	}
 }
 
 void ADroneSpawner::ActivatePendingDrone()
@@ -303,8 +321,6 @@ void ADroneSpawner::ResetPlatform()
 	TimerAnimElapsed = 0.f;
 	PlatformDownAnimElapsed = 0.f;
 }
-
-// ----------- PAUSE/RESUME LOGIC ----------------------
 
 void ADroneSpawner::PauseAllTimers()
 {

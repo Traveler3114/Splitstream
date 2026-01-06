@@ -1,3 +1,4 @@
+// DroneSpawner.h
 #pragma once
 
 #include "CoreMinimal.h"
@@ -7,6 +8,8 @@
 #include "TimelineEra.h"
 #include "DataAssets/ItemBase.h"
 #include "DroneSpawner.generated.h"
+
+
 
 class UTextRenderComponent;
 class ADronePawn;
@@ -69,7 +72,8 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Spawning")
 	float PlatformRiseOffset = 85.f;
 
-	UPROPERTY()
+	// Make the array editable per instance in the editor, and in Blueprints
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Drone")
 	TArray<ADronePawn*> SpawnedDrones;
 
 	UPROPERTY()
@@ -95,6 +99,9 @@ protected:
 	float PausedTimerAnimElapsed = 0.0f;
 	float PausedPlatformDownAnimElapsed = 0.0f;
 
+	// Respawn queue
+	int32 PendingSpawnCount = 0;
+
 	// Spawning and animation
 	UFUNCTION()
 	void HandleDroneDeath(ADronePawn* DeadDrone);
@@ -102,6 +109,9 @@ protected:
 	void BindToDroneDeath(ADronePawn* Drone);
 
 	void ActivatePendingDrone();
+
+	// NEW: Respawn queue support
+	void StartNextPendingSpawn();
 
 	UFUNCTION()
 	void UpdateCountdownText();
