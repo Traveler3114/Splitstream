@@ -98,6 +98,18 @@ void ADronePawn::DeactivateDrone()
 
 }
 
+void ADronePawn::SetRevealProgress(float RevealAlpha)
+{
+    if (DroneMesh)
+    {
+        UMaterialInstanceDynamic* DynMat = DroneMesh->CreateAndSetMaterialInstanceDynamic(0);
+        if (DynMat)
+        {
+            DynMat->SetScalarParameterValue("RevealAlpha", RevealAlpha);
+        }
+    }
+}
+
 void ADronePawn::StartStateTreeAtNode(ANavNode* Node)
 {
     if (Node)
@@ -288,6 +300,7 @@ void ADronePawn::OnHealthChanged(const FOnAttributeChangeData& Data)
 void ADronePawn::BeginPlay()
 {
     Super::BeginPlay();
+	SetRevealProgress(1.0f);
     GetWorldTimerManager().SetTimer(DetectionTimerHandle, this, &ADronePawn::DetectionUpdate, DetectionInterval, true);
     OnRep_DetectedActor();
     AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute())

@@ -176,6 +176,7 @@ void ADroneSpawner::StartNextPendingSpawn()
 		if (PendingDrone)
 		{
 			PendingDrone->DeactivateDrone();
+			PendingDrone->SetRevealProgress(0.f); // Start fully hidden
 		}
 	}
 
@@ -228,10 +229,17 @@ void ADroneSpawner::TickPlatformAnim()
 		{
 			FVector PlatLoc = PlatformMesh->GetComponentLocation() + DroneSpawnOffset;
 			PendingDrone->SetActorLocation(PlatLoc);
+
+			// ---- Reveal mesh gradually ----
+			if (PendingDrone)
+			{
+				PendingDrone->SetRevealProgress(S); // S goes from 0 to 1 during platform up
+			}
 		}
 	}
 	else
 	{
+		// (same as before, for platform going down)
 		PlatformDownAnimElapsed += TickInterval;
 		float Alpha = FMath::Clamp(PlatformDownAnimElapsed / RespawnDelay, 0.f, 1.f);
 		float S = 1.f - FMath::SmoothStep(0.f, 1.f, Alpha);
@@ -250,7 +258,6 @@ void ADroneSpawner::TickPlatformAnim()
 		}
 	}
 }
-
 void ADroneSpawner::OnRespawnTimerFinished()
 {
 	GetWorldTimerManager().ClearTimer(RespawnTimerHandle);
@@ -276,6 +283,7 @@ void ADroneSpawner::ActivatePendingDrone()
 {
 	if (PendingDrone)
 	{
+		PendingDrone->SetRevealProgress(1.f);
 		TArray<AActor*> FoundNodes;
 		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ANavNode::StaticClass(), FoundNodes);
 

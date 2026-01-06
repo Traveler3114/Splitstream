@@ -25,6 +25,9 @@ public:
 
     UFUNCTION(BlueprintCallable)
     void DeactivateDrone();
+
+    UFUNCTION(BlueprintCallable, Category = "Printer")
+    void SetRevealProgress(float RevealAlpha);
     // IAbilitySystemInterface
     virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
 
@@ -78,6 +81,7 @@ protected:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection")
     float ViewConeAngle = 90.0f;
+
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Drone")
     USkeletalMeshComponent* DroneMesh;
