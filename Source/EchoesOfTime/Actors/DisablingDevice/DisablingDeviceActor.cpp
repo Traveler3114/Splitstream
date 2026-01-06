@@ -1,6 +1,7 @@
 #include "DisablingDeviceActor.h"
 #include "ActorComponents/SearchComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "Interfaces/IPuzzleCompletionReceiver.h"
 #include "Components/ArrowComponent.h"
 
 ADisablingDeviceActor::ADisablingDeviceActor()
@@ -49,8 +50,13 @@ void ADisablingDeviceActor::DisableDevice()
     // Solo completion logic:
     if (bIsSolo)
     {
-        OnSoloDeviceDisabled.Broadcast();
-        // You can add more solo logic here (VFX/SFX, Blueprint events)
+        for (AActor* Target : CompletionTargets)
+        {
+            if (Target && Target->GetClass()->ImplementsInterface(UPuzzleCompletionReceiver::StaticClass()))
+            {
+                IPuzzleCompletionReceiver::Execute_OnPuzzleCompleted(Target);
+            }
+        }
     }
 }
 

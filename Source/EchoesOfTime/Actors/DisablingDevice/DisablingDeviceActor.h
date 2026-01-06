@@ -63,7 +63,8 @@ public:
     UFUNCTION()
     virtual void OnSearchComplete();
 
-
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Device")
+    TArray<AActor*> CompletionTargets;
 
 protected:
     virtual void BeginPlay() override;

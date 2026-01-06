@@ -5,6 +5,7 @@
 #include "GameFramework/Actor.h"
 #include "Interfaces/IInteractable.h"
 #include "Interfaces/IRepairable.h"
+#include "Interfaces/IPuzzleCompletionReceiver.h"
 #include "TimelineEra.h"
 #include "DataAssets/ItemBase.h"
 #include "DroneSpawner.generated.h"
@@ -15,7 +16,7 @@ class UTextRenderComponent;
 class ADronePawn;
 
 UCLASS()
-class ECHOESOFTIME_API ADroneSpawner : public AActor, public IInteractable, public IRepairable
+class ECHOESOFTIME_API ADroneSpawner : public AActor, public IInteractable, public IRepairable, public IPuzzleCompletionReceiver
 {
 	GENERATED_BODY()
 
@@ -35,6 +36,8 @@ public:
 	virtual ETimelineEra GetTimelineEra_Implementation() const override { return TimelineEra; }
 	virtual AActor* GetCompletionTarget_Implementation() const override { return const_cast<ADroneSpawner*>(this); }
 	virtual FOnRepairRequested& GetOnRepairRequested() override { return OnRepairRequested; }
+
+	virtual void OnPuzzleCompleted_Implementation() override;
 
 	UPROPERTY(BlueprintAssignable, Category = "Repair")
 	FOnRepairRequested OnRepairRequested;

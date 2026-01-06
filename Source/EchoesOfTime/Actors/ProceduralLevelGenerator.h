@@ -120,6 +120,7 @@ protected:
     void SetupWirePuzzle();
     void SetupLeverPuzzle();
     void SetupDisablingDevices();
+    void SetupDroneSpawnerDisabler();
     void SetupKeypadAndComputerCodes(const TArray<class ADeskActor*>& Desks);
     
     // ============================================================

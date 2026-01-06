@@ -41,6 +41,15 @@ void ADroneSpawner::RequestRepair_Implementation(AActor* RepairInstigator)
 	}
 }
 
+void ADroneSpawner::OnPuzzleCompleted_Implementation()
+{
+	if (SearchComponent) 
+	{
+		SearchComponent->bSearched = true;
+		PauseAllTimers();
+	}
+}
+
 void ADroneSpawner::Interact_Implementation(AActor* Interactor)
 {
 	if (SearchComponent)

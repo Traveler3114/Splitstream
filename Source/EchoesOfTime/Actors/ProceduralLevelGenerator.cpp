@@ -11,6 +11,7 @@
 #include "Actors/SearchableActor.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
+#include "Actors/DroneSpawner.h"
 #include "TimelineEra.h"
 #include "Actors/DeskActor.h"
 #include "Actors/CodeGenerator.h"
@@ -553,6 +554,57 @@ void AProceduralLevelGenerator::SetupDisablingDevices()
     );
 }
 
+void AProceduralLevelGenerator::SetupDroneSpawnerDisabler()
+{
+    UWorld* World = GetWorld();
+    if (!World || !DisablingDeviceBPClass)
+        return;
+
+    // Find valid spawn points for DroneSpawnerDisabler in the Past era
+    TArray<AActor*> FoundPoints;
+    UGameplayStatics::GetAllActorsOfClass(World, ARandomPointActor::StaticClass(), FoundPoints);
+
+    TArray<ARandomPointActor*> ValidPoints;
+    for (AActor* Actor : FoundPoints)
+    {
+        ARandomPointActor* Point = Cast<ARandomPointActor>(Actor);
+        if (Point && Point->TimelineEra == ETimelineEra::Past && Point->Tags.Contains(TEXT("DroneSpawnerDisabler")))
+        {
+            ValidPoints.Add(Point);
+        }
+    }
+
+    if (ValidPoints.Num() == 0)
+        return;
+
+    // Randomly pick one
+    int32 SpawnIdx = FMath::RandRange(0, ValidPoints.Num() - 1);
+    ARandomPointActor* Point = ValidPoints[SpawnIdx];
+    UArrowComponent* PointArrow = Point->FindComponentByClass<UArrowComponent>();
+    FRotator SpawnRotation = PointArrow ? PointArrow->GetComponentRotation() : Point->GetActorRotation();
+
+    ADisablingDeviceActor* Device = World->SpawnActor<ADisablingDeviceActor>(
+        DisablingDeviceBPClass,
+        Point->GetActorLocation(),
+        SpawnRotation
+    );
+
+    if (Device)
+    {
+        Device->TimelineEra = ETimelineEra::Past;
+        Device->SetIsSolo(true);
+        if (Point->Tags.Num() > 1)
+        {
+            Device->SpawnLocationName = Point->Tags[1].ToString();
+        }
+
+        // *** Populate CompletionTargets with all DroneSpawner actors ***
+        TArray<AActor*> DroneSpawners;
+        UGameplayStatics::GetAllActorsOfClass(World, ADroneSpawner::StaticClass(), DroneSpawners);
+        Device->CompletionTargets = DroneSpawners;
+    }
+}
+
 void AProceduralLevelGenerator::SetupKeypadAndComputerCodes(const TArray<ADeskActor*>& Desks)
 {
     // Find desks with computers
@@ -896,6 +948,7 @@ void AProceduralLevelGenerator::HandlePastSpawns()
     SetupWirePuzzle();
     SetupLeverPuzzle();
     SetupDisablingDevices();
+    SetupDroneSpawnerDisabler();
 
     // Spawn and configure all NPCs and environment
     TArray<ACivilianCharacter*> PastCivilians;
