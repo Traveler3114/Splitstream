@@ -17,6 +17,13 @@ class ECHOESOFTIME_API ADisablingDeviceActor : public AActor, public IInteractab
 public:
     ADisablingDeviceActor();
 
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Appearance")
+    FLinearColor ManagerBaseColor = FLinearColor(0.1f, 0.4f, 0.9f, 1.f);
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Appearance")
+    FLinearColor SoloBaseColor = FLinearColor(0.9f, 0.15f, 0.15f, 1.f);
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
     ETimelineEra TimelineEra = ETimelineEra::Past;
 
@@ -27,7 +34,7 @@ public:
     bool bIsActive = true;
 
     UPROPERTY(EditAnywhere, Replicated)
-    bool bIsSolo = true;
+    bool bIsSolo = false;
 
     UPROPERTY(BlueprintAssignable, Category="Device")
     FOnSoloDeviceDisabled OnSoloDeviceDisabled; // Fires if solo device disabled
@@ -53,7 +60,7 @@ public:
     void DisableDevice();
 
     UFUNCTION(BlueprintCallable)
-    void SetIsSolo(bool bSolo) { bIsSolo = bSolo; }
+    void SetIsSolo(bool bSolo);
 
     virtual void Interact_Implementation(AActor* Interactor) override;
     virtual void CancelInteract_Implementation(AActor* Interactor) override;

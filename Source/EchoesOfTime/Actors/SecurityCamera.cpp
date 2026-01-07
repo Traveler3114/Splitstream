@@ -8,6 +8,7 @@
 #include "Interfaces/IDetectable.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "GameStates/DefaultGameState.h"
+#include "DrawDebugHelpers.h" // needed for debug drawing
 
 ASecurityCamera::ASecurityCamera()
 {
@@ -92,6 +93,41 @@ void ASecurityCamera::DetectionUpdate()
 
     FVector CamLoc = SceneCapture ? SceneCapture->GetComponentLocation() : GetActorLocation();
 
+    // ----- Debug Cone Drawing -----
+    if (bDrawDebugDetectionCone)
+    {
+        FVector CamForward = SceneCapture ? SceneCapture->GetForwardVector() : GetActorForwardVector();
+        const float HalfFOVRadians = FMath::DegreesToRadians(ViewConeAngle * 0.5f);
+        // DrawDebugCone args: UWorld, Origin, Dir, Length, AngleWidth, AngleHeight, Segments, Color, PersistentLines, LifeTime, DepthPriority
+        DrawDebugCone(
+            GetWorld(),
+            CamLoc,
+            CamForward,
+            DetectionDistance,
+            HalfFOVRadians,
+            HalfFOVRadians,
+            24,
+            FColor::Green,
+            false,
+            DetectionInterval * 1.1f, // Keep visible a bit longer than interval
+            0,
+            2.0f
+        );
+
+        // Optionally: draw center line showing forward vector
+        DrawDebugLine(
+            GetWorld(),
+            CamLoc,
+            CamLoc + CamForward * DetectionDistance,
+            FColor::Yellow,
+            false,
+            DetectionInterval * 1.1f,
+            0,
+            1.0f
+        );
+    }
+    // ----- End Debug Drawing -----
+
     TArray<AActor*> OverlappedActors;
     TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
     ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn));
@@ -114,7 +150,7 @@ void ASecurityCamera::DetectionUpdate()
         if (!Actor || !Actor->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
             continue;
 
-        // --- FOV/Cone Math (just like in your working version) ---
+        // --- FOV/Cone Math
         FVector ToTarget = Actor->GetActorLocation() - CamLoc;
         float Distance = ToTarget.Size();
         if (Distance > DetectionDistance)

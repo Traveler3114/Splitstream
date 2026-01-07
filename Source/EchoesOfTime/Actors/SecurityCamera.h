@@ -17,7 +17,7 @@ public:
 protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-	virtual void OnFullyDetected_Implementation(AActor* DetectingActor) override;
+    virtual void OnFullyDetected_Implementation(AActor* DetectingActor) override;
     virtual bool IsActorAlreadyDetected_Implementation(AActor* DetectingActor) const override;
 
     // Timer handles
@@ -72,6 +72,10 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Pan")
     float PauseAtLimit = 2.0f; // seconds to pause at each end
+
+    // Debug option: Show detection cone in editor/runtime
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
+    bool bDrawDebugDetectionCone = false;
 
 private:
     float CurrentYaw = 0.0f;

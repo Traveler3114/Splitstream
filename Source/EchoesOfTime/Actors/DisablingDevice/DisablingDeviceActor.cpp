@@ -23,6 +23,31 @@ ADisablingDeviceActor::ADisablingDeviceActor()
     ArrowComp->SetupAttachment(RootComponent);
 }
 
+void ADisablingDeviceActor::SetIsSolo(bool bSolo)
+{
+    bIsSolo = bSolo;
+
+    if (DeviceMesh)
+    {
+        // --- Slot 0: IconBackgroundColour ---
+        UMaterialInstanceDynamic* IconMatInstance = DeviceMesh->CreateAndSetMaterialInstanceDynamic(0);
+        if (IconMatInstance)
+        {
+            FLinearColor UseIconBGColor = bIsSolo ? SoloBaseColor : ManagerBaseColor;
+            IconMatInstance->SetVectorParameterValue(FName("IconBackgroundColour"), UseIconBGColor);
+        }
+
+        // --- Slot 1: Base Color ---
+        UMaterialInstanceDynamic* BoxMatInstance = DeviceMesh->CreateAndSetMaterialInstanceDynamic(1);
+        if (BoxMatInstance)
+        {
+            FLinearColor UseBaseColor = bIsSolo ? SoloBaseColor : ManagerBaseColor;
+            BoxMatInstance->SetVectorParameterValue(FName("Base Color"), UseBaseColor);
+        }
+    }
+}
+
+
 void ADisablingDeviceActor::BeginPlay()
 {
     Super::BeginPlay();
