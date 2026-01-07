@@ -328,6 +328,7 @@ void ADefaultCharacter::UpdateEquippedItemMesh()
     UStaticMesh* NewMesh = nullptr;
     FVector RelativeLocation = FVector::ZeroVector;
     FRotator RelativeRotation = FRotator::ZeroRotator;
+    FVector RelativeScale = FVector::OneVector;
 
     // Try to get mesh and transform from the Pickup class defaults (if set)
     if (ItemAsset && ItemAsset->ItemPickupToSpawn)
@@ -340,6 +341,7 @@ void ADefaultCharacter::UpdateEquippedItemMesh()
                 NewMesh = PickupCDO->OverrideMeshComp->GetStaticMesh();
                 RelativeLocation = PickupCDO->OverrideMeshComp->GetRelativeLocation();
                 RelativeRotation = PickupCDO->OverrideMeshComp->GetRelativeRotation();
+                RelativeScale = PickupCDO->OverrideMeshComp->GetRelativeScale3D();
             }
         }
     }
@@ -356,6 +358,7 @@ void ADefaultCharacter::UpdateEquippedItemMesh()
         // EquippedItemMeshComp->SetRelativeRotation(RelativeRotation);
         EquippedItemMeshComp->SetRelativeLocation(FVector(-0.000000, 0.500000, 2.208336));
         EquippedItemMeshComp->SetRelativeRotation(FRotator(0.528160, -3.449450, 8.694707));
+        EquippedItemMeshComp->SetRelativeScale3D(RelativeScale);
     }
 
     // Compute ADS if we have a mesh
