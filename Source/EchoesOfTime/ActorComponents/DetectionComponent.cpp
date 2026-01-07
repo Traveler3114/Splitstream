@@ -132,6 +132,25 @@ TArray<AActor*> UDetectionComponent::GetActiveDetectors() const
     return Result;
 }
 
+// --- Distance-based detection speed multiplier ---
+float UDetectionComponent::GetDetectionSpeedMultiplier(AActor* Detector) const
+{
+    if (!Detector || !GetOwner())
+        return 1.0f;
+
+    float Distance = FVector::Dist(Detector->GetActorLocation(), GetOwner()->GetActorLocation());
+
+    // Avoid division by zero, and never go "infinite" speed
+    float EffectiveDistance = FMath::Max(Distance, 1.0f);
+
+    // Simple inverse formula: speed is higher when closer, slower when further
+    float Speed = BaseDetectionSpeedMultiplier / EffectiveDistance;
+
+    // Optional: Clamp to minimum/maximum if you want to be sure it's reasonable
+    return FMath::Clamp(Speed, 0.1f, 10.0f);
+}
+// -------------------------------------------------
+
 void UDetectionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
@@ -146,7 +165,10 @@ void UDetectionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
         // If detection in progress and not fully detected
         if (State.bDetectionInProgress && !State.bFullyDetected)
         {
-            State.Progress += DeltaTime;
+            // Use distance-based detection speed
+            float DetectionSpeedMultiplier = GetDetectionSpeedMultiplier(Detector);
+            State.Progress += DeltaTime * DetectionSpeedMultiplier;
+
             if (State.Progress >= DetectionDuration)
             {
                 State.Progress = DetectionDuration;

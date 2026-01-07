@@ -4,8 +4,6 @@
 #include "Components/ActorComponent.h"
 #include "DetectionComponent.generated.h"
 
-class UDetectionWidget;
-
 USTRUCT()
 struct FDetectionState
 {
@@ -17,9 +15,10 @@ struct FDetectionState
 
     FDetectionState() : Progress(0.f), Direction(0), bDetectionInProgress(false), bFullyDetected(false) {}
     FDetectionState(float P, int8 D, bool InDetection = false, bool InFullyDetected = false)
-        : Progress(P), Direction(D), bDetectionInProgress(InDetection), bFullyDetected(InFullyDetected) {}
+        : Progress(P), Direction(D), bDetectionInProgress(InDetection), bFullyDetected(InFullyDetected) {
+    }
 };
-// Event delegates to notify UI/Registry (OPTIONAL, for UI update hooks)
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDetectionBegan, AActor*, OwnerActor);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDetectionEnded, AActor*, OwnerActor);
 
@@ -37,6 +36,10 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection")
     float DetectionDuration = 2.5f;
+
+    // The higher this is, the faster it fills when up close.
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection|Distance")
+    float BaseDetectionSpeedMultiplier = 1600.f; // Tune as needed!
 
     UPROPERTY()
     TMap<AActor*, FDetectionState> DetectionStates;
@@ -69,4 +72,5 @@ public:
 
 protected:
     void HandleFullyDetected(AActor* Detector);
+    float GetDetectionSpeedMultiplier(AActor* Detector) const;
 };
