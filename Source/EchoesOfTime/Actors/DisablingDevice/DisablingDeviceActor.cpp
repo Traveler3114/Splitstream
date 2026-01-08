@@ -27,24 +27,24 @@ void ADisablingDeviceActor::SetIsSolo(bool bSolo)
 {
     bIsSolo = bSolo;
 
-    if (DeviceMesh)
-    {
-        // --- Slot 0: IconBackgroundColour ---
-        UMaterialInstanceDynamic* IconMatInstance = DeviceMesh->CreateAndSetMaterialInstanceDynamic(0);
-        if (IconMatInstance)
-        {
-            FLinearColor UseIconBGColor = bIsSolo ? SoloBaseColor : ManagerBaseColor;
-            IconMatInstance->SetVectorParameterValue(FName("IconBackgroundColour"), UseIconBGColor);
-        }
+    //if (DeviceMesh)
+    //{
+    //    // --- Slot 0: IconBackgroundColour ---
+    //    UMaterialInstanceDynamic* IconMatInstance = DeviceMesh->CreateAndSetMaterialInstanceDynamic(0);
+    //    if (IconMatInstance)
+    //    {
+    //        FLinearColor UseIconBGColor = bIsSolo ? SoloBaseColor : ManagerBaseColor;
+    //        IconMatInstance->SetVectorParameterValue(FName("IconBackgroundColour"), UseIconBGColor);
+    //    }
 
-        // --- Slot 1: Base Color ---
-        UMaterialInstanceDynamic* BoxMatInstance = DeviceMesh->CreateAndSetMaterialInstanceDynamic(1);
-        if (BoxMatInstance)
-        {
-            FLinearColor UseBaseColor = bIsSolo ? SoloBaseColor : ManagerBaseColor;
-            BoxMatInstance->SetVectorParameterValue(FName("Base Color"), UseBaseColor);
-        }
-    }
+    //    // --- Slot 1: Base Color ---
+    //    UMaterialInstanceDynamic* BoxMatInstance = DeviceMesh->CreateAndSetMaterialInstanceDynamic(1);
+    //    if (BoxMatInstance)
+    //    {
+    //        FLinearColor UseBaseColor = bIsSolo ? SoloBaseColor : ManagerBaseColor;
+    //        BoxMatInstance->SetVectorParameterValue(FName("Base Color"), UseBaseColor);
+    //    }
+    //}
 }
 
 
@@ -73,16 +73,16 @@ void ADisablingDeviceActor::DisableDevice()
     OnDeviceStateChanged.Broadcast(this);
 
     // Solo completion logic:
-    if (bIsSolo)
-    {
-        for (AActor* Target : CompletionTargets)
-        {
-            if (Target && Target->GetClass()->ImplementsInterface(UPuzzleCompletionReceiver::StaticClass()))
-            {
-                IPuzzleCompletionReceiver::Execute_OnPuzzleCompleted(Target);
-            }
-        }
-    }
+    //if (bIsSolo)
+    //{
+    //    for (AActor* Target : CompletionTargets)
+    //    {
+    //        if (Target && Target->GetClass()->ImplementsInterface(UPuzzleCompletionReceiver::StaticClass()))
+    //        {
+    //            IPuzzleCompletionReceiver::Execute_OnPuzzleCompleted(Target);
+    //        }
+    //    }
+    //}
 }
 
 void ADisablingDeviceActor::Interact_Implementation(AActor* Interactor)

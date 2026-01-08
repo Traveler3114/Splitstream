@@ -26,6 +26,7 @@
 #include "Actors/SecurityDocumentActor.h"
 #include "Widgets/SecurityDocumentWidget.h"
 #include "Components/WidgetComponent.h"
+#include "Actors/DroneSpawnerDisabler.h"
 
 // ============================================================
 // Constants
@@ -558,7 +559,7 @@ void AProceduralLevelGenerator::SetupDisablingDevices()
 void AProceduralLevelGenerator::SetupDroneSpawnerDisabler()
 {
     UWorld* World = GetWorld();
-    if (!World || !DisablingDeviceBPClass)
+    if (!World || !DroneSpawnerDisablerBPClass)
         return;
 
     // Find valid spawn points for DroneSpawnerDisabler in the Past era
@@ -584,8 +585,8 @@ void AProceduralLevelGenerator::SetupDroneSpawnerDisabler()
     UArrowComponent* PointArrow = Point->FindComponentByClass<UArrowComponent>();
     FRotator SpawnRotation = PointArrow ? PointArrow->GetComponentRotation() : Point->GetActorRotation();
 
-    ADisablingDeviceActor* Device = World->SpawnActor<ADisablingDeviceActor>(
-        DisablingDeviceBPClass,
+    ADroneSpawnerDisabler* Device = World->SpawnActor<ADroneSpawnerDisabler>(
+        DroneSpawnerDisablerBPClass,
         Point->GetActorLocation(),
         SpawnRotation
     );
@@ -593,11 +594,6 @@ void AProceduralLevelGenerator::SetupDroneSpawnerDisabler()
     if (Device)
     {
         Device->TimelineEra = ETimelineEra::Past;
-        Device->SetIsSolo(true);
-        if (Point->Tags.Num() > 1)
-        {
-            Device->SpawnLocationName = Point->Tags[1].ToString();
-        }
 
         // *** Populate CompletionTargets with all DroneSpawner actors ***
         TArray<AActor*> DroneSpawners;
@@ -613,25 +609,21 @@ void AProceduralLevelGenerator::SetupDroneSpawnerDisabler()
     FRotator FutureRotation = SpawnRotation;
 
     // This actor will only be visual in Future
-    AActor* VisualFutureDevice = World->SpawnActor<AActor>(
-        FutureDisablingDeviceBPClass,
+    ADroneSpawnerDisabler* VisualFutureDevice = World->SpawnActor<ADroneSpawnerDisabler>(
+        DroneSpawnerDisablerBPClass,
         FutureLocation,
         FutureRotation
     );
 
-    //if (VisualFutureDevice)
-    //{
-    //    VisualFutureDevice->TimelineEra = ETimelineEra::Future;
-    //    VisualFutureDevice->SetIsSolo(true);
-    //    if (Point->Tags.Num() > 1)
-    //    {
-    //        VisualFutureDevice->SpawnLocationName = Point->Tags[1].ToString();
-    //    }
+    if (VisualFutureDevice)
+    {
+        VisualFutureDevice->TimelineEra = ETimelineEra::Future;
+        VisualFutureDevice->SetMesh();
 
-    //    // Tag or configure as visual-only if you wish, e.g.
-    //    // VisualFutureDevice->SetActorHiddenInGame(false);
-    //    // VisualFutureDevice->SetActorEnableCollision(false); // if desired
-    //}
+        // Tag or configure as visual-only if you wish, e.g.
+        // VisualFutureDevice->SetActorHiddenInGame(false);
+        // VisualFutureDevice->SetActorEnableCollision(false); // if desired
+    }
 }
 
 void AProceduralLevelGenerator::SetupKeypadAndComputerCodes(const TArray<ADeskActor*>& Desks)

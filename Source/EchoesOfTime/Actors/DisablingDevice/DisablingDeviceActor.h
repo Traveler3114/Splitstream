@@ -18,11 +18,11 @@ public:
     ADisablingDeviceActor();
 
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Appearance")
-    FLinearColor ManagerBaseColor = FLinearColor(0.1f, 0.4f, 0.9f, 1.f);
+    //UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Appearance")
+    //FLinearColor ManagerBaseColor = FLinearColor(0.1f, 0.4f, 0.9f, 1.f);
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Appearance")
-    FLinearColor SoloBaseColor = FLinearColor(0.9f, 0.15f, 0.15f, 1.f);
+    //UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Appearance")
+    //FLinearColor SoloBaseColor = FLinearColor(0.9f, 0.15f, 0.15f, 1.f);
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
     ETimelineEra TimelineEra = ETimelineEra::Past;

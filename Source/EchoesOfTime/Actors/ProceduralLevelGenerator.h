@@ -70,7 +70,7 @@ public:
 	TSubclassOf<class ADisablingDeviceActor> DisablingDeviceBPClass;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Disabling Device")
-    TSubclassOf<class AActor> FutureDisablingDeviceBPClass;
+    TSubclassOf<class AActor> DroneSpawnerDisablerBPClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Levers")
 	TSubclassOf<class ALeverActor> LeverBPClass;
