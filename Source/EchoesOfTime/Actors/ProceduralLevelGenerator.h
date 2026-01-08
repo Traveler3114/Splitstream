@@ -69,6 +69,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Disabling Device")
 	TSubclassOf<class ADisablingDeviceActor> DisablingDeviceBPClass;
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Disabling Device")
+    TSubclassOf<class AActor> FutureDisablingDeviceBPClass;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Levers")
 	TSubclassOf<class ALeverActor> LeverBPClass;
 

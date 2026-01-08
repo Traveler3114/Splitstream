@@ -613,25 +613,25 @@ void AProceduralLevelGenerator::SetupDroneSpawnerDisabler()
     FRotator FutureRotation = SpawnRotation;
 
     // This actor will only be visual in Future
-    ADisablingDeviceActor* VisualFutureDevice = World->SpawnActor<ADisablingDeviceActor>(
-        DisablingDeviceBPClass,
+    AActor* VisualFutureDevice = World->SpawnActor<AActor>(
+        FutureDisablingDeviceBPClass,
         FutureLocation,
         FutureRotation
     );
 
-    if (VisualFutureDevice)
-    {
-        VisualFutureDevice->TimelineEra = ETimelineEra::Future;
-        VisualFutureDevice->SetIsSolo(true);
-        if (Point->Tags.Num() > 1)
-        {
-            VisualFutureDevice->SpawnLocationName = Point->Tags[1].ToString();
-        }
+    //if (VisualFutureDevice)
+    //{
+    //    VisualFutureDevice->TimelineEra = ETimelineEra::Future;
+    //    VisualFutureDevice->SetIsSolo(true);
+    //    if (Point->Tags.Num() > 1)
+    //    {
+    //        VisualFutureDevice->SpawnLocationName = Point->Tags[1].ToString();
+    //    }
 
-        // Tag or configure as visual-only if you wish, e.g.
-        // VisualFutureDevice->SetActorHiddenInGame(false);
-        // VisualFutureDevice->SetActorEnableCollision(false); // if desired
-    }
+    //    // Tag or configure as visual-only if you wish, e.g.
+    //    // VisualFutureDevice->SetActorHiddenInGame(false);
+    //    // VisualFutureDevice->SetActorEnableCollision(false); // if desired
+    //}
 }
 
 void AProceduralLevelGenerator::SetupKeypadAndComputerCodes(const TArray<ADeskActor*>& Desks)
