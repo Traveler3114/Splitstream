@@ -18,6 +18,8 @@ public:
 	// Sets default values for this actor's properties
 	ADroneSpawnerDisabler();
 
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ETimelineEra TimelineEra = ETimelineEra::Past;
 
@@ -38,14 +40,21 @@ public:
 	UStaticMesh* FutureMesh;
 
 	void SetMesh();
+
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	UFUNCTION()
 	void OnSearchComplete();
 
 	virtual void Interact_Implementation(AActor* Interactor) override;
 	virtual void CancelInteract_Implementation(AActor* Interactor) override;
 	virtual bool IsProgressiveInteract_Implementation() override { return true; }
 	virtual void SetHighlighted_Implementation(bool bHighlighted) override;
+
+private:
+	UPROPERTY(Replicated)
+	bool bVisualOnly = false;
 
 };
