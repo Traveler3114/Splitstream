@@ -1,6 +1,6 @@
 #include "SoloGATeleport.h"
 #include "Actors/PointActors/RefPointActor.h"
-#include "AbilitySystem/EOTGameplayTags.h"
+#include "AbilitySystem/SplitstreamGameplayTags.h"
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 

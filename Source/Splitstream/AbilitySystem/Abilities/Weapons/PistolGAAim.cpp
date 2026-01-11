@@ -1,5 +1,5 @@
 #include "PistolGAAim.h"
-#include "AbilitySystem/EOTGameplayTags.h"
+#include "AbilitySystem/SplitstreamGameplayTags.h"
 #include "Characters/DefaultCharacter.h"
 #include "Engine/Engine.h"
 

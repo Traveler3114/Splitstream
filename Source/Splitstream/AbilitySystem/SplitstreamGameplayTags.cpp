@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "EOTGameplayTags.h"
+#include "SplitstreamGameplayTags.h"
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character, "Character");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Block, "Character.Status.Block");

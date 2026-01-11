@@ -7,7 +7,7 @@
 #include "Widgets/ProximityHackWidget.h"
 #include "AbilitySystemInterface.h"
 #include "AbilitySystemComponent.h"
-#include "AbilitySystem/EOTGameplayTags.h"
+#include "AbilitySystem/SplitstreamGameplayTags.h"
 #include "Engine/World.h"
 #include "Blueprint/UserWidget.h"
 #include "ActorComponents/InventoryComponent.h"

@@ -1,6 +1,6 @@
 #include "FutureGAPastEcho.h"
 #include "AbilitySystemComponent.h"
-#include "AbilitySystem/EOTGameplayTags.h"
+#include "AbilitySystem/SplitstreamGameplayTags.h"
 #include "GameplayTagContainer.h"
 
 UFutureGAPastEcho::UFutureGAPastEcho()

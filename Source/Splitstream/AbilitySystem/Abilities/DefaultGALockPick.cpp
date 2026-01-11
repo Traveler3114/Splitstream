@@ -2,7 +2,7 @@
 #include "AbilitySystem/AbilityTasks/LockPickAbilityTask.h"
 #include "ActorComponents/LockPickComponent.h"
 #include "Widgets/HUD/LockPickWidget.h"
-#include "AbilitySystem/EOTGameplayTags.h"
+#include "AbilitySystem/SplitstreamGameplayTags.h"
 #include "Engine/Engine.h"
 
 UDefaultGALockPick::UDefaultGALockPick()

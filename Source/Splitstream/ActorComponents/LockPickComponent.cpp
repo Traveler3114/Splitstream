@@ -2,7 +2,7 @@
 #include "Net/UnrealNetwork.h"
 #include "AbilitySystemInterface.h"
 #include "AbilitySystemComponent.h"
-#include "AbilitySystem/EOTGameplayTags.h"
+#include "AbilitySystem/SplitstreamGameplayTags.h"
 
 #if WITH_EDITOR
 #include "Editor/UnrealEd/Public/Editor.h"

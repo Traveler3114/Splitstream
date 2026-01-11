@@ -1,6 +1,6 @@
 #include "DefaultGAHack.h"
 #include "AbilitySystemComponent.h"
-#include "AbilitySystem/EOTGameplayTags.h"
+#include "AbilitySystem/SplitstreamGameplayTags.h"
 #include "AbilitySystem/AbilityTasks/HackAbilityTask.h"
 #include "ActorComponents/HackComponent.h"
 #include "Widgets/HUD/HackWidget.h"

@@ -1,5 +1,5 @@
 #include "PistolGAFire.h"
-#include "AbilitySystem/EOTGameplayTags.h"
+#include "AbilitySystem/SplitstreamGameplayTags.h"
 #include "Actors/Projectiles/Bullet.h"
 #include "Characters/DefaultCharacter.h"
 #include "AbilitySystemComponent.h"

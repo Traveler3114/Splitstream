@@ -1,6 +1,6 @@
 #include "RobotGuardCharacter.h"
 #include "Components/StateTreeComponent.h"
-#include "AbilitySystem/EOTGameplayTags.h"
+#include "AbilitySystem/SplitstreamGameplayTags.h"
 #include "Kismet/GameplayStatics.h"
 #include "Interfaces/IRepairable.h"
 #include "AbilitySystemComponent.h"

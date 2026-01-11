@@ -16,7 +16,7 @@
 #include "Actors/PointActors/NavNode.h"
 #include "Net/UnrealNetwork.h"
 #include "AbilitySystemComponent.h"
-#include "AbilitySystem/EOTGameplayTags.h"
+#include "AbilitySystem/SplitstreamGameplayTags.h"
 
 ADronePawn::ADronePawn()
 {

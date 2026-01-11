@@ -9,7 +9,7 @@
 #include "AbilitySystem/AttributeSets/PlayerAttributeSet.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
 #include "Widgets/HUD/CharacterOverlay.h"
-#include "AbilitySystem/EOTGameplayTags.h"
+#include "AbilitySystem/SplitstreamGameplayTags.h"
 #include "ActorComponents/DetectionComponent.h"
 #include "GameStates/DefaultGameState.h"
 #include "GameplayEffectTypes.h"

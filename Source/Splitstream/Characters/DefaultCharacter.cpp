@@ -16,7 +16,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "AbilitySystem/AttributeSets/PlayerAttributeSet.h"
 #include "DefaultGameInstance.h"
-#include "AbilitySystem/EOTGameplayTags.h"
+#include "AbilitySystem/SplitstreamGameplayTags.h"
 #include "Interfaces/IDetectable.h"
 #include "EngineUtils.h"
 #include "Controllers/DefaultPlayerController.h"

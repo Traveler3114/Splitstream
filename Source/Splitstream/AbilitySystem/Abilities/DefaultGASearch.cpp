@@ -1,7 +1,7 @@
 #include "DefaultGASearch.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/AbilityTasks/SearchAbilityTask.h"
-#include "AbilitySystem/EOTGameplayTags.h"
+#include "AbilitySystem/SplitstreamGameplayTags.h"
 #include "ActorComponents/SearchComponent.h"
 #include "Widgets/HUD/SearchWidget.h"
 

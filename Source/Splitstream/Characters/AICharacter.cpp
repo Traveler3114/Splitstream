@@ -14,7 +14,7 @@
 #include "ActorComponents/SearchComponent.h"
 #include "ActorComponents/ProximityHackComponent.h"
 #include "GameStates/DefaultGameState.h"
-#include "AbilitySystem/EOTGameplayTags.h"
+#include "AbilitySystem/SplitstreamGameplayTags.h"
 #include "Components/StateTreeComponent.h"
 
 AAICharacter::AAICharacter()
