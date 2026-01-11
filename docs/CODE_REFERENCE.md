@@ -1532,3 +1532,1991 @@ private:
 
 ---
 
+
+## Actors
+
+Located in `Actors/` - Interactive world objects and environmental elements. This is the largest module with 50+ actor types organized into several categories.
+
+### Base Actor Classes
+
+These provide common functionality for derived actor types.
+
+#### DoorBase.h / .cpp
+
+**Abstract base class for all door types**
+
+Provides core door functionality including open/close, locking, keycard access, and auto-open for AI.
+
+```cpp
+UCLASS(Abstract)
+class ECHOESOFTIME_API ADoorBase : public AActor, 
+                                    public IInteractable, 
+                                    public IKeycardUnlockable
+{
+    GENERATED_BODY()
+public:
+    // Components
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+    USceneComponent* SceneRoot;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+    UStaticMeshComponent* DoorMesh;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+    class UArrowComponent* ArrowComp; // Shows door forward direction
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door")
+    class UBoxComponent* GuardOpenTrigger; // Auto-open trigger for AI
+    
+    // Door State
+    UPROPERTY(ReplicatedUsing = OnRep_IsOpen, EditAnywhere, BlueprintReadWrite, Category = "Door")
+    bool bIsOpen = false;
+    
+    UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Lock")
+    bool bIsLocked = false;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door")
+    bool bRequiresKeycard = false;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door")
+    bool bAutoOpenForGuards = true;
+    
+    // Lock Pick Component
+    UPROPERTY()
+    class ULockPickComponent* LockPickComponent = nullptr;
+    
+    // Methods
+    int32 ComputeOpenDirection(AActor* ReferenceActor) const;
+    
+    // IInteractable
+    virtual void Interact_Implementation(AActor* Interactor) override;
+    virtual void CancelInteract_Implementation(AActor* Interactor) override;
+    virtual void SetHighlighted_Implementation(bool bHighlight) override;
+    virtual bool IsProgressiveInteract_Implementation() override;
+    
+    // IKeycardUnlockable
+    virtual void UnlockWithKeycard_Implementation(AActor* Interactor) override;
+    virtual bool RequiresKeycard_Implementation() const override;
+    
+    // Blueprint Events (animation in BP)
+    UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Door")
+    void OpenDoor(int32 Direction);
+    
+    UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Door")
+    void CloseDoor(int32 Direction);
+    
+    // Lock System
+    UFUNCTION()
+    virtual void OnLockUnlocked();
+    
+    UFUNCTION()
+    virtual void OnRep_IsOpen();
+    
+    // Guard Auto-Open System
+    UFUNCTION()
+    void OnGuardOpenBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, ...);
+    
+    UFUNCTION()
+    void OnGuardOpenEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, ...);
+    
+    UFUNCTION()
+    void ForceOpenDoorForGuard(AActor* GuardActor);
+    
+    UFUNCTION()
+    void ForceCloseDoorForGuard(AActor* GuardActor);
+    
+protected:
+    int32 OpenDirection = 1; // 1 = away from player, -1 = toward player
+};
+```
+
+**Features**:
+- **Smart Opening**: Computes door swing direction based on player position
+- **Lock System**: Supports lock picking via LockPickComponent
+- **Keycard Access**: Can require keycard for access
+- **AI Auto-Open**: Guards can walk through without interaction
+- **Network Replication**: Full multiplayer support
+- **Blueprint Animation**: Door movement handled in Blueprint
+
+**Opening Directions**:
+- Door opens away from player (push) if player is on hinge side
+- Door opens toward player (pull) if player is opposite hinge
+- Direction: 1 = forward, -1 = backward
+
+**Derived Classes**:
+- `PastDoor` - Door in past timeline
+- `FutureDoor` - Door in future timeline
+
+---
+
+#### DoubleDoorBase.h / .cpp
+
+**Double door with two panels**
+
+Similar to DoorBase but manages two door panels that open symmetrically.
+
+```cpp
+UCLASS(Abstract)
+class ECHOESOFTIME_API ADoubleDoorBase : public AActor, public IInteractable
+{
+    GENERATED_BODY()
+public:
+    UPROPERTY(EditAnywhere)
+    UStaticMeshComponent* LeftDoorMesh;
+    
+    UPROPERTY(EditAnywhere)
+    UStaticMeshComponent* RightDoorMesh;
+    
+    UPROPERTY(ReplicatedUsing = OnRep_IsOpen)
+    bool bIsOpen = false;
+    
+    UPROPERTY(Replicated)
+    bool bIsLocked = false;
+    
+    // Similar interface to DoorBase
+    UFUNCTION(BlueprintImplementableEvent)
+    void OpenDoubleDoor(int32 Direction);
+    
+    UFUNCTION(BlueprintImplementableEvent)
+    void CloseDoubleDoor(int32 Direction);
+};
+```
+
+**Derived Classes**:
+- `PastDoubleDoor`
+- `FutureDoubleDoor`
+
+---
+
+#### VentBase.h / .cpp
+
+**Ventilation shaft for stealth traversal**
+
+Crawl spaces that allow players to bypass areas or reach hidden locations.
+
+```cpp
+class ECHOESOFTIME_API AVentBase : public AActor, public IInteractable
+{
+    GENERATED_BODY()
+public:
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    UStaticMeshComponent* VentMesh;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    AActor* ExitPoint; // Target vent or location
+    
+    UPROPERTY(EditAnywhere)
+    bool bRequiresTool = false; // Need crowbar/screwdriver
+    
+    UPROPERTY(EditAnywhere)
+    bool bIsOpen = false;
+    
+    // IInteractable
+    virtual void Interact_Implementation(AActor* Interactor) override;
+    
+private:
+    void TeleportPlayerToExit(ACharacter* Character);
+    void PlayCrawlAnimation();
+};
+```
+
+**Features**:
+- Stealth traversal path
+- Can require tools to open
+- Teleports to exit vent
+- Hidden from guard sight
+
+**Derived Classes**:
+- `PastVent`
+- `FutureVent`
+
+---
+
+### Interactive Objects
+
+#### AlarmButton.h / .cpp
+
+**Panic button for triggering alarms**
+
+Guards can press this to trigger base-wide alarm.
+
+```cpp
+class ECHOESOFTIME_API AAlarmButton : public AActor, public IInteractable
+{
+    GENERATED_BODY()
+public:
+    UPROPERTY(ReplicatedUsing = OnRep_IsActivated)
+    bool bIsActivated = false;
+    
+    UPROPERTY(EditAnywhere)
+    bool bSingleUse = true;
+    
+    virtual void Interact_Implementation(AActor* Interactor) override;
+    
+    UFUNCTION()
+    void TriggerAlarm();
+    
+    UFUNCTION()
+    void OnRep_IsActivated();
+    
+    UPROPERTY(BlueprintAssignable)
+    FOnAlarmTriggered OnAlarmTriggered;
+};
+```
+
+**Usage**: Placed near guard posts, security stations
+
+---
+
+#### CodeGenerator.h / .cpp
+
+**Generates random access codes**
+
+Creates random codes displayed on documents/screens that players need for keypads.
+
+```cpp
+class ECHOESOFTIME_API ACodeGenerator : public AActor
+{
+    GENERATED_BODY()
+public:
+    UPROPERTY(EditAnywhere, Category = "Code")
+    int32 CodeLength = 4;
+    
+    UPROPERTY(EditAnywhere, Category = "Code")
+    bool bUseLetters = false;
+    
+    UPROPERTY(EditAnywhere, Category = "Code")
+    bool bUseNumbers = true;
+    
+    UPROPERTY(BlueprintReadOnly, Replicated, Category = "Code")
+    FString GeneratedCode;
+    
+    UFUNCTION(BlueprintCallable, Category = "Code")
+    FString GenerateNewCode();
+    
+    UFUNCTION(BlueprintPure, Category = "Code")
+    FString GetCode() const { return GeneratedCode; }
+    
+protected:
+    virtual void BeginPlay() override;
+};
+```
+
+**Usage**: 
+- Generates code on BeginPlay
+- Code displayed on in-game screens/documents
+- Players use code to unlock keypads
+
+---
+
+#### DeskActor.h / .cpp
+
+**Interactive office desk**
+
+```cpp
+class ECHOESOFTIME_API ADeskActor : public AActor, public IInteractable
+{
+    GENERATED_BODY()
+public:
+    UPROPERTY(EditAnywhere)
+    UStaticMeshComponent* DeskMesh;
+    
+    UPROPERTY(EditAnywhere)
+    TArray<UItemBase*> ContainedItems;
+    
+    UPROPERTY(EditAnywhere)
+    bool bRequiresSearch = true;
+    
+    UPROPERTY()
+    USearchComponent* SearchComponent;
+    
+    virtual void Interact_Implementation(AActor* Interactor) override;
+};
+```
+
+**Features**:
+- Contains searchable items
+- Can have documents on surface
+- Drawers can be locked
+
+---
+
+#### ItemPickup.h / .cpp
+
+**Collectible item actor**
+
+World pickup that adds items to player inventory.
+
+```cpp
+class ECHOESOFTIME_API AItemPickup : public AActor, public IInteractable
+{
+    GENERATED_BODY()
+public:
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
+    UItemBase* ItemData;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
+    FGuid ItemInstanceID;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
+    UStaticMeshComponent* MeshComponent;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
+    bool bAutoGenerateGUID = true;
+    
+    virtual void Interact_Implementation(AActor* Interactor) override;
+    
+    UPROPERTY(BlueprintAssignable)
+    FOnItemPickedUp OnItemPickedUp;
+    
+protected:
+    virtual void BeginPlay() override;
+    void PickupItem(AActor* Interactor);
+};
+```
+
+**Derived Classes**:
+- `PastItemPickup` - Item in past timeline
+- `FutureItemPickup` - Item in future timeline (invalidated if past changes)
+
+---
+
+#### KeycardScanner.h / .cpp
+
+**Keycard access control system**
+
+```cpp
+class ECHOESOFTIME_API AKeycardScanner : public AActor, public IInteractable
+{
+    GENERATED_BODY()
+public:
+    UPROPERTY(EditAnywhere, Category = "Keycard")
+    FGameplayTag RequiredKeycardTag;
+    
+    UPROPERTY(EditAnywhere, Category = "Keycard")
+    TArray<AActor*> ControlledActors; // Doors, elevators, etc.
+    
+    UPROPERTY(EditAnywhere, Category = "Keycard")
+    bool bRequiresSpecificKeycard = true;
+    
+    UPROPERTY(EditAnywhere, Category = "Keycard")
+    bool bOneTimeUse = false;
+    
+    UPROPERTY(ReplicatedUsing = OnRep_IsActivated)
+    bool bIsActivated = false;
+    
+    virtual void Interact_Implementation(AActor* Interactor) override;
+    
+protected:
+    bool CheckKeycardAccess(AActor* Interactor);
+    void UnlockControlledActors();
+    void GrantAccessToInteractor(AActor* Interactor);
+    
+    UFUNCTION()
+    void OnRep_IsActivated();
+};
+```
+
+**Features**:
+- Requires specific keycard item
+- Unlocks multiple connected actors
+- Visual feedback (light changes)
+- Network replicated
+
+---
+
+#### LockerActor.h / .cpp
+
+**Storage locker**
+
+```cpp
+class ECHOESOFTIME_API ALockerActor : public AActor, public IInteractable
+{
+    GENERATED_BODY()
+public:
+    UPROPERTY(EditAnywhere)
+    UStaticMeshComponent* LockerMesh;
+    
+    UPROPERTY(EditAnywhere)
+    TArray<UItemBase*> StoredItems;
+    
+    UPROPERTY(EditAnywhere)
+    bool bIsLocked = true;
+    
+    UPROPERTY()
+    ULockPickComponent* LockPickComponent;
+    
+    UPROPERTY()
+    USearchComponent* SearchComponent;
+    
+    virtual void Interact_Implementation(AActor* Interactor) override;
+    
+private:
+    void OpenLocker();
+};
+```
+
+**Usage**: Contains loot, must be unlocked first
+
+---
+
+#### MetalDetector.h / .cpp
+
+**Security checkpoint metal detector**
+
+```cpp
+class ECHOESOFTIME_API AMetalDetector : public AActor
+{
+    GENERATED_BODY()
+public:
+    UPROPERTY(EditAnywhere)
+    UBoxComponent* DetectionVolume;
+    
+    UPROPERTY(EditAnywhere)
+    FGameplayTagContainer MetalTags; // Tags that trigger detection
+    
+    UPROPERTY(EditAnywhere)
+    bool bIsActive = true;
+    
+    UFUNCTION()
+    void OnDetectionBeginOverlap(UPrimitiveComponent* OverlappedComponent, 
+                                 AActor* OtherActor, ...);
+    
+    UPROPERTY(BlueprintAssignable)
+    FOnMetalDetected OnMetalDetected;
+    
+private:
+    bool ActorTriggersDetector(AActor* Actor);
+};
+```
+
+**Features**:
+- Detects weapons and metal items
+- Triggers alarm if metal detected
+- Can be disabled via hacking
+
+---
+
+#### NewspaperActor.h / .cpp
+
+**Readable newspaper with lore**
+
+```cpp
+class ECHOESOFTIME_API ANewspaperActor : public AActor, public IInteractable
+{
+    GENERATED_BODY()
+public:
+    UPROPERTY(EditAnywhere, Category = "Content")
+    FText NewspaperHeadline;
+    
+    UPROPERTY(EditAnywhere, Category = "Content")
+    FText NewspaperContent;
+    
+    UPROPERTY(EditAnywhere, Category = "Content")
+    UTexture2D* NewspaperImage;
+    
+    UPROPERTY(EditAnywhere, Category = "Content")
+    FDateTime PublicationDate;
+    
+    virtual void Interact_Implementation(AActor* Interactor) override;
+    
+private:
+    void DisplayNewspaper(APlayerController* PlayerController);
+};
+```
+
+**Usage**: Environmental storytelling, hints, lore
+
+---
+
+
+#### PowerGenerator.h / .cpp
+
+**Power generator for puzzle systems**
+
+Powers devices and doors, can be activated/deactivated.
+
+```cpp
+class ECHOESOFTIME_API APowerGenerator : public AActor, public IInteractable, public IRepairable
+{
+    GENERATED_BODY()
+public:
+    UPROPERTY(ReplicatedUsing = OnRep_IsPowered, EditAnywhere, BlueprintReadWrite)
+    bool bIsPowered = false;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Power")
+    TArray<AActor*> PoweredActors;
+    
+    UPROPERTY(EditAnywhere, Category = "Power")
+    bool bRequiresRepair = false;
+    
+    UPROPERTY(EditAnywhere, Category = "Power")
+    bool bStartsOn = true;
+    
+    virtual void Interact_Implementation(AActor* Interactor) override;
+    
+    UFUNCTION(BlueprintCallable, Category = "Power")
+    void TogglePower();
+    
+    UFUNCTION(BlueprintCallable, Category = "Power")
+    void SetPowered(bool bNewPowered);
+    
+    // IRepairable
+    virtual void Repair_Implementation(AActor* Repairer) override;
+    virtual bool NeedsRepair_Implementation() const override;
+    
+    UFUNCTION()
+    void OnRep_IsPowered();
+    
+private:
+    void UpdatePoweredActors();
+    void NotifyPoweredActors(bool bPowerState);
+};
+```
+
+**Derived Classes**:
+- `PastPowerGenerator`
+- `FuturePowerGenerator`
+
+**Features**:
+- Powers doors, lights, terminals
+- Can break and need repair
+- Network replicated
+- Visual indicators (lights, sounds)
+
+---
+
+### Security Systems
+
+#### SecurityCamera.h / .cpp
+
+**Surveillance camera with detection**
+
+Automatically panning camera that detects players and triggers alarms.
+
+```cpp
+class ECHOESOFTIME_API ASecurityCamera : public AActor, public IDetectable
+{
+    GENERATED_BODY()
+public:
+    // Components
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+    UStaticMeshComponent* CameraMesh;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+    class USceneCaptureComponent2D* SceneCapture;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    class UArrowComponent* ArrowComp;
+    
+    // Detection Parameters
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection")
+    float DetectionDistance = 2000.0f;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection")
+    float ViewConeAngle = 90.0f;
+    
+    // Pan Settings
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Pan")
+    float MinYaw = -45.0f;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Pan")
+    float MaxYaw = 45.0f;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Pan")
+    float PanSpeed = 30.0f; // Degrees per second
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Pan")
+    float PauseAtLimit = 2.0f; // Pause at each end
+    
+    // Debug
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
+    bool bDrawDebugDetectionCone = false;
+    
+    // State
+    UPROPERTY(EditAnywhere, Category = "Camera")
+    bool bCanBeHacked = true;
+    
+    UPROPERTY(ReplicatedUsing = OnRep_IsDisabled)
+    bool bIsDisabled = false;
+    
+    // IDetectable
+    virtual void OnFullyDetected_Implementation(AActor* DetectingActor) override;
+    virtual bool IsActorAlreadyDetected_Implementation(AActor* DetectingActor) const override;
+    
+    UFUNCTION()
+    void OnRep_IsDisabled();
+    
+protected:
+    virtual void BeginPlay() override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+    
+private:
+    void DetectionUpdate();
+    void PanUpdate();
+    
+    FTimerHandle DetectionTimerHandle;
+    FTimerHandle PanTimerHandle;
+    
+    float DetectionInterval = 0.2f;
+    float PanInterval = 0.02f;
+    
+    float CurrentYaw = 0.0f;
+    bool bPanningRight = true;
+    float PauseTimer = 0.0f;
+    
+    UPROPERTY(ReplicatedUsing = OnRep_PanOffset)
+    float PanOffset = 0.0f;
+    
+    UFUNCTION()
+    void OnRep_PanOffset();
+    
+    TSet<TWeakObjectPtr<AActor>> LastDetectedActors;
+};
+```
+
+**Features**:
+- Automatic panning within range
+- Cone-based line-of-sight detection
+- Can be hacked/disabled
+- Triggers alarms on detection
+- Optimized with timer-based ticking
+- Network replicated pan position
+
+---
+
+#### SecurityDocumentActor.h / .cpp
+
+**Readable security document**
+
+Displays security information like access codes, patrol schedules.
+
+```cpp
+class ECHOESOFTIME_API ASecurityDocumentActor : public AActor, public IInteractable
+{
+    GENERATED_BODY()
+public:
+    UPROPERTY(EditAnywhere, Category = "Content")
+    FText DocumentTitle;
+    
+    UPROPERTY(EditAnywhere, Category = "Content")
+    FText DocumentContent;
+    
+    UPROPERTY(EditAnywhere, Category = "Content")
+    TSubclassOf<UUserWidget> DocumentWidgetClass;
+    
+    UPROPERTY(EditAnywhere, Category = "Content")
+    UTexture2D* DocumentTexture;
+    
+    virtual void Interact_Implementation(AActor* Interactor) override;
+    
+private:
+    void ShowDocument(APlayerController* PlayerController);
+};
+```
+
+**Usage**: Contains hints, codes, lore, patrol routes
+
+---
+
+### Computer Systems
+
+Located in `Actors/Computers/`
+
+#### Computer.h / .cpp
+
+**Base computer terminal**
+
+```cpp
+class ECHOESOFTIME_API AComputer : public AActor, public IInteractable
+{
+    GENERATED_BODY()
+public:
+    UPROPERTY(EditAnywhere)
+    UStaticMeshComponent* ComputerMesh;
+    
+    UPROPERTY(EditAnywhere)
+    UHackComponent* HackComponent;
+    
+    UPROPERTY(EditAnywhere, Category = "Computer")
+    bool bRequiresPassword = false;
+    
+    UPROPERTY(EditAnywhere, Category = "Computer")
+    FString Password;
+    
+    UPROPERTY(ReplicatedUsing = OnRep_IsAccessed)
+    bool bIsAccessed = false;
+    
+    virtual void Interact_Implementation(AActor* Interactor) override;
+    
+    UFUNCTION(BlueprintImplementableEvent)
+    void OnComputerAccessed();
+    
+    UFUNCTION()
+    void OnRep_IsAccessed();
+};
+```
+
+---
+
+#### ArchiveComputer.h / .cpp
+
+**Archive/database computer**
+
+```cpp
+class ECHOESOFTIME_API AArchiveComputer : public AComputer
+{
+    GENERATED_BODY()
+public:
+    UPROPERTY(EditAnywhere, Category = "Archive")
+    TArray<FText> ArchiveEntries;
+    
+    UPROPERTY(EditAnywhere, Category = "Archive")
+    TMap<FString, FText> DatabaseEntries;
+    
+    UFUNCTION(BlueprintCallable, Category = "Archive")
+    void DisplayArchiveEntry(int32 Index);
+    
+    UFUNCTION(BlueprintCallable, Category = "Archive")
+    FText SearchDatabase(const FString& Query);
+};
+```
+
+---
+
+### Timeline Objects
+
+Located in `Actors/TimeObjects/` - Objects that exist in specific timelines
+
+#### GhostCharacterActor.h / .cpp
+
+**Ghost echo of past characters**
+
+Visible only during Past Echo ability, shows past events.
+
+```cpp
+class ECHOESOFTIME_API AGhostCharacterActor : public AActor, public IGhostRevealable
+{
+    GENERATED_BODY()
+public:
+    UPROPERTY(EditAnywhere)
+    USkeletalMeshComponent* GhostMesh;
+    
+    UPROPERTY(EditAnywhere, Category = "Ghost")
+    ETimelineEra SourceTimeline = ETimelineEra::Past;
+    
+    UPROPERTY(EditAnywhere, Category = "Ghost")
+    bool bPlaysAnimation = true;
+    
+    UPROPERTY(EditAnywhere, Category = "Ghost")
+    UAnimSequence* GhostAnimation;
+    
+    UPROPERTY(EditAnywhere, Category = "Ghost")
+    float AnimationPlayRate = 1.0f;
+    
+    // IGhostRevealable
+    virtual void RevealGhost_Implementation() override;
+    virtual void HideGhost_Implementation() override;
+    
+protected:
+    virtual void BeginPlay() override;
+    
+private:
+    void SetupGhostMaterial();
+    void PlayLoopingAnimation();
+};
+```
+
+**Features**:
+- Invisible by default
+- Revealed during Past Echo ability
+- Plays looping animations
+- Ghostly material/shader
+- No collision
+
+---
+
+### Specialized Actors
+
+#### Teleporter.h / .cpp
+
+**Teleportation pad**
+
+```cpp
+class ECHOESOFTIME_API ATeleporter : public AActor, public IInteractable
+{
+    GENERATED_BODY()
+public:
+    UPROPERTY(EditAnywhere, Category = "Teleporter")
+    AActor* DestinationTeleporter;
+    
+    UPROPERTY(EditAnywhere, Category = "Teleporter")
+    FVector DestinationOffset = FVector::ZeroVector;
+    
+    UPROPERTY(EditAnywhere, Category = "Teleporter")
+    bool bBidirectional = true;
+    
+    UPROPERTY(EditAnywhere, Category = "Teleporter")
+    float TeleportDelay = 0.5f;
+    
+    UPROPERTY(EditAnywhere, Category = "Teleporter")
+    UParticleSystem* TeleportEffect;
+    
+    virtual void Interact_Implementation(AActor* Interactor) override;
+    
+private:
+    void TeleportActor(AActor* ActorToTeleport);
+    void SpawnTeleportEffects(const FVector& Location);
+    
+    UFUNCTION(Server, Reliable)
+    void ServerTeleportActor(AActor* ActorToTeleport);
+};
+```
+
+---
+
+#### Terminal.h / .cpp
+
+**Interactive terminal**
+
+```cpp
+class ECHOESOFTIME_API ATerminal : public AActor, public IInteractable
+{
+    GENERATED_BODY()
+public:
+    UPROPERTY(EditAnywhere)
+    UStaticMeshComponent* TerminalMesh;
+    
+    UPROPERTY(EditAnywhere)
+    UHackComponent* HackComponent;
+    
+    UPROPERTY(EditAnywhere, Category = "Terminal")
+    TArray<AActor*> ControlledDevices;
+    
+    UPROPERTY(EditAnywhere, Category = "Terminal")
+    FText TerminalContent;
+    
+    virtual void Interact_Implementation(AActor* Interactor) override;
+    
+private:
+    void ActivateControlledDevices();
+};
+```
+
+---
+
+## Characters
+
+Located in `Characters/` - Player and AI character classes
+
+### DefaultCharacter.h / .cpp
+
+**Main player character**
+
+The primary player character with full GAS integration, inventory, detection, and movement.
+
+```cpp
+class ECHOESOFTIME_API ADefaultCharacter : public ACharacter, 
+                                           public IInteractable, 
+                                           public IAbilitySystemInterface, 
+                                           public IDetectable
+{
+    GENERATED_BODY()
+public:
+    ADefaultCharacter();
+    
+    // Components
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
+    UCameraComponent* CameraComponent;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ASC")
+    UAbilitySystemComponent* AbilitySystemComponent;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
+    UInventoryComponent* InventoryComponent;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detection")
+    UDetectionComponent* DetectionComponent;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
+    UStaticMeshComponent* EquippedItemMeshComp;
+    
+    // Ability System
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Abilities")
+    UAbilityInputSet* FutureGASet;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Abilities")
+    UAbilityInputSet* SoloGASet;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Abilities")
+    UDefaultGASet* DefaultGASet;
+    
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
+    TSubclassOf<UGameplayEffect> AttributeInitGE;
+    
+    // Input
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+    UInputMappingSet* InputMappingSet;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    UInputAction* MoveAction;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    UInputAction* LookAction;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    UInputAction* SprintAction;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    UInputAction* JumpAction;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    UInputAction* CrouchAction;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    UInputAction* InteractAction;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    UInputAction* DropItemAction;
+    
+    // State
+    UPROPERTY(ReplicatedUsing = OnRep_SprintState)
+    bool bIsSprinting = false;
+    
+    UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Pitch)
+    float Pitch = 0.0f;
+    
+    // Methods
+    virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+    virtual void PostInitializeComponents() override;
+    virtual void BeginPlay() override;
+    virtual void Tick(float DeltaTime) override;
+    virtual void OnRep_PlayerState() override;
+    virtual void PossessedBy(AController* NewController) override;
+    
+    // Movement
+    void Move(const FInputActionValue& Value);
+    void Look(const FInputActionValue& Value);
+    virtual void Jump() override;
+    void StartCrouch();
+    void StopCrouching();
+    void StartSprint();
+    void StopSprint();
+    
+    // Inventory
+    void UpdateEquippedItemMesh();
+    void DropActiveItem();
+    void SelectInventorySlot(int32 SlotNumber);
+    void HandleNumberKey(FKey PressedKey);
+    void OnInventoryChanged(const TArray<FInventorySlot>& Slots);
+    
+    // Ability System
+    void InitializeAbilitySystem();
+    virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+    void HandleAbilityInput(const FInputActionInstance& Instance, FGameplayTag InputTag);
+    void HandleAbilityInputReleased(const FInputActionInstance& Instance, FGameplayTag InputTag);
+    const UPlayerAttributeSet* GetPlayerAttributeSet() const;
+    
+    // Attribute callbacks
+    void OnWalkSpeedChanged(const FOnAttributeChangeData& ChangeData);
+    void OnRunSpeedChanged(const FOnAttributeChangeData& ChangeData);
+    void OnCrouchSpeedChanged(const FOnAttributeChangeData& ChangeData);
+    
+    // Interaction
+    void HandleInteractHoldStart();
+    void HandleInteractHoldStop();
+    void HandleInteractInstant();
+    void UpdateInteractHighlight();
+    
+    UFUNCTION(Server, Reliable)
+    void ServerHandleInteract(AActor* TargetActor);
+    
+    // Camera
+    UPROPERTY(BlueprintReadOnly, Category = "Camera")
+    FVector CameraDefaultLocation;
+    
+    UPROPERTY(BlueprintReadOnly, Category = "Camera")
+    FRotator CameraDefaultRotation;
+    
+    UFUNCTION(BlueprintImplementableEvent, Category = "Aim")
+    void StartAimCamera(FVector AimLocation, FRotator AimRotation);
+    
+    UFUNCTION(BlueprintImplementableEvent, Category = "Aim")
+    void StopAimCamera(FVector ReturnLocation, FRotator ReturnRotation);
+    
+    // IDetectable
+    virtual void OnDetected_Implementation(AActor* Detector) override;
+    virtual void OnLost_Implementation(AActor* Detector) override;
+    virtual void OnForceDetectionEnd_Implementation(AActor* Detector) override;
+    virtual void OnFullyDetected_Implementation(AActor* Detector) override;
+    
+    // Utility
+    bool GetForwardTraceResult(float TraceDistance, FHitResult& OutHit, FVector& OutTraceEnd) const;
+    
+    UFUNCTION(BlueprintPure, Category = "Detection")
+    static float CalculateDetectionAngle(const FVector& CameraLocation,
+                                        const FRotator& PlayerCameraRotation,
+                                        const FVector& SelfLocation);
+    
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+    
+protected:
+    AActor* HighlightedActor = nullptr;
+    AActor* ProgressiveActor = nullptr;
+    
+private:
+    void GrantAbilitiesFromInputSet();
+    void GrantAbilitiesFromDefaultSet();
+    void OnIllegalTagChanged(const FGameplayTag CallbackTag, int32 NewCount);
+};
+```
+
+**Features**:
+- Full Gameplay Ability System integration
+- Inventory management
+- Detection system
+- Enhanced Input System
+- Network replication
+- Timeline-based abilities
+- Sprint, crouch, jump mechanics
+- Item interaction and pickup
+- Camera system with aim support
+
+---
+
+
+### AICharacter.h / .cpp
+
+**Base class for AI characters**
+
+Abstract base for AI-controlled NPCs including guards and civilians.
+
+```cpp
+UCLASS(Abstract)
+class ECHOESOFTIME_API AAICharacter : public ACharacter, 
+                                       public IAbilitySystemInterface, 
+                                       public IInteractable, 
+                                       public IDetectable
+{
+    GENERATED_BODY()
+public:
+    AAICharacter();
+    
+    // Components
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    UAbilitySystemComponent* AbilitySystemComponent;
+    
+    UPROPERTY()
+    UPlayerAttributeSet* AttributeSet;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detection")
+    UDetectionComponent* DetectionComponent;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detection")
+    USearchComponent* SearchComponent;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+    UAIPerceptionComponent* AIPerceptionComponent;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+    UAISenseConfig_Sight* SightConfig;
+    
+    // State
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+    AActor* TargetActor = nullptr;
+    
+    UPROPERTY()
+    AActor* DetectedActor = nullptr;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
+    ETimelineEra TimelineEra = ETimelineEra::Past;
+    
+    UPROPERTY(BlueprintReadOnly)
+    bool bIsDead = false;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+    int32 MoneyToSubtract = -10000; // Penalty for killing
+    
+    // Item System (for searchable loot)
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Item")
+    UItemBase* ItemData;
+    
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Item")
+    FGuid ItemInstanceID;
+    
+    // Delegates
+    UPROPERTY(BlueprintAssignable, Category = "Item")
+    FOnAICharacterPickedUp OnItemPickedUp;
+    
+    // IAbilitySystemInterface
+    virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+    
+    // IInteractable
+    virtual void Interact_Implementation(AActor* Interactor) override;
+    virtual void CancelInteract_Implementation(AActor* Interactor) override;
+    virtual void SetHighlighted_Implementation(bool bHighlight) override;
+    virtual bool IsProgressiveInteract_Implementation() override { return true; }
+    
+    // IDetectable
+    virtual void OnDetected_Implementation(AActor* Detector) override;
+    virtual void OnLost_Implementation(AActor* Detector) override;
+    virtual void OnForceDetectionEnd_Implementation(AActor* Detector) override;
+    virtual void OnFullyDetected_Implementation(AActor* ActorDetected) override;
+    virtual bool IsActorAlreadyDetected_Implementation(AActor* DetectingActor) const override;
+    
+protected:
+    virtual void BeginPlay() override;
+    virtual void OnHealthChanged(const struct FOnAttributeChangeData& Data);
+    virtual void OnSearchComplete();
+    virtual void TryPickup(AActor* Interactor);
+    virtual void OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors);
+};
+```
+
+**Features**:
+- AI Perception System integration
+- Searchable for loot
+- Can be killed/knocked out
+- Health system via GAS
+- Timeline-specific spawning
+
+**Derived Classes**:
+- `GuardCharacter` - Security guards
+- `RobotGuardCharacter` - Robot guards
+- `CivilianCharacter` - Civilians
+- `DronePawn` - Flying drones
+
+---
+
+### GuardCharacter.h / .cpp
+
+**Security guard AI**
+
+Guards that patrol, detect players, and respond to alarms.
+
+```cpp
+class ECHOESOFTIME_API AGuardCharacter : public AAICharacter
+{
+    GENERATED_BODY()
+public:
+    UPROPERTY(EditAnywhere, Category = "AI|Patrol")
+    TArray<AActor*> PatrolPoints;
+    
+    UPROPERTY(EditAnywhere, Category = "AI|Detection")
+    float DetectionRange = 2000.0f;
+    
+    UPROPERTY(EditAnywhere, Category = "AI|Detection")
+    float HearingRange = 1000.0f;
+    
+    UPROPERTY(EditAnywhere, Category = "AI|Combat")
+    bool bIsArmed = true;
+    
+    UPROPERTY(EditAnywhere, Category = "AI|Behavior")
+    bool bCanCallBackup = true;
+    
+    // State Tree behaviors handle:
+    // - Patrolling
+    // - Investigating
+    // - Chasing
+    // - Combat
+    // - Searching
+    // - Calling for backup
+};
+```
+
+---
+
+### CivilianCharacter.h / .cpp
+
+**Civilian NPC**
+
+Non-hostile NPCs that can panic and call guards.
+
+```cpp
+class ECHOESOFTIME_API ACivilianCharacter : public AAICharacter
+{
+    GENERATED_BODY()
+public:
+    UPROPERTY(EditAnywhere, Category = "AI|Behavior")
+    bool bCanPanic = true;
+    
+    UPROPERTY(EditAnywhere, Category = "AI|Behavior")
+    bool bWillCallGuards = true;
+    
+    UPROPERTY(EditAnywhere, Category = "AI|Behavior")
+    float PanicRadius = 500.0f;
+    
+    // Behaviors:
+    // - Walking/standing
+    // - Fleeing when scared
+    // - Calling for help
+};
+```
+
+---
+
+### DronePawn.h / .cpp
+
+**Flying surveillance drone**
+
+```cpp
+class ECHOESOFTIME_API ADronePawn : public APawn, public IDetectable
+{
+    GENERATED_BODY()
+public:
+    UPROPERTY(EditAnywhere)
+    UStaticMeshComponent* DroneMesh;
+    
+    UPROPERTY(EditAnywhere)
+    class UFloatingPawnMovement* MovementComponent;
+    
+    UPROPERTY(EditAnywhere, Category = "AI")
+    TArray<AActor*> PatrolPoints;
+    
+    UPROPERTY(EditAnywhere, Category = "Detection")
+    float DetectionRange = 1500.0f;
+    
+    UPROPERTY(EditAnywhere, Category = "Drone")
+    bool bCanBeHacked = true;
+    
+    // Behaviors:
+    // - Patrolling
+    // - Detecting players
+    // - Can be disabled by hacking
+};
+```
+
+---
+
+### RobotGuardCharacter.h / .cpp
+
+**Robotic security guard**
+
+Future-era robot guards with different behaviors.
+
+```cpp
+class ECHOESOFTIME_API ARobotGuardCharacter : public AGuardCharacter
+{
+    GENERATED_BODY()
+public:
+    UPROPERTY(EditAnywhere, Category = "Robot")
+    bool bCanBeHacked = true;
+    
+    UPROPERTY(EditAnywhere, Category = "Robot")
+    bool bRequiresRepair = false;
+    
+    // Additional robotic features
+};
+```
+
+---
+
+## Controllers
+
+Located in `Controllers/` - Player controllers for different game modes
+
+### DefaultPlayerController.h / .cpp
+
+**Main game player controller**
+
+```cpp
+class ECHOESOFTIME_API ADefaultPlayerController : public APlayerController
+{
+    GENERATED_BODY()
+public:
+    ADefaultPlayerController();
+    
+    virtual void BeginPlay() override;
+    virtual void SetupInputComponent() override;
+    
+    // HUD Management
+    UFUNCTION(BlueprintCallable, Category = "HUD")
+    void ShowPauseMenu();
+    
+    UFUNCTION(BlueprintCallable, Category = "HUD")
+    void HidePauseMenu();
+    
+    // Input Mode Management
+    void SetInputModeGameOnly();
+    void SetInputModeUIOnly();
+    void SetInputModeGameAndUI();
+    
+protected:
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<UUserWidget> PauseMenuClass;
+    
+    UPROPERTY()
+    UUserWidget* PauseMenuWidget;
+};
+```
+
+---
+
+### LobbyPlayerController.h / .cpp
+
+**Multiplayer lobby controller**
+
+```cpp
+class ECHOESOFTIME_API ALobbyPlayerController : public APlayerController
+{
+    GENERATED_BODY()
+public:
+    // Lobby-specific functionality
+    UFUNCTION(BlueprintCallable)
+    void ReadyUp();
+    
+    UFUNCTION(BlueprintCallable)
+    void SelectCharacter(ETimelineEra Era);
+};
+```
+
+---
+
+### MainMenuPlayerController.h / .cpp
+
+**Main menu controller**
+
+```cpp
+class ECHOESOFTIME_API AMainMenuPlayerController : public APlayerController
+{
+    GENERATED_BODY()
+public:
+    // Main menu functionality
+    virtual void BeginPlay() override;
+};
+```
+
+---
+
+## Data Assets
+
+Located in `DataAssets/` - Data-driven configuration
+
+### ItemBase.h / .cpp
+
+**Base item data asset**
+
+Defines items that can be picked up and stored in inventory.
+
+```cpp
+UCLASS(BlueprintType)
+class ECHOESOFTIME_API UItemBase : public UPrimaryDataAsset
+{
+    GENERATED_BODY()
+public:
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item")
+    FText ItemName;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item")
+    FText ItemDescription;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item")
+    UTexture2D* ItemIcon;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item")
+    UStaticMesh* ItemMesh;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item")
+    FGameplayTag ItemTag;
+    
+    // Gameplay Effects granted when equipped
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gameplay")
+    TArray<TSubclassOf<UGameplayEffect>> GrantedEffects;
+    
+    // Abilities granted when equipped
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gameplay")
+    TArray<TSubclassOf<UGameplayAbility>> GrantedAbilities;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item")
+    bool bIsEquippable = true;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item")
+    bool bIsStackable = false;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item")
+    int32 MaxStackSize = 1;
+};
+```
+
+**Item Types**:
+- Keycards (unlock doors)
+- Tools (lockpicks, hacking devices)
+- Weapons (pistols)
+- Documents (readable information)
+- Collectibles (lore items)
+
+---
+
+### AbilityInputSet.h / .cpp
+
+**Maps abilities to input actions**
+
+```cpp
+UCLASS(BlueprintType)
+class ECHOESOFTIME_API UAbilityInputSet : public UDataAsset
+{
+    GENERATED_BODY()
+public:
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    TArray<FAbilityInputMapping> AbilityInputMappings;
+};
+
+USTRUCT(BlueprintType)
+struct FAbilityInputMapping
+{
+    GENERATED_BODY()
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    TSubclassOf<UGameplayAbility> Ability;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    FGameplayTag InputTag;
+};
+```
+
+---
+
+### DefaultGASet.h / .cpp
+
+**Default ability set**
+
+Defines default abilities available to all characters.
+
+```cpp
+UCLASS(BlueprintType)
+class ECHOESOFTIME_API UDefaultGASet : public UDataAsset
+{
+    GENERATED_BODY()
+public:
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    TArray<TSubclassOf<UGameplayAbility>> Abilities;
+};
+```
+
+---
+
+### InputMappingSet.h / .cpp
+
+**Input mapping configuration**
+
+```cpp
+UCLASS(BlueprintType)
+class ECHOESOFTIME_API UInputMappingSet : public UDataAsset
+{
+    GENERATED_BODY()
+public:
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    UInputMappingContext* InputMappingContext;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    TArray<FInputActionMapping> ActionMappings;
+};
+```
+
+---
+
+## Game Modes & States
+
+### BaseGameMode.h / .cpp
+
+**Base game mode**
+
+```cpp
+class ECHOESOFTIME_API ABaseGameMode : public AGameModeBase
+{
+    GENERATED_BODY()
+public:
+    ABaseGameMode();
+    
+    virtual void BeginPlay() override;
+};
+```
+
+---
+
+### DefaultGameMode.h / .cpp
+
+**Main gameplay mode**
+
+```cpp
+class ECHOESOFTIME_API ADefaultGameMode : public ABaseGameMode
+{
+    GENERATED_BODY()
+public:
+    virtual void BeginPlay() override;
+    virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
+    
+    UFUNCTION(BlueprintCallable)
+    void RestartLevel();
+    
+protected:
+    UFUNCTION()
+    void OnAlarmStarted(float AlarmEndTime);
+    
+    UFUNCTION()
+    void OnAlarmCanceled();
+    
+    UFUNCTION()
+    void OnPreAlarmStarted(float PreAlarmEndTime, AActor* PreAlarmInstigator);
+    
+    UFUNCTION()
+    void OnPreAlarmCanceled();
+    
+private:
+    FTimerHandle RestartTimerHandle;
+    FTimerHandle PreAlarmTimerHandle;
+};
+```
+
+---
+
+### LobbyGameMode.h / .cpp
+
+**Multiplayer lobby mode**
+
+```cpp
+class ECHOESOFTIME_API ALobbyGameMode : public ABaseGameMode
+{
+    GENERATED_BODY()
+public:
+    // Lobby management
+    UFUNCTION(BlueprintCallable)
+    void StartGame();
+    
+    UFUNCTION(BlueprintCallable)
+    bool AllPlayersReady() const;
+};
+```
+
+---
+
+### DefaultGameState.h / .cpp
+
+**Main game state**
+
+```cpp
+class ECHOESOFTIME_API ADefaultGameState : public AGameStateBase
+{
+    GENERATED_BODY()
+public:
+    UPROPERTY(Replicated, BlueprintReadOnly)
+    bool bIsAlarmActive = false;
+    
+    UPROPERTY(Replicated, BlueprintReadOnly)
+    float AlarmTimeRemaining = 0.0f;
+    
+    UFUNCTION(BlueprintCallable, NetMulticast, Reliable)
+    void TriggerAlarm(float Duration);
+    
+    UFUNCTION(BlueprintCallable, NetMulticast, Reliable)
+    void CancelAlarm();
+};
+```
+
+---
+
+### LobbyGameState.h / .cpp
+
+**Lobby state**
+
+```cpp
+class ECHOESOFTIME_API ALobbyGameState : public AGameStateBase
+{
+    GENERATED_BODY()
+public:
+    UPROPERTY(Replicated, BlueprintReadOnly)
+    TArray<APlayerState*> ReadyPlayers;
+    
+    UPROPERTY(Replicated, BlueprintReadOnly)
+    FString SelectedMap;
+};
+```
+
+---
+
+## Interfaces
+
+Located in `Interfaces/` - C++ interfaces for polymorphic behavior
+
+### IInteractable.h / .cpp
+
+**Interface for interactive objects**
+
+```cpp
+UINTERFACE(MinimalAPI, Blueprintable)
+class UInteractable : public UInterface
+{
+    GENERATED_BODY()
+};
+
+class ECHOESOFTIME_API IInteractable
+{
+    GENERATED_BODY()
+public:
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interactable")
+    void Interact(AActor* Interactor);
+    
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interactable")
+    void CancelInteract(AActor* Interactor);
+    
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interactable")
+    void SetHighlighted(bool bHighlight);
+    
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interactable")
+    bool IsProgressiveInteract();
+    
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interactable")
+    bool IsCorrectItem(UItemBase* Item) const;
+    
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interactable")
+    bool RequiresItem() const;
+};
+```
+
+**Implemented By**: Doors, computers, items, NPCs, terminals, etc.
+
+---
+
+### IDetectable.h / .cpp
+
+**Interface for detectable entities**
+
+```cpp
+UINTERFACE(MinimalAPI, Blueprintable)
+class UDetectable : public UInterface
+{
+    GENERATED_BODY()
+};
+
+class ECHOESOFTIME_API IDetectable
+{
+    GENERATED_BODY()
+public:
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Detectable")
+    void OnDetected(AActor* Detector);
+    
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Detectable")
+    void OnLost(AActor* Detector);
+    
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Detectable")
+    void OnForceDetectionEnd(AActor* Detector);
+    
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Detectable")
+    void OnFullyDetected(AActor* Detector);
+    
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Detectable")
+    bool IsActorAlreadyDetected(AActor* DetectingActor) const;
+};
+```
+
+**Implemented By**: Player character, AI characters, cameras
+
+---
+
+### IKeycardUnlockable.h / .cpp
+
+**Interface for keycard-locked objects**
+
+```cpp
+UINTERFACE(MinimalAPI, Blueprintable)
+class UKeycardUnlockable : public UInterface
+{
+    GENERATED_BODY()
+};
+
+class ECHOESOFTIME_API IKeycardUnlockable
+{
+    GENERATED_BODY()
+public:
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Keycard")
+    void UnlockWithKeycard(AActor* Interactor);
+    
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Keycard")
+    bool RequiresKeycard() const;
+};
+```
+
+---
+
+### IGhostRevealable.h / .cpp
+
+**Interface for ghost/past echo objects**
+
+```cpp
+UINTERFACE(MinimalAPI, Blueprintable)
+class UGhostRevealable : public UInterface
+{
+    GENERATED_BODY()
+};
+
+class ECHOESOFTIME_API IGhostRevealable
+{
+    GENERATED_BODY()
+public:
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Ghost")
+    void RevealGhost();
+    
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Ghost")
+    void HideGhost();
+};
+```
+
+---
+
+### IRepairable.h / .cpp
+
+**Interface for repairable objects**
+
+```cpp
+UINTERFACE(MinimalAPI, Blueprintable)
+class URepairable : public UInterface
+{
+    GENERATED_BODY()
+};
+
+class ECHOESOFTIME_API IRepairable
+{
+    GENERATED_BODY()
+public:
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Repair")
+    void Repair(AActor* Repairer);
+    
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Repair")
+    bool NeedsRepair() const;
+};
+```
+
+---
+
+## Minigames
+
+Located in `Minigames/` - Interactive mini-game systems
+
+### FirewallMiniGame.h / .cpp
+
+**Space Invaders-style hacking mini-game**
+
+A retro-style space shooter mini-game used for hacking terminals.
+
+```cpp
+UCLASS(Blueprintable, BlueprintType)
+class ECHOESOFTIME_API UFirewallMiniGame : public UObject
+{
+    GENERATED_BODY()
+public:
+    // Configuration
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame")
+    UInputMappingContext* FirewallIMC;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame")
+    TSubclassOf<UFirewallWidget> WidgetClass;
+    
+    // Textures
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame")
+    UTexture2D* PlayerTexture;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame")
+    UTexture2D* EnemyTexture;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame")
+    UTexture2D* BossTexture;
+    
+    // Gameplay Tuning
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|Boss Tuning")
+    int32 BossTotalHP = 100;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MiniGame|Boss Tuning")
+    float BossModeDuration = 20.0f;
+    
+    // Easter Egg
+    UPROPERTY(BlueprintReadWrite, Category = "EasterEgg")
+    bool bUseEasterEggSprites = false;
+    
+    // Delegates
+    UPROPERTY(BlueprintAssignable)
+    FFirewallMiniGameEnded OnMiniGameEnded;
+    
+    // Methods
+    UFUNCTION(BlueprintCallable, Category = "MiniGame")
+    void StartGame(APlayerController* PlayerController);
+    
+    UFUNCTION(BlueprintCallable, Category = "MiniGame")
+    void EndGame();
+    
+private:
+    // Game state
+    FMiniGamePlayer Player;
+    TArray<FMiniGameEnemy> Enemies;
+    TArray<FMiniGameProjectile> Projectiles;
+    bool bIsGameOver;
+    
+    void TickGame();
+    void SpawnEnemy();
+    void UpdatePlayer(float DeltaTime);
+    void UpdateEnemies(float DeltaTime);
+    void CheckCollisions();
+    void GameOver();
+    void Victory();
+};
+```
+
+**Features**:
+- Space Invaders-style gameplay
+- Difficulty increases over time
+- Boss fight after 20 seconds
+- Easter egg sprite mode
+- Victory = successful hack
+
+---
+
+### NeonRunnerMiniGame.h / .cpp
+
+**Endless runner mini-game**
+
+```cpp
+UCLASS(Blueprintable, BlueprintType)
+class ECHOESOFTIME_API UNeonRunnerMiniGame : public UObject
+{
+    GENERATED_BODY()
+public:
+    // Similar structure to FirewallMiniGame
+    // Endless runner gameplay
+    // Used for different hacking challenges
+};
+```
+
+---
+
+## Widgets
+
+Located in `Widgets/` - UI components (30+ widget classes)
+
+### HUD Widgets
+
+- `CharacterHUD` - Main HUD container
+- `CharacterOverlay` - Health, stamina, detection meter
+- `HackWidget` - Hacking progress UI
+- `LockPickWidget` - Lock picking mini-game UI
+- `SearchWidget` - Search progress indicator
+- `DetectionWidget` - Detection meter
+- `ProximityHackWidget` - Proximity hack indicator
+
+### Menu Widgets
+
+- `MainMenuWidget` - Main menu UI
+- `PauseMenuWidget` - Pause menu
+- `SettingsWidget` - Settings menu
+- `GraphicsWidget` - Graphics settings
+- `InputWidget` - Input remapping
+- `KeybindWidget` - Individual keybind UI
+
+### Lobby Widgets
+
+- `LobbyUI` - Multiplayer lobby
+- `PlayerLobbyInfo` - Player info card
+- `FriendList` - Friends list
+- `FriendWidget` - Individual friend entry
+
+### Mini-game Widgets
+
+- `FirewallWidget` - Firewall mini-game UI
+- `NeonRunnerWidget` - Neon Runner UI
+
+---
+
+## Utilities
+
+### Saving System
+
+Located in `Saving/`
+
+#### UserSettingsSaveGame.h / .cpp
+
+**Saves user preferences**
+
+```cpp
+USTRUCT(BlueprintType)
+struct FSavedKeybind
+{
+    GENERATED_BODY()
+    
+    UPROPERTY()
+    FName ActionName;
+    
+    UPROPERTY()
+    FKey Key;
+};
+
+UCLASS()
+class ECHOESOFTIME_API UUserSettingsSaveGame : public USaveGame
+{
+    GENERATED_BODY()
+public:
+    UPROPERTY()
+    TArray<FSavedKeybind> SavedKeybinds;
+    
+    UPROPERTY()
+    float MouseSensitivity = 1.0f;
+    
+    UPROPERTY()
+    int32 GraphicsQuality = 3;
+    
+    UPROPERTY()
+    bool bVSyncEnabled = true;
+    
+    UPROPERTY()
+    float MasterVolume = 1.0f;
+};
+```
+
+---
+
+## Summary
+
+This comprehensive code reference documents **274 C++ source files** across **14 major modules**:
+
+1. **Core Module** (5 files) - Module initialization, timeline system, game instance
+2. **Ability System** (26 files) - GAS implementation with abilities, tasks, attributes, cues
+3. **Actor Components** (7 files) - Reusable gameplay components
+4. **Actors** (50+ files) - Interactive world objects
+5. **Characters** (6 files) - Player and AI characters
+6. **Controllers** (3 files) - Player controllers
+7. **Data Assets** (4 files) - Data-driven configuration
+8. **Game Modes & States** (6 files) - Game flow management
+9. **Interfaces** (8 files) - Polymorphic behavior contracts
+10. **Minigames** (2 files) - Interactive mini-games
+11. **Widgets** (30+ files) - UI components
+12. **Utilities** (2 files) - Helper systems
+
+### Key Design Patterns
+
+- **Component-Based Architecture**: Reusable components for common functionality
+- **Interface-Driven Design**: Polymorphism via C++ interfaces
+- **Data-Driven Configuration**: Data Assets for flexible content
+- **Network Replication**: Full multiplayer support
+- **Gameplay Ability System**: Abilities, attributes, and effects
+- **Enhanced Input System**: Modern input handling
+- **Timeline Mechanics**: Past/Future era system
+
+### Best Practices
+
+1. **Modularity**: Systems are loosely coupled
+2. **Reusability**: Components can be mixed and matched
+3. **Extensibility**: Base classes for custom implementations
+4. **Network Safety**: Proper replication and RPC usage
+5. **Blueprint Integration**: C++ exposes functionality to Blueprints
+6. **Performance**: Timer-based updates, optimized tick
+
+---
+
+**Document Version**: 1.0  
+**Last Updated**: January 2025  
+**Total Lines**: ~3700  
+**Coverage**: Complete C++ source codebase
+
+For system-level documentation, see [SYSTEMS.md](SYSTEMS.md).  
+For architecture overview, see [ARCHITECTURE.md](ARCHITECTURE.md).  
+For getting started, see [QUICK_START.md](QUICK_START.md).
+
+---
+

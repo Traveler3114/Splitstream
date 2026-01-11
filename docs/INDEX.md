@@ -30,7 +30,8 @@ All documentation is organized for easy navigation. Choose your starting point b
 
 1. **[ARCHITECTURE.md](ARCHITECTURE.md)** - Complete architecture overview
 2. **[SYSTEMS.md](SYSTEMS.md)** - Detailed system documentation
-3. **[BUILD_GUIDE.md](BUILD_GUIDE.md)** - Build process and optimization
+3. **[CODE_REFERENCE.md](CODE_REFERENCE.md)** - Complete C++ code documentation
+4. **[BUILD_GUIDE.md](BUILD_GUIDE.md)** - Build process and optimization
 
 ---
 
@@ -108,6 +109,32 @@ All documentation is organized for easy navigation. Choose your starting point b
 
 ---
 
+### [CODE_REFERENCE.md](CODE_REFERENCE.md)
+**Complete C++ code documentation** - 94 KB
+
+**Contents:**
+- ✅ Complete module structure documentation
+- ✅ All 274 C++ source files documented
+- ✅ Gameplay Ability System (GAS) complete reference
+- ✅ All gameplay abilities with implementation details
+- ✅ Ability tasks, attribute sets, gameplay cues
+- ✅ Actor components (7 components)
+- ✅ Actors (50+ actor types documented)
+- ✅ Characters (player and AI)
+- ✅ Controllers and player control
+- ✅ Data assets and configuration
+- ✅ Game modes and states
+- ✅ Interfaces (8 interface types)
+- ✅ Minigames implementation
+- ✅ Widget/UI system overview
+- ✅ Design patterns and best practices
+
+**Best for:** Developers needing detailed C++ API reference, understanding class relationships, implementing new features, and code review.
+
+**Time to read:** 1-2 hours for complete reference
+
+---
+
 ### [SYSTEMS.md](SYSTEMS.md)
 **Detailed systems documentation** - 18 KB
 
@@ -158,18 +185,23 @@ All documentation is organized for easy navigation. Choose your starting point b
 - **Learn development workflow** → [README.md - Development Workflow](../README.md#development-workflow)
 - **Create a new feature** → [BUILD_GUIDE.md - Development Workflows](BUILD_GUIDE.md#development-workflows)
 - **Debug my code** → [BUILD_GUIDE.md - Debugging](BUILD_GUIDE.md#debugging)
+- **Look up a C++ class** → [CODE_REFERENCE.md](CODE_REFERENCE.md)
+- **Understand an ability** → [CODE_REFERENCE.md - Ability System](CODE_REFERENCE.md#ability-system)
+- **Find a specific actor type** → [CODE_REFERENCE.md - Actors](CODE_REFERENCE.md#actors)
 
 #### Understanding Systems
 - **Learn about Gameplay Abilities** → [SYSTEMS.md - Gameplay Ability System](SYSTEMS.md#gameplay-ability-system)
 - **Understand AI behavior** → [SYSTEMS.md - AI and Detection System](SYSTEMS.md#ai-and-detection-system)
 - **Learn networking** → [SYSTEMS.md - Networking System](SYSTEMS.md#networking-system)
 - **Understand the timeline system** → [SYSTEMS.md - Timeline System](SYSTEMS.md#timeline-system)
+- **Reference C++ API** → [CODE_REFERENCE.md](CODE_REFERENCE.md)
 
 #### Architecture and Design
 - **Understand code architecture** → [ARCHITECTURE.md](ARCHITECTURE.md)
 - **Learn design patterns** → [ARCHITECTURE.md - Design Patterns](ARCHITECTURE.md#design-patterns)
 - **Understand data flow** → [ARCHITECTURE.md - Data Flow](ARCHITECTURE.md#data-flow)
 - **Extend the system** → [ARCHITECTURE.md - Extension Points](ARCHITECTURE.md#extension-points)
+- **Review C++ implementation** → [CODE_REFERENCE.md](CODE_REFERENCE.md)
 
 #### Contributing
 - **Make my first contribution** → [CONTRIBUTING.md - Getting Started](CONTRIBUTING.md#getting-started)
@@ -243,8 +275,11 @@ Use this checklist to ensure you've read the necessary documentation:
 | BUILD_GUIDE.md | 18 KB | ~850 | Building & Development |
 | ARCHITECTURE.md | 19 KB | ~850 | Technical Architecture |
 | SYSTEMS.md | 18 KB | ~850 | System Details |
+| CODE_REFERENCE.md | **94 KB** | **~3522** | **Complete C++ API Reference** |
 | CONTRIBUTING.md | 14 KB | ~650 | Contribution Guidelines |
-| **Total** | **~97 KB** | **~4200** | **Complete Documentation** |
+| **Total** | **~191 KB** | **~7722** | **Complete Documentation** |
+
+---
 
 ---
 
