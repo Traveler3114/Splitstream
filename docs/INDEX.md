@@ -1,6 +1,6 @@
 # Documentation Index
 
-Welcome to the Echoes of Time documentation! This index will guide you to the right documentation for your needs.
+Welcome to the Splitstream documentation! This index will guide you to the right documentation for your needs.
 
 ---
 
@@ -326,7 +326,7 @@ Ready to get started? Here's your recommended path:
 
 ---
 
-**Welcome to Echoes of Time development!** 🎮
+**Welcome to Splitstream development!** 🎮
 
 We're excited to have you as part of the team. Whether you're fixing bugs, adding features, or improving documentation, your contributions make this project better.
 

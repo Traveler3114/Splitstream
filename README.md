@@ -1,4 +1,4 @@
-# Echoes of Time
+# Splitstream
 
 <div align="center">
 
@@ -16,7 +16,7 @@
 
 ## Overview
 
-**Echoes of Time** is an ambitious stealth-action game built with Unreal Engine 5.7 that features innovative timeline manipulation mechanics. Players navigate between Past and Future timelines, utilizing unique abilities and strategies to overcome challenges in a cyberpunk-inspired world.
+**Splitstream** is an ambitious stealth-action game built with Unreal Engine 5.7 that features innovative timeline manipulation mechanics. Players navigate between Past and Future timelines, utilizing unique abilities and strategies to overcome challenges in a cyberpunk-inspired world.
 
 ### Key Concepts
 
@@ -100,22 +100,22 @@ Get up and running in 15 minutes! For detailed setup instructions, see [QUICK_ST
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/Traveler3114/Echoes-of-Time.git
-cd Echoes-of-Time
+git clone https://github.com/Traveler3114/Splitstream.git
+cd Splitstream
 
 # 2. Pull large files
 git lfs pull
 
 # 3. Generate Visual Studio project files
-# Right-click EchoesOfTime.uproject → "Generate Visual Studio project files"
+# Right-click Splitstream.uproject → "Generate Visual Studio project files"
 
 # 4. Open solution and build
-# Open EchoesOfTime.sln in Visual Studio
+# Open Splitstream.sln in Visual Studio
 # Build → Build Solution (Ctrl+Shift+B)
 # Configuration: Development Editor | Win64
 
 # 5. Launch the editor
-# Press F5 in Visual Studio or double-click EchoesOfTime.uproject
+# Press F5 in Visual Studio or double-click Splitstream.uproject
 ```
 
 **First Launch Note**: Shader compilation will take 20-60 minutes on first run. This is normal!
@@ -150,8 +150,8 @@ Comprehensive documentation is available in the [docs/](docs/) directory:
 ## Project Structure
 
 ```
-EchoesOfTime/
-├── Source/EchoesOfTime/              # C++ source code (274 files)
+Splitstream/
+├── Source/Splitstream/              # C++ source code (274 files)
 │   ├── AbilitySystem/                # Gameplay Ability System implementation
 │   │   ├── Abilities/                # All gameplay abilities
 │   │   ├── AbilityTasks/             # Custom ability tasks
@@ -260,8 +260,8 @@ EchoesOfTime/
 │   ├── CONTRIBUTING.md               # Contribution guide
 │   └── images/                       # Documentation images
 │
-├── EchoesOfTime.uproject             # Project file (UE 5.7)
-├── EchoesOfTime.sln                  # Visual Studio solution
+├── Splitstream.uproject             # Project file (UE 5.7)
+├── Splitstream.sln                  # Visual Studio solution
 └── README.md                         # This file
 ```
 
@@ -490,7 +490,7 @@ git lfs pull
 #### Missing Plugins
 
 ```bash
-# Ensure plugins are enabled in EchoesOfTime.uproject:
+# Ensure plugins are enabled in Splitstream.uproject:
 - GameplayAbilities
 - StateTree
 - GameplayStateTree
@@ -510,9 +510,9 @@ git lfs pull
 
 ### Getting Help
 
-1. **Check Logs**: `Saved/Logs/EchoesOfTime.log`
+1. **Check Logs**: `Saved/Logs/Splitstream.log`
 2. **Documentation**: See [BUILD_GUIDE.md - Troubleshooting](docs/BUILD_GUIDE.md#troubleshooting)
-3. **Search Issues**: Check [GitHub Issues](https://github.com/Traveler3114/Echoes-of-Time/issues)
+3. **Search Issues**: Check [GitHub Issues](https://github.com/Traveler3114/Splitstream/issues)
 4. **Ask for Help**: Create new issue with error details
 
 ---
@@ -665,7 +665,7 @@ Please ensure you have proper licenses for all assets if you plan to distribute 
 ### Development Team
 
 - **Lead Developer**: Traveler3114
-- **Project**: Echoes of Time
+- **Project**: Splitstream
 
 ### Special Thanks
 
@@ -687,8 +687,8 @@ Please ensure you have proper licenses for all assets if you plan to distribute 
 
 - **Documentation**: [docs/](docs/) folder
 - **API Reference**: [CODE_REFERENCE.md](docs/CODE_REFERENCE.md)
-- **GitHub Issues**: [Issue Tracker](https://github.com/Traveler3114/Echoes-of-Time/issues)
-- **Pull Requests**: [PR List](https://github.com/Traveler3114/Echoes-of-Time/pulls)
+- **GitHub Issues**: [Issue Tracker](https://github.com/Traveler3114/Splitstream/issues)
+- **Pull Requests**: [PR List](https://github.com/Traveler3114/Splitstream/pulls)
 
 ### Learning Resources
 
@@ -743,7 +743,7 @@ A: Create a GitHub Issue with:
 ## Contact
 
 - **GitHub**: [@Traveler3114](https://github.com/Traveler3114)
-- **Project Repository**: [Echoes-of-Time](https://github.com/Traveler3114/Echoes-of-Time)
+- **Project Repository**: [Splitstream](https://github.com/Traveler3114/Splitstream)
 
 ---
 
@@ -762,6 +762,6 @@ This project would not be possible without:
 
 **Made with ❤️ using Unreal Engine 5.7**
 
-[⬆ Back to Top](#echoes-of-time)
+[⬆ Back to Top](#splitstream)
 
 </div>

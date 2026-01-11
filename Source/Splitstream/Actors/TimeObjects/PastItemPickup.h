@@ -1,0 +1,28 @@
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Actors/ItemPickup.h"
+#include "PastItemPickup.generated.h"
+
+UCLASS()
+class SPLITSTREAM_API APastItemPickup : public AItemPickup
+{
+    GENERATED_BODY()
+public:
+    APastItemPickup();
+    virtual void OnConstruction(const FTransform& Transform) override;
+
+    UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "TimeLink")
+    class AFutureItemPickup* SpawnedFutureItem = nullptr;
+
+    virtual void BeginPlay() override;
+
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+    void SpawnLinkedFutureItem();
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ghost")
+    FVector FutureItemPickupOffset = FVector(0.0f, 0.0f, 0.0f);
+
+    
+};

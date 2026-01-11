@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-Get up and running with Echoes of Time development in 15 minutes.
+Get up and running with Splitstream development in 15 minutes.
 
 ---
 
@@ -41,15 +41,15 @@ git config --global user.email "your.email@example.com"
 ### 4. Clone Repository
 
 ```bash
-git clone https://github.com/Traveler3114/Echoes-of-Time.git
-cd Echoes-of-Time
+git clone https://github.com/Traveler3114/Splitstream.git
+cd Splitstream
 git lfs pull
 ```
 
 ### 5. Generate and Build
 
-1. **Right-click** `EchoesOfTime.uproject` → **Generate Visual Studio project files**
-2. **Double-click** `EchoesOfTime.sln` to open Visual Studio
+1. **Right-click** `Splitstream.uproject` → **Generate Visual Studio project files**
+2. **Double-click** `Splitstream.sln` to open Visual Studio
 3. Set configuration to **Development Editor** | **Win64**
 4. Press **Ctrl + Shift + B** to build (10-30 minutes first time)
 5. Press **F5** to launch editor (shader compilation: 20-60 minutes first time)
@@ -73,13 +73,13 @@ After opening the editor:
 ```bash
 # Build from command line
 "C:\Program Files\Epic Games\UE_5.7\Engine\Build\BatchFiles\Build.bat" ^
-    EchoesOfTime Win64 Development ^
-    -project="PATH\TO\EchoesOfTime.uproject"
+    Splitstream Win64 Development ^
+    -project="PATH\TO\Splitstream.uproject"
 
 # Clean build
 "C:\Program Files\Epic Games\UE_5.7\Engine\Build\BatchFiles\Clean.bat" ^
-    EchoesOfTime Win64 Development ^
-    -project="PATH\TO\EchoesOfTime.uproject"
+    Splitstream Win64 Development ^
+    -project="PATH\TO\Splitstream.uproject"
 ```
 
 ### Playing
@@ -113,8 +113,8 @@ showdebug abilitysystem  # GAS debugging
 ## Project Structure (Key Directories)
 
 ```
-EchoesOfTime/
-├── Source/EchoesOfTime/     # C++ source code
+Splitstream/
+├── Source/Splitstream/     # C++ source code
 │   ├── Characters/          # Player & AI characters
 │   ├── AbilitySystem/       # Gameplay abilities
 │   ├── ActorComponents/     # Reusable components
@@ -253,7 +253,7 @@ stat game      # Game thread timing
 ### "Missing Modules" Error
 ```
 Solution:
-1. Right-click EchoesOfTime.uproject
+1. Right-click Splitstream.uproject
 2. Generate Visual Studio project files
 3. Rebuild in Visual Studio
 ```
@@ -305,9 +305,9 @@ Once you're set up:
    - [BUILD_GUIDE.md](BUILD_GUIDE.md) - Detailed build instructions
 
 2. **Explore the Codebase:**
-   - Start with `Source/EchoesOfTime/Characters/DefaultCharacter.cpp`
-   - Check out `Source/EchoesOfTime/AbilitySystem/`
-   - Look at interfaces in `Source/EchoesOfTime/Interfaces/`
+   - Start with `Source/Splitstream/Characters/DefaultCharacter.cpp`
+   - Check out `Source/Splitstream/AbilitySystem/`
+   - Look at interfaces in `Source/Splitstream/Interfaces/`
 
 3. **Learn Key Systems:**
    - Gameplay Ability System (GAS)
@@ -372,10 +372,10 @@ showdebug            # Debug HUD
 ### File Paths
 ```
 Engine: C:\Program Files\Epic Games\UE_5.7\
-Project: [YourPath]\Echoes-of-Time\
+Project: [YourPath]\Splitstream\
 Binaries: [ProjectPath]\Binaries\Win64\
 Content: [ProjectPath]\Content\
-Source: [ProjectPath]\Source\EchoesOfTime\
+Source: [ProjectPath]\Source\Splitstream\
 Logs: [ProjectPath]\Saved\Logs\
 ```
 
@@ -404,7 +404,7 @@ Having issues? Here's how to get help:
 
 ---
 
-**Welcome to Echoes of Time development!** 🎮
+**Welcome to Splitstream development!** 🎮
 
 Start with a simple task, explore the codebase, and don't hesitate to ask questions. Happy coding!
 
