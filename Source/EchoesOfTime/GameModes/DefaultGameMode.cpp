@@ -102,7 +102,7 @@ void ADefaultGameMode::PreAlarmTimeout()
 		return;
 	if (ADefaultGameState* GS = GetGameState<ADefaultGameState>())
 	{
-		GS->StartAlarm(GS->PreAlarmInstigator);
+		GS->StartAlarm(GS->PreAlarmSoonestInstigator);
 	}
 }
 

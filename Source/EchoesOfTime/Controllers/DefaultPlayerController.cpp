@@ -85,7 +85,7 @@ void ADefaultPlayerController::SetupOverlay()
         }
         else if (GS->bPreAlarmActive && GS->PreAlarmEndTime > 0.f)
         {
-            HandlePreAlarmStarted(GS->PreAlarmEndTime, GS->PreAlarmInstigator);
+            HandlePreAlarmStarted(GS->PreAlarmEndTime, GS->PreAlarmSoonestInstigator);
         }
         else
         {

@@ -27,6 +27,21 @@ struct FGuardRepairCountdown
     float ETA = 0.f;
 };
 
+USTRUCT()
+struct FPreAlarmInstigatorInfo
+{
+    GENERATED_BODY()
+
+    UPROPERTY()
+    AActor* Instigator = nullptr;
+
+    UPROPERTY()
+    float ETA = 0.f;
+
+    FPreAlarmInstigatorInfo() : Instigator(nullptr), ETA(0.f) {}
+    FPreAlarmInstigatorInfo(AActor* InActor, float InETA) : Instigator(InActor), ETA(InETA) {}
+};
+
 UCLASS()
 class ECHOESOFTIME_API ADefaultGameState : public ABaseGameState
 {
@@ -34,8 +49,6 @@ class ECHOESOFTIME_API ADefaultGameState : public ABaseGameState
 
 public:
     ADefaultGameState();
-
-
 
     UPROPERTY(ReplicatedUsing = OnRep_AlarmStarted, BlueprintReadOnly, Category = "Alarm")
     float AlarmEndTime;
@@ -74,11 +87,15 @@ public:
     UPROPERTY(ReplicatedUsing = OnRep_PreAlarmActive, BlueprintReadOnly, Category = "Alarm")
     bool bPreAlarmActive;
 
-    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Alarm")
-    AActor* PreAlarmInstigator;
-
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Alarm")
     float PreAlarmDuration = 3.f;
+
+    // Structs to represent each instigator and their individual ETA.
+    UPROPERTY(Replicated)
+    TArray<FPreAlarmInstigatorInfo> PreAlarmInstigatorsInfo;
+
+    UPROPERTY(Replicated, BlueprintReadOnly, Category = "Alarm")
+    AActor* PreAlarmSoonestInstigator;
 
     UPROPERTY(BlueprintAssignable)
     FOnPreAlarmStarted OnPreAlarmStarted;
@@ -104,7 +121,10 @@ public:
     void StartPreAlarm(AActor* InPreAlarmInstigator, float Duration);
 
     UFUNCTION(BlueprintCallable)
-    void CancelPreAlarm(AActor* InPreAlarmInstigator = nullptr);
+    void CancelPreAlarm(AActor* InCancelingInstigator = nullptr);
+
+    UFUNCTION(BlueprintCallable)
+    void RemovePreAlarmInstigator(AActor* InToRemoveInstigator);
 
     UFUNCTION(BlueprintCallable, BlueprintPure)
     float GetRemainingPreAlarmTime() const;
@@ -143,4 +163,7 @@ protected:
     void OnRep_GuardRepairCountdowns();
 
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+    // Helper
+    void UpdatePreAlarmSoonestInstigator();
 };
