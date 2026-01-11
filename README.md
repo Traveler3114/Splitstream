@@ -6,6 +6,8 @@
 
 **Echoes of Time** is a multiplayer stealth-action game built with Unreal Engine 5.7 that features time manipulation mechanics, puzzle-solving, and cooperative gameplay. Players navigate through different timelines (Past and Future) while engaging in stealth missions, hacking systems, and solving puzzles.
 
+> 📚 **[Complete Documentation Index](docs/INDEX.md)** - Quick access to all documentation
+
 ---
 
 ## Table of Contents
@@ -587,6 +589,17 @@ This project is proprietary software. Unauthorized copying, distribution, or mod
 ---
 
 ## Additional Resources
+
+### Project Documentation
+
+This project includes extensive documentation to help you get started and contribute effectively:
+
+- **[📚 Documentation Index](docs/INDEX.md)** - Complete guide to all documentation
+- **[⚡ Quick Start Guide](docs/QUICK_START.md)** - Get up and running in 15 minutes
+- **[🔨 Build Guide](docs/BUILD_GUIDE.md)** - Detailed build and development instructions
+- **[🏗️ Architecture](docs/ARCHITECTURE.md)** - Technical architecture and design patterns
+- **[⚙️ Systems](docs/SYSTEMS.md)** - In-depth system documentation
+- **[🤝 Contributing](docs/CONTRIBUTING.md)** - Contribution guidelines and standards
 
 ### Useful Links
 
