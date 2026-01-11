@@ -10,7 +10,7 @@
  * 
  */
 UCLASS()
-class ECHOESOFTIME_API UDefaultAbilitySystemComponent : public UAbilitySystemComponent
+class SPLITSTREAM_API UDefaultAbilitySystemComponent : public UAbilitySystemComponent
 {
 	GENERATED_BODY()
 	

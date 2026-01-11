@@ -16,7 +16,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWirePuzzleCompleted);
 */
 
 UCLASS()
-class ECHOESOFTIME_API AWirePuzzleManager : public AActor
+class SPLITSTREAM_API AWirePuzzleManager : public AActor
 {
     GENERATED_BODY()
 public:

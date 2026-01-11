@@ -9,7 +9,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnButtonPressed, const FString&, Symbol);
 
 UCLASS()
-class ECHOESOFTIME_API AKeypadButton : public AActor, public IInteractable
+class SPLITSTREAM_API AKeypadButton : public AActor, public IInteractable
 {
     GENERATED_BODY()
 

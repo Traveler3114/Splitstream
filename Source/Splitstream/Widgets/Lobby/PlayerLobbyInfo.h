@@ -11,7 +11,7 @@ class UTexture2D;
 class APlayerState;
 
 UCLASS()
-class ECHOESOFTIME_API UPlayerLobbyInfo : public UUserWidget
+class SPLITSTREAM_API UPlayerLobbyInfo : public UUserWidget
 {
     GENERATED_BODY()
 

@@ -9,7 +9,7 @@
 #include "GarageDoor.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API AGarageDoor : public AActor, public IPuzzleCompletionReceiver
+class SPLITSTREAM_API AGarageDoor : public AActor, public IPuzzleCompletionReceiver
 {
 	GENERATED_BODY()
 	

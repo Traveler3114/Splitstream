@@ -10,7 +10,7 @@
 #include "Teleporter.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API ATeleporter : public AActor, public IInteractable
+class SPLITSTREAM_API ATeleporter : public AActor, public IInteractable
 {
 	GENERATED_BODY()
 

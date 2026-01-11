@@ -7,7 +7,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnDoorStateChanged, bool, bIsOpen, int32, Direction);
 
 UCLASS()
-class ECHOESOFTIME_API APastDoor : public ADoorBase
+class SPLITSTREAM_API APastDoor : public ADoorBase
 {
     GENERATED_BODY()
 

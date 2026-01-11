@@ -10,7 +10,7 @@
 #include "DroneSpawnerDisabler.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API ADroneSpawnerDisabler : public AActor, public IInteractable
+class SPLITSTREAM_API ADroneSpawnerDisabler : public AActor, public IInteractable
 {
 	GENERATED_BODY()
 

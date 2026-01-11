@@ -9,7 +9,7 @@
 #include "LockerActor.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API ALockerActor : public AActor, public IInteractable
+class SPLITSTREAM_API ALockerActor : public AActor, public IInteractable
 {
 	GENERATED_BODY()
 	

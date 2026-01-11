@@ -10,7 +10,7 @@ class UTextBlock;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnCalendarButtonClicked, int32, Year, int32, Month, int32, Day);
 
 UCLASS()
-class ECHOESOFTIME_API UCalendarButtonWidget : public UUserWidget
+class SPLITSTREAM_API UCalendarButtonWidget : public UUserWidget
 {
     GENERATED_BODY()
 public:

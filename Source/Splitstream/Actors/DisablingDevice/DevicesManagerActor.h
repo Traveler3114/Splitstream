@@ -9,7 +9,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPuzzleCompleted);
 
 UCLASS()
-class ECHOESOFTIME_API ADevicesManagerActor : public AActor
+class SPLITSTREAM_API ADevicesManagerActor : public AActor
 {
     GENERATED_BODY()
 

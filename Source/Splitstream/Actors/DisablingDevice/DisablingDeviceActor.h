@@ -10,7 +10,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnSoloDeviceDisabled);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDeviceStateChanged, ADisablingDeviceActor*, Device);
 
 UCLASS()
-class ECHOESOFTIME_API ADisablingDeviceActor : public AActor, public IInteractable
+class SPLITSTREAM_API ADisablingDeviceActor : public AActor, public IInteractable
 {
     GENERATED_BODY()
     

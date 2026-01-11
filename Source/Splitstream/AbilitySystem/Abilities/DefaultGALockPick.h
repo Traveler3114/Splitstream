@@ -9,7 +9,7 @@
 class ULockPickAbilityTask;
 
 UCLASS()
-class ECHOESOFTIME_API UDefaultGALockPick : public UGameplayAbility
+class SPLITSTREAM_API UDefaultGALockPick : public UGameplayAbility
 {
     GENERATED_BODY()
 public:

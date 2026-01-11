@@ -5,7 +5,7 @@
 #include "FutureVent.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API AFutureVent : public AVentBase
+class SPLITSTREAM_API AFutureVent : public AVentBase
 {
     GENERATED_BODY()
 

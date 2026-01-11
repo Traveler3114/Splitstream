@@ -10,7 +10,7 @@
  * 
  */
 UCLASS()
-class ECHOESOFTIME_API AMainMenuPlayerController : public APlayerController
+class SPLITSTREAM_API AMainMenuPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 public:

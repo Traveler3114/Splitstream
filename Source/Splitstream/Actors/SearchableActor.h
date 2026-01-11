@@ -9,7 +9,7 @@
 #include "SearchableActor.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API ASearchableActor : public AActor, public IInteractable
+class SPLITSTREAM_API ASearchableActor : public AActor, public IInteractable
 {
 	GENERATED_BODY()
 	

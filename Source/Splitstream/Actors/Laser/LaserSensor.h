@@ -10,7 +10,7 @@ class UStaticMeshComponent;
 class UNiagaraComponent;
 
 UCLASS()
-class ECHOESOFTIME_API ALaserSensor : public AActor
+class SPLITSTREAM_API ALaserSensor : public AActor
 {
     GENERATED_BODY()
 

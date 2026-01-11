@@ -5,7 +5,7 @@
 #include "RefPointActor.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API ARefPointActor : public AActor
+class SPLITSTREAM_API ARefPointActor : public AActor
 {
     GENERATED_BODY()
 public:

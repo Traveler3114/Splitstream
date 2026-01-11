@@ -5,7 +5,7 @@
 #include "SoloGATeleport.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API USoloGATeleport : public UGameplayAbility
+class SPLITSTREAM_API USoloGATeleport : public UGameplayAbility
 {
     GENERATED_BODY()
 

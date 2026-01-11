@@ -22,7 +22,7 @@ enum class EWireColor : uint8
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWireCutSignature, AWireActor*, Wire);
 
 UCLASS()
-class ECHOESOFTIME_API AWireActor : public AActor, public IInteractable
+class SPLITSTREAM_API AWireActor : public AActor, public IInteractable
 {
     GENERATED_BODY()
 

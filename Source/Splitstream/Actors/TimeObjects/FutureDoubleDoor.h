@@ -5,7 +5,7 @@
 #include "FutureDoubleDoor.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API AFutureDoubleDoor : public ADoubleDoorBase
+class SPLITSTREAM_API AFutureDoubleDoor : public ADoubleDoorBase
 {
     GENERATED_BODY()
 

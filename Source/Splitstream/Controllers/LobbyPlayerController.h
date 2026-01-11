@@ -8,7 +8,7 @@ class ULobbyUI;
 class APlayerState;
 
 UCLASS()
-class ECHOESOFTIME_API ALobbyPlayerController : public APlayerController
+class SPLITSTREAM_API ALobbyPlayerController : public APlayerController
 {
     GENERATED_BODY()
 

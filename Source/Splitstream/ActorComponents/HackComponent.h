@@ -7,7 +7,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHackComplete);
 
 UCLASS(Blueprintable, ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
-class ECHOESOFTIME_API UHackComponent : public UActorComponent
+class SPLITSTREAM_API UHackComponent : public UActorComponent
 {
     GENERATED_BODY()
 

@@ -14,7 +14,7 @@ class USphereComponent;
 class UItemBase;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
-class ECHOESOFTIME_API UProximityHackComponent : public UHackComponent
+class SPLITSTREAM_API UProximityHackComponent : public UHackComponent
 {
     GENERATED_BODY()
 

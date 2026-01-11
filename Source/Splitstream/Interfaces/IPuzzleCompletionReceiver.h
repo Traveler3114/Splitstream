@@ -9,7 +9,7 @@ class UPuzzleCompletionReceiver : public UInterface
     GENERATED_BODY()
 };
 
-class ECHOESOFTIME_API IPuzzleCompletionReceiver
+class SPLITSTREAM_API IPuzzleCompletionReceiver
 {
     GENERATED_BODY()
 

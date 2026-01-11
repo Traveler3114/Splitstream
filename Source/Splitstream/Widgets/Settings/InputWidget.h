@@ -24,7 +24,7 @@ struct FKeybindDefinition
 };
 
 UCLASS()
-class ECHOESOFTIME_API UInputWidget : public UUserWidget
+class SPLITSTREAM_API UInputWidget : public UUserWidget
 {
     GENERATED_BODY()
 

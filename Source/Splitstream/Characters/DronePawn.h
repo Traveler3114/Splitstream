@@ -14,7 +14,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDroneDeath, ADronePawn*, DeadDron
 class UPlayerAttributeSet;
 
 UCLASS()
-class ECHOESOFTIME_API ADronePawn : public APawn, public IAbilitySystemInterface, public IRepairable
+class SPLITSTREAM_API ADronePawn : public APawn, public IAbilitySystemInterface, public IRepairable
 {
     GENERATED_BODY()
 public:

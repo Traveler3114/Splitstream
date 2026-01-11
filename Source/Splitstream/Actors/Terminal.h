@@ -9,7 +9,7 @@
 #include "Terminal.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API ATerminal : public AActor, public IRepairable, public IInteractable, public IServerActionInterface
+class SPLITSTREAM_API ATerminal : public AActor, public IRepairable, public IInteractable, public IServerActionInterface
 {
     GENERATED_BODY()
 public:

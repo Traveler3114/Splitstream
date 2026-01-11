@@ -10,7 +10,7 @@ class USlider;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSliderValueChanged, float, Value);
 
 UCLASS()
-class ECHOESOFTIME_API USliderWidget : public UUserWidget
+class SPLITSTREAM_API USliderWidget : public UUserWidget
 {
     GENERATED_BODY()
 public:

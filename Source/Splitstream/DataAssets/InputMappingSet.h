@@ -19,7 +19,7 @@ struct FInputActionTagMapping
 };
 
 UCLASS(BlueprintType)
-class ECHOESOFTIME_API UInputMappingSet : public UDataAsset
+class SPLITSTREAM_API UInputMappingSet : public UDataAsset
 {
     GENERATED_BODY()
 public:

@@ -29,7 +29,7 @@ struct FLockPinData
 };
 
 UCLASS(Blueprintable, ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
-class ECHOESOFTIME_API ULockPickComponent : public UActorComponent, public IServerActionInterface
+class SPLITSTREAM_API ULockPickComponent : public UActorComponent, public IServerActionInterface
 {
     GENERATED_BODY()
 

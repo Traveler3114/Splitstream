@@ -5,7 +5,7 @@
 #include "DetectionWidget.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API UDetectionWidget : public UUserWidget
+class SPLITSTREAM_API UDetectionWidget : public UUserWidget
 {
     GENERATED_BODY()
 public:

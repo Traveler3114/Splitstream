@@ -48,7 +48,7 @@ struct FNeonRunnerPlayer
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FNeonRunnerGameEnded, bool, bWasVictory);
 
 UCLASS(Blueprintable, BlueprintType)
-class ECHOESOFTIME_API UNeonRunnerMiniGame : public UObject
+class SPLITSTREAM_API UNeonRunnerMiniGame : public UObject
 {
     GENERATED_BODY()
 public:

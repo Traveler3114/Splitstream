@@ -7,7 +7,7 @@
 #include "DoubleDoorBase.generated.h"
 
 UCLASS(Abstract)
-class ECHOESOFTIME_API ADoubleDoorBase : public AActor, public IInteractable, public IKeycardUnlockable
+class SPLITSTREAM_API ADoubleDoorBase : public AActor, public IInteractable, public IKeycardUnlockable
 {
     GENERATED_BODY()
 

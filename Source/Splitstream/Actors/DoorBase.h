@@ -9,7 +9,7 @@
 #include "DoorBase.generated.h"
 
 UCLASS(Abstract)
-class ECHOESOFTIME_API ADoorBase : public AActor, public IInteractable, public IKeycardUnlockable
+class SPLITSTREAM_API ADoorBase : public AActor, public IInteractable, public IKeycardUnlockable
 {
     GENERATED_BODY()
 

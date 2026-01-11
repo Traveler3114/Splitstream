@@ -10,7 +10,7 @@ class UHackWidget;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHackTaskResult, bool, bSuccess);
 
 UCLASS()
-class ECHOESOFTIME_API UHackAbilityTask : public UAbilityTask
+class SPLITSTREAM_API UHackAbilityTask : public UAbilityTask
 {
     GENERATED_BODY()
 public:

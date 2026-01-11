@@ -5,7 +5,7 @@
 #include "BaseGameState.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API ABaseGameState : public AGameState
+class SPLITSTREAM_API ABaseGameState : public AGameState
 {
     GENERATED_BODY()
 public:

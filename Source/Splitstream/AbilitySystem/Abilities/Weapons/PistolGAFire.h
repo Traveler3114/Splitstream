@@ -5,7 +5,7 @@
 #include "PistolGAFire.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API UPistolGAFire : public UGameplayAbility
+class SPLITSTREAM_API UPistolGAFire : public UGameplayAbility
 {
 	GENERATED_BODY()
 public:

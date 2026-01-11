@@ -53,7 +53,7 @@ enum class ECalendarStage : uint8
 };
 
 UCLASS()
-class ECHOESOFTIME_API UCalendarWidget : public UUserWidget
+class SPLITSTREAM_API UCalendarWidget : public UUserWidget
 {
     GENERATED_BODY()
 

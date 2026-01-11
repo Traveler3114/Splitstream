@@ -29,7 +29,7 @@ struct FLevelData
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnMapSelectedSignature, const FString&, LevelName, const TSoftObjectPtr<UWorld>&, LevelAsset);
 
 UCLASS()
-class ECHOESOFTIME_API UMapSelectionWidget : public UUserWidget
+class SPLITSTREAM_API UMapSelectionWidget : public UUserWidget
 {
     GENERATED_BODY()
 

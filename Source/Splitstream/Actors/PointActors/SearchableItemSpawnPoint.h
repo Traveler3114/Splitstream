@@ -17,7 +17,7 @@ enum class EItemSpawnArea : uint8
 };
 
 UCLASS()
-class ECHOESOFTIME_API ASearchableItemSpawnPoint : public AActor
+class SPLITSTREAM_API ASearchableItemSpawnPoint : public AActor
 {
     GENERATED_BODY()
 public:

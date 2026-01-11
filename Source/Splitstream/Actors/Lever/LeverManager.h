@@ -11,7 +11,7 @@ class ALeverActor;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLeverPuzzleCompleted); // This is fine to repeat (different delegate name)
 
 UCLASS()
-class ECHOESOFTIME_API ALeverManager : public AActor
+class SPLITSTREAM_API ALeverManager : public AActor
 {
     GENERATED_BODY()
 

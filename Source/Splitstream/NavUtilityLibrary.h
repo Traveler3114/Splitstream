@@ -4,7 +4,7 @@
 #include "NavUtilityLibrary.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API UNavUtilityLibrary : public UBlueprintFunctionLibrary
+class SPLITSTREAM_API UNavUtilityLibrary : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
 

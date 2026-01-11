@@ -11,7 +11,7 @@
 #include "NeonRunnerWidget.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API UNeonRunnerWidget : public UUserWidget
+class SPLITSTREAM_API UNeonRunnerWidget : public UUserWidget
 {
     GENERATED_BODY()
 public:

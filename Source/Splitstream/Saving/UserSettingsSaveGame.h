@@ -19,7 +19,7 @@ struct FSavedKeybind
 };
 
 UCLASS()
-class ECHOESOFTIME_API UUserSettingsSaveGame : public USaveGame
+class SPLITSTREAM_API UUserSettingsSaveGame : public USaveGame
 {
     GENERATED_BODY()
 

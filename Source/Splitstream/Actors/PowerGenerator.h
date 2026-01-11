@@ -8,7 +8,7 @@
 #include "PowerGenerator.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API APowerGenerator : public AActor, public IRepairable, public IInteractable
+class SPLITSTREAM_API APowerGenerator : public AActor, public IRepairable, public IInteractable
 {
     GENERATED_BODY()
 public:

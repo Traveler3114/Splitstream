@@ -10,7 +10,7 @@ class ULockPickWidget;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLockPickTaskResult, bool, bSuccess);
 
 UCLASS()
-class ECHOESOFTIME_API ULockPickAbilityTask : public UAbilityTask
+class SPLITSTREAM_API ULockPickAbilityTask : public UAbilityTask
 {
     GENERATED_BODY()
 public:

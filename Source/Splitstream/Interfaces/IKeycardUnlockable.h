@@ -5,12 +5,12 @@
 #include "IKeycardUnlockable.generated.h"
 
 UINTERFACE(Blueprintable)
-class ECHOESOFTIME_API UKeycardUnlockable : public UInterface
+class SPLITSTREAM_API UKeycardUnlockable : public UInterface
 {
     GENERATED_BODY()
 };
 
-class ECHOESOFTIME_API IKeycardUnlockable
+class SPLITSTREAM_API IKeycardUnlockable
 {
     GENERATED_BODY()
 

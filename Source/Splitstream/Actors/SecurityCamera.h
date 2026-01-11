@@ -7,7 +7,7 @@
 #include "SecurityCamera.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API ASecurityCamera : public AActor, public IDetectable
+class SPLITSTREAM_API ASecurityCamera : public AActor, public IDetectable
 {
     GENERATED_BODY()
 

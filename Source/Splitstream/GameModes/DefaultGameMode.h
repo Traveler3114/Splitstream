@@ -5,7 +5,7 @@
 #include "DefaultGameMode.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API ADefaultGameMode : public ABaseGameMode
+class SPLITSTREAM_API ADefaultGameMode : public ABaseGameMode
 {
 	GENERATED_BODY()
 public:

@@ -11,7 +11,7 @@ class AComputer;
 class ASearchableItemSpawnPoint;
 
 UCLASS()
-class ECHOESOFTIME_API ADeskActor : public AActor
+class SPLITSTREAM_API ADeskActor : public AActor
 {
     GENERATED_BODY()
 

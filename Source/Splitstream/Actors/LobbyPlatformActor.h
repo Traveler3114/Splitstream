@@ -17,7 +17,7 @@ class UPlayerLobbyInfo;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnLobbyPlatformOccupantChanged, ALobbyPlatformActor*, Platform, APlayerState*, NewOccupant);
 
 UCLASS()
-class ECHOESOFTIME_API ALobbyPlatformActor : public AActor
+class SPLITSTREAM_API ALobbyPlatformActor : public AActor
 {
 	GENERATED_BODY()
 

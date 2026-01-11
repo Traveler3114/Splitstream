@@ -11,7 +11,7 @@ class ALobbyGameState;
 class APlayerState;
 
 UCLASS()
-class ECHOESOFTIME_API ALobbyGameMode : public ABaseGameMode
+class SPLITSTREAM_API ALobbyGameMode : public ABaseGameMode
 {
     GENERATED_BODY()
 

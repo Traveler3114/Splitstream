@@ -19,7 +19,7 @@ class UArrowComponent;
 
 
 UCLASS(BlueprintType, Blueprintable)
-class ECHOESOFTIME_API ANavNode : public AActor
+class SPLITSTREAM_API ANavNode : public AActor
 {
 	GENERATED_BODY()
 

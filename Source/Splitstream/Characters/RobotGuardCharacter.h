@@ -5,7 +5,7 @@
 #include "RobotGuardCharacter.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API ARobotGuardCharacter : public AGuardCharacter
+class SPLITSTREAM_API ARobotGuardCharacter : public AGuardCharacter
 {
     GENERATED_BODY()
 

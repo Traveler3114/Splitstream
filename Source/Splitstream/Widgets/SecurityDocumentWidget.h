@@ -6,7 +6,7 @@
 #include "SecurityDocumentWidget.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API USecurityDocumentWidget : public UUserWidget
+class SPLITSTREAM_API USecurityDocumentWidget : public UUserWidget
 {
 	GENERATED_BODY()
 

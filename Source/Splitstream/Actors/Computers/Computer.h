@@ -10,7 +10,7 @@ class UHackComponent;
 class UTextRenderComponent;
 
 UCLASS()
-class ECHOESOFTIME_API AComputer : public AActor, public IInteractable
+class SPLITSTREAM_API AComputer : public AActor, public IInteractable
 {
     GENERATED_BODY()
 
