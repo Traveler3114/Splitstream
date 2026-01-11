@@ -1,6 +1,6 @@
-# Contributing to Echoes of Time
+# Contributing to Splitstream
 
-Thank you for your interest in contributing to Echoes of Time! This document provides guidelines and best practices for contributing to the project.
+Thank you for your interest in contributing to Splitstream! This document provides guidelines and best practices for contributing to the project.
 
 ---
 
@@ -88,11 +88,11 @@ Before contributing, ensure you have:
 # Fork the repository on GitHub (click "Fork" button)
 
 # Clone your fork
-git clone https://github.com/YOUR_USERNAME/Echoes-of-Time.git
-cd Echoes-of-Time
+git clone https://github.com/YOUR_USERNAME/Splitstream.git
+cd Splitstream
 
 # Add upstream remote
-git remote add upstream https://github.com/Traveler3114/Echoes-of-Time.git
+git remote add upstream https://github.com/Traveler3114/Splitstream.git
 ```
 
 ### 2. Create a Branch
@@ -526,7 +526,7 @@ If adding C++ unit tests:
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FMyFeatureTest,
-    "EchoesOfTime.MyFeature.BasicTest",
+    "Splitstream.MyFeature.BasicTest",
     EAutomationTestFlags::ApplicationContextMask | 
     EAutomationTestFlags::ProductFilter
 )
@@ -560,7 +560,7 @@ bool FMyFeatureTest::RunTest(const FString& Parameters)
  * Replicates inventory state across network.
  */
 UCLASS()
-class ECHOESOFTIME_API UInventoryComponent : public UActorComponent
+class SPLITSTREAM_API UInventoryComponent : public UActorComponent
 {
     GENERATED_BODY()
     
@@ -620,7 +620,7 @@ By contributing, you agree that your contributions will be licensed under the sa
 
 ---
 
-Thank you for contributing to Echoes of Time! 🎮
+Thank you for contributing to Splitstream! 🎮
 
 ---
 

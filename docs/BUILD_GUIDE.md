@@ -1,6 +1,6 @@
 # Build and Development Guide
 
-This guide provides detailed instructions for building, testing, and developing Echoes of Time.
+This guide provides detailed instructions for building, testing, and developing Splitstream.
 
 ---
 
@@ -112,10 +112,10 @@ git lfs install
 
 ```bash
 # Clone the repository
-git clone https://github.com/Traveler3114/Echoes-of-Time.git
+git clone https://github.com/Traveler3114/Splitstream.git
 
 # Navigate to project directory
-cd Echoes-of-Time
+cd Splitstream
 ```
 
 ### Step 2: Initialize Git LFS
@@ -147,7 +147,7 @@ AdvancedSteamSessions/
 **Method 1: Right-Click Method (Recommended)**
 
 1. Navigate to project directory in File Explorer
-2. Right-click on `EchoesOfTime.uproject`
+2. Right-click on `Splitstream.uproject`
 3. Select **Generate Visual Studio project files**
 4. Wait for generation to complete
 
@@ -158,22 +158,22 @@ AdvancedSteamSessions/
 cd "C:\Program Files\Epic Games\UE_5.7\Engine\Binaries\DotNET"
 
 # Run project file generator
-UnrealBuildTool.exe -projectfiles -project="PATH_TO_PROJECT\EchoesOfTime.uproject" -game -engine
+UnrealBuildTool.exe -projectfiles -project="PATH_TO_PROJECT\Splitstream.uproject" -game -engine
 ```
 
 **Expected Output:**
-- `EchoesOfTime.sln` (Solution file)
-- `EchoesOfTime.vcxproj` (Project file)
+- `Splitstream.sln` (Solution file)
+- `Splitstream.vcxproj` (Project file)
 - `.vs/` directory
 
 ### Step 5: Open Solution in Visual Studio
 
 ```bash
 # Open solution file
-start EchoesOfTime.sln
+start Splitstream.sln
 ```
 
-Or double-click `EchoesOfTime.sln` in File Explorer.
+Or double-click `Splitstream.sln` in File Explorer.
 
 ### Step 6: Initial Build
 
@@ -219,7 +219,7 @@ Time Elapsed: [time]
 **Command Line:**
 ```bash
 cd "C:\Program Files\Epic Games\UE_5.7\Engine\Build\BatchFiles"
-Build.bat EchoesOfTime Win64 Development -project="PATH_TO_PROJECT\EchoesOfTime.uproject"
+Build.bat Splitstream Win64 Development -project="PATH_TO_PROJECT\Splitstream.uproject"
 ```
 
 **Features:**
@@ -266,7 +266,7 @@ Build.bat EchoesOfTime Win64 Development -project="PATH_TO_PROJECT\EchoesOfTime.
 ```
 1. Select configuration dropdown (top toolbar)
 2. Choose "Development Editor" and "Win64"
-3. Right-click "EchoesOfTime" in Solution Explorer
+3. Right-click "Splitstream" in Solution Explorer
 4. Click "Build"
 ```
 
@@ -280,22 +280,22 @@ Build.bat EchoesOfTime Win64 Development -project="PATH_TO_PROJECT\EchoesOfTime.
 **Build Development Editor:**
 ```bash
 "C:\Program Files\Epic Games\UE_5.7\Engine\Build\BatchFiles\Build.bat" ^
-    EchoesOfTime Win64 Development ^
-    -project="C:\Path\To\EchoesOfTime\EchoesOfTime.uproject"
+    Splitstream Win64 Development ^
+    -project="C:\Path\To\Splitstream\Splitstream.uproject"
 ```
 
 **Build Shipping:**
 ```bash
 "C:\Program Files\Epic Games\UE_5.7\Engine\Build\BatchFiles\Build.bat" ^
-    EchoesOfTime Win64 Shipping ^
-    -project="C:\Path\To\EchoesOfTime\EchoesOfTime.uproject"
+    Splitstream Win64 Shipping ^
+    -project="C:\Path\To\Splitstream\Splitstream.uproject"
 ```
 
 **Clean Build:**
 ```bash
 "C:\Program Files\Epic Games\UE_5.7\Engine\Build\BatchFiles\Clean.bat" ^
-    EchoesOfTime Win64 Development ^
-    -project="C:\Path\To\EchoesOfTime\EchoesOfTime.uproject"
+    Splitstream Win64 Development ^
+    -project="C:\Path\To\Splitstream\Splitstream.uproject"
 ```
 
 ### Build Optimization
@@ -307,7 +307,7 @@ Build.bat EchoesOfTime Win64 Development -project="PATH_TO_PROJECT\EchoesOfTime.
 - Default in Visual Studio
 
 **2. Disable Unneeded Plugins:**
-Edit `EchoesOfTime.uproject`, set plugin `Enabled: false`
+Edit `Splitstream.uproject`, set plugin `Enabled: false`
 
 **3. Use Live Coding (Hot Reload):**
 - For small C++ changes
@@ -319,7 +319,7 @@ Visual Studio automatically uses all CPU cores.
 
 Command line:
 ```bash
-Build.bat EchoesOfTime Win64 Development -maxcpucount:8
+Build.bat Splitstream Win64 Development -maxcpucount:8
 ```
 
 **5. Unity Build:**
@@ -352,7 +352,7 @@ Already enabled in UBT. Combines cpp files for faster compilation.
 
 **Method 2: Editor Only**
 ```
-1. Open EchoesOfTime.uproject directly
+1. Open Splitstream.uproject directly
 2. Wait for editor to load
 3. Click Play or press Alt+P
 ```
@@ -372,7 +372,7 @@ File → Package Project → Windows → Windows (64-bit)
 **From Build:**
 ```
 Navigate to: Binaries/Win64/
-Run: EchoesOfTime.exe
+Run: Splitstream.exe
 ```
 
 ### Multiplayer Testing
@@ -387,13 +387,13 @@ Run: EchoesOfTime.exe
 2. **Command Line (Multiple Instances):**
 ```bash
 # Server
-EchoesOfTime.exe -log -server
+Splitstream.exe -log -server
 
 # Client 1
-EchoesOfTime.exe -log -game 127.0.0.1
+Splitstream.exe -log -game 127.0.0.1
 
 # Client 2
-EchoesOfTime.exe -log -game 127.0.0.1
+Splitstream.exe -log -game 127.0.0.1
 ```
 
 ---
@@ -487,12 +487,12 @@ For major changes, restart the editor.
 
 Create test file:
 ```cpp
-// EchoesOfTimeTests.cpp
+// SplitstreamTests.cpp
 #include "Misc/AutomationTest.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FMyTest, 
-    "EchoesOfTime.MyTest",
+    "Splitstream.MyTest",
     EAutomationTestFlags::ApplicationContextMask | 
     EAutomationTestFlags::ProductFilter
 )
@@ -640,7 +640,7 @@ dumpnet         - Dump network info
 
 3. **Select Output Directory:**
    - Choose location outside project
-   - e.g., `C:\Builds\EchoesOfTime\`
+   - e.g., `C:\Builds\Splitstream\`
 
 4. **Wait for Packaging:**
    - Progress shown in Output Log
@@ -649,18 +649,18 @@ dumpnet         - Dump network info
 5. **Test Package:**
    ```
    Navigate to output directory
-   Run: WindowsNoEditor\EchoesOfTime.exe
+   Run: WindowsNoEditor\Splitstream.exe
    ```
 
 ### Package Structure
 
 ```
 WindowsNoEditor/
-├── EchoesOfTime/          # Content directory
+├── Splitstream/          # Content directory
 │   ├── Content/           # Cooked assets
 │   └── Binaries/          # Game binaries
 ├── Engine/                # Engine binaries
-├── EchoesOfTime.exe       # Game executable
+├── Splitstream.exe       # Game executable
 └── Prerequisites/         # Required redistributables
 ```
 
@@ -688,11 +688,11 @@ WindowsNoEditor/
 **Error:**
 ```
 The following modules are missing or built with a different engine version:
-- EchoesOfTime
+- Splitstream
 ```
 
 **Solution:**
-1. Right-click `EchoesOfTime.uproject`
+1. Right-click `Splitstream.uproject`
 2. Generate Visual Studio project files
 3. Rebuild in Visual Studio
 

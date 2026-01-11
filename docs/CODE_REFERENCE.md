@@ -1,6 +1,6 @@
-# Code Reference - Echoes of Time
+# Code Reference - Splitstream
 
-**Complete API and Implementation Reference for Source/EchoesOfTime**
+**Complete API and Implementation Reference for Source/Splitstream**
 
 ---
 
@@ -25,12 +25,12 @@
 
 ## Overview
 
-This document provides extensive technical documentation for all code in the `Source/EchoesOfTime` directory. The codebase consists of **274 C++ source files** organized into a modular architecture.
+This document provides extensive technical documentation for all code in the `Source/Splitstream` directory. The codebase consists of **274 C++ source files** organized into a modular architecture.
 
 ### Project Structure
 
 ```
-Source/EchoesOfTime/
+Source/Splitstream/
 ├── AbilitySystem/           # Gameplay Ability System implementation
 ├── ActorComponents/         # Reusable actor components
 ├── Actors/                  # Interactive world actors
@@ -60,14 +60,14 @@ Source/EchoesOfTime/
 
 This section documents the core module files that define the foundational architecture.
 
-### EchoesOfTime.h / .cpp
+### Splitstream.h / .cpp
 **Main module definition**
 
-Primary module header that defines the ECHOESOFTIME_API macro and initializes the game module.
+Primary module header that defines the SPLITSTREAM_API macro and initializes the game module.
 
 ```cpp
 // Core module initialization
-class ECHOESOFTIME_API FEchoesOfTimeModule : public IModuleInterface
+class SPLITSTREAM_API FSplitstreamModule : public IModuleInterface
 {
 public:
     virtual void StartupModule() override;
@@ -114,7 +114,7 @@ enum class ETimelineEra : uint8
 Extends `UAdvancedFriendsGameInstance` to manage session lifecycle, input mappings, and user settings.
 
 ```cpp
-class ECHOESOFTIME_API UDefaultGameInstance : public UAdvancedFriendsGameInstance
+class SPLITSTREAM_API UDefaultGameInstance : public UAdvancedFriendsGameInstance
 {
 public:
     // Session management
@@ -173,7 +173,7 @@ protected:
 Manages player-specific data that needs to be replicated across the network.
 
 ```cpp
-class ECHOESOFTIME_API ADefaultPlayerState : public APlayerState
+class SPLITSTREAM_API ADefaultPlayerState : public APlayerState
 {
     GENERATED_BODY()
 public:
@@ -192,7 +192,7 @@ public:
 Blueprint function library for navigation and pathfinding operations.
 
 ```cpp
-class ECHOESOFTIME_API UNavUtilityLibrary : public UBlueprintFunctionLibrary
+class SPLITSTREAM_API UNavUtilityLibrary : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
 public:
@@ -213,7 +213,7 @@ The project uses Unreal's **Gameplay Ability System (GAS)** for abilities, attri
 **Custom ability system component**
 
 ```cpp
-class ECHOESOFTIME_API UDefaultAbilitySystemComponent : public UAbilitySystemComponent
+class SPLITSTREAM_API UDefaultAbilitySystemComponent : public UAbilitySystemComponent
 {
     GENERATED_BODY()
     // Custom extensions to UE's ability system
@@ -304,7 +304,7 @@ Located in `AbilitySystem/Abilities/` - These implement the core player abilitie
 Allows players to hack computers, terminals, security systems, and electronic devices through a mini-game interface.
 
 ```cpp
-class ECHOESOFTIME_API UDefaultGAHack : public UGameplayAbility
+class SPLITSTREAM_API UDefaultGAHack : public UGameplayAbility
 {
     GENERATED_BODY()
 public:
@@ -351,7 +351,7 @@ public:
 Interactive lock picking mechanic with mini-game for bypassing locks on doors, lockers, and containers.
 
 ```cpp
-class ECHOESOFTIME_API UDefaultGALockPick : public UGameplayAbility
+class SPLITSTREAM_API UDefaultGALockPick : public UGameplayAbility
 {
     GENERATED_BODY()
 public:
@@ -401,7 +401,7 @@ protected:
 Allows players to search AI characters, containers, desks, and other searchable objects to find items and collectibles.
 
 ```cpp
-class ECHOESOFTIME_API UDefaultGASearch : public UGameplayAbility
+class SPLITSTREAM_API UDefaultGASearch : public UGameplayAbility
 {
     GENERATED_BODY()
 public:
@@ -449,7 +449,7 @@ protected:
 The signature ability for Future timeline characters. Allows players to see "echoes" of past events, revealing hidden information and ghost characters from the past timeline.
 
 ```cpp
-class ECHOESOFTIME_API UFutureGAPastEcho : public UGameplayAbility
+class SPLITSTREAM_API UFutureGAPastEcho : public UGameplayAbility
 {
     GENERATED_BODY()
 public:
@@ -511,7 +511,7 @@ protected:
 Single-player teleportation ability for quick traversal. Not available in multiplayer modes.
 
 ```cpp
-class ECHOESOFTIME_API USoloGATeleport : public UGameplayAbility
+class SPLITSTREAM_API USoloGATeleport : public UGameplayAbility
 {
     GENERATED_BODY()
 public:
@@ -563,7 +563,7 @@ Located in `AbilitySystem/Abilities/Weapons/` - Combat abilities for weapons.
 Handles pistol aiming mechanics with camera adjustments and movement modifications.
 
 ```cpp
-class ECHOESOFTIME_API UPistolGAAim : public UGameplayAbility
+class SPLITSTREAM_API UPistolGAAim : public UGameplayAbility
 {
     GENERATED_BODY()
 public:
@@ -616,7 +616,7 @@ protected:
 Handles pistol firing mechanics including projectile spawning, ammo consumption, and hit detection.
 
 ```cpp
-class ECHOESOFTIME_API UPistolGAFire : public UGameplayAbility
+class SPLITSTREAM_API UPistolGAFire : public UGameplayAbility
 {
     GENERATED_BODY()
 public:
@@ -689,7 +689,7 @@ Ability tasks are used to handle time-based or event-driven operations within ga
 Manages the progression of hacking operations, including timing, success/failure conditions, and event broadcasting.
 
 ```cpp
-class ECHOESOFTIME_API UHackAbilityTask : public UAbilityTask
+class SPLITSTREAM_API UHackAbilityTask : public UAbilityTask
 {
     GENERATED_BODY()
 public:
@@ -739,7 +739,7 @@ protected:
 Handles the duration and outcome of lock picking attempts.
 
 ```cpp
-class ECHOESOFTIME_API ULockPickAbilityTask : public UAbilityTask
+class SPLITSTREAM_API ULockPickAbilityTask : public UAbilityTask
 {
     GENERATED_BODY()
 public:
@@ -784,7 +784,7 @@ protected:
 Manages the progressive search interaction with objects and characters.
 
 ```cpp
-class ECHOESOFTIME_API USearchAbilityTask : public UAbilityTask
+class SPLITSTREAM_API USearchAbilityTask : public UAbilityTask
 {
     GENERATED_BODY()
 public:
@@ -823,7 +823,7 @@ Located in `AbilitySystem/AttributeSets/` - Defines gameplay attributes managed 
 Defines all player stats and attributes managed by the Gameplay Ability System, including health, stamina, and movement speeds.
 
 ```cpp
-class ECHOESOFTIME_API UPlayerAttributeSet : public UAttributeSet
+class SPLITSTREAM_API UPlayerAttributeSet : public UAttributeSet
 {
     GENERATED_BODY()
 public:
@@ -925,7 +925,7 @@ Gameplay Cues provide cosmetic feedback for gameplay events without affecting ga
 Triggers visual and audio effects when the Past Echo ability is activated.
 
 ```cpp
-class ECHOESOFTIME_API UGCN_PastEchoActivated : public UGameplayCueNotify_Static
+class SPLITSTREAM_API UGCN_PastEchoActivated : public UGameplayCueNotify_Static
 {
     GENERATED_BODY()
 public:
@@ -970,7 +970,7 @@ protected:
 Removes or fades out Past Echo effects when the ability ends.
 
 ```cpp
-class ECHOESOFTIME_API UGCN_PastEchoDeactivated : public UGameplayCueNotify_Static
+class SPLITSTREAM_API UGCN_PastEchoDeactivated : public UGameplayCueNotify_Static
 {
     GENERATED_BODY()
 public:
@@ -1008,7 +1008,7 @@ These components implement specific gameplay systems and can be attached to any 
 Manages AI detection of the player character, handling detection levels, decay, and alert states.
 
 ```cpp
-class ECHOESOFTIME_API UDetectionComponent : public UActorComponent
+class SPLITSTREAM_API UDetectionComponent : public UActorComponent
 {
     GENERATED_BODY()
 public:
@@ -1100,7 +1100,7 @@ private:
 Component that makes an actor hackable by players, managing hack state, difficulty, and completion callbacks.
 
 ```cpp
-class ECHOESOFTIME_API UHackComponent : public UActorComponent
+class SPLITSTREAM_API UHackComponent : public UActorComponent
 {
     GENERATED_BODY()
 public:
@@ -1192,7 +1192,7 @@ struct FInventorySlot
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInventoryChanged, const TArray<FInventorySlot>&, Items);
 
-class ECHOESOFTIME_API UInventoryComponent : public UActorComponent
+class SPLITSTREAM_API UInventoryComponent : public UActorComponent
 {
     GENERATED_BODY()
 public:
@@ -1298,7 +1298,7 @@ private:
 Component for objects that can be locked and unlocked through lock picking.
 
 ```cpp
-class ECHOESOFTIME_API ULockPickComponent : public UActorComponent
+class SPLITSTREAM_API ULockPickComponent : public UActorComponent
 {
     GENERATED_BODY()
 public:
@@ -1372,7 +1372,7 @@ protected:
 Allows hacking devices by being near them without direct interaction (e.g., hacking cameras or drones).
 
 ```cpp
-class ECHOESOFTIME_API UProximityHackComponent : public UActorComponent
+class SPLITSTREAM_API UProximityHackComponent : public UActorComponent
 {
     GENERATED_BODY()
 public:
@@ -1449,7 +1449,7 @@ private:
 Component that makes actors searchable for loot, items, and collectibles.
 
 ```cpp
-class ECHOESOFTIME_API USearchComponent : public UActorComponent
+class SPLITSTREAM_API USearchComponent : public UActorComponent
 {
     GENERATED_BODY()
 public:
@@ -1549,7 +1549,7 @@ Provides core door functionality including open/close, locking, keycard access, 
 
 ```cpp
 UCLASS(Abstract)
-class ECHOESOFTIME_API ADoorBase : public AActor, 
+class SPLITSTREAM_API ADoorBase : public AActor, 
                                     public IInteractable, 
                                     public IKeycardUnlockable
 {
@@ -1657,7 +1657,7 @@ Similar to DoorBase but manages two door panels that open symmetrically.
 
 ```cpp
 UCLASS(Abstract)
-class ECHOESOFTIME_API ADoubleDoorBase : public AActor, public IInteractable
+class SPLITSTREAM_API ADoubleDoorBase : public AActor, public IInteractable
 {
     GENERATED_BODY()
 public:
@@ -1695,7 +1695,7 @@ public:
 Crawl spaces that allow players to bypass areas or reach hidden locations.
 
 ```cpp
-class ECHOESOFTIME_API AVentBase : public AActor, public IInteractable
+class SPLITSTREAM_API AVentBase : public AActor, public IInteractable
 {
     GENERATED_BODY()
 public:
@@ -1741,7 +1741,7 @@ private:
 Guards can press this to trigger base-wide alarm.
 
 ```cpp
-class ECHOESOFTIME_API AAlarmButton : public AActor, public IInteractable
+class SPLITSTREAM_API AAlarmButton : public AActor, public IInteractable
 {
     GENERATED_BODY()
 public:
@@ -1775,7 +1775,7 @@ public:
 Creates random codes displayed on documents/screens that players need for keypads.
 
 ```cpp
-class ECHOESOFTIME_API ACodeGenerator : public AActor
+class SPLITSTREAM_API ACodeGenerator : public AActor
 {
     GENERATED_BODY()
 public:
@@ -1814,7 +1814,7 @@ protected:
 **Interactive office desk**
 
 ```cpp
-class ECHOESOFTIME_API ADeskActor : public AActor, public IInteractable
+class SPLITSTREAM_API ADeskActor : public AActor, public IInteractable
 {
     GENERATED_BODY()
 public:
@@ -1848,7 +1848,7 @@ public:
 World pickup that adds items to player inventory.
 
 ```cpp
-class ECHOESOFTIME_API AItemPickup : public AActor, public IInteractable
+class SPLITSTREAM_API AItemPickup : public AActor, public IInteractable
 {
     GENERATED_BODY()
 public:
@@ -1886,7 +1886,7 @@ protected:
 **Keycard access control system**
 
 ```cpp
-class ECHOESOFTIME_API AKeycardScanner : public AActor, public IInteractable
+class SPLITSTREAM_API AKeycardScanner : public AActor, public IInteractable
 {
     GENERATED_BODY()
 public:
@@ -1930,7 +1930,7 @@ protected:
 **Storage locker**
 
 ```cpp
-class ECHOESOFTIME_API ALockerActor : public AActor, public IInteractable
+class SPLITSTREAM_API ALockerActor : public AActor, public IInteractable
 {
     GENERATED_BODY()
 public:
@@ -1965,7 +1965,7 @@ private:
 **Security checkpoint metal detector**
 
 ```cpp
-class ECHOESOFTIME_API AMetalDetector : public AActor
+class SPLITSTREAM_API AMetalDetector : public AActor
 {
     GENERATED_BODY()
 public:
@@ -2002,7 +2002,7 @@ private:
 **Readable newspaper with lore**
 
 ```cpp
-class ECHOESOFTIME_API ANewspaperActor : public AActor, public IInteractable
+class SPLITSTREAM_API ANewspaperActor : public AActor, public IInteractable
 {
     GENERATED_BODY()
 public:
@@ -2037,7 +2037,7 @@ private:
 Powers devices and doors, can be activated/deactivated.
 
 ```cpp
-class ECHOESOFTIME_API APowerGenerator : public AActor, public IInteractable, public IRepairable
+class SPLITSTREAM_API APowerGenerator : public AActor, public IInteractable, public IRepairable
 {
     GENERATED_BODY()
 public:
@@ -2095,7 +2095,7 @@ private:
 Automatically panning camera that detects players and triggers alarms.
 
 ```cpp
-class ECHOESOFTIME_API ASecurityCamera : public AActor, public IDetectable
+class SPLITSTREAM_API ASecurityCamera : public AActor, public IDetectable
 {
     GENERATED_BODY()
 public:
@@ -2192,7 +2192,7 @@ private:
 Displays security information like access codes, patrol schedules.
 
 ```cpp
-class ECHOESOFTIME_API ASecurityDocumentActor : public AActor, public IInteractable
+class SPLITSTREAM_API ASecurityDocumentActor : public AActor, public IInteractable
 {
     GENERATED_BODY()
 public:
@@ -2228,7 +2228,7 @@ Located in `Actors/Computers/`
 **Base computer terminal**
 
 ```cpp
-class ECHOESOFTIME_API AComputer : public AActor, public IInteractable
+class SPLITSTREAM_API AComputer : public AActor, public IInteractable
 {
     GENERATED_BODY()
 public:
@@ -2264,7 +2264,7 @@ public:
 **Archive/database computer**
 
 ```cpp
-class ECHOESOFTIME_API AArchiveComputer : public AComputer
+class SPLITSTREAM_API AArchiveComputer : public AComputer
 {
     GENERATED_BODY()
 public:
@@ -2295,7 +2295,7 @@ Located in `Actors/TimeObjects/` - Objects that exist in specific timelines
 Visible only during Past Echo ability, shows past events.
 
 ```cpp
-class ECHOESOFTIME_API AGhostCharacterActor : public AActor, public IGhostRevealable
+class SPLITSTREAM_API AGhostCharacterActor : public AActor, public IGhostRevealable
 {
     GENERATED_BODY()
 public:
@@ -2343,7 +2343,7 @@ private:
 **Teleportation pad**
 
 ```cpp
-class ECHOESOFTIME_API ATeleporter : public AActor, public IInteractable
+class SPLITSTREAM_API ATeleporter : public AActor, public IInteractable
 {
     GENERATED_BODY()
 public:
@@ -2380,7 +2380,7 @@ private:
 **Interactive terminal**
 
 ```cpp
-class ECHOESOFTIME_API ATerminal : public AActor, public IInteractable
+class SPLITSTREAM_API ATerminal : public AActor, public IInteractable
 {
     GENERATED_BODY()
 public:
@@ -2416,7 +2416,7 @@ Located in `Characters/` - Player and AI character classes
 The primary player character with full GAS integration, inventory, detection, and movement.
 
 ```cpp
-class ECHOESOFTIME_API ADefaultCharacter : public ACharacter, 
+class SPLITSTREAM_API ADefaultCharacter : public ACharacter, 
                                            public IInteractable, 
                                            public IAbilitySystemInterface, 
                                            public IDetectable
@@ -2593,7 +2593,7 @@ Abstract base for AI-controlled NPCs including guards and civilians.
 
 ```cpp
 UCLASS(Abstract)
-class ECHOESOFTIME_API AAICharacter : public ACharacter, 
+class SPLITSTREAM_API AAICharacter : public ACharacter, 
                                        public IAbilitySystemInterface, 
                                        public IInteractable, 
                                        public IDetectable
@@ -2695,7 +2695,7 @@ protected:
 Guards that patrol, detect players, and respond to alarms.
 
 ```cpp
-class ECHOESOFTIME_API AGuardCharacter : public AAICharacter
+class SPLITSTREAM_API AGuardCharacter : public AAICharacter
 {
     GENERATED_BODY()
 public:
@@ -2733,7 +2733,7 @@ public:
 Non-hostile NPCs that can panic and call guards.
 
 ```cpp
-class ECHOESOFTIME_API ACivilianCharacter : public AAICharacter
+class SPLITSTREAM_API ACivilianCharacter : public AAICharacter
 {
     GENERATED_BODY()
 public:
@@ -2760,7 +2760,7 @@ public:
 **Flying surveillance drone**
 
 ```cpp
-class ECHOESOFTIME_API ADronePawn : public APawn, public IDetectable
+class SPLITSTREAM_API ADronePawn : public APawn, public IDetectable
 {
     GENERATED_BODY()
 public:
@@ -2795,7 +2795,7 @@ public:
 Future-era robot guards with different behaviors.
 
 ```cpp
-class ECHOESOFTIME_API ARobotGuardCharacter : public AGuardCharacter
+class SPLITSTREAM_API ARobotGuardCharacter : public AGuardCharacter
 {
     GENERATED_BODY()
 public:
@@ -2820,7 +2820,7 @@ Located in `Controllers/` - Player controllers for different game modes
 **Main game player controller**
 
 ```cpp
-class ECHOESOFTIME_API ADefaultPlayerController : public APlayerController
+class SPLITSTREAM_API ADefaultPlayerController : public APlayerController
 {
     GENERATED_BODY()
 public:
@@ -2857,7 +2857,7 @@ protected:
 **Multiplayer lobby controller**
 
 ```cpp
-class ECHOESOFTIME_API ALobbyPlayerController : public APlayerController
+class SPLITSTREAM_API ALobbyPlayerController : public APlayerController
 {
     GENERATED_BODY()
 public:
@@ -2877,7 +2877,7 @@ public:
 **Main menu controller**
 
 ```cpp
-class ECHOESOFTIME_API AMainMenuPlayerController : public APlayerController
+class SPLITSTREAM_API AMainMenuPlayerController : public APlayerController
 {
     GENERATED_BODY()
 public:
@@ -2900,7 +2900,7 @@ Defines items that can be picked up and stored in inventory.
 
 ```cpp
 UCLASS(BlueprintType)
-class ECHOESOFTIME_API UItemBase : public UPrimaryDataAsset
+class SPLITSTREAM_API UItemBase : public UPrimaryDataAsset
 {
     GENERATED_BODY()
 public:
@@ -2953,7 +2953,7 @@ public:
 
 ```cpp
 UCLASS(BlueprintType)
-class ECHOESOFTIME_API UAbilityInputSet : public UDataAsset
+class SPLITSTREAM_API UAbilityInputSet : public UDataAsset
 {
     GENERATED_BODY()
 public:
@@ -2984,7 +2984,7 @@ Defines default abilities available to all characters.
 
 ```cpp
 UCLASS(BlueprintType)
-class ECHOESOFTIME_API UDefaultGASet : public UDataAsset
+class SPLITSTREAM_API UDefaultGASet : public UDataAsset
 {
     GENERATED_BODY()
 public:
@@ -3001,7 +3001,7 @@ public:
 
 ```cpp
 UCLASS(BlueprintType)
-class ECHOESOFTIME_API UInputMappingSet : public UDataAsset
+class SPLITSTREAM_API UInputMappingSet : public UDataAsset
 {
     GENERATED_BODY()
 public:
@@ -3022,7 +3022,7 @@ public:
 **Base game mode**
 
 ```cpp
-class ECHOESOFTIME_API ABaseGameMode : public AGameModeBase
+class SPLITSTREAM_API ABaseGameMode : public AGameModeBase
 {
     GENERATED_BODY()
 public:
@@ -3039,7 +3039,7 @@ public:
 **Main gameplay mode**
 
 ```cpp
-class ECHOESOFTIME_API ADefaultGameMode : public ABaseGameMode
+class SPLITSTREAM_API ADefaultGameMode : public ABaseGameMode
 {
     GENERATED_BODY()
 public:
@@ -3075,7 +3075,7 @@ private:
 **Multiplayer lobby mode**
 
 ```cpp
-class ECHOESOFTIME_API ALobbyGameMode : public ABaseGameMode
+class SPLITSTREAM_API ALobbyGameMode : public ABaseGameMode
 {
     GENERATED_BODY()
 public:
@@ -3095,7 +3095,7 @@ public:
 **Main game state**
 
 ```cpp
-class ECHOESOFTIME_API ADefaultGameState : public AGameStateBase
+class SPLITSTREAM_API ADefaultGameState : public AGameStateBase
 {
     GENERATED_BODY()
 public:
@@ -3120,7 +3120,7 @@ public:
 **Lobby state**
 
 ```cpp
-class ECHOESOFTIME_API ALobbyGameState : public AGameStateBase
+class SPLITSTREAM_API ALobbyGameState : public AGameStateBase
 {
     GENERATED_BODY()
 public:
@@ -3149,7 +3149,7 @@ class UInteractable : public UInterface
     GENERATED_BODY()
 };
 
-class ECHOESOFTIME_API IInteractable
+class SPLITSTREAM_API IInteractable
 {
     GENERATED_BODY()
 public:
@@ -3188,7 +3188,7 @@ class UDetectable : public UInterface
     GENERATED_BODY()
 };
 
-class ECHOESOFTIME_API IDetectable
+class SPLITSTREAM_API IDetectable
 {
     GENERATED_BODY()
 public:
@@ -3224,7 +3224,7 @@ class UKeycardUnlockable : public UInterface
     GENERATED_BODY()
 };
 
-class ECHOESOFTIME_API IKeycardUnlockable
+class SPLITSTREAM_API IKeycardUnlockable
 {
     GENERATED_BODY()
 public:
@@ -3249,7 +3249,7 @@ class UGhostRevealable : public UInterface
     GENERATED_BODY()
 };
 
-class ECHOESOFTIME_API IGhostRevealable
+class SPLITSTREAM_API IGhostRevealable
 {
     GENERATED_BODY()
 public:
@@ -3274,7 +3274,7 @@ class URepairable : public UInterface
     GENERATED_BODY()
 };
 
-class ECHOESOFTIME_API IRepairable
+class SPLITSTREAM_API IRepairable
 {
     GENERATED_BODY()
 public:
@@ -3300,7 +3300,7 @@ A retro-style space shooter mini-game used for hacking terminals.
 
 ```cpp
 UCLASS(Blueprintable, BlueprintType)
-class ECHOESOFTIME_API UFirewallMiniGame : public UObject
+class SPLITSTREAM_API UFirewallMiniGame : public UObject
 {
     GENERATED_BODY()
 public:
@@ -3375,7 +3375,7 @@ private:
 
 ```cpp
 UCLASS(Blueprintable, BlueprintType)
-class ECHOESOFTIME_API UNeonRunnerMiniGame : public UObject
+class SPLITSTREAM_API UNeonRunnerMiniGame : public UObject
 {
     GENERATED_BODY()
 public:
@@ -3448,7 +3448,7 @@ struct FSavedKeybind
 };
 
 UCLASS()
-class ECHOESOFTIME_API UUserSettingsSaveGame : public USaveGame
+class SPLITSTREAM_API UUserSettingsSaveGame : public USaveGame
 {
     GENERATED_BODY()
 public:

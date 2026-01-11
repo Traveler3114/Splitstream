@@ -1,6 +1,6 @@
 # Systems Overview
 
-This document provides a detailed overview of the major systems in Echoes of Time and how they work together.
+This document provides a detailed overview of the major systems in Splitstream and how they work together.
 
 ---
 
@@ -30,7 +30,7 @@ The Gameplay Ability System (GAS) is Unreal's framework for implementing charact
 
 **Class:** `UDefaultAbilitySystemComponent`
 
-**Location:** `Source/EchoesOfTime/AbilitySystem/`
+**Location:** `Source/Splitstream/AbilitySystem/`
 
 **Responsibilities:**
 - Manages granted abilities
@@ -221,7 +221,7 @@ GameplayTag.Timeline.Future
 
 **Class:** `ADefaultCharacter`
 
-**Location:** `Source/EchoesOfTime/Characters/`
+**Location:** `Source/Splitstream/Characters/`
 
 #### Core Components
 
@@ -324,7 +324,7 @@ Uses State Tree for behavior:
 
 **Class:** `UDetectionComponent`
 
-**Location:** `Source/EchoesOfTime/ActorComponents/`
+**Location:** `Source/Splitstream/ActorComponents/`
 
 #### Detection Mechanics
 
@@ -464,7 +464,7 @@ class ATimelineActor : public AActor
 
 **Class:** `UInventoryComponent`
 
-**Location:** `Source/EchoesOfTime/ActorComponents/`
+**Location:** `Source/Splitstream/ActorComponents/`
 
 #### Data Structure
 
@@ -733,7 +733,7 @@ void ADefaultCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 ## Save System
 
-**Location:** `Source/EchoesOfTime/Saving/`
+**Location:** `Source/Splitstream/Saving/`
 
 ### Save Game Data
 
@@ -849,7 +849,7 @@ Save System (checkpoint)
 
 ## Conclusion
 
-This systems overview provides a comprehensive look at how Echoes of Time is structured. For implementation details, refer to the source code and inline documentation.
+This systems overview provides a comprehensive look at how Splitstream is structured. For implementation details, refer to the source code and inline documentation.
 
 ---
 

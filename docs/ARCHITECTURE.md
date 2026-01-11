@@ -1,6 +1,6 @@
-# Echoes of Time - Architecture Documentation
+# Splitstream - Architecture Documentation
 
-This document provides an in-depth technical overview of the Echoes of Time codebase architecture, design patterns, and implementation details.
+This document provides an in-depth technical overview of the Splitstream codebase architecture, design patterns, and implementation details.
 
 ---
 
@@ -19,7 +19,7 @@ This document provides an in-depth technical overview of the Echoes of Time code
 
 ## Architecture Overview
 
-Echoes of Time follows a component-based architecture using Unreal Engine 5.7's framework. The project is structured around several key pillars:
+Splitstream follows a component-based architecture using Unreal Engine 5.7's framework. The project is structured around several key pillars:
 
 ### High-Level Architecture
 
@@ -54,10 +54,10 @@ Echoes of Time follows a component-based architecture using Unreal Engine 5.7's 
 
 ## Module Structure
 
-### Main Game Module: EchoesOfTime
+### Main Game Module: Splitstream
 
 **Module Type**: Runtime  
-**Location**: `Source/EchoesOfTime/`
+**Location**: `Source/Splitstream/`
 
 #### Module Dependencies
 
@@ -79,7 +79,7 @@ PrivateDependencyModuleNames:
 
 #### Build Configuration
 
-**File**: `EchoesOfTime.Build.cs`
+**File**: `Splitstream.Build.cs`
 
 ```cpp
 PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
@@ -441,7 +441,7 @@ OnInventoryChanged.AddDynamic(this, &ADefaultCharacter::OnInventoryChanged);
 ### Directory Structure Philosophy
 
 ```
-Source/EchoesOfTime/
+Source/Splitstream/
 ├── AbilitySystem/           # GAS implementation
 │   ├── Abilities/           # Individual abilities
 │   ├── AttributeSets/       # Attribute definitions
@@ -830,7 +830,7 @@ Potential modding hooks:
 
 ## Conclusion
 
-This architecture document provides a comprehensive overview of the Echoes of Time codebase. For specific implementation details, refer to the inline code documentation and comments.
+This architecture document provides a comprehensive overview of the Splitstream codebase. For specific implementation details, refer to the inline code documentation and comments.
 
 **Related Documents:**
 - [README.md](../README.md) - Setup and getting started
