@@ -9,7 +9,7 @@ class UEnumOptionWidget;
 class USliderWidget;
 
 UCLASS()
-class ECHOESOFTIME_API UGraphicsWidget : public UUserWidget
+class SPLITSTREAM_API UGraphicsWidget : public UUserWidget
 {
     GENERATED_BODY()
 public:

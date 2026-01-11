@@ -10,7 +10,7 @@
 class UBoxComponent;
 
 UCLASS()
-class ECHOESOFTIME_API AIllegalArea : public AActor
+class SPLITSTREAM_API AIllegalArea : public AActor
 {
     GENERATED_BODY()
     

@@ -10,7 +10,7 @@
  * 
  */
 UCLASS()
-class ECHOESOFTIME_API UFriendWidget : public UUserWidget
+class SPLITSTREAM_API UFriendWidget : public UUserWidget
 {
 	GENERATED_BODY()
 	

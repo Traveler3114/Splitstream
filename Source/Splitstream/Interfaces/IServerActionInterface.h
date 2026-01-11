@@ -36,7 +36,7 @@ class UServerActionInterface : public UInterface
 };
 
 // 3. Implement your pure C++ interface. 
-class ECHOESOFTIME_API IServerActionInterface
+class SPLITSTREAM_API IServerActionInterface
 {
     GENERATED_BODY()
 

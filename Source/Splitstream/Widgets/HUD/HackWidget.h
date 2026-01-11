@@ -7,7 +7,7 @@
 class UHackComponent;
 
 UCLASS()
-class ECHOESOFTIME_API UHackWidget : public UUserWidget
+class SPLITSTREAM_API UHackWidget : public UUserWidget
 {
     GENERATED_BODY()
 public:

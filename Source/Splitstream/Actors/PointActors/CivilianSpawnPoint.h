@@ -6,7 +6,7 @@
 #include "CivilianSpawnPoint.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API ACivilianSpawnPoint : public AActor
+class SPLITSTREAM_API ACivilianSpawnPoint : public AActor
 {
     GENERATED_BODY()
 

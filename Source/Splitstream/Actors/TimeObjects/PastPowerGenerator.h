@@ -7,7 +7,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGeneratorCompleted, bool, bIsCompleted);
 
 UCLASS()
-class ECHOESOFTIME_API APastPowerGenerator : public APowerGenerator
+class SPLITSTREAM_API APastPowerGenerator : public APowerGenerator
 {
     GENERATED_BODY()
 

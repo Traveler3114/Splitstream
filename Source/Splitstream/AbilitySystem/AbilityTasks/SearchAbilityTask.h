@@ -10,7 +10,7 @@ class USearchWidget;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSearchTaskResult, bool, bSuccess);
 
 UCLASS()
-class ECHOESOFTIME_API USearchAbilityTask : public UAbilityTask
+class SPLITSTREAM_API USearchAbilityTask : public UAbilityTask
 {
     GENERATED_BODY()
 public:

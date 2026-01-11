@@ -7,7 +7,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnSearchComplete);
 
 UCLASS(Blueprintable, ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
-class ECHOESOFTIME_API USearchComponent : public UActorComponent
+class SPLITSTREAM_API USearchComponent : public UActorComponent
 {
     GENERATED_BODY()
 

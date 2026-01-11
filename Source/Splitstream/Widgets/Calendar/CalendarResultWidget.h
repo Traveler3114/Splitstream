@@ -8,7 +8,7 @@ class UImage;
 class UTextBlock;
 
 UCLASS()
-class ECHOESOFTIME_API UCalendarResultWidget : public UUserWidget
+class SPLITSTREAM_API UCalendarResultWidget : public UUserWidget
 {
     GENERATED_BODY()
 public:

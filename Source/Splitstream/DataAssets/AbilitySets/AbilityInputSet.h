@@ -21,7 +21,7 @@ struct FAbilityInputSetEntry
 };
 
 UCLASS(BlueprintType)
-class ECHOESOFTIME_API UAbilityInputSet : public UDataAsset
+class SPLITSTREAM_API UAbilityInputSet : public UDataAsset
 {
     GENERATED_BODY()
 

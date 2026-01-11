@@ -20,7 +20,7 @@ class UDetectionComponent;
 class USearchComponent;
 
 UCLASS(Abstract)
-class ECHOESOFTIME_API AAICharacter : public ACharacter, public IAbilitySystemInterface, public IInteractable, public IDetectable
+class SPLITSTREAM_API AAICharacter : public ACharacter, public IAbilitySystemInterface, public IInteractable, public IDetectable
 {
     GENERATED_BODY()
 

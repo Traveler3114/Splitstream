@@ -9,7 +9,7 @@
 #include "MetalDetector.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API AMetalDetector : public AActor, public IPuzzleCompletionReceiver 
+class SPLITSTREAM_API AMetalDetector : public AActor, public IPuzzleCompletionReceiver 
 {
 	GENERATED_BODY()
 

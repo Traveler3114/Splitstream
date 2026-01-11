@@ -12,7 +12,7 @@
 class ADeskActor;
 
 UCLASS()
-class ECHOESOFTIME_API ACivilianCharacter : public AAICharacter
+class SPLITSTREAM_API ACivilianCharacter : public AAICharacter
 {
     GENERATED_BODY()
 

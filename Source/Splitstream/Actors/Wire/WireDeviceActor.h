@@ -20,7 +20,7 @@ struct FWireDeviceColorConfig
 };
 
 UCLASS()
-class ECHOESOFTIME_API AWireDeviceActor : public AActor
+class SPLITSTREAM_API AWireDeviceActor : public AActor
 {
     GENERATED_BODY()
 

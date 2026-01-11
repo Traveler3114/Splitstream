@@ -23,7 +23,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDetectionBegan, AActor*, OwnerAct
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDetectionEnded, AActor*, OwnerActor);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
-class ECHOESOFTIME_API UDetectionComponent : public UActorComponent
+class SPLITSTREAM_API UDetectionComponent : public UActorComponent
 {
     GENERATED_BODY()
 

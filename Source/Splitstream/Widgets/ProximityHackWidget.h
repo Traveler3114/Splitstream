@@ -10,7 +10,7 @@
  * Receives progress via SetHackProgress(float) from UProximityHackComponent.
  */
 UCLASS()
-class ECHOESOFTIME_API UProximityHackWidget : public UUserWidget
+class SPLITSTREAM_API UProximityHackWidget : public UUserWidget
 {
     GENERATED_BODY()
 

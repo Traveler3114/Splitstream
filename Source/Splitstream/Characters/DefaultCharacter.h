@@ -27,7 +27,7 @@ class AItemPickup;
 // Detection state struct for better readability/maintainability
 
 UCLASS()
-class ECHOESOFTIME_API ADefaultCharacter : public ACharacter, public IInteractable, public IAbilitySystemInterface, public IDetectable
+class SPLITSTREAM_API ADefaultCharacter : public ACharacter, public IInteractable, public IAbilitySystemInterface, public IDetectable
 {
     GENERATED_BODY()
 public:

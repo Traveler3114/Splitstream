@@ -9,7 +9,7 @@ class UPauseMenuWidget;
 class ATerminal;
 
 UCLASS()
-class ECHOESOFTIME_API ADefaultPlayerController : public APlayerController
+class SPLITSTREAM_API ADefaultPlayerController : public APlayerController
 {
     GENERATED_BODY()
 public:

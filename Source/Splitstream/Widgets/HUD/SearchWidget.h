@@ -7,7 +7,7 @@
 class USearchComponent;
 
 UCLASS()
-class ECHOESOFTIME_API USearchWidget : public UUserWidget
+class SPLITSTREAM_API USearchWidget : public UUserWidget
 {
     GENERATED_BODY()
 public:

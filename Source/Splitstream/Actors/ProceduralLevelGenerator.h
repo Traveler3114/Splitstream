@@ -43,7 +43,7 @@ struct FWireSequenceStep
 
 
 UCLASS()
-class ECHOESOFTIME_API AProceduralLevelGenerator : public AActor
+class SPLITSTREAM_API AProceduralLevelGenerator : public AActor
 {
     GENERATED_BODY()
 public:

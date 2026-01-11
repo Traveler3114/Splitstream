@@ -6,7 +6,7 @@
 #include "GhostCharacterActor.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API AGhostCharacterActor : public AActor, public IGhostRevealable
+class SPLITSTREAM_API AGhostCharacterActor : public AActor, public IGhostRevealable
 {
     GENERATED_BODY()
 

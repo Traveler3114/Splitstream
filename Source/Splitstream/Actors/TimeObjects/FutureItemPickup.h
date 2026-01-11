@@ -7,7 +7,7 @@
 DECLARE_MULTICAST_DELEGATE_OneParam(FFutureItemInvalidated, FGuid /*InstanceID*/);
 
 UCLASS()
-class ECHOESOFTIME_API AFutureItemPickup : public AItemPickup
+class SPLITSTREAM_API AFutureItemPickup : public AItemPickup
 {
     GENERATED_BODY()
 public:

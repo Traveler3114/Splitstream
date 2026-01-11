@@ -9,7 +9,7 @@ class UButton;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnShowFriendListRequested);
 
 UCLASS()
-class ECHOESOFTIME_API UOpenFriendsListButton : public UUserWidget
+class SPLITSTREAM_API UOpenFriendsListButton : public UUserWidget
 {
 	GENERATED_BODY()
 

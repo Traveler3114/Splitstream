@@ -6,7 +6,7 @@
 #include "CharacterHUD.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API ACharacterHUD : public AHUD
+class SPLITSTREAM_API ACharacterHUD : public AHUD
 {
     GENERATED_BODY()
 

@@ -11,7 +11,7 @@ class UTextBlock;
 class UVerticalBox;
 
 UCLASS()
-class ECHOESOFTIME_API UCharacterOverlay : public UUserWidget
+class SPLITSTREAM_API UCharacterOverlay : public UUserWidget
 {
     GENERATED_BODY()
 

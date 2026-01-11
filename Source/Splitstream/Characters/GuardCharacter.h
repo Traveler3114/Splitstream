@@ -17,7 +17,7 @@
 class ANavNode;
 
 UCLASS()
-class ECHOESOFTIME_API AGuardCharacter : public AAICharacter, public IGhostMirrorSource
+class SPLITSTREAM_API AGuardCharacter : public AAICharacter, public IGhostMirrorSource
 {
     GENERATED_BODY()
 

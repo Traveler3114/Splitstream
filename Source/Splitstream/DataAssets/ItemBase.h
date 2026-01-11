@@ -24,7 +24,7 @@ enum class EItemType : uint8
 };
 
 UCLASS(BlueprintType)
-class ECHOESOFTIME_API UItemBase : public UDataAsset
+class SPLITSTREAM_API UItemBase : public UDataAsset
 {
     GENERATED_BODY()
 public:

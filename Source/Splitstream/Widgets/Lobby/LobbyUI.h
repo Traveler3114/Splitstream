@@ -9,7 +9,7 @@ class UTextBlock;
 class ADefaultPlayerState;
 
 UCLASS()
-class ECHOESOFTIME_API ULobbyUI : public UUserWidget
+class SPLITSTREAM_API ULobbyUI : public UUserWidget
 {
 	GENERATED_BODY()
 public:

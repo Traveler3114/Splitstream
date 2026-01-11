@@ -9,7 +9,7 @@ class ULockPickComponent;
 class UImage;
 
 UCLASS()
-class ECHOESOFTIME_API ULockPickWidget : public UUserWidget
+class SPLITSTREAM_API ULockPickWidget : public UUserWidget
 {
     GENERATED_BODY()
 public:

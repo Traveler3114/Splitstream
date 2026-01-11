@@ -43,7 +43,7 @@ struct FPreAlarmInstigatorInfo
 };
 
 UCLASS()
-class ECHOESOFTIME_API ADefaultGameState : public ABaseGameState
+class SPLITSTREAM_API ADefaultGameState : public ABaseGameState
 {
     GENERATED_BODY()
 

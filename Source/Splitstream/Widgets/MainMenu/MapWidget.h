@@ -15,7 +15,7 @@ class UButton;
 DECLARE_DELEGATE_TwoParams(FOnMapSelect, const FString&, const TSoftObjectPtr<UWorld>&);
 
 UCLASS()
-class ECHOESOFTIME_API UMapWidget : public UUserWidget
+class SPLITSTREAM_API UMapWidget : public UUserWidget
 {
     GENERATED_BODY()
 public:

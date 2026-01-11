@@ -16,7 +16,7 @@ class UTextRenderComponent;
 class ADronePawn;
 
 UCLASS()
-class ECHOESOFTIME_API ADroneSpawner : public AActor, public IInteractable, public IRepairable, public IPuzzleCompletionReceiver
+class SPLITSTREAM_API ADroneSpawner : public AActor, public IInteractable, public IRepairable, public IPuzzleCompletionReceiver
 {
 	GENERATED_BODY()
 

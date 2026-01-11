@@ -5,7 +5,7 @@
 #include "Bullet.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API ABullet : public AActor
+class SPLITSTREAM_API ABullet : public AActor
 {
     GENERATED_BODY()
 public:

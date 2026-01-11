@@ -6,7 +6,7 @@
 #include "NewspaperActor.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API ANewspaperActor : public AActor
+class SPLITSTREAM_API ANewspaperActor : public AActor
 {
     GENERATED_BODY()
 

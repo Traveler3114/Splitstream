@@ -9,7 +9,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLeverInteracted, ALeverActor*, Lever);
 
 UCLASS()
-class ECHOESOFTIME_API ALeverActor : public AActor, public IInteractable
+class SPLITSTREAM_API ALeverActor : public AActor, public IInteractable
 {
     GENERATED_BODY()
 

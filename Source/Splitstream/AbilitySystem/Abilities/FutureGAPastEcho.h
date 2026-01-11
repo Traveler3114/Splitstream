@@ -11,7 +11,7 @@
  * - On 2nd press: Execute GameplayCue.PastEcho.Deactivated (hide locally) and remove Character.Status.PastEcho.
  */
 UCLASS()
-class ECHOESOFTIME_API UFutureGAPastEcho : public UGameplayAbility
+class SPLITSTREAM_API UFutureGAPastEcho : public UGameplayAbility
 {
 	GENERATED_BODY()
 public:

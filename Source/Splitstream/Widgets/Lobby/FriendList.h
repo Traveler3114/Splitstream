@@ -8,7 +8,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnShowButtonRequested);
 
 
 UCLASS()
-class ECHOESOFTIME_API UFriendList : public UUserWidget
+class SPLITSTREAM_API UFriendList : public UUserWidget
 {
 	GENERATED_BODY()
 

@@ -7,7 +7,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FLobbyOnAggregateReadyChanged);
 
 UCLASS()
-class ECHOESOFTIME_API ALobbyGameState : public ABaseGameState
+class SPLITSTREAM_API ALobbyGameState : public ABaseGameState
 {
 	GENERATED_BODY()
 public:

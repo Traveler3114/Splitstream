@@ -11,7 +11,7 @@
 class AKeypadButton;
 
 UCLASS()
-class ECHOESOFTIME_API AKeypadScanner : public AActor, public IInteractable
+class SPLITSTREAM_API AKeypadScanner : public AActor, public IInteractable
 {
     GENERATED_BODY()
 

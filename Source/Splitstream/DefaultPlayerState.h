@@ -16,7 +16,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAvatarChanged, ADefaultPlayerStat
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTeamChanged, ADefaultPlayerState*, PS);
 
 UCLASS()
-class ECHOESOFTIME_API ADefaultPlayerState : public APlayerState, public IAbilitySystemInterface
+class SPLITSTREAM_API ADefaultPlayerState : public APlayerState, public IAbilitySystemInterface
 {
     GENERATED_BODY()
 public:

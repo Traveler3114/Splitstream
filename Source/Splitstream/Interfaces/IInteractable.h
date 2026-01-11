@@ -12,7 +12,7 @@ class UInteractable : public UInterface
     GENERATED_BODY()
 };
 
-class ECHOESOFTIME_API IInteractable
+class SPLITSTREAM_API IInteractable
 {
     GENERATED_BODY()
 

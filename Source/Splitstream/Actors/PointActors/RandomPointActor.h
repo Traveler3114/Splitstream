@@ -6,7 +6,7 @@
 #include "RandomPointActor.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API ARandomPointActor : public AActor
+class SPLITSTREAM_API ARandomPointActor : public AActor
 {
     GENERATED_BODY()
 

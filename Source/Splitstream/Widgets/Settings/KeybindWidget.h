@@ -12,7 +12,7 @@ class USizeBox;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnChangeKeyClicked, UKeybindWidget*, Source);
 
 UCLASS()
-class ECHOESOFTIME_API UKeybindWidget : public UUserWidget
+class SPLITSTREAM_API UKeybindWidget : public UUserWidget
 {
     GENERATED_BODY()
 public:

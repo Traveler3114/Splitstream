@@ -5,7 +5,7 @@
 #include "GCN_PastEchoDeactivated.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API UGCN_PastEchoDeactivated : public UGameplayCueNotify_Static
+class SPLITSTREAM_API UGCN_PastEchoDeactivated : public UGameplayCueNotify_Static
 {
     GENERATED_BODY()
 

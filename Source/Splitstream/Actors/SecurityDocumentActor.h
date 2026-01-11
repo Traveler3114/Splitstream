@@ -11,7 +11,7 @@ class UWidgetComponent;
 class USceneComponent;
 
 UCLASS()
-class ECHOESOFTIME_API ASecurityDocumentActor : public AActor
+class SPLITSTREAM_API ASecurityDocumentActor : public AActor
 {
     GENERATED_BODY()
 

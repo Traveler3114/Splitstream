@@ -7,7 +7,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnVentStateChanged, bool, bIsOpen);
 
 UCLASS()
-class ECHOESOFTIME_API APastVent : public AVentBase
+class SPLITSTREAM_API APastVent : public AVentBase
 {
     GENERATED_BODY()
 

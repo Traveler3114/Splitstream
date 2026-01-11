@@ -7,7 +7,7 @@
 class USearchAbilityTask;
 
 UCLASS()
-class ECHOESOFTIME_API UDefaultGASearch : public UGameplayAbility
+class SPLITSTREAM_API UDefaultGASearch : public UGameplayAbility
 {
     GENERATED_BODY()
 public:

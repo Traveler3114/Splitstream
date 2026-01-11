@@ -7,7 +7,7 @@
 class UHackAbilityTask;
 
 UCLASS()
-class ECHOESOFTIME_API UDefaultGAHack : public UGameplayAbility
+class SPLITSTREAM_API UDefaultGAHack : public UGameplayAbility
 {
     GENERATED_BODY()
 public:

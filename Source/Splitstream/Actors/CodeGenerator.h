@@ -29,7 +29,7 @@ struct FKeypadCodeStatus
 };
 
 UCLASS()
-class ECHOESOFTIME_API ACodeGenerator : public AActor, public IInteractable
+class SPLITSTREAM_API ACodeGenerator : public AActor, public IInteractable
 {
     GENERATED_BODY()
 

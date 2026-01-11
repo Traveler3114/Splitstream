@@ -10,7 +10,7 @@ class UButton;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEnumChanged, int32, NewIndex);
 
 UCLASS()
-class ECHOESOFTIME_API UEnumOptionWidget : public UUserWidget
+class SPLITSTREAM_API UEnumOptionWidget : public UUserWidget
 {
     GENERATED_BODY()
 public:

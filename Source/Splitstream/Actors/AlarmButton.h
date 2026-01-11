@@ -7,7 +7,7 @@
 #include "AlarmButton.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API AAlarmButton : public AActor, public IInteractable
+class SPLITSTREAM_API AAlarmButton : public AActor, public IInteractable
 {
     GENERATED_BODY()
 

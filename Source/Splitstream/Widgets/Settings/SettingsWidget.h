@@ -11,7 +11,7 @@ class UGraphicsWidget;
 class UInputWidget;
 
 UCLASS()
-class ECHOESOFTIME_API USettingsWidget : public UUserWidget
+class SPLITSTREAM_API USettingsWidget : public UUserWidget
 {
     GENERATED_BODY()
 

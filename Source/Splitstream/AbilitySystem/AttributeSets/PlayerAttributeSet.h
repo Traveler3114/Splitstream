@@ -13,7 +13,7 @@
     GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
 
 UCLASS()
-class ECHOESOFTIME_API UPlayerAttributeSet : public UAttributeSet
+class SPLITSTREAM_API UPlayerAttributeSet : public UAttributeSet
 {
     GENERATED_BODY()
 

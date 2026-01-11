@@ -10,7 +10,7 @@ class UButton;
 class USettingsWidget;
 
 UCLASS()
-class ECHOESOFTIME_API UPauseMenuWidget : public UUserWidget
+class SPLITSTREAM_API UPauseMenuWidget : public UUserWidget
 {
     GENERATED_BODY()
 

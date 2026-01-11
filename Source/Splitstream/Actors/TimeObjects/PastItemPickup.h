@@ -5,7 +5,7 @@
 #include "PastItemPickup.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API APastItemPickup : public AItemPickup
+class SPLITSTREAM_API APastItemPickup : public AItemPickup
 {
     GENERATED_BODY()
 public:

@@ -10,7 +10,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemPickedUp, AActor*, Interactor, UItemBase*, ItemData);
 
 UCLASS()
-class ECHOESOFTIME_API AItemPickup : public AActor, public IInteractable, public IDetectable
+class SPLITSTREAM_API AItemPickup : public AActor, public IInteractable, public IDetectable
 {
     GENERATED_BODY()
 

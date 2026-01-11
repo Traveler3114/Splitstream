@@ -9,7 +9,7 @@
 class ALaserSensor;
 
 UCLASS()
-class ECHOESOFTIME_API ALaserManager : public AActor, public IPuzzleCompletionReceiver
+class SPLITSTREAM_API ALaserManager : public AActor, public IPuzzleCompletionReceiver
 {
     GENERATED_BODY()
 

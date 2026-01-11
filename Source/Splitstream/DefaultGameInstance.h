@@ -8,7 +8,7 @@
 #include "DefaultGameInstance.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API UDefaultGameInstance : public UAdvancedFriendsGameInstance
+class SPLITSTREAM_API UDefaultGameInstance : public UAdvancedFriendsGameInstance
 {
     GENERATED_BODY()
 public:

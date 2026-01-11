@@ -26,7 +26,7 @@ struct FInventorySlot
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInventoryChanged, const TArray<FInventorySlot>&, Items);
 
 UCLASS(Blueprintable, ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
-class ECHOESOFTIME_API UInventoryComponent : public UActorComponent
+class SPLITSTREAM_API UInventoryComponent : public UActorComponent
 {
     GENERATED_BODY()
 

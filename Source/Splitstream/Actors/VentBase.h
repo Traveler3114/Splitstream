@@ -9,7 +9,7 @@
 #include "VentBase.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API AVentBase : public AActor, public IInteractable, public IDetectable
+class SPLITSTREAM_API AVentBase : public AActor, public IInteractable, public IDetectable
 {
 	GENERATED_BODY()
 	

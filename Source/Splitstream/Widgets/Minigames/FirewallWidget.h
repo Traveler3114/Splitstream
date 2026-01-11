@@ -10,7 +10,7 @@
 #include "FirewallWidget.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API UFirewallWidget : public UUserWidget
+class SPLITSTREAM_API UFirewallWidget : public UUserWidget
 {
     GENERATED_BODY()
 

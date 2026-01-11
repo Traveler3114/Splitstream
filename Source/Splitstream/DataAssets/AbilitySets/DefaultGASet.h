@@ -11,7 +11,7 @@
  * DataAsset used to store a set of Gameplay Abilities to grant.
  */
 UCLASS()
-class ECHOESOFTIME_API UDefaultGASet : public UDataAsset
+class SPLITSTREAM_API UDefaultGASet : public UDataAsset
 {
 	GENERATED_BODY()
 

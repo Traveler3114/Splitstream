@@ -6,7 +6,7 @@
 #include "FuturePowerGenerator.generated.h"
 
 UCLASS()
-class ECHOESOFTIME_API AFuturePowerGenerator : public APowerGenerator, public IServerActionInterface
+class SPLITSTREAM_API AFuturePowerGenerator : public APowerGenerator, public IServerActionInterface
 {
     GENERATED_BODY()
 
