@@ -42,14 +42,20 @@ The Gameplay Ability System (GAS) is Unreal's framework for implementing charact
 **Key Functions:**
 ```cpp
 // Grant an ability to the character
+// Call this during initialization or when the player acquires a new ability
+// Returns: FGameplayAbilitySpecHandle for tracking
 void GiveAbility(const FGameplayAbilitySpec& Spec);
 
 // Try to activate ability by tag
+// Use this to trigger abilities from input or gameplay events
+// Returns: true if at least one ability was activated successfully
 bool TryActivateAbilitiesByTag(const FGameplayTagContainer& Tags);
 
-// Apply gameplay effect
+// Apply gameplay effect to self
+// Use for buffs, debuffs, damage, or attribute modifications
+// Returns: Handle to track and potentially remove the effect later
 FActiveGameplayEffectHandle ApplyGameplayEffectToSelf(
-    const UGameplayEffect* Effect);
+    const UGameplayEffect* Effect, float Level = 1.0f);
 ```
 
 #### 2. Attribute Sets
@@ -139,20 +145,50 @@ protected:
 - **Duration**: Temporary effect with duration (e.g., speed boost)
 - **Infinite**: Permanent effect (e.g., stat upgrades)
 
-**Example:**
-```cpp
-// Create instant damage effect
-UGameplayEffect* DamageEffect = NewObject<UGameplayEffect>();
-DamageEffect->DurationPolicy = EGameplayEffectDurationType::Instant;
-DamageEffect->Modifiers.Add(FGameplayModifierInfo(
-    UPlayerAttributeSet::GetHealthAttribute(),
-    EGameplayModOp::Additive,
-    FGameplayEffectModifierMagnitude(-10.0f)
-));
+**Standard Approach:**
 
-// Apply to target
-ASC->ApplyGameplayEffectToSelf(DamageEffect, 1.0f, Context);
+Gameplay Effects are typically created as Blueprint Data Assets or C++ classes:
+
+```cpp
+// Method 1: Using a UGameplayEffect Blueprint Data Asset (Recommended)
+UPROPERTY(EditDefaultsOnly, Category = "Abilities")
+TSubclassOf<UGameplayEffect> DamageEffectClass;
+
+// Apply the effect
+if (DamageEffectClass)
+{
+    FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+    Context.AddSourceObject(this);
+    
+    FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(
+        DamageEffectClass, 
+        1.0f, // Level
+        Context
+    );
+    
+    if (SpecHandle.IsValid())
+    {
+        ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+    }
+}
+
+// Method 2: Creating effect class in C++ (for reusable effects)
+UCLASS()
+class UDamageGameplayEffect : public UGameplayEffect
+{
+    GENERATED_BODY()
+    
+public:
+    UDamageGameplayEffect()
+    {
+        DurationPolicy = EGameplayEffectDurationType::Instant;
+        
+        // Configure modifiers in constructor or via Blueprint
+    }
+};
 ```
+
+**Note:** For most use cases, create Gameplay Effects as Blueprint Data Assets in the editor. This allows designers to tweak values without code changes.
 
 #### 5. Gameplay Tags
 
