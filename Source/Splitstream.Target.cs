@@ -3,13 +3,13 @@
 using UnrealBuildTool;
 using System.Collections.Generic;
 
-public class EchoesOfTimeEditorTarget : TargetRules
+public class SplitstreamTarget : TargetRules
 {
-	public EchoesOfTimeEditorTarget( TargetInfo Target) : base(Target)
+	public SplitstreamTarget(TargetInfo Target) : base(Target)
 	{
-		Type = TargetType.Editor;
+		Type = TargetType.Game;
 		DefaultBuildSettings = BuildSettingsVersion.V6;
 		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_7;
-		ExtraModuleNames.Add("EchoesOfTime");
+		ExtraModuleNames.Add("Splitstream");
 	}
 }

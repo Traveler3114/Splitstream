@@ -2,9 +2,9 @@
 
 using UnrealBuildTool;
 
-public class EchoesOfTime : ModuleRules
+public class Splitstream : ModuleRules
 {
-	public EchoesOfTime(ReadOnlyTargetRules Target) : base(Target)
+	public Splitstream(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
@@ -31,7 +31,7 @@ public class EchoesOfTime : ModuleRules
 
 
 		PublicIncludePaths.AddRange(new string[] {
-			"EchoesOfTime"
+			"Splitstream"
 		});
 		// Uncomment if you are using Slate UI
 		        PrivateDependencyModuleNames.AddRange(new string[]
