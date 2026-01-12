@@ -220,8 +220,18 @@ void ADefaultPlayerController::UpdateAlarmUI()
 {
     if (!CharacterHUD || !CharacterHUD->CharacterOverlay) return;
 
-    float Now = GetWorld()->GetTimeSeconds();
-    float Remaining = FMath::Max(0.f, AlarmEndTime - Now);
+    // Use network-synced server time!
+    float ServerNow = 0.f;
+    if (AGameStateBase* GS = GetWorld() ? GetWorld()->GetGameState<AGameStateBase>() : nullptr)
+    {
+        ServerNow = GS->GetServerWorldTimeSeconds();
+    }
+    else
+    {
+        ServerNow = GetWorld()->GetTimeSeconds();
+    }
+
+    float Remaining = FMath::Max(0.f, AlarmEndTime - ServerNow);
 
     int32 SecondsLeft = FMath::FloorToInt(Remaining);
     FString StatusText = FString::Printf(TEXT("ALARM - Restart in %d s"), SecondsLeft);
@@ -265,8 +275,18 @@ void ADefaultPlayerController::UpdatePreAlarmUI()
 {
     if (!CharacterHUD || !CharacterHUD->CharacterOverlay) return;
 
-    float Now = GetWorld()->GetTimeSeconds();
-    float Remaining = FMath::Max(0.f, PreAlarmEndTime - Now);
+    // Use network-synced server time!
+    float ServerNow = 0.f;
+    if (AGameStateBase* GS = GetWorld() ? GetWorld()->GetGameState<AGameStateBase>() : nullptr)
+    {
+        ServerNow = GS->GetServerWorldTimeSeconds();
+    }
+    else
+    {
+        ServerNow = GetWorld()->GetTimeSeconds();
+    }
+
+    float Remaining = FMath::Max(0.f, PreAlarmEndTime - ServerNow);
 
     int32 SecondsLeft = FMath::FloorToInt(Remaining);
     FString StatusText = FString::Printf(TEXT("Guard spotted you! Alarm in %d s"), SecondsLeft);
