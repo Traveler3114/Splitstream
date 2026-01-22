@@ -12,7 +12,12 @@ class UTextBlock;
 class UImage;
 class UButton;
 
-DECLARE_DELEGATE_TwoParams(FOnMapSelect, const FString&, const TSoftObjectPtr<UWorld>&);
+DECLARE_DELEGATE_ThreeParams(FOnMapSelect,
+    const FString&,            // LevelName
+    const TSoftObjectPtr<UWorld>&, // LevelAsset
+    const TSoftObjectPtr<UWorld>&  // LobbyLevelAsset
+);
+
 
 UCLASS()
 class SPLITSTREAM_API UMapWidget : public UUserWidget

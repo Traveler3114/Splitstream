@@ -64,7 +64,7 @@ void UMainMenuWidget::OnQuitClicked()
     UKismetSystemLibrary::QuitGame(this, PC, EQuitPreference::Quit, true);
 }
 
-void UMainMenuWidget::OnMapSelected(const FString& LevelName, const TSoftObjectPtr<UWorld>& LevelAsset)
+void UMainMenuWidget::OnMapSelected(const FString& LevelName, const TSoftObjectPtr<UWorld>& LevelAsset, const TSoftObjectPtr<UWorld>& LobbyLevelAsset)
 {
     // Return MainMenu visible
     SetVisibility(ESlateVisibility::Visible);
@@ -86,7 +86,7 @@ void UMainMenuWidget::OnMapSelected(const FString& LevelName, const TSoftObjectP
     {
         if (UDefaultGameInstance* DGI = Cast<UDefaultGameInstance>(GI))
         {
-            DGI->CreateSession(LevelName, LevelAsset);
+            DGI->CreateSession(LevelName, LevelAsset, LobbyLevelAsset);
         }
     }
 }

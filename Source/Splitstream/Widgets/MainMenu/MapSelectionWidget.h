@@ -23,10 +23,16 @@ struct FLevelData
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level Data")
     TSoftObjectPtr<UWorld> LevelAsset;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level Data")
+    TSoftObjectPtr<UWorld> LobbyLevelAsset;
 };
 
 // Declares the delegate type for map selection events
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnMapSelectedSignature, const FString&, LevelName, const TSoftObjectPtr<UWorld>&, LevelAsset);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnMapSelectedSignature,
+    const FString&, LevelName,
+    const TSoftObjectPtr<UWorld>&, LevelAsset,
+    const TSoftObjectPtr<UWorld>&, LobbyLevelAsset);
 
 UCLASS()
 class SPLITSTREAM_API UMapSelectionWidget : public UUserWidget
@@ -53,5 +59,5 @@ public:
     virtual void NativeConstruct() override;
     void PopulateLevelList();
     // Called by child widgets to notify selection
-    void MapChosen(const FString& LevelName, const TSoftObjectPtr<UWorld>& LevelAsset);
+    void MapChosen(const FString& LevelName, const TSoftObjectPtr<UWorld>& LevelAsset, const TSoftObjectPtr<UWorld>& LobbyLevelAsset);
 };

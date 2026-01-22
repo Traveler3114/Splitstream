@@ -40,5 +40,5 @@ public:
 
     // Called when map is chosen from selection widget
     UFUNCTION()
-    void OnMapSelected(const FString& LevelName, const TSoftObjectPtr<UWorld>& LevelAsset);
+    void OnMapSelected(const FString& LevelName, const TSoftObjectPtr<UWorld>& LevelAsset, const TSoftObjectPtr<UWorld>& LobbyLevelAsset);
 };

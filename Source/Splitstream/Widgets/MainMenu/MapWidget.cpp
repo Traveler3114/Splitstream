@@ -28,6 +28,6 @@ void UMapWidget::OnSelect()
 {
     if (OnSelectClicked.IsBound())
     {
-        OnSelectClicked.Execute(LevelData.LevelName, LevelData.LevelAsset);
+        OnSelectClicked.Execute(LevelData.LevelName, LevelData.LevelAsset, LevelData.LobbyLevelAsset);
     }
 }

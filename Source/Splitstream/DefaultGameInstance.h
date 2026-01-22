@@ -13,7 +13,7 @@ class SPLITSTREAM_API UDefaultGameInstance : public UAdvancedFriendsGameInstance
     GENERATED_BODY()
 public:
     UFUNCTION(BlueprintImplementableEvent, Category = "GameInstance")
-    void CreateSession(const FString& LevelName, const TSoftObjectPtr<UWorld>& Level);
+    void CreateSession(const FString& LevelName, const TSoftObjectPtr<UWorld>& Level, const TSoftObjectPtr<UWorld>& LobbyLevel);
 
     UPROPERTY()
     UInputMappingContext* RuntimeInputMappingContext = nullptr;

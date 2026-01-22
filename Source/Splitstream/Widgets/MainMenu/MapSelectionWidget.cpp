@@ -30,7 +30,7 @@ void UMapSelectionWidget::PopulateLevelList()
     }
 }
 
-void UMapSelectionWidget::MapChosen(const FString& LevelName, const TSoftObjectPtr<UWorld>& LevelAsset)
+void UMapSelectionWidget::MapChosen(const FString& LevelName, const TSoftObjectPtr<UWorld>& LevelAsset, const TSoftObjectPtr<UWorld>& LobbyLevelAsset)
 {
-    OnMapSelected.Broadcast(LevelName, LevelAsset);
+    OnMapSelected.Broadcast(LevelName, LevelAsset, LobbyLevelAsset);
 }
