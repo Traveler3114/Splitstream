@@ -16,6 +16,7 @@ class SPLITSTREAM_API ATeleporter : public AActor, public IInteractable
 
 public:
 	ATeleporter();
+	void UpdateTeleporterColour();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Locker")
 	ETimelineEra TimelineEra = ETimelineEra::Future;

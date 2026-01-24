@@ -34,6 +34,29 @@ void ATeleporter::BeginPlay()
 	{
 		TeleportVolume->OnComponentBeginOverlap.AddDynamic(this, &ATeleporter::OnTeleportVolumeBeginOverlap);
 	}
+
+	UpdateTeleporterColour(); // << Set correct colour at start
+}
+
+void ATeleporter::UpdateTeleporterColour()
+{
+	if (!TeleporterMesh) return;
+
+	// Ensure we use a dynamic material instance, so we can change parameters at runtime
+	UMaterialInstanceDynamic* DynMat = TeleporterMesh->CreateAndSetMaterialInstanceDynamic(0);
+	if (!DynMat) return;
+
+	FLinearColor OldColour = FLinearColor::White; // Default fallback
+
+	// Read the OldColour from the material
+	DynMat->GetVectorParameterValue(FName("OldColour"), OldColour);
+
+	// Decide the NewColour value
+	FLinearColor NewColour = bIsActive ? OldColour : FLinearColor::Red;
+
+	// Always set OldColour to the value we originally get (never change at runtime)
+	DynMat->SetVectorParameterValue(FName("OldColour"), OldColour);
+	DynMat->SetVectorParameterValue(FName("NewColour"), NewColour);
 }
 
 void ATeleporter::OnTeleportVolumeBeginOverlap(
@@ -69,6 +92,8 @@ void ATeleporter::OnTeleportVolumeBeginOverlap(
 	OverlappingCharacter->SetActorLocationAndRotation(TargetLocation, TargetRotation);
 
 	SetHighlighted_Implementation(bIsActive);
+	UpdateTeleporterColour();
+	if (OtherTeleporter) OtherTeleporter->UpdateTeleporterColour();
 }
 
 bool ATeleporter::IsCorrectItem_Implementation(UItemBase* Item) const
@@ -93,6 +118,9 @@ void ATeleporter::Interact_Implementation(AActor* Interactor)
 	// Remove any outline/highlight
 	SetHighlighted_Implementation(false);
 	OtherTeleporter->SetHighlighted_Implementation(false);
+
+	UpdateTeleporterColour();
+	if (OtherTeleporter) OtherTeleporter->UpdateTeleporterColour();
 }
 
 void ATeleporter::SetHighlighted_Implementation(bool bHighlight)
