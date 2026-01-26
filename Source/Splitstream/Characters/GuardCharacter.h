@@ -14,6 +14,14 @@
 #include "GuardCharacter.generated.h"
 
 
+UENUM(BlueprintType)
+enum class EGuardType : uint8
+{
+    NormalGuard       UMETA(DisplayName = "Normal Guard"),
+    SecurityChief     UMETA(DisplayName = "Security Chief"),
+    HighLevelGuard    UMETA(DisplayName = "High Level Guard")
+};
+
 class ANavNode;
 
 UCLASS()
@@ -26,8 +34,8 @@ public:
     virtual void BeginPlay() override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Guard")
-    bool bIsSecurityChief = false;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard")
+    EGuardType GuardType = EGuardType::NormalGuard;
 
     UPROPERTY(ReplicatedUsing = OnRep_GuardName, EditAnywhere, BlueprintReadWrite, Category = "Guard")
     FString GuardName;

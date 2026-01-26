@@ -249,8 +249,10 @@ void ADroneSpawner::TickPlatformAnim()
 	else
 	{
 		// (same as before, for platform going down)
-		PlatformDownAnimElapsed += TickInterval;
-		float Alpha = FMath::Clamp(PlatformDownAnimElapsed / RespawnDelay, 0.f, 1.f);
+		float DownInterval = TickInterval * 3;
+		PlatformDownAnimElapsed += DownInterval;
+		float DownDuration = RespawnDelay / 3; // finish faster
+		float Alpha = FMath::Clamp(PlatformDownAnimElapsed / DownDuration, 0.f, 1.f);
 		float S = 1.f - FMath::SmoothStep(0.f, 1.f, Alpha);
 
 		if (PlatformMesh)

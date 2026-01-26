@@ -734,7 +734,7 @@ void AProceduralLevelGenerator::SpawnSecurityDocument(const TArray<AGuardCharact
     
     for (AGuardCharacter* Guard : Guards)
     {
-        if (Guard && Guard->bIsSecurityChief)
+        if (Guard && Guard->GuardType == EGuardType::SecurityChief)
         {
             SecurityChief = Guard;
             SecurityChiefLocker = Guard->AssignedLocker;
