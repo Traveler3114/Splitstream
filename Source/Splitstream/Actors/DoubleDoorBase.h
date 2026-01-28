@@ -3,11 +3,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Interfaces/IInteractable.h"
-#include "Interfaces/IKeycardUnlockable.h"
+#include "Interfaces/IUnlockable.h"
 #include "DoubleDoorBase.generated.h"
 
 UCLASS(Abstract)
-class SPLITSTREAM_API ADoubleDoorBase : public AActor, public IInteractable, public IKeycardUnlockable
+class SPLITSTREAM_API ADoubleDoorBase : public AActor, public IInteractable, public IUnlockable
 {
     GENERATED_BODY()
 
@@ -28,9 +28,6 @@ public:
 
     UPROPERTY(ReplicatedUsing = OnRep_IsOpen, EditAnywhere, BlueprintReadWrite, Category = "Door")
     bool bIsOpen = false;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door")
-    bool bRequiresKeycard = false;
 
     UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Lock")
     bool bIsLocked = false;
@@ -55,8 +52,7 @@ public:
     virtual bool IsProgressiveInteract_Implementation() override;
 
     // Keycard unlockable interface
-    virtual void UnlockWithKeycard_Implementation(AActor* Interactor) override;
-    virtual bool RequiresKeycard_Implementation() const override;
+    virtual void UnlockWithAccess_Implementation(AActor* Interactor) override;
 
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;

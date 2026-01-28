@@ -2,7 +2,7 @@
 #include "KeypadButton.h"
 #include "Components/TextRenderComponent.h"
 #include "Components/StaticMeshComponent.h"
-#include "Interfaces/IKeycardUnlockable.h"
+#include "Interfaces/IUnlockable.h"
 #include "Net/UnrealNetwork.h"
 
 AKeypadScanner::AKeypadScanner()
@@ -188,9 +188,9 @@ void AKeypadScanner::TryUnlock(AActor* Interactor)
 
     bUnlocked = true;
 
-    if (LinkedActor->GetClass()->ImplementsInterface(UKeycardUnlockable::StaticClass()))
+    if (LinkedActor->GetClass()->ImplementsInterface(UUnlockable::StaticClass()))
     {
-        IKeycardUnlockable::Execute_UnlockWithKeycard(LinkedActor, Interactor);
+        IUnlockable::Execute_UnlockWithAccess(LinkedActor, Interactor);
     }
     SetEnteredCodeAndUpdateText(TEXT("UNLOCKED"));
 }

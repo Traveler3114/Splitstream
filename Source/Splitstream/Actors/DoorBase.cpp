@@ -62,7 +62,7 @@ void ADoorBase::Interact_Implementation(AActor* Interactor)
         return;
     }
 
-    if (bRequiresKeycard)
+    if (bIsLocked)
         return;
 
     if (HasAuthority())
@@ -123,18 +123,13 @@ void ADoorBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
     DOREPLIFETIME(ADoorBase, bIsLocked);
 }
 
-void ADoorBase::UnlockWithKeycard_Implementation(AActor* Interactor)
+void ADoorBase::UnlockWithAccess_Implementation(AActor* Interactor)
 {
     if (HasAuthority())
     {
         bIsOpen = true;
         OnRep_IsOpen();
     }
-}
-
-bool ADoorBase::RequiresKeycard_Implementation() const
-{
-    return bRequiresKeycard;
 }
 
 void ADoorBase::SetHighlighted_Implementation(bool bHighlight)
