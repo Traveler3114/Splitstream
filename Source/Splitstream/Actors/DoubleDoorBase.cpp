@@ -64,7 +64,7 @@ void ADoubleDoorBase::Interact_Implementation(AActor* Interactor)
         return;
     }
 
-    if (bRequiresKeycard)
+    if (bIsLocked)
     {
         return;
     }
@@ -127,7 +127,7 @@ void ADoubleDoorBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
     DOREPLIFETIME(ADoubleDoorBase, bIsLocked);
 }
 
-void ADoubleDoorBase::UnlockWithKeycard_Implementation(AActor* Interactor)
+void ADoubleDoorBase::UnlockWithAccess_Implementation(AActor* Interactor)
 {
     if (HasAuthority())
     {
@@ -135,12 +135,6 @@ void ADoubleDoorBase::UnlockWithKeycard_Implementation(AActor* Interactor)
         OnRep_IsOpen();
     }
 }
-
-bool ADoubleDoorBase::RequiresKeycard_Implementation() const
-{
-    return bRequiresKeycard;
-}
-
 void ADoubleDoorBase::SetHighlighted_Implementation(bool bHighlight)
 {
     if (DoorLeftMesh && DoorRightMesh)

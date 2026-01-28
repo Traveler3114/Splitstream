@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Interfaces/IInteractable.h"
-#include "Interfaces/IKeycardUnlockable.h"
 #include "DataAssets/ItemBase.h"
 #include "Characters/CivilianCharacter.h"
 #include "TimelineEra.h"

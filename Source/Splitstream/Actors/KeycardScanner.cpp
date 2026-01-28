@@ -30,9 +30,9 @@ void AKeycardScanner::Interact_Implementation(AActor* Interactor)
     if (!Interactor || !LinkedActor)
         return;
 
-    if (LinkedActor->GetClass()->ImplementsInterface(UKeycardUnlockable::StaticClass()))
+    if (LinkedActor->GetClass()->ImplementsInterface(UUnlockable::StaticClass()))
     {
-        IKeycardUnlockable::Execute_UnlockWithKeycard(LinkedActor, Interactor);
+        IUnlockable::Execute_UnlockWithAccess(LinkedActor, Interactor);
     }
 }
 

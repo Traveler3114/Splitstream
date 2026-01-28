@@ -4,7 +4,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/SceneComponent.h"
 #include "Net/UnrealNetwork.h"
-#include "Interfaces/IKeycardUnlockable.h"
+#include "Interfaces/IUnlockable.h"
 #include "Characters/CivilianCharacter.h"
 
 AFingerprintScanner::AFingerprintScanner()
@@ -49,9 +49,9 @@ void AFingerprintScanner::Interact_Implementation(AActor* Interactor)
         return;
 
     // Optionally, call interface unlock if LinkedActor supports it
-    if (LinkedActor->GetClass()->ImplementsInterface(UKeycardUnlockable::StaticClass()))
+    if (LinkedActor->GetClass()->ImplementsInterface(UUnlockable::StaticClass()))
     {
-        IKeycardUnlockable::Execute_UnlockWithKeycard(LinkedActor, Interactor);
+        IUnlockable::Execute_UnlockWithAccess(LinkedActor, Interactor);
     }
 }
 
