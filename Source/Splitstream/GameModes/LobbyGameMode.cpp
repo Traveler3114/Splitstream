@@ -218,25 +218,25 @@ void ALobbyGameMode::StartGameIfAllowed(ALobbyPlayerController* RequestingPC)
     if (!bRequireAllReadyToStart || bAll)
     {
         // --- SOLO TAG LOGIC ----
-        const FGameplayTag SoloTag = FGameplayTag::RequestGameplayTag("Team.Solo");
-        for (APlayerState* PS : GameState->PlayerArray)
-        {
-            if (ADefaultPlayerState* DPS = Cast<ADefaultPlayerState>(PS))
-            {
-                if (GameState->PlayerArray.Num() == 1)
-                {
-                    // Set the solo team
-                    DPS->TeamName = "Solo";
-                    DPS->UpdateTeamGameplayTag();
-                }
-                else if (DPS->TeamName == "Solo")
-                {
-                    // Reset the team if previously set (multi joined)
-                    DPS->TeamName = "Past";
-                    DPS->UpdateTeamGameplayTag();
-                }
-            }
-        }
+        // const FGameplayTag SoloTag = FGameplayTag::RequestGameplayTag("Team.Solo");
+        // for (APlayerState* PS : GameState->PlayerArray)
+        // {
+        //     if (ADefaultPlayerState* DPS = Cast<ADefaultPlayerState>(PS))
+        //     {
+        //         if (GameState->PlayerArray.Num() == 1)
+        //         {
+        //             // Set the solo team
+        //             DPS->TeamName = "Solo";
+        //             DPS->UpdateTeamGameplayTag();
+        //         }
+        //         else if (DPS->TeamName == "Solo")
+        //         {
+        //             // Reset the team if previously set (multi joined)
+        //             DPS->TeamName = "Past";
+        //             DPS->UpdateTeamGameplayTag();
+        //         }
+        //     }
+        // }
         // --- END SOLO TAG LOGIC ----
 
         // Then your loading screen logic and travel...
