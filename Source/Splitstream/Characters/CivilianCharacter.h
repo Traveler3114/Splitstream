@@ -11,23 +11,12 @@
 
 class ADeskActor;
 
-UENUM(BlueprintType)
-enum class ECivilianType : uint8
-{
-    NormalCivilian           UMETA(DisplayName = "Normal Civilian"),
-    Manager                  UMETA(DisplayName = "Manager"),
-    ExecutiveManager         UMETA(DisplayName = "Executive Manager")
-};
-
 UCLASS()
 class SPLITSTREAM_API ACivilianCharacter : public AAICharacter
 {
     GENERATED_BODY()
 
 public:
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Civilian")
-    ECivilianType CivilianType = ECivilianType::NormalCivilian;
 
     ACivilianCharacter();
     virtual void BeginPlay() override;

@@ -31,7 +31,7 @@ public:
 
     // What type of civilian's fingerprint is required?
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fingerprint")
-    ECivilianType RequiredCivilianType = ECivilianType::ExecutiveManager;
+    TSubclassOf<ACivilianCharacter> RequiredCivilianClass;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
     ETimelineEra TimelineEra = ETimelineEra::Past;

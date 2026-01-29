@@ -515,7 +515,7 @@ void ADefaultCharacter::DropActiveItem()
     FVector TraceEnd;
     FVector DropLocation;
 
-    if (GetForwardTraceResult(300.f, Hit, TraceEnd))
+    if (GetForwardTraceResult(InteractDistance, Hit, TraceEnd))
     {
         DropLocation = Hit.bBlockingHit ? Hit.ImpactPoint : TraceEnd;
     }
@@ -546,7 +546,7 @@ void ADefaultCharacter::UpdateInteractHighlight()
 
     FHitResult Hit;
     FVector TraceEnd;
-    bool bHit = GetForwardTraceResult(300.f, Hit, TraceEnd);
+    bool bHit = GetForwardTraceResult(InteractDistance, Hit, TraceEnd);
 
     AActor* HitActor = bHit ? Hit.GetActor() : nullptr;
 
@@ -575,7 +575,7 @@ void ADefaultCharacter::HandleInteractHoldStart()
 
     FHitResult Hit;
     FVector TraceEnd;
-    if (!GetForwardTraceResult(300.f, Hit, TraceEnd))
+    if (!GetForwardTraceResult(InteractDistance, Hit, TraceEnd))
     {
         ProgressiveActor = DummySentinel;
         return;
@@ -616,7 +616,7 @@ void ADefaultCharacter::HandleInteractInstant()
     {
         FHitResult Hit;
         FVector TraceEnd;
-        if (GetForwardTraceResult(300.f, Hit, TraceEnd))
+        if (GetForwardTraceResult(InteractDistance, Hit, TraceEnd))
         {
             AActor* HitActor = Hit.GetActor();
             if (HitActor)
@@ -629,7 +629,7 @@ void ADefaultCharacter::HandleInteractInstant()
 
     FHitResult Hit;
     FVector TraceEnd;
-    if (GetForwardTraceResult(300.f, Hit, TraceEnd))
+    if (GetForwardTraceResult(InteractDistance, Hit, TraceEnd))
     {
         AActor* HitActor = Hit.GetActor();
         if (!HitActor)

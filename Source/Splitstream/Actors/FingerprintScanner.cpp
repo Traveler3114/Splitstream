@@ -18,7 +18,6 @@ AFingerprintScanner::AFingerprintScanner()
     Mesh->SetupAttachment(DefaultSceneRoot);
 
     LinkedActor = nullptr;
-    RequiredCivilianType = ECivilianType::ExecutiveManager;
 }
 
 void AFingerprintScanner::BeginPlay()
@@ -37,7 +36,7 @@ bool AFingerprintScanner::IsCorrectItem_Implementation(UItemBase* Item) const
     if (!OwnerCivilian)
         return false;
 
-    return OwnerCivilian->CivilianType == RequiredCivilianType;
+    return OwnerCivilian->GetClass() == RequiredCivilianClass.Get();
 }
 
 void AFingerprintScanner::Interact_Implementation(AActor* Interactor)

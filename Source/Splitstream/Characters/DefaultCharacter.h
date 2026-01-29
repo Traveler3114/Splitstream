@@ -160,6 +160,10 @@ public:
     UDetectionComponent* DetectionComponent;
 
     // Input handlers for interaction
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction")
+    float InteractDistance = 300.f;
+
     UFUNCTION()
     void HandleInteractHoldStart();
 

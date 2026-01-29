@@ -11,6 +11,7 @@
 #include "Actors/PointActors/SearchableItemSpawnPoint.h"
 #include "Actors/SearchableActor.h"
 #include "Kismet/GameplayStatics.h"
+#include "Characters/GuardCharacter.h"
 #include "Net/UnrealNetwork.h"
 #include "Actors/DroneSpawner.h"
 #include "TimelineEra.h"
@@ -734,7 +735,7 @@ void AProceduralLevelGenerator::SpawnSecurityDocument(const TArray<AGuardCharact
     
     for (AGuardCharacter* Guard : Guards)
     {
-        if (Guard && Guard->GuardType == EGuardType::SecurityChief)
+        if (Guard && Guard->GetClass() == RequiredGuardClass.Get())
         {
             SecurityChief = Guard;
             SecurityChiefLocker = Guard->AssignedLocker;

@@ -51,6 +51,9 @@ public:
     void HandlePastSpawns();
     void HandleFutureSpawns();
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fingerprint")
+    TSubclassOf<class AGuardCharacter> RequiredGuardClass;
+
     UPROPERTY(Replicated, BlueprintReadOnly)
     FRandomDate PastDate;
 
