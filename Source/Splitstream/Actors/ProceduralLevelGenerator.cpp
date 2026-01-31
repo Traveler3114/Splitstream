@@ -330,49 +330,49 @@ FRandomDate AProceduralLevelGenerator::GenerateFutureDate(const FRandomDate& Min
     return Date;
 }
 
-void AProceduralLevelGenerator::SpawnCivilianDeskItems(const TArray<ACivilianCharacter*>& Civilians)
-{
-    for (ACivilianCharacter* Civilian : Civilians)
-    {
-        if (!Civilian || !Civilian->AssignedDesk)
-            continue;
+//void AProceduralLevelGenerator::SpawnCivilianDeskItems(const TArray<ACivilianCharacter*>& Civilians)
+//{
+    //for (ACivilianCharacter* Civilian : Civilians)
+    //{
+    //    if (!Civilian || !Civilian->AssignedDesk)
+    //        continue;
 
-        const TArray<ASearchableItemSpawnPoint*>& SpawnPoints = Civilian->AssignedDesk->ItemSpawnPoints;
-        if (SpawnPoints.Num() == 0 || SearchableItemClasses.Num() == 0)
-            continue;
+    //    const TArray<ASearchableItemSpawnPoint*>& SpawnPoints = Civilian->AssignedDesk->ItemSpawnPoints;
+    //    if (SpawnPoints.Num() == 0 || SearchableItemClasses.Num() == 0)
+    //        continue;
 
-        // Randomly select which item on this desk will give a reward
-        int32 GiveableIndex = FMath::RandRange(0, SpawnPoints.Num() - 1);
+    //    // Randomly select which item on this desk will give a reward
+    //    int32 GiveableIndex = FMath::RandRange(0, SpawnPoints.Num() - 1);
 
-        for (int32 i = 0; i < SpawnPoints.Num(); ++i)
-        {
-            ASearchableItemSpawnPoint* SpawnPoint = SpawnPoints[i];
-            if (!SpawnPoint)
-                continue;
+    //    for (int32 i = 0; i < SpawnPoints.Num(); ++i)
+    //    {
+    //        ASearchableItemSpawnPoint* SpawnPoint = SpawnPoints[i];
+    //        if (!SpawnPoint)
+    //            continue;
 
-            // Randomly pick which actor class to spawn (cup, file, etc)
-            int32 RandomClassIdx = FMath::RandRange(0, SearchableItemClasses.Num() - 1);
-            TSubclassOf<ASearchableActor> ChosenClass = SearchableItemClasses[RandomClassIdx];
+    //        // Randomly pick which actor class to spawn (cup, file, etc)
+    //        int32 RandomClassIdx = FMath::RandRange(0, SearchableItemClasses.Num() - 1);
+    //        TSubclassOf<ASearchableActor> ChosenClass = SearchableItemClasses[RandomClassIdx];
 
-            FActorSpawnParameters SpawnParams;
-            SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+    //        FActorSpawnParameters SpawnParams;
+    //        SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
-            ASearchableActor* NewItem = GetWorld()->SpawnActor<ASearchableActor>(
-                ChosenClass,
-                SpawnPoint->GetActorLocation(),
-                SpawnPoint->GetActorRotation(),
-                SpawnParams
-            );
+    //        ASearchableActor* NewItem = GetWorld()->SpawnActor<ASearchableActor>(
+    //            ChosenClass,
+    //            SpawnPoint->GetActorLocation(),
+    //            SpawnPoint->GetActorRotation(),
+    //            SpawnParams
+    //        );
 
-            if (NewItem)
-            {
-                NewItem->TimelineEra = Civilian->TimelineEra;
-                NewItem->LinkedCivilian = Civilian;
-                NewItem->bGivesItem = (i == GiveableIndex);
-            }
-        }
-    }
-}
+    //        if (NewItem)
+    //        {
+    //            NewItem->TimelineEra = Civilian->TimelineEra;
+    //            NewItem->LinkedCivilian = Civilian;
+    //            NewItem->bGivesItem = (i == GiveableIndex);
+    //        }
+    //    }
+    //}
+//}
 
 // ============================================================
 // Puzzle Setup Implementations
@@ -985,7 +985,7 @@ void AProceduralLevelGenerator::HandlePastSpawns()
     // Generate date and spawn environmental objects
     PastDate = GeneratePastDate();
     SpawnNewspaper(ETimelineEra::Past, PastDate);
-    SpawnCivilianDeskItems(PastCivilians);
+    //SpawnCivilianDeskItems(PastCivilians);
     SpawnSecurityDocument(PastGuards);
 
     // After past is setup, configure future era
@@ -1024,7 +1024,7 @@ void AProceduralLevelGenerator::HandleFutureSpawns()
     // Generate date and spawn environmental objects
     FutureDate = GenerateFutureDate(PastDate);
     SpawnNewspaper(ETimelineEra::Future, FutureDate);
-    SpawnCivilianDeskItems(FutureCivilians);
+    //SpawnCivilianDeskItems(FutureCivilians);
 }
 
 // ============================================================

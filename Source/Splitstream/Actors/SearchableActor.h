@@ -17,7 +17,7 @@ public:
 	// Sets default values for this actor's properties
 	ASearchableActor();
 
-	//virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
 	ETimelineEra TimelineEra = ETimelineEra::Past;
@@ -34,8 +34,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Proximity Hack|Reward")
 	UItemBase* RewardItem = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ownership")
-	class ACivilianCharacter* LinkedCivilian = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "Searchable")
+	bool bIsActivatedForPlayer = false;
+
+
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ownership")
+	//class ACivilianCharacter* LinkedCivilian = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Searchable")
 	bool bGivesItem = false;
