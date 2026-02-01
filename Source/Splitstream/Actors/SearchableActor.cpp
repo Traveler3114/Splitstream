@@ -39,7 +39,7 @@ void ASearchableActor::BeginPlay()
 
 void ASearchableActor::SetHighlighted_Implementation(bool bHighlight)
 {
-    if(!bIsActivatedForPlayer) return;
+    if(!bIsActivatedForPlayer && bHighlight) return;
 
     if (ActorMesh && SearchComponent)
     {

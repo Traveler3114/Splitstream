@@ -120,28 +120,28 @@ void AArchiveComputer::Interact_Implementation(AActor* Interactor)
         CalendarDateRecords.Add(PastRec);
 
         // FUTURE
-        FCalendarDateRecord FutureRec;
-        FutureRec.Year = GeneratorRef->FutureDate.Year;
-        FutureRec.Month = GeneratorRef->FutureDate.Month;
-        FutureRec.Day = GeneratorRef->FutureDate.Day;
+        //FCalendarDateRecord FutureRec;
+        //FutureRec.Year = GeneratorRef->FutureDate.Year;
+        //FutureRec.Month = GeneratorRef->FutureDate.Month;
+        //FutureRec.Day = GeneratorRef->FutureDate.Day;
 
-        TArray<AActor*> FoundCodeGenerators;
-        UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACodeGenerator::StaticClass(), FoundCodeGenerators);
+        //TArray<AActor*> FoundCodeGenerators;
+        //UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACodeGenerator::StaticClass(), FoundCodeGenerators);
 
-        for (AActor* Actor : FoundCodeGenerators)
-        {
-            ACodeGenerator* CodeGen = Cast<ACodeGenerator>(Actor);
-            if (CodeGen && CodeGen->TimelineEra == ETimelineEra::Future && CodeGen->TargetCivilian)
-            {
-                FCivilianCalendarEntry Entry;
-                Entry.Name = CodeGen->TargetCivilian->CivilianName;
-                Entry.Portrait = CodeGen->TargetCivilian->PortraitTexture;
-                FutureRec.Civilians.Add(Entry);
-                break;
-            }
-        }
-        if (FutureRec.Civilians.Num() > 0)
-            CalendarDateRecords.Add(FutureRec);
+        //for (AActor* Actor : FoundCodeGenerators)
+        //{
+        //    ACodeGenerator* CodeGen = Cast<ACodeGenerator>(Actor);
+        //    if (CodeGen && CodeGen->TimelineEra == ETimelineEra::Future && CodeGen->TargetCivilian)
+        //    {
+        //        FCivilianCalendarEntry Entry;
+        //        Entry.Name = CodeGen->TargetCivilian->CivilianName;
+        //        Entry.Portrait = CodeGen->TargetCivilian->PortraitTexture;
+        //        FutureRec.Civilians.Add(Entry);
+        //        break;
+        //    }
+        //}
+        //if (FutureRec.Civilians.Num() > 0)
+        //    CalendarDateRecords.Add(FutureRec);
     }
 
     // **Only the server sends the RPC. This works for both listen server and remote clients!**

@@ -995,35 +995,35 @@ void AProceduralLevelGenerator::HandlePastSpawns()
 void AProceduralLevelGenerator::HandleFutureSpawns()
 {
     // Spawn and configure all NPCs and environment for future era
-    TArray<ACivilianCharacter*> FutureCivilians;
-    TArray<ADeskActor*> FutureDesks;
-    TArray<AGuardCharacter*> FutureGuards;
-    TArray<ALockerActor*> FutureLockers;
-    HandleEraSpawns(ETimelineEra::Future, FutureCivilians, FutureDesks, FutureGuards, FutureLockers);
+    //TArray<ACivilianCharacter*> FutureCivilians;
+    //TArray<ADeskActor*> FutureDesks;
+    //TArray<AGuardCharacter*> FutureGuards;
+    //TArray<ALockerActor*> FutureLockers;
+    //HandleEraSpawns(ETimelineEra::Future, FutureCivilians, FutureDesks, FutureGuards, FutureLockers);
 
-    // Select a random civilian as the target for code generators
-    ACivilianCharacter* TargetCivilian = nullptr;
-    if (FutureCivilians.Num() > 0)
-    {
-        int32 RandomIndex = FMath::RandRange(0, FutureCivilians.Num() - 1);
-        TargetCivilian = FutureCivilians[RandomIndex];
-    }
+    //// Select a random civilian as the target for code generators
+    //ACivilianCharacter* TargetCivilian = nullptr;
+    //if (FutureCivilians.Num() > 0)
+    //{
+    //    int32 RandomIndex = FMath::RandRange(0, FutureCivilians.Num() - 1);
+    //    TargetCivilian = FutureCivilians[RandomIndex];
+    //}
 
-    // Configure all code generators to target the selected civilian
-    TArray<AActor*> FoundCodeGenerators;
-    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACodeGenerator::StaticClass(), FoundCodeGenerators);
-    for (AActor* Actor : FoundCodeGenerators)
-    {
-        ACodeGenerator* CodeGen = Cast<ACodeGenerator>(Actor);
-        if (CodeGen && CodeGen->TimelineEra == ETimelineEra::Future)
-        {
-            CodeGen->TargetCivilian = TargetCivilian;
-        }
-    }
+    //// Configure all code generators to target the selected civilian
+    //TArray<AActor*> FoundCodeGenerators;
+    //UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACodeGenerator::StaticClass(), FoundCodeGenerators);
+    //for (AActor* Actor : FoundCodeGenerators)
+    //{
+    //    ACodeGenerator* CodeGen = Cast<ACodeGenerator>(Actor);
+    //    if (CodeGen && CodeGen->TimelineEra == ETimelineEra::Future)
+    //    {
+    //        CodeGen->TargetCivilian = TargetCivilian;
+    //    }
+    //}
 
-    // Generate date and spawn environmental objects
+    //// Generate date and spawn environmental objects
     FutureDate = GenerateFutureDate(PastDate);
-    SpawnNewspaper(ETimelineEra::Future, FutureDate);
+    //SpawnNewspaper(ETimelineEra::Future, FutureDate);
     //SpawnCivilianDeskItems(FutureCivilians);
 }
 

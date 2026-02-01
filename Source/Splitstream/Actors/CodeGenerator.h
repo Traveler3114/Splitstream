@@ -56,8 +56,8 @@ public:
     TArray<FKeypadCodeStatus> StatusArray;
 
     // Replicated for Civilian
-    UPROPERTY(Replicated, BlueprintReadOnly)
-    class ACivilianCharacter* TargetCivilian = nullptr;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fingerprint")
+    TSubclassOf<class ACivilianCharacter> RequiredCivilianClass;
 
     // Replicated text for code/timer display
     UPROPERTY(ReplicatedUsing = OnRep_CodesDisplayText)

@@ -53,7 +53,6 @@ void ACodeGenerator::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void ACodeGenerator::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-    DOREPLIFETIME(ACodeGenerator, TargetCivilian);
     DOREPLIFETIME(ACodeGenerator, CodesDisplayText);
 
     UE_LOG(LogTemp, Display, TEXT("[%s][%s] Lifetime replication set."), *GetNameSafe(this), TEXT(__FUNCTION__));
@@ -62,7 +61,7 @@ void ACodeGenerator::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 bool ACodeGenerator::IsCorrectItem_Implementation(UItemBase* Item) const
 {
     UItemBase* FP = Cast<UItemBase>(Item);
-    bool bResult = FP && FP->OwnerCivilian == TargetCivilian;
+    bool bResult = FP && FP->OwnerCivilian->GetClass() == RequiredCivilianClass.Get();
     return bResult;
 }
 
@@ -72,7 +71,7 @@ void ACodeGenerator::Interact_Implementation(AActor* Interactor)
     if (!HasAuthority()) {
         return;
     }
-    if (!Interactor || !TargetCivilian) {
+    if (!Interactor) {
         return;
     }
 
