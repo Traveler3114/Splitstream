@@ -29,4 +29,7 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Civilian")
     ADeskActor* AssignedDesk = nullptr;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Civilian")
+    TArray<class ASearchableActor*> AllowedSearchables;
 };

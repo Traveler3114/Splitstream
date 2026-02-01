@@ -39,6 +39,8 @@ void ASearchableActor::BeginPlay()
 
 void ASearchableActor::SetHighlighted_Implementation(bool bHighlight)
 {
+    if(!bIsActivatedForPlayer) return;
+
     if (ActorMesh && SearchComponent)
     {
         if (SearchComponent->bSearched)
@@ -56,9 +58,23 @@ void ASearchableActor::SetHighlighted_Implementation(bool bHighlight)
 
 void ASearchableActor::Interact_Implementation(AActor* Interactor)
 {
+    if (ACivilianCharacter* Civilian = Cast<ACivilianCharacter>(Interactor))
+    {
+        bIsActivatedForPlayer = true;
+		RewardItem->OwnerCivilian = Civilian;
+        // Optionally show highlight, play SFX etc
+        return;
+    }
+    else if (!bIsActivatedForPlayer)
+    {
+        // Block player from searching until a civilian has used
+        return;
+    }
+    // Only hits here if player and search is activated
     if (SearchComponent)
         SearchComponent->Interact(Interactor);
 }
+
 
 void ASearchableActor::CancelInteract_Implementation(AActor* Interactor)
 {
@@ -97,10 +113,19 @@ void ASearchableActor::OnSearchComplete()
         return;
     }
 
-    RewardItem->OwnerCivilian = LinkedCivilian;
+    //RewardItem->OwnerCivilian = LinkedCivilian;
     FGuid NewInstanceID = FGuid::NewGuid();
     bool bAdded = Inventory->AddItem(RewardItem, NewInstanceID);
+
+    bIsActivatedForPlayer = false;
     SetHighlighted_Implementation(false);
+}
+
+void ASearchableActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    DOREPLIFETIME(ASearchableActor, bIsActivatedForPlayer);
 }
 
 

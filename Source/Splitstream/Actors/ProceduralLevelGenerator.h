@@ -95,7 +95,7 @@ public:
 
 protected:
     virtual void BeginPlay() override;
-    void SpawnCivilianDeskItems(const TArray<class ACivilianCharacter*>& Civilians);
+     //void SpawnCivilianDeskItems(const TArray<class ACivilianCharacter*>& Civilians);
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
     FString GenerateRandomCode(int32 Length = 4) const;
