@@ -8,6 +8,14 @@
 #include "Interfaces/IInteractable.h"
 #include "SearchableActor.generated.h"
 
+UENUM(BlueprintType)
+enum class EFloorLevel : uint8
+{
+	Basement     UMETA(DisplayName = "Basement"),
+	FirstFloor   UMETA(DisplayName = "First Floor"),
+	SecondFloor  UMETA(DisplayName = "Second Floor"),
+};
+
 UCLASS()
 class SPLITSTREAM_API ASearchableActor : public AActor, public IInteractable
 {
@@ -16,6 +24,9 @@ class SPLITSTREAM_API ASearchableActor : public AActor, public IInteractable
 public:	
 	// Sets default values for this actor's properties
 	ASearchableActor();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Floor")
+	EFloorLevel Floor = EFloorLevel::Basement;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
