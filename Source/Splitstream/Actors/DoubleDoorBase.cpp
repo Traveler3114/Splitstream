@@ -153,7 +153,7 @@ void ADoubleDoorBase::OnGuardOpenBeginOverlap(UPrimitiveComponent* OverlappedCom
 {
     if (!bAutoOpenForGuards)
         return;
-    if (OtherActor && (OtherActor->IsA(AGuardCharacter::StaticClass())))
+    if (OtherActor && OtherActor->IsA(AAICharacter::StaticClass()))
     {
         ForceOpenDoorForGuard(OtherActor);
     }
@@ -164,7 +164,7 @@ void ADoubleDoorBase::OnGuardOpenEndOverlap(UPrimitiveComponent* OverlappedComp,
 {
     if (!bAutoOpenForGuards)
         return;
-    if (OtherActor && OtherActor->IsA(AGuardCharacter::StaticClass()))
+    if (OtherActor && OtherActor->IsA(AAICharacter::StaticClass()))
     {
         // Check if any other guards are still overlapping
         TArray<AActor*> Overlapping;
