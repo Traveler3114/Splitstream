@@ -118,7 +118,8 @@ void AGuardCharacter::OnRep_IsInCameraView()
 
 bool AGuardCharacter::ShouldGhostBeVisible_Implementation() const
 {
-    return bIsInCameraView;
+    //return bIsInCameraView;
+    return true;
 }
 
 USkeletalMeshComponent* AGuardCharacter::GetMirrorMesh_Implementation() const
