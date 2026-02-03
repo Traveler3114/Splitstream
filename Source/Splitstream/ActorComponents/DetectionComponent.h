@@ -39,7 +39,7 @@ public:
 
     // The higher this is, the faster it fills when up close.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection|Distance")
-    float BaseDetectionSpeedMultiplier = 1600.f; // Tune as needed!
+    float BaseDetectionSpeedMultiplier = 1200.f; // Tune as needed!
 
     UPROPERTY()
     TMap<AActor*, FDetectionState> DetectionStates;

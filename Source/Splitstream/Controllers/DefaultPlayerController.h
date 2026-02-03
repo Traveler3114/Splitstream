@@ -61,7 +61,7 @@ public:
     UFUNCTION(Client, Reliable)
     void ClientShowLoadingScreen();
 
-    UFUNCTION()
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
     void OnMoneyCollectedChanged(int32 Current, int32 Target);
 
     UFUNCTION()

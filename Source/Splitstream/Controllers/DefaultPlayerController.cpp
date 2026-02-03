@@ -185,7 +185,7 @@ void ADefaultPlayerController::UpdateRepairCountdownUI()
     }
 }
 
-void ADefaultPlayerController::OnMoneyCollectedChanged(int32 Current, int32 Target)
+void ADefaultPlayerController::OnMoneyCollectedChanged_Implementation(int32 Current, int32 Target)
 {
     if (CharacterHUD && CharacterHUD->CharacterOverlay)
     {
