@@ -60,7 +60,7 @@ void ULobbyUI::RefreshTeamLabel(const FString& CurrentTeam)
 {
 	if (team_txt)
 	{
-		FString OppositeTeam = CurrentTeam == "Past" ? "Future" : "Past";
+		FString OppositeTeam = CurrentTeam == "Past" ? "FUTURE" : "PAST";
 		team_txt->SetText(FText::FromString(OppositeTeam));
 	}
 }
@@ -131,8 +131,8 @@ void ULobbyUI::RefreshReadyLabel(bool bIsReady)
 {
 	if (ready_txt)
 	{
-		ready_txt->SetText(bIsReady ? FText::FromString(TEXT("Unready"))
-			: FText::FromString(TEXT("Ready")));
+		ready_txt->SetText(bIsReady ? FText::FromString(TEXT("UNREADY"))
+			: FText::FromString(TEXT("READY")));
 	}
 }
 
