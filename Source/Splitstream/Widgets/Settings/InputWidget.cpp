@@ -83,15 +83,9 @@ void UInputWidget::BuildKeybindList()
     }
 }
 
+
 void UInputWidget::HandleRowClicked(UKeybindWidget* Source)
 {
-    UDefaultGameInstance* GI = GetWorld() ? GetWorld()->GetGameInstance<UDefaultGameInstance>() : nullptr;
-
-    if (PendingRebindWidget && PendingRebindWidget != Source)
-    {
-        UpdateKeybindDisplay(PendingRebindWidget->InputAction);
-    }
-
     PendingRebindAction = Source->InputAction;
     PendingRebindWidget = Source;
 
@@ -102,6 +96,10 @@ void UInputWidget::HandleRowClicked(UKeybindWidget* Source)
     {
         FInputModeUIOnly UIOnly;
         PC->SetInputMode(UIOnly);
+
+        // Set focus directly to this widget for this player
+        SetUserFocus(PC);
+        SetKeyboardFocus();
     }
 }
 
@@ -126,6 +124,8 @@ void UInputWidget::UpdateKeybindDisplay(UInputAction* InputAction)
         }
     }
 }
+
+
 
 // Handles input rebinding event for a key
 FReply UInputWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
