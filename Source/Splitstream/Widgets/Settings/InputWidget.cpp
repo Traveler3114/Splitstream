@@ -139,30 +139,38 @@ FReply UInputWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEven
         FKey NewKey = InKeyEvent.GetKey();
         UInputMappingContext* MappingContext = GI->GetCurrentInputMappingContext();
 
-        // Remove all keys for this action
+        // Remove all mappings for this action in runtime context
         TArray<FEnhancedActionKeyMapping> OldMappings = MappingContext->GetMappings();
-        TArray<FKey> OldKeys;
         for (const FEnhancedActionKeyMapping& Mapping : OldMappings)
         {
             if (Mapping.Action == PendingRebindAction)
             {
-                OldKeys.Add(Mapping.Key);
+                MappingContext->UnmapKey(PendingRebindAction, Mapping.Key);
             }
         }
-        for (const FKey& OldKey : OldKeys)
+        // Defensive: Remove also in default context
+        if (GI->DefaultMappingContext && GI->DefaultMappingContext != MappingContext)
         {
-            MappingContext->UnmapKey(PendingRebindAction, OldKey);
+            TArray<FEnhancedActionKeyMapping> DefMappings = GI->DefaultMappingContext->GetMappings();
+            for (const FEnhancedActionKeyMapping& Mapping : DefMappings)
+            {
+                if (Mapping.Action == PendingRebindAction)
+                {
+                    GI->DefaultMappingContext->UnmapKey(PendingRebindAction, Mapping.Key);
+                }
+            }
         }
+        // Add new mapping
         MappingContext->MapKey(PendingRebindAction, NewKey);
 
-        // Refresh subsystem
+        // Clear all input contexts, re-add only runtime context!
         if (APlayerController* PC = GetOwningPlayer())
         {
             if (ULocalPlayer* LP = Cast<ULocalPlayer>(PC->Player))
             {
                 if (UEnhancedInputLocalPlayerSubsystem* Subsys = LP->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
                 {
-                    Subsys->RemoveMappingContext(MappingContext);
+                    Subsys->ClearAllMappings();
                     Subsys->AddMappingContext(MappingContext, 0);
                 }
             }
@@ -175,7 +183,6 @@ FReply UInputWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEven
     }
     return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
 }
-
 void UInputWidget::UpdateTexts()
 {
     // No-op, slider widget handles its own value text already
