@@ -48,9 +48,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "Searchable")
 	bool bIsActivatedForPlayer = false;
 
-
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ownership")
-	//class ACivilianCharacter* LinkedCivilian = nullptr;
+	UPROPERTY()
+	class ACivilianCharacter* PendingOwnerCivilian = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Searchable")
 	bool bGivesItem = false;
@@ -61,7 +60,6 @@ protected:
 	virtual void Interact_Implementation(AActor* Interactor) override;
 	virtual void CancelInteract_Implementation(AActor* Interactor) override;
 	virtual bool IsProgressiveInteract_Implementation() override;
-	//virtual void SetHighlighted_Implementation(bool bHighlight) override;
 
 	UPROPERTY(BlueprintReadWrite,EditAnywhere)
 	class USearchComponent* SearchComponent = nullptr;

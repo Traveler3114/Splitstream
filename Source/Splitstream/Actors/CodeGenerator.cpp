@@ -58,15 +58,10 @@ void ACodeGenerator::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
     UE_LOG(LogTemp, Display, TEXT("[%s][%s] Lifetime replication set."), *GetNameSafe(this), TEXT(__FUNCTION__));
 }
 
-bool ACodeGenerator::IsCorrectItem_Implementation(UItemBase* Item) const
+bool ACodeGenerator::IsCorrectItem_Implementation(const FInventorySlot& Slot) const
 {
-    // Check for nullptr before dereferencing pointer members
-    if (!Item || !Item->OwnerCivilian)
-    {
-        return false;
-    }
-
-    return Item->OwnerCivilian->GetClass() == RequiredCivilianClass.Get();
+    if (!Slot.ItemAsset || !Slot.OwnerCivilian) return false;
+    return Slot.OwnerCivilian->GetClass() == RequiredCivilianClass.Get();
 }
 
 void ACodeGenerator::Interact_Implementation(AActor* Interactor)

@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Interfaces/IInteractable.h"
+#include "ActorComponents/InventoryComponent.h"
 #include "TimelineEra.h"
 #include "CodeGenerator.generated.h"
 
@@ -72,7 +73,7 @@ protected:
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
     virtual void Interact_Implementation(AActor* Interactor) override;
     virtual void SetHighlighted_Implementation(bool bHighlight) override;
-    virtual bool IsCorrectItem_Implementation(UItemBase* Item) const override;
+    virtual bool IsCorrectItem_Implementation(const FInventorySlot& Slot) const override;
 	virtual bool RequiresItem_Implementation() const override { return true; }
 
     void UpdateDisplayText();

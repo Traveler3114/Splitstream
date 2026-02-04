@@ -96,9 +96,9 @@ void ATeleporter::OnTeleportVolumeBeginOverlap(
 	if (OtherTeleporter) OtherTeleporter->UpdateTeleporterColour();
 }
 
-bool ATeleporter::IsCorrectItem_Implementation(UItemBase* Item) const
+bool ATeleporter::IsCorrectItem_Implementation(const FInventorySlot& Slot) const
 {
-	return Item && Item->ItemType == RequiredItem;
+	return Slot.ItemAsset && Slot.ItemAsset->ItemType == RequiredItem;
 }
 
 void ATeleporter::Interact_Implementation(AActor* Interactor)

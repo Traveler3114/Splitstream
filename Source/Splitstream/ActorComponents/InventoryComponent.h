@@ -18,6 +18,9 @@ struct FInventorySlot
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FGuid ItemInstanceID;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    class ACivilianCharacter* OwnerCivilian = nullptr;
+
     // Per-instance effect/ability handles (not properties, runtime only!)
     TArray<FActiveGameplayEffectHandle> GrantedGameplayEffectHandles;
     TArray<FGameplayAbilitySpecHandle>  GrantedAbilityHandles;

@@ -3,6 +3,7 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemInterface.h"
 #include "DefaultPlayerState.h"
+#include "Characters/CivilianCharacter.h"
 #include "GameplayTagContainer.h"
 #include "Actors/TimeObjects/FutureItemPickup.h"
 

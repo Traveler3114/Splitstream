@@ -25,14 +25,12 @@ void AFingerprintScanner::BeginPlay()
     Super::BeginPlay();
 }
 
-bool AFingerprintScanner::IsCorrectItem_Implementation(UItemBase* Item) const
+bool AFingerprintScanner::IsCorrectItem_Implementation(const FInventorySlot& Slot) const
 {
-    // Only fingerprints allowed
-    if (!Item || Item->ItemType != EItemType::Fingerprint)
+    if (!Slot.ItemAsset || Slot.ItemAsset->ItemType != EItemType::Fingerprint)
         return false;
 
-    // The fingerprint's OwnerCivilian must exist and be of the required type
-    ACivilianCharacter* OwnerCivilian = Item->OwnerCivilian;
+    ACivilianCharacter* OwnerCivilian = Slot.OwnerCivilian;
     if (!OwnerCivilian)
         return false;
 

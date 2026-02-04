@@ -196,10 +196,10 @@ void AKeypadScanner::TryUnlock(AActor* Interactor)
 }
 
 // KeypadScanner.cpp
-bool AKeypadScanner::IsCorrectItem_Implementation(UItemBase* Item) const
+bool AKeypadScanner::IsCorrectItem_Implementation(const FInventorySlot& Slot) const
 {
     // Only allow if the item is not null and is the right keycard type
-    return Item && Item->ItemType == RequiredKeycardType;
+    return Slot.ItemAsset && Slot.ItemAsset->ItemType == RequiredKeycardType;
 }
 
 void AKeypadScanner::Interact_Implementation(AActor* Interactor)

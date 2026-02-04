@@ -1,10 +1,9 @@
-
-
 #pragma once
 
 #include "UObject/Interface.h"
-#include "DataAssets/ItemBase.h"
+#include "ActorComponents/InventoryComponent.h"
 #include "IInteractable.generated.h"
+
 
 UINTERFACE(MinimalAPI, Blueprintable)
 class UInteractable : public UInterface
@@ -17,7 +16,6 @@ class SPLITSTREAM_API IInteractable
     GENERATED_BODY()
 
 public:
-    // Use BlueprintNativeEvent so you can implement in C++ or Blueprint
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interactable")
     void Interact(AActor* Interactor);
 
@@ -31,7 +29,7 @@ public:
     bool IsProgressiveInteract();
 
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interactable")
-    bool IsCorrectItem(UItemBase* Item) const;
+    bool IsCorrectItem(const FInventorySlot& Slot) const;
 
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interactable")
     bool RequiresItem() const;

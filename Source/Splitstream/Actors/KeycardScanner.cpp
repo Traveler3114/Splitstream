@@ -18,10 +18,10 @@ void AKeycardScanner::BeginPlay()
     Super::BeginPlay();
 }
 
-bool AKeycardScanner::IsCorrectItem_Implementation(UItemBase* Item) const
+bool AKeycardScanner::IsCorrectItem_Implementation(const FInventorySlot& Slot) const
 {
     // This is the ONLY place that checks if the item is the correct keycard.
-    return Item && Item->ItemType == RequiredKeycardType;
+    return Slot.ItemAsset && Slot.ItemAsset->ItemType == RequiredKeycardType;
 }
 void AKeycardScanner::Interact_Implementation(AActor* Interactor)
 {

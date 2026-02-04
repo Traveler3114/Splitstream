@@ -39,6 +39,6 @@ public:
     // IInteractable overrides
     virtual void Interact_Implementation(AActor* Interactor) override;
     virtual void SetHighlighted_Implementation(bool bHighlight) override;
-    virtual bool IsCorrectItem_Implementation(UItemBase* Item) const override;
+    virtual bool IsCorrectItem_Implementation(const FInventorySlot& Slot) const override;
     virtual bool RequiresItem_Implementation() const override { return true; }
 };

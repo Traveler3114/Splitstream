@@ -61,8 +61,7 @@ void ASearchableActor::Interact_Implementation(AActor* Interactor)
     if (ACivilianCharacter* Civilian = Cast<ACivilianCharacter>(Interactor))
     {
         bIsActivatedForPlayer = true;
-		RewardItem->OwnerCivilian = Civilian;
-        // Optionally show highlight, play SFX etc
+        PendingOwnerCivilian = Civilian;
         return;
     }
     else if (!bIsActivatedForPlayer)
@@ -91,36 +90,30 @@ bool ASearchableActor::IsProgressiveInteract_Implementation()
 
 void ASearchableActor::OnSearchComplete()
 {
-    if (!bGivesItem) return;
-
-	if (!RewardItem) return;
-
-    if (!HasAuthority()) return; // Ensure only server gives the item
-
-    // Null check for SearchComponent
-    if (!SearchComponent) {
-        return;
-    }
-
-    // Null check for LastInteractor
+    if (!bGivesItem || !RewardItem || !HasAuthority() || !SearchComponent) return;
     AActor* LastInteractor = SearchComponent->LastInteractor.Get();
-    if (!LastInteractor) {
-        return;
-    }
+    if (!LastInteractor) return;
 
     UInventoryComponent* Inventory = LastInteractor->FindComponentByClass<UInventoryComponent>();
-    if (!Inventory) {
-        return;
-    }
+    if (!Inventory) return;
 
-    //RewardItem->OwnerCivilian = LinkedCivilian;
     FGuid NewInstanceID = FGuid::NewGuid();
     bool bAdded = Inventory->AddItem(RewardItem, NewInstanceID);
+    if (bAdded)
+    {
+        for (FInventorySlot& Slot : Inventory->Slots)
+        {
+            if (Slot.ItemAsset == RewardItem && Slot.ItemInstanceID == NewInstanceID)
+            {
+                Slot.OwnerCivilian = PendingOwnerCivilian; // Only set on server
+                break;
+            }
+        }
+    }
 
     bIsActivatedForPlayer = false;
     SetHighlighted_Implementation(false);
 }
-
 void ASearchableActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);

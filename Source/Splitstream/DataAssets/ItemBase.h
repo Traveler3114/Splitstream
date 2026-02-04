@@ -73,10 +73,6 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
     float DropImpulseStrength = 500.f;
 
-    // --- Ownership (optional, e.g. for fingerprints) ---
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Ownership")
-    class ACivilianCharacter* OwnerCivilian;
-
     // --- Effects (optional) ---
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tags")
     TArray<TSubclassOf<class UGameplayEffect>> GrantedGameplayEffects;

@@ -644,17 +644,16 @@ void ADefaultCharacter::HandleInteractInstant()
             if (Inventory)
             {
                 FInventorySlot ActiveSlot = Inventory->GetActiveItem();
-                UItemBase* ActiveItem = ActiveSlot.ItemAsset;
 
                 if (bRequiresItem)
                 {
-                    if (HasAuthority() && !IInteractable::Execute_IsCorrectItem(HitActor, ActiveItem))
+                    if (HasAuthority() && !IInteractable::Execute_IsCorrectItem(HitActor, ActiveSlot))
                     {
                         return;
                     }
-                    if (ActiveItem)
+                    if (ActiveSlot.ItemAsset)
                     {
-                        ActiveItem->OnUsed(this, ActiveSlot.ItemInstanceID);
+                        ActiveSlot.ItemAsset->OnUsed(this, ActiveSlot.ItemInstanceID);
                     }
                 }
             }
@@ -679,17 +678,16 @@ void ADefaultCharacter::ServerHandleInteract_Implementation(AActor* TargetActor)
         if (Inventory)
         {
             FInventorySlot ActiveSlot = Inventory->GetActiveItem();
-            UItemBase* ActiveItem = ActiveSlot.ItemAsset;
 
             if (bRequiresItem)
             {
-                if (!IInteractable::Execute_IsCorrectItem(TargetActor, ActiveItem))
+                if (!IInteractable::Execute_IsCorrectItem(TargetActor, ActiveSlot))
                 {
                     return;
                 }
-                if (ActiveItem)
+                if (ActiveSlot.ItemAsset)
                 {
-                    ActiveItem->OnUsed(this, ActiveSlot.ItemInstanceID);
+                    ActiveSlot.ItemAsset->OnUsed(this, ActiveSlot.ItemInstanceID);
                 }
             }
         }
