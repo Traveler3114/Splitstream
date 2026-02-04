@@ -20,7 +20,6 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Searching, "Character.Status.Searchi
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Illegal, "Character.Status.Illegal");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Aiming, "Character.Status.Aiming");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Firing, "Character.Status.Firing");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Immunity, "Character.Status.Immunity");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Illegal_Action, "Character.Status.Illegal.Action");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Illegal_Area, "Character.Status.Illegal.Area");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Teleporting, "Character.Status.Teleporting");

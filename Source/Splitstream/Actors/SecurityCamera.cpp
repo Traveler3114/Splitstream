@@ -6,12 +6,9 @@
 #include "Components/ArrowComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Interfaces/IDetectable.h"
-#include "AbilitySystemComponent.h"
-#include "AbilitySystem/SplitstreamGameplayTags.h"
 #include "Kismet/KismetSystemLibrary.h"
-#include "AbilitySystemInterface.h"
 #include "GameStates/DefaultGameState.h"
-#include "DrawDebugHelpers.h"
+#include "DrawDebugHelpers.h" // needed for debug drawing
 
 ASecurityCamera::ASecurityCamera()
 {
@@ -150,14 +147,6 @@ void ASecurityCamera::DetectionUpdate()
 
     for (AActor* Actor : OverlappedActors)
     {
-        UAbilitySystemComponent* ASC = nullptr;
-        if (auto* ASCInterface = Cast<IAbilitySystemInterface>(Actor))
-        {
-            ASC = ASCInterface->GetAbilitySystemComponent();
-        }
-        if (ASC && ASC->HasMatchingGameplayTag(TAG_Character_Status_Immunity))
-            continue;
-
         if (!Actor || !Actor->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
             continue;
 

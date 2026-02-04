@@ -15,7 +15,6 @@
 #include "ActorComponents/ProximityHackComponent.h"
 #include "GameStates/DefaultGameState.h"
 #include "AbilitySystem/SplitstreamGameplayTags.h"
-#include "AbilitySystemInterface.h"
 #include "Components/StateTreeComponent.h"
 
 AAICharacter::AAICharacter()
@@ -250,18 +249,6 @@ void AAICharacter::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
 {
     for (AActor* Actor : UpdatedActors)
     {
-
-        UAbilitySystemComponent* ASC = nullptr;
-        if (auto* ASCInterface = Cast<IAbilitySystemInterface>(Actor))
-        {
-            ASC = ASCInterface->GetAbilitySystemComponent();
-        }
-        if (ASC && ASC->HasMatchingGameplayTag(TAG_Character_Status_Immunity))
-        {
-            continue; // skip immune
-        }
-
-
         if (Actor && Actor->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
         {
             FActorPerceptionBlueprintInfo Info;

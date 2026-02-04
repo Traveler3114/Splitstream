@@ -16,7 +16,6 @@
 #include "Actors/PointActors/NavNode.h"
 #include "Net/UnrealNetwork.h"
 #include "AbilitySystemComponent.h"
-#include "AbilitySystemInterface.h"
 #include "AbilitySystem/SplitstreamGameplayTags.h"
 
 ADronePawn::ADronePawn()
@@ -369,9 +368,6 @@ void ADronePawn::DetectionUpdate()
     ADefaultCharacter* NewlyDetected = nullptr;
     for (AActor* Candidate : OverlappedActors)
     {
-
-
-
         if (!Candidate || Candidate == this)
             continue;
 
@@ -379,7 +375,7 @@ void ADronePawn::DetectionUpdate()
         if (!DefaultChar)
             continue;
         UAbilitySystemComponent* ASC = DefaultChar->GetAbilitySystemComponent();
-        if (!ASC || !ASC->HasMatchingGameplayTag(TAG_Character_Status_Illegal) || ASC->HasMatchingGameplayTag(TAG_Character_Status_Immunity))
+        if (!ASC || !ASC->HasMatchingGameplayTag(TAG_Character_Status_Illegal))
             continue;
 
         UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(DefaultChar->GetRootComponent());
