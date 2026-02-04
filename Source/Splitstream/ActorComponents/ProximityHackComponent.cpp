@@ -219,6 +219,9 @@ void UProximityHackComponent::OnDetectionBeginOverlap(UPrimitiveComponent* Overl
     if (GetOwnerRole() != ROLE_Authority || !OtherActor)
         return;
 
+    if (bHacked)      // <--- PREVENT any further hacking/overlap effect if already hacked
+        return;
+
     ACharacter* Character = Cast<ACharacter>(OtherActor);
     if (!Character || !Character->IsPlayerControlled())
         return;
@@ -235,6 +238,9 @@ void UProximityHackComponent::OnDetectionEndOverlap(UPrimitiveComponent* Overlap
     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
     if (GetOwnerRole() != ROLE_Authority || !OtherActor)
+        return;
+
+    if (bHacked)
         return;
 
     ACharacter* Character = Cast<ACharacter>(OtherActor);
@@ -254,6 +260,11 @@ void UProximityHackComponent::OnDetectionEndOverlap(UPrimitiveComponent* Overlap
 
 void UProximityHackComponent::Server_UpdateProximity()
 {
+
+    if (bHacked)
+        return;
+
+
     PlayersInRange.RemoveAll([](const TWeakObjectPtr<ACharacter>& Ptr)
         {
             return !Ptr.IsValid();

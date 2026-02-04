@@ -60,9 +60,13 @@ void ACodeGenerator::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 
 bool ACodeGenerator::IsCorrectItem_Implementation(UItemBase* Item) const
 {
-    UItemBase* FP = Cast<UItemBase>(Item);
-    bool bResult = FP && FP->OwnerCivilian->GetClass() == RequiredCivilianClass.Get();
-    return bResult;
+    // Check for nullptr before dereferencing pointer members
+    if (!Item || !Item->OwnerCivilian)
+    {
+        return false;
+    }
+
+    return Item->OwnerCivilian->GetClass() == RequiredCivilianClass.Get();
 }
 
 void ACodeGenerator::Interact_Implementation(AActor* Interactor)
