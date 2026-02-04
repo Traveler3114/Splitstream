@@ -42,7 +42,7 @@ public:
 	UFUNCTION()
 	virtual void OnSearchComplete();
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Proximity Hack|Reward")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Reward")
 	UItemBase* RewardItem = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "Searchable")
