@@ -7,7 +7,6 @@
 #include "Characters/CivilianCharacter.h"
 #include "ActorComponents/InventoryComponent.h"
 #include "DataAssets/ItemBase.h"
-#include "Net/UnrealNetwork.h"
 
 // Sets default values
 ASearchableActor::ASearchableActor()
@@ -23,6 +22,7 @@ ASearchableActor::ASearchableActor()
     SearchComponent = CreateDefaultSubobject<USearchComponent>(TEXT("SearchComponent"));
     SearchComponent->SearchDuration = 5.f;
     SearchComponent->SetIsReplicated(true);
+	SearchComponent->bSearched = true;
 
 	bReplicates = true;
 }
@@ -33,14 +33,14 @@ void ASearchableActor::BeginPlay()
 	Super::BeginPlay();
     if (SearchComponent)
     {
+        if (HasAuthority()) // Only set on server
+            SearchComponent->bSearched = true;
         SearchComponent->OnSearchComplete.AddDynamic(this, &ASearchableActor::OnSearchComplete);
     }
 }
 
 void ASearchableActor::SetHighlighted_Implementation(bool bHighlight)
 {
-    if(!bIsActivatedForPlayer && bHighlight) return;
-
     if (ActorMesh && SearchComponent)
     {
         if (SearchComponent->bSearched)
@@ -60,18 +60,18 @@ void ASearchableActor::Interact_Implementation(AActor* Interactor)
 {
     if (ACivilianCharacter* Civilian = Cast<ACivilianCharacter>(Interactor))
     {
-        bIsActivatedForPlayer = true;
+        // NPC re-enables the search for players
+        if (SearchComponent)
+            SearchComponent->bSearched = false;
         PendingOwnerCivilian = Civilian;
         return;
     }
-    else if (!bIsActivatedForPlayer)
+
+    // Only allow players to search if not already searched (i.e. after NPC unlock)
+    if (SearchComponent && !SearchComponent->bSearched)
     {
-        // Block player from searching until a civilian has used
-        return;
-    }
-    // Only hits here if player and search is activated
-    if (SearchComponent)
         SearchComponent->Interact(Interactor);
+    }
 }
 
 
@@ -111,14 +111,6 @@ void ASearchableActor::OnSearchComplete()
         }
     }
 
-    bIsActivatedForPlayer = false;
     SetHighlighted_Implementation(false);
 }
-void ASearchableActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-    DOREPLIFETIME(ASearchableActor, bIsActivatedForPlayer);
-}
-
 

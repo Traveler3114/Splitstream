@@ -28,8 +28,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Floor")
 	EFloorLevel Floor = EFloorLevel::Basement;
 
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
 	ETimelineEra TimelineEra = ETimelineEra::Past;
 
@@ -44,9 +42,6 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Reward")
 	UItemBase* RewardItem = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "Searchable")
-	bool bIsActivatedForPlayer = false;
 
 	UPROPERTY()
 	class ACivilianCharacter* PendingOwnerCivilian = nullptr;
