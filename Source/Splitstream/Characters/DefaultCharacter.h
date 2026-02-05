@@ -32,7 +32,12 @@ class SPLITSTREAM_API ADefaultCharacter : public ACharacter, public IInteractabl
     GENERATED_BODY()
 public:
     ADefaultCharacter();
+
+    UPROPERTY()
     TWeakObjectPtr<AActor> ProgressiveActor = nullptr;
+
+    UPROPERTY()
+    bool bIsHoldingInteract = false;
 
     void OnWalkSpeedChanged(const FOnAttributeChangeData& ChangeData);
     void OnRunSpeedChanged(const FOnAttributeChangeData& ChangeData);

@@ -129,9 +129,6 @@ void ADoorBase::UnlockWithAccess_Implementation(AActor* Interactor)
     {
         bIsOpen = true;
         OnRep_IsOpen();
-
-        //REMOVE LATER
-		bIsLocked = false;
     }
 }
 

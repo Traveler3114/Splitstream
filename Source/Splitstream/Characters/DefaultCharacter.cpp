@@ -568,22 +568,20 @@ void ADefaultCharacter::UpdateInteractHighlight()
 
 void ADefaultCharacter::HandleInteractHoldStart()
 {
-    static AActor* const DummySentinel = (AActor*)0x1;
-
-    if (ProgressiveActor.IsValid())
+    if (bIsHoldingInteract)
         return;
+
+    bIsHoldingInteract = true;
 
     FHitResult Hit;
     FVector TraceEnd;
     if (!GetForwardTraceResult(InteractDistance, Hit, TraceEnd))
     {
-        ProgressiveActor = DummySentinel;
         return;
     }
     AActor* HitActor = Hit.GetActor();
     if (!HitActor)
     {
-        ProgressiveActor = DummySentinel;
         return;
     }
 
@@ -598,12 +596,15 @@ void ADefaultCharacter::HandleInteractHoldStart()
 
 void ADefaultCharacter::HandleInteractHoldStop()
 {
-    static AActor* const DummySentinel = (AActor*)0x1;
+    if (!bIsHoldingInteract)
+        return;
+
+    bIsHoldingInteract = false;
+
     if (ProgressiveActor.IsValid())
     {
         AActor* ActorPtr = ProgressiveActor.Get();
-        if (ActorPtr != DummySentinel &&
-            ActorPtr->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
+        if (ActorPtr && ActorPtr->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
         {
             IInteractable::Execute_CancelInteract(ActorPtr, this);
         }
