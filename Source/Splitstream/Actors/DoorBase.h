@@ -38,6 +38,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door")
     class UBoxComponent* GuardOpenTrigger;
 
+    UPROPERTY()
     class ULockPickComponent* LockPickComponent = nullptr;
 
     int32 ComputeOpenDirection(AActor* ReferenceActor) const;
