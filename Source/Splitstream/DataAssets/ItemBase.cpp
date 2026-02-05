@@ -40,7 +40,12 @@ void UItemBase::OnDropped(AActor* Instigator, FGuid ItemInstanceID, FVector Drop
 
     UClass* PickupClass = ItemPickupToSpawn ? ItemPickupToSpawn.Get() : AItemPickup::StaticClass();
 
-    FVector SpawnLocation = bEnablePhysicsOnDrop ? Instigator->GetActorLocation() : DropLocation;
+    // NEW: spawn slightly in front of character if physics enabled
+    const float ForwardDropDistance = 50.f; // <-- Tweakable
+    FVector SpawnLocation = bEnablePhysicsOnDrop
+        ? Instigator->GetActorLocation() + Instigator->GetActorForwardVector() * ForwardDropDistance
+        : DropLocation;
+
     FTransform SpawnTransform(FRotator::ZeroRotator, SpawnLocation);
     AItemPickup* Pickup = World->SpawnActorDeferred<AItemPickup>(PickupClass, SpawnTransform);
     if (Pickup)
