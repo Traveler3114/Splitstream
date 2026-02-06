@@ -51,6 +51,9 @@ public:
     UFUNCTION()
     void CleanupOSSDelegates();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Maps")
+    FString LobbyMapPath = TEXT("/Game/Maps/LobbyMap");
+
 private:
     FString PendingMenuURL;
     bool bTravelAfterSessionDestroy = false;

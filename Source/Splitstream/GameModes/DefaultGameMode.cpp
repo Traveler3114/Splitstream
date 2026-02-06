@@ -110,14 +110,25 @@ void ADefaultGameMode::RestartLevel()
 {
 	if (!HasAuthority())
 		return;
+
+
+
 	FString LobbyURL = TEXT("/Game/Maps/LobbyMap");
 	if (ADefaultGameState* GS = GetGameState<ADefaultGameState>())
 		if (!GS->LobbyMapPath.IsEmpty())
 			LobbyURL = GS->LobbyMapPath;
+
+	if (UDefaultGameInstance* GI = Cast<UDefaultGameInstance>(GetGameInstance()))
+	{
+		LobbyURL = GI->LobbyMapPath;
+	}
+
 	for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
 	{
 		if (ADefaultPlayerController* PC = Cast<ADefaultPlayerController>(Iterator->Get()))
 			PC->ClientShowLoadingScreen();
 	}
+
+
 	GetWorld()->ServerTravel(LobbyURL);
 }
