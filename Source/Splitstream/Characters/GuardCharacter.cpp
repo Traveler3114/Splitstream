@@ -11,7 +11,7 @@
 
 AGuardCharacter::AGuardCharacter()
 {
-    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bCanEverTick = false;
 
     NameText = CreateDefaultSubobject<UTextRenderComponent>(TEXT("NameText"));
     NameText->SetupAttachment(GetMesh());

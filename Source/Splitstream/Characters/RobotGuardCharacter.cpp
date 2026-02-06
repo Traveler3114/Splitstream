@@ -9,6 +9,7 @@
 ARobotGuardCharacter::ARobotGuardCharacter()
 {
     CurrentRepairTarget = nullptr;
+    PrimaryActorTick.bCanEverTick = false;
 }
 
 void ARobotGuardCharacter::BeginPlay()

@@ -4,7 +4,7 @@
 
 ACivilianCharacter::ACivilianCharacter()
 {
-    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bCanEverTick = false;
 }
 
 void ACivilianCharacter::BeginPlay()
