@@ -54,7 +54,7 @@ ADefaultCharacter::ADefaultCharacter()
     DetectionComponent = CreateDefaultSubobject<UDetectionComponent>(TEXT("DetectionComponent"));
 
     EquippedItemMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("EquippedItemMeshComp"));
-    EquippedItemMeshComp->SetupAttachment(GetMesh(), TEXT("HandGrip_R"));
+    EquippedItemMeshComp->SetupAttachment(GetMesh(), TEXT("Hand_R"));
     EquippedItemMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
