@@ -64,14 +64,44 @@ void ADefaultGameMode::OnAlarmStarted(float AlarmEndTime, ETimelineEra Era)
 {
     if (!HasAuthority())
         return;
-    // Still global level reset, but you can separate by Era if desired
-    GetWorldTimerManager().ClearTimer(PreAlarmTimerHandlePast);
-    GetWorldTimerManager().ClearTimer(PreAlarmTimerHandleFuture);
+
     float Remaining = AlarmEndTime - GetWorld()->GetTimeSeconds();
     Remaining = FMath::Max(0.f, Remaining);
-    GetWorldTimerManager().ClearTimer(RestartTimerHandle);
-    GetWorldTimerManager().SetTimer(RestartTimerHandle, this, &ADefaultGameMode::RestartLevel, Remaining, false);
+
+    FTimerHandle& EraHandle = (Era == ETimelineEra::Past) ? AlarmTimerHandlePast : AlarmTimerHandleFuture;
+    GetWorldTimerManager().ClearTimer(EraHandle);
+    GetWorldTimerManager().SetTimer(
+        EraHandle,
+        FTimerDelegate::CreateUObject(this, &ADefaultGameMode::EliminatePlayersInEra, Era),
+        Remaining, false
+    );
 }
+
+void ADefaultGameMode::EliminatePlayersInEra(ETimelineEra Era)
+{
+    FGameplayTag EraTag = (Era == ETimelineEra::Past)
+        ? FGameplayTag::RequestGameplayTag(TEXT("Team.Past"))
+        : FGameplayTag::RequestGameplayTag(TEXT("Team.Future"));
+
+    for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
+    {
+        if (ADefaultPlayerController* PC = Cast<ADefaultPlayerController>(Iterator->Get()))
+        {
+            if (ADefaultPlayerState* PS = PC->GetPlayerState<ADefaultPlayerState>())
+            {
+                if (UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent())
+                {
+                    if (ASC->HasMatchingGameplayTag(EraTag))
+                    {
+                        PC->ChangeState(NAME_Spectating);
+                        // Optionally: PC->ClientShowDefeatOverlay();
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 void ADefaultGameMode::OnAlarmCanceled()
 {

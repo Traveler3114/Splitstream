@@ -16,8 +16,14 @@ public:
     UFUNCTION(BlueprintCallable)
     void RestartLevel();
 
+	void EliminatePlayersInEra(ETimelineEra Era);
+
 protected:
     FTimerHandle RestartTimerHandle;
+
+    FTimerHandle AlarmTimerHandlePast;
+    FTimerHandle AlarmTimerHandleFuture;
+
     FTimerHandle PreAlarmTimerHandlePast;
     FTimerHandle PreAlarmTimerHandleFuture;
 
