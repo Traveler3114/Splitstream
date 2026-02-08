@@ -30,7 +30,6 @@ void UItemBase::OnRemovedFromInventory(AActor* Instigator)
     
 }
 
-// Pseudocode for ItemBase.cpp
 
 void UItemBase::OnDropped(AActor* Instigator, FGuid ItemInstanceID, FVector DropLocation)
 {

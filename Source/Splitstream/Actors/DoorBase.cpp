@@ -81,7 +81,6 @@ int32 ADoorBase::ComputeOpenDirection(AActor* ReferenceActor) const
     }
     FVector DoorForward = ArrowComp->GetForwardVector();
     FVector ToActor = ReferenceActor->GetActorLocation() - GetActorLocation();
-    //FVector ToActor = ReferenceActor->GetActorLocation() - OpenDirectionArrow->GetComponentLocation();
     ToActor.Normalize();
     float Dot = FVector::DotProduct(DoorForward, ToActor);
     int32 Dir = (Dot < 0.f) ? 1 : -1;

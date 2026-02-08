@@ -24,7 +24,6 @@ class UInventoryComponent;
 class UDetectionComponent;
 class AItemPickup;
 
-// Detection state struct for better readability/maintainability
 
 UCLASS()
 class SPLITSTREAM_API ADefaultCharacter : public ACharacter, public IInteractable, public IAbilitySystemInterface, public IDetectable

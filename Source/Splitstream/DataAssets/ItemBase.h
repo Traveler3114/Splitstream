@@ -45,7 +45,6 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
     EItemType ItemType;
 
-    // In ItemBase.h, add:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item|Pickup")
     TSubclassOf<class AItemPickup> ItemPickupToSpawn;
 
