@@ -42,7 +42,7 @@ void ADefaultGameState::StartAlarm(AActor* InAlarmInstigator, ETimelineEra Era)
     AlarmInstigator = InAlarmInstigator;
     AlarmEra = Era;
 
-    // Optionally, cancel the corresponding era's prealarm state:
+    // Cancel the corresponding era's prealarm state
     FPerEraPreAlarmState& EraPreAlarm = GetEraPreAlarm(Era);
     EraPreAlarm.bActive = false;
     EraPreAlarm.EndTime = 0.f;
@@ -119,8 +119,10 @@ void ADefaultGameState::StartPreAlarm(AActor* InPreAlarmInstigator, float Durati
 
     if (!State.bActive) {
         State.bActive = true;
-        OnPreAlarmStarted.Broadcast(State.EndTime, State.SoonestInstigator, Era);
     }
+
+    // Broadcast on server immediately
+    OnPreAlarmStarted.Broadcast(State.EndTime, State.SoonestInstigator, Era);
 }
 
 void ADefaultGameState::RemovePreAlarmInstigator(AActor* InToRemoveInstigator, ETimelineEra Era)
@@ -204,20 +206,28 @@ void ADefaultGameState::OnRep_AlarmActive()
         OnAlarmCanceled.Broadcast();
 }
 
-void ADefaultGameState::OnRep_PreAlarmStarted()
+void ADefaultGameState::OnRep_PastPreAlarm()
 {
-    // Broadcast for Past prealarm if active
     if (PastPreAlarm.bActive)
+    {
         OnPreAlarmStarted.Broadcast(PastPreAlarm.EndTime, PastPreAlarm.SoonestInstigator, ETimelineEra::Past);
-
-    // Broadcast for Future prealarm if active
-    if (FuturePreAlarm.bActive)
-        OnPreAlarmStarted.Broadcast(FuturePreAlarm.EndTime, FuturePreAlarm.SoonestInstigator, ETimelineEra::Future);
-}
-void ADefaultGameState::OnRep_PreAlarmActive()
-{
-    if (!PastPreAlarm.bActive && !FuturePreAlarm.bActive)
+    }
+    else
+    {
         OnPreAlarmCanceled.Broadcast();
+    }
+}
+
+void ADefaultGameState::OnRep_FuturePreAlarm()
+{
+    if (FuturePreAlarm.bActive)
+    {
+        OnPreAlarmStarted.Broadcast(FuturePreAlarm.EndTime, FuturePreAlarm.SoonestInstigator, ETimelineEra::Future);
+    }
+    else
+    {
+        OnPreAlarmCanceled.Broadcast();
+    }
 }
 
 void ADefaultGameState::AddCollectedMoney(int32 Amount)

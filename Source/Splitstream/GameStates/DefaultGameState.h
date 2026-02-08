@@ -98,10 +98,10 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Alarm")
     float PreAlarmDuration = 3.f;
 
-    UPROPERTY(Replicated)
+    UPROPERTY(ReplicatedUsing = OnRep_PastPreAlarm)
     FPerEraPreAlarmState PastPreAlarm;
 
-    UPROPERTY(Replicated)
+    UPROPERTY(ReplicatedUsing = OnRep_FuturePreAlarm)
     FPerEraPreAlarmState FuturePreAlarm;
 
     UPROPERTY(BlueprintAssignable)
@@ -165,10 +165,10 @@ protected:
     void OnRep_AlarmActive();
 
     UFUNCTION()
-    void OnRep_PreAlarmStarted();
+    void OnRep_PastPreAlarm();
 
     UFUNCTION()
-    void OnRep_PreAlarmActive();
+    void OnRep_FuturePreAlarm();
 
     UFUNCTION()
     void OnRep_CurrentMoneyCollected();

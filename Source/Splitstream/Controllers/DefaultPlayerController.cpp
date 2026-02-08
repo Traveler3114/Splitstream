@@ -75,36 +75,32 @@ void ADefaultPlayerController::SetupOverlay()
         GS->OnGuardRepairETAStarted.AddDynamic(this, &ADefaultPlayerController::HandleRepairETAStarted);
         OnMoneyCollectedChanged(GS->CurrentMoneyCollected, GS->TargetMoneyAmount);
 
-        // --- Critical: update overlay to show this player's team's prealarm immediately
-        // 1. Determine the player's era/team
-        ETimelineEra PlayerEra = ETimelineEra::Past; // Default if we can't tell
-
-        if (ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>())
-        {
-            if (UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent())
-            {
-                if (ASC->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(TEXT("Team.Future"))))
-                    PlayerEra = ETimelineEra::Future;
-            }
-        }
-
-        // 2. Access correct prealarm state
-        const FPerEraPreAlarmState& PreAlarm = (PlayerEra == ETimelineEra::Past)
-            ? GS->PastPreAlarm
-            : GS->FuturePreAlarm;
-
+        // --- Catch-up: show current alarm/prealarm state on overlay ---
         if (GS->bAlarmActive && GS->AlarmEndTime > 0.f)
         {
             HandleAlarmStarted(GS->AlarmEndTime, GS->AlarmEra);
         }
-        else if (PreAlarm.bActive && PreAlarm.EndTime > 0.f)
-        {
-            HandlePreAlarmStarted(PreAlarm.EndTime, PreAlarm.SoonestInstigator, PlayerEra);
-        }
         else
         {
-            HandleAlarmCanceled();
-            HandlePreAlarmCanceled();
+            // Check both eras — HandlePreAlarmStarted already filters by team tag
+            bool bAnyPreAlarmShown = false;
+
+            if (GS->PastPreAlarm.bActive && GS->PastPreAlarm.EndTime > 0.f)
+            {
+                HandlePreAlarmStarted(GS->PastPreAlarm.EndTime, GS->PastPreAlarm.SoonestInstigator, ETimelineEra::Past);
+                bAnyPreAlarmShown = true;
+            }
+            if (GS->FuturePreAlarm.bActive && GS->FuturePreAlarm.EndTime > 0.f)
+            {
+                HandlePreAlarmStarted(GS->FuturePreAlarm.EndTime, GS->FuturePreAlarm.SoonestInstigator, ETimelineEra::Future);
+                bAnyPreAlarmShown = true;
+            }
+
+            if (!bAnyPreAlarmShown)
+            {
+                HandleAlarmCanceled();
+                HandlePreAlarmCanceled();
+            }
         }
     }
 }
@@ -572,9 +568,9 @@ void ADefaultPlayerController::ClientUpdateDetectionWidget_Implementation(AActor
 
             // "Box cast" border
             float ScaleX = (ToTarget2D.X > 0.f) ? (ViewportSize.X - Center.X - Margin) / FMath::Max(ToTarget2D.X, 0.0001f)
-                                                : (0.f + Margin - Center.X) / FMath::Min(ToTarget2D.X, -0.0001f);
+                : (0.f + Margin - Center.X) / FMath::Min(ToTarget2D.X, -0.0001f);
             float ScaleY = (ToTarget2D.Y > 0.f) ? (ViewportSize.Y - Center.Y - Margin) / FMath::Max(ToTarget2D.Y, 0.0001f)
-                                                : (0.f + Margin - Center.Y) / FMath::Min(ToTarget2D.Y, -0.0001f);
+                : (0.f + Margin - Center.Y) / FMath::Min(ToTarget2D.Y, -0.0001f);
 
             float Scale = FMath::Min(FMath::Abs(ScaleX), FMath::Abs(ScaleY));
             ScreenPos = Center + ToTarget2D * Scale;
@@ -654,4 +650,3 @@ void ADefaultPlayerController::ServerExecuteAction_Implementation(UObject* Targe
         UE_LOG(LogTemp, Error, TEXT("Target does NOT implement IServerActionInterface!"));
     }
 }
-
