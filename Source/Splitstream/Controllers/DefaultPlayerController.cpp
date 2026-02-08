@@ -376,7 +376,12 @@ void ADefaultPlayerController::ClientShowLoadingScreen_Implementation()
 void ADefaultPlayerController::OnRep_PlayerState()
 {
     Super::OnRep_PlayerState();
-    SetupOverlay();
+    ADefaultPlayerState* MyPS = GetPlayerState<ADefaultPlayerState>();
+    if (MyPS)
+    {
+        MyPS->UpdateTeamGameplayTag(); // <-- Ensures tags are applied after ASC is definitely ready
+        SetupOverlay();
+    }
 }
 
 void ADefaultPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
