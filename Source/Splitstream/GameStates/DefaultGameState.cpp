@@ -9,11 +9,8 @@ ADefaultGameState::ADefaultGameState()
     AlarmDuration = 5.f;
     AlarmInstigator = nullptr;
 
-    PreAlarmEndTime = 0.f;
-    bPreAlarmActive = false;
-    PreAlarmSoonestInstigator = nullptr;
-    PreAlarmInstigatorsInfo.Empty();
-    PreAlarmDuration = 3.f;
+    CurrentMoneyCollected = 0;
+    TargetMoneyAmount = 50000;
 }
 
 void ADefaultGameState::StartGuardRepairCountdown(AActor* Repairable, float Duration)
@@ -43,17 +40,14 @@ void ADefaultGameState::StartAlarm(AActor* InAlarmInstigator, ETimelineEra Era)
     AlarmEndTime = ServerNow + AlarmDuration;
     bAlarmActive = true;
     AlarmInstigator = InAlarmInstigator;
-    AlarmEra = Era; // <--- Set the member variable!
+    AlarmEra = Era;
 
-    // Cancel any pre-alarm that might be active
-    if (bPreAlarmActive)
-    {
-        bPreAlarmActive = false;
-        PreAlarmEndTime = 0.f;
-        PreAlarmSoonestInstigator = nullptr;
-        PreAlarmInstigatorsInfo.Empty();
-        OnPreAlarmCanceled.Broadcast();
-    }
+    // Optionally, cancel the corresponding era's prealarm state:
+    FPerEraPreAlarmState& EraPreAlarm = GetEraPreAlarm(Era);
+    EraPreAlarm.bActive = false;
+    EraPreAlarm.EndTime = 0.f;
+    EraPreAlarm.SoonestInstigator = nullptr;
+    EraPreAlarm.InstigatorsInfo.Empty();
 
     OnAlarmStarted.Broadcast(AlarmEndTime, AlarmEra);
 }
@@ -91,14 +85,15 @@ void ADefaultGameState::RequestRestart()
 void ADefaultGameState::StartPreAlarm(AActor* InPreAlarmInstigator, float Duration, ETimelineEra Era)
 {
     if (!HasAuthority()) return;
-    if (bAlarmActive) return;
     if (!InPreAlarmInstigator) return;
+
+    FPerEraPreAlarmState& State = GetEraPreAlarm(Era);
 
     const float ServerNow = GetWorld()->GetTimeSeconds();
     float EndTime = ServerNow + Duration;
 
     bool bFound = false;
-    for (FPreAlarmInstigatorInfo& Info : PreAlarmInstigatorsInfo) {
+    for (FPreAlarmInstigatorInfo& Info : State.InstigatorsInfo) {
         if (Info.Instigator == InPreAlarmInstigator) {
             if (EndTime < Info.ETA)
                 Info.ETA = EndTime;
@@ -108,84 +103,94 @@ void ADefaultGameState::StartPreAlarm(AActor* InPreAlarmInstigator, float Durati
         }
     }
     if (!bFound)
-        PreAlarmInstigatorsInfo.Add(FPreAlarmInstigatorInfo(InPreAlarmInstigator, EndTime, Era));
+        State.InstigatorsInfo.Add(FPreAlarmInstigatorInfo(InPreAlarmInstigator, EndTime, Era));
 
-    UpdatePreAlarmSoonestInstigator();
+    // Find soonest instigator for this era
+    State.SoonestInstigator = nullptr;
+    float SoonestETA = 0.f;
+    for (const FPreAlarmInstigatorInfo& Info : State.InstigatorsInfo) {
+        if (State.SoonestInstigator == nullptr || Info.ETA < SoonestETA)
+        {
+            State.SoonestInstigator = Info.Instigator;
+            SoonestETA = Info.ETA;
+        }
+    }
+    State.EndTime = SoonestETA;
 
-    if (!bPreAlarmActive) {
-        PreAlarmEndTime = EndTime;
-        bPreAlarmActive = true;
-        ETimelineEra SoonestEra = Era;
-        if (PreAlarmSoonestInstigator)
-            for (const FPreAlarmInstigatorInfo& Info : PreAlarmInstigatorsInfo)
-                if (Info.Instigator == PreAlarmSoonestInstigator)
-                    SoonestEra = Info.Era;
-        OnPreAlarmStarted.Broadcast(PreAlarmEndTime, PreAlarmSoonestInstigator, SoonestEra);
+    if (!State.bActive) {
+        State.bActive = true;
+        OnPreAlarmStarted.Broadcast(State.EndTime, State.SoonestInstigator, Era);
     }
 }
 
-void ADefaultGameState::RemovePreAlarmInstigator(AActor* InToRemoveInstigator)
+void ADefaultGameState::RemovePreAlarmInstigator(AActor* InToRemoveInstigator, ETimelineEra Era)
 {
     if (!HasAuthority()) return;
     if (!InToRemoveInstigator) return;
 
-    PreAlarmInstigatorsInfo.RemoveAll([InToRemoveInstigator](const FPreAlarmInstigatorInfo& Info) {
+    FPerEraPreAlarmState& State = GetEraPreAlarm(Era);
+
+    State.InstigatorsInfo.RemoveAll([InToRemoveInstigator](const FPreAlarmInstigatorInfo& Info) {
         return Info.Instigator == InToRemoveInstigator;
         });
 
-    UpdatePreAlarmSoonestInstigator();
-
-    // If none left, cancel pre-alarm
-    if (PreAlarmInstigatorsInfo.Num() == 0)
+    // Update soonest for this era
+    State.SoonestInstigator = nullptr;
+    float SoonestETA = 0.f;
+    for (const FPreAlarmInstigatorInfo& Info : State.InstigatorsInfo)
     {
-        bPreAlarmActive = false;
-        PreAlarmEndTime = 0.f;
-        PreAlarmSoonestInstigator = nullptr;
+        if (State.SoonestInstigator == nullptr || Info.ETA < SoonestETA)
+        {
+            State.SoonestInstigator = Info.Instigator;
+            SoonestETA = Info.ETA;
+        }
+    }
+    State.EndTime = SoonestETA;
+
+    if (State.InstigatorsInfo.Num() == 0)
+    {
+        State.bActive = false;
+        State.EndTime = 0.f;
+        State.SoonestInstigator = nullptr;
         OnPreAlarmCanceled.Broadcast();
     }
     else
     {
-        // Sync pre-alarm endtime and broadcast the new soonest
-        PreAlarmEndTime = 0.f;
-        ETimelineEra SoonestEra = ETimelineEra::Past;
-        for (const FPreAlarmInstigatorInfo& Info : PreAlarmInstigatorsInfo)
-            if (PreAlarmEndTime == 0.f || Info.ETA < PreAlarmEndTime)
-            {
-                PreAlarmEndTime = Info.ETA;
-                SoonestEra = Info.Era;
-            }
-        OnPreAlarmStarted.Broadcast(PreAlarmEndTime, PreAlarmSoonestInstigator, SoonestEra);
+        OnPreAlarmStarted.Broadcast(State.EndTime, State.SoonestInstigator, Era);
     }
 }
 
-
-void ADefaultGameState::CancelPreAlarm(AActor* InCancelingInstigator)
+void ADefaultGameState::CancelPreAlarm(AActor* InCancelingInstigator, ETimelineEra Era)
 {
     if (!HasAuthority())
         return;
-    if (!bPreAlarmActive)
+
+    FPerEraPreAlarmState& State = GetEraPreAlarm(Era);
+
+    if (!State.bActive)
         return;
 
     if (InCancelingInstigator)
     {
-        RemovePreAlarmInstigator(InCancelingInstigator);
+        RemovePreAlarmInstigator(InCancelingInstigator, Era);
     }
     else
     {
-        PreAlarmInstigatorsInfo.Empty();
-        bPreAlarmActive = false;
-        PreAlarmEndTime = 0.f;
-        PreAlarmSoonestInstigator = nullptr;
+        State.InstigatorsInfo.Empty();
+        State.bActive = false;
+        State.EndTime = 0.f;
+        State.SoonestInstigator = nullptr;
         OnPreAlarmCanceled.Broadcast();
     }
 }
 
-float ADefaultGameState::GetRemainingPreAlarmTime() const
+float ADefaultGameState::GetRemainingPreAlarmTime(ETimelineEra Era) const
 {
-    if (!bPreAlarmActive)
+    const FPerEraPreAlarmState& State = GetEraPreAlarm(Era);
+    if (!State.bActive)
         return 0.f;
     const float Now = GetWorld()->GetTimeSeconds();
-    return FMath::Max(0.f, PreAlarmEndTime - Now);
+    return FMath::Max(0.f, State.EndTime - Now);
 }
 
 void ADefaultGameState::OnRep_AlarmStarted()
@@ -201,24 +206,17 @@ void ADefaultGameState::OnRep_AlarmActive()
 
 void ADefaultGameState::OnRep_PreAlarmStarted()
 {
-    // Find soonest again clientside by looking through PreAlarmInstigatorsInfo
-    AActor* Soonest = nullptr;
-    float SoonestETA = 0.f;
-    ETimelineEra SoonestEra = ETimelineEra::Past;
-    for (const FPreAlarmInstigatorInfo& Info : PreAlarmInstigatorsInfo)
-    {
-        if (Soonest == nullptr || Info.ETA < SoonestETA)
-        {
-            Soonest = Info.Instigator;
-            SoonestETA = Info.ETA;
-            SoonestEra = Info.Era;
-        }
-    }
-    OnPreAlarmStarted.Broadcast(PreAlarmEndTime, Soonest, SoonestEra);
+    // Broadcast for Past prealarm if active
+    if (PastPreAlarm.bActive)
+        OnPreAlarmStarted.Broadcast(PastPreAlarm.EndTime, PastPreAlarm.SoonestInstigator, ETimelineEra::Past);
+
+    // Broadcast for Future prealarm if active
+    if (FuturePreAlarm.bActive)
+        OnPreAlarmStarted.Broadcast(FuturePreAlarm.EndTime, FuturePreAlarm.SoonestInstigator, ETimelineEra::Future);
 }
 void ADefaultGameState::OnRep_PreAlarmActive()
 {
-    if (!bPreAlarmActive)
+    if (!PastPreAlarm.bActive && !FuturePreAlarm.bActive)
         OnPreAlarmCanceled.Broadcast();
 }
 
@@ -250,33 +248,8 @@ void ADefaultGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
     DOREPLIFETIME(ADefaultGameState, AlarmInstigator);
     DOREPLIFETIME(ADefaultGameState, AlarmEra);
 
-    DOREPLIFETIME(ADefaultGameState, PreAlarmEndTime);
-    DOREPLIFETIME(ADefaultGameState, bPreAlarmActive);
-    DOREPLIFETIME(ADefaultGameState, PreAlarmInstigatorsInfo);
-    DOREPLIFETIME(ADefaultGameState, PreAlarmSoonestInstigator);
-
-    DOREPLIFETIME(ADefaultGameState, CurrentMoneyCollected);
+    DOREPLIFETIME(ADefaultGameState, PastPreAlarm);
+    DOREPLIFETIME(ADefaultGameState, FuturePreAlarm);
     DOREPLIFETIME(ADefaultGameState, GuardRepairCountdowns);
-}
-
-void ADefaultGameState::UpdatePreAlarmSoonestInstigator()
-{
-    PreAlarmSoonestInstigator = nullptr;
-    float SoonestETA = 0.f;
-    float Now = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f;
-    for (const FPreAlarmInstigatorInfo& Info : PreAlarmInstigatorsInfo)
-    {
-        if (Info.Instigator)
-        {
-            float ThisETA = Info.ETA;
-            // ETA should be in the future, but just in case
-            if (ThisETA < Now)
-                continue;
-            if (!PreAlarmSoonestInstigator || ThisETA < SoonestETA)
-            {
-                PreAlarmSoonestInstigator = Info.Instigator;
-                SoonestETA = ThisETA;
-            }
-        }
-    }
+    DOREPLIFETIME(ADefaultGameState, CurrentMoneyCollected);
 }

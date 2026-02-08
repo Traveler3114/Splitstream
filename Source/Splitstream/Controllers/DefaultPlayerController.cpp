@@ -37,7 +37,6 @@ void ADefaultPlayerController::SetupOverlay()
     {
         CharacterHUD->AddCharacterOverlay();
 
-        // Only proceed if overlay instance actually exists
         if (CharacterHUD->CharacterOverlay)
         {
             // Ping
@@ -60,7 +59,6 @@ void ADefaultPlayerController::SetupOverlay()
     BindGameplayTagDelegates();
     GetWorldTimerManager().SetTimer(PingUpdateTimerHandle, this, &ADefaultPlayerController::UpdatePingOnOverlay, 1.0f, true);
 
-    // Alarm/pre-alarm event handlers and immediate state update
     if (ADefaultGameState* GS = GetWorld() ? GetWorld()->GetGameState<ADefaultGameState>() : nullptr)
     {
         GS->OnAlarmStarted.RemoveDynamic(this, &ADefaultPlayerController::HandleAlarmStarted);
@@ -77,27 +75,31 @@ void ADefaultPlayerController::SetupOverlay()
         GS->OnGuardRepairETAStarted.AddDynamic(this, &ADefaultPlayerController::HandleRepairETAStarted);
         OnMoneyCollectedChanged(GS->CurrentMoneyCollected, GS->TargetMoneyAmount);
 
-        // --- The critical part: immediately update alarm/pre-alarm UI
+        // --- Critical: update overlay to show this player's team's prealarm immediately
+        // 1. Determine the player's era/team
+        ETimelineEra PlayerEra = ETimelineEra::Past; // Default if we can't tell
+
+        if (ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>())
+        {
+            if (UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent())
+            {
+                if (ASC->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(TEXT("Team.Future"))))
+                    PlayerEra = ETimelineEra::Future;
+            }
+        }
+
+        // 2. Access correct prealarm state
+        const FPerEraPreAlarmState& PreAlarm = (PlayerEra == ETimelineEra::Past)
+            ? GS->PastPreAlarm
+            : GS->FuturePreAlarm;
+
         if (GS->bAlarmActive && GS->AlarmEndTime > 0.f)
         {
             HandleAlarmStarted(GS->AlarmEndTime, GS->AlarmEra);
         }
-        else if (GS->bPreAlarmActive && GS->PreAlarmEndTime > 0.f)
+        else if (PreAlarm.bActive && PreAlarm.EndTime > 0.f)
         {
-            // Find Era for soonest instigator
-            ETimelineEra SoonestEra = ETimelineEra::Past;
-            if (GS->PreAlarmSoonestInstigator)
-            {
-                for (const FPreAlarmInstigatorInfo& Info : GS->PreAlarmInstigatorsInfo)
-                {
-                    if (Info.Instigator == GS->PreAlarmSoonestInstigator)
-                    {
-                        SoonestEra = Info.Era;
-                        break;
-                    }
-                }
-            }
-            HandlePreAlarmStarted(GS->PreAlarmEndTime, GS->PreAlarmSoonestInstigator, SoonestEra);
+            HandlePreAlarmStarted(PreAlarm.EndTime, PreAlarm.SoonestInstigator, PlayerEra);
         }
         else
         {

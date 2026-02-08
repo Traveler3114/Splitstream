@@ -8,32 +8,34 @@
 UCLASS()
 class SPLITSTREAM_API ADefaultGameMode : public ABaseGameMode
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 public:
-	virtual void BeginPlay() override;
-	virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
+    virtual void BeginPlay() override;
+    virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
 
-	UFUNCTION(BlueprintCallable)
-	void RestartLevel();
+    UFUNCTION(BlueprintCallable)
+    void RestartLevel();
 
 protected:
-	FTimerHandle RestartTimerHandle;
-	FTimerHandle PreAlarmTimerHandle;
+    FTimerHandle RestartTimerHandle;
+    FTimerHandle PreAlarmTimerHandlePast;
+    FTimerHandle PreAlarmTimerHandleFuture;
 
-	UFUNCTION()
-	void OnAlarmStarted(float AlarmEndTime, ETimelineEra Era);
+    UFUNCTION()
+    void OnAlarmStarted(float AlarmEndTime, ETimelineEra Era);
 
-	UFUNCTION()
-	void OnAlarmCanceled();
+    UFUNCTION()
+    void OnAlarmCanceled();
 
-	UFUNCTION()
-	void OnPreAlarmStarted(float PreAlarmEndTime, AActor* PreAlarmInstigator, ETimelineEra Era);
+    UFUNCTION()
+    void OnPreAlarmStarted(float PreAlarmEndTime, AActor* PreAlarmInstigator, ETimelineEra Era);
 
-	UFUNCTION()
-	void OnPreAlarmCanceled();
+    UFUNCTION()
+    void OnPreAlarmCanceled();
 
-	void PreAlarmTimeout();
+    void PreAlarmTimeoutPast();
+    void PreAlarmTimeoutFuture();
 
 private:
-	FString PendingMenuURL;
+    FString PendingMenuURL;
 };

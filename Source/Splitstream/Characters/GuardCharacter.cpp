@@ -55,7 +55,7 @@ void AGuardCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
         {
             if (ADefaultGameState* GS = Cast<ADefaultGameState>(GetWorld()->GetGameState()))
             {
-                GS->RemovePreAlarmInstigator(this);
+                GS->RemovePreAlarmInstigator(this, TimelineEra);
             }
         }
         if (NameText)
