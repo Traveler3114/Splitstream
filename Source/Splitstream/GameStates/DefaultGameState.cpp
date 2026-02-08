@@ -43,6 +43,7 @@ void ADefaultGameState::StartAlarm(AActor* InAlarmInstigator, ETimelineEra Era)
     AlarmEndTime = ServerNow + AlarmDuration;
     bAlarmActive = true;
     AlarmInstigator = InAlarmInstigator;
+    AlarmEra = Era; // <--- Set the member variable!
 
     // Cancel any pre-alarm that might be active
     if (bPreAlarmActive)
@@ -54,7 +55,7 @@ void ADefaultGameState::StartAlarm(AActor* InAlarmInstigator, ETimelineEra Era)
         OnPreAlarmCanceled.Broadcast();
     }
 
-    OnAlarmStarted.Broadcast(AlarmEndTime);
+    OnAlarmStarted.Broadcast(AlarmEndTime, AlarmEra);
 }
 
 void ADefaultGameState::CancelAlarm(AActor* InAlarmInstigator)
@@ -189,7 +190,7 @@ float ADefaultGameState::GetRemainingPreAlarmTime() const
 
 void ADefaultGameState::OnRep_AlarmStarted()
 {
-    OnAlarmStarted.Broadcast(AlarmEndTime);
+    OnAlarmStarted.Broadcast(AlarmEndTime, AlarmEra);
 }
 
 void ADefaultGameState::OnRep_AlarmActive()
@@ -247,6 +248,7 @@ void ADefaultGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
     DOREPLIFETIME(ADefaultGameState, AlarmEndTime);
     DOREPLIFETIME(ADefaultGameState, bAlarmActive);
     DOREPLIFETIME(ADefaultGameState, AlarmInstigator);
+    DOREPLIFETIME(ADefaultGameState, AlarmEra);
 
     DOREPLIFETIME(ADefaultGameState, PreAlarmEndTime);
     DOREPLIFETIME(ADefaultGameState, bPreAlarmActive);

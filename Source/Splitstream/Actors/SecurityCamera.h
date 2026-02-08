@@ -24,6 +24,9 @@ protected:
     FTimerHandle DetectionTimerHandle;
     FTimerHandle PanTimerHandle;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
+    ETimelineEra TimelineEra = ETimelineEra::Past;
+
     // Timer intervals (can be tweaked)
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Optimization")
     float DetectionInterval = 0.2f; // seconds

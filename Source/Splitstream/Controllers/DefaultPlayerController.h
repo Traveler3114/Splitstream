@@ -93,7 +93,7 @@ private:
     FTimerHandle AlarmUpdateTimerHandle;
 
     UFUNCTION()
-    void HandleAlarmStarted(float InAlarmEndTime);
+    void HandleAlarmStarted(float InAlarmEndTime, ETimelineEra Era);
 
     UFUNCTION()
     void HandleAlarmCanceled();

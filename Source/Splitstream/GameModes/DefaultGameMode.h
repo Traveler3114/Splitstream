@@ -21,7 +21,7 @@ protected:
 	FTimerHandle PreAlarmTimerHandle;
 
 	UFUNCTION()
-	void OnAlarmStarted(float AlarmEndTime);
+	void OnAlarmStarted(float AlarmEndTime, ETimelineEra Era);
 
 	UFUNCTION()
 	void OnAlarmCanceled();

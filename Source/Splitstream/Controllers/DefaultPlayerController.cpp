@@ -80,7 +80,7 @@ void ADefaultPlayerController::SetupOverlay()
         // --- The critical part: immediately update alarm/pre-alarm UI
         if (GS->bAlarmActive && GS->AlarmEndTime > 0.f)
         {
-            HandleAlarmStarted(GS->AlarmEndTime);
+            HandleAlarmStarted(GS->AlarmEndTime, GS->AlarmEra);
         }
         else if (GS->bPreAlarmActive && GS->PreAlarmEndTime > 0.f)
         {
@@ -206,8 +206,23 @@ void ADefaultPlayerController::OnMoneyCollectedChanged_Implementation(int32 Curr
 }
 
 
-void ADefaultPlayerController::HandleAlarmStarted(float InAlarmEndTime)
+void ADefaultPlayerController::HandleAlarmStarted(float InAlarmEndTime, ETimelineEra Era)
 {
+    // Only show alarm if player is in the matching era/team
+    ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
+    if (!PS)
+        return;
+    UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
+    if (!ASC)
+        return;
+
+    FGameplayTag TeamTag = (Era == ETimelineEra::Past)
+        ? FGameplayTag::RequestGameplayTag(TEXT("Team.Past"))
+        : FGameplayTag::RequestGameplayTag(TEXT("Team.Future"));
+
+    if (!ASC->HasMatchingGameplayTag(TeamTag))
+        return;
+
     // If a pre-alarm UI is active, clear it IMMEDIATELY
     HandlePreAlarmCanceled();
 

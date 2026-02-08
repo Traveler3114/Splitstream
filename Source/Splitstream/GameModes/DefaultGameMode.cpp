@@ -61,7 +61,7 @@ AActor* ADefaultGameMode::ChoosePlayerStart_Implementation(AController* Player)
 	return Super::ChoosePlayerStart_Implementation(Player);
 }
 
-void ADefaultGameMode::OnAlarmStarted(float AlarmEndTime)
+void ADefaultGameMode::OnAlarmStarted(float AlarmEndTime, ETimelineEra Era)
 {
 	if (!HasAuthority())
 		return;
@@ -102,7 +102,19 @@ void ADefaultGameMode::PreAlarmTimeout()
 		return;
 	if (ADefaultGameState* GS = GetGameState<ADefaultGameState>())
 	{
-		GS->StartAlarm(GS->PreAlarmSoonestInstigator);
+		ETimelineEra SoonestEra = ETimelineEra::Past; // default
+		if (GS->PreAlarmSoonestInstigator)
+		{
+			for (const FPreAlarmInstigatorInfo& Info : GS->PreAlarmInstigatorsInfo)
+			{
+				if (Info.Instigator == GS->PreAlarmSoonestInstigator)
+				{
+					SoonestEra = Info.Era;
+					break;
+				}
+			}
+		}
+		GS->StartAlarm(GS->PreAlarmSoonestInstigator, SoonestEra);
 	}
 }
 

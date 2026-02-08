@@ -7,7 +7,7 @@
 
 class AActor;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAlarmStarted, float, AlarmEndTime);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnAlarmStarted, float, AlarmEndTime, ETimelineEra, Era);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAlarmCanceled);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnRestartRequested);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnPreAlarmStarted, float, PreAlarmEndTime, AActor*, PreAlarmInstigator, ETimelineEra, Era);
@@ -58,6 +58,9 @@ public:
 
     UPROPERTY(ReplicatedUsing = OnRep_AlarmStarted, BlueprintReadOnly, Category = "Alarm")
     float AlarmEndTime;
+
+    UPROPERTY(Replicated)
+    ETimelineEra AlarmEra = ETimelineEra::Past;
 
     UPROPERTY(ReplicatedUsing = OnRep_AlarmActive, BlueprintReadOnly, Category = "Alarm")
     bool bAlarmActive;
@@ -111,7 +114,7 @@ public:
 
     // ALARM
     UFUNCTION(BlueprintCallable)
-    void StartAlarm(AActor* InAlarmInstigator = nullptr);
+    void StartAlarm(AActor* InAlarmInstigator, ETimelineEra Era);
 
     UFUNCTION(BlueprintCallable)
     void CancelAlarm(AActor* InAlarmInstigator = nullptr);

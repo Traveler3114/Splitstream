@@ -16,7 +16,7 @@ void AAlarmButton::Interact_Implementation(AActor* Interactor)
 {
     if (ADefaultGameState* GS = Cast<ADefaultGameState>(GetWorld()->GetGameState()))
     {
-        GS->StartAlarm();
+        GS->StartAlarm(this, TimelineEra);
     }
 }
 

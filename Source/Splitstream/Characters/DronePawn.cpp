@@ -427,7 +427,7 @@ void ADronePawn::DetectionUpdate()
             if (ADefaultGameState* GS = Cast<ADefaultGameState>(GetWorld()->GetGameState()))
             {
                 GS->CancelPreAlarm(this);
-                GS->StartAlarm(this);
+                GS->StartAlarm(this, TimelineEra);
             }
         }
     }

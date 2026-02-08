@@ -138,7 +138,7 @@ void AWirePuzzleManager::OnWireCut(AWireActor* CutWire)
         ADefaultGameState* GS = GetWorld() ? GetWorld()->GetGameState<ADefaultGameState>() : nullptr;
         if (GS)
         {
-            GS->StartAlarm();
+            GS->StartAlarm(this, TimelineEra);
         }
         return;
     }

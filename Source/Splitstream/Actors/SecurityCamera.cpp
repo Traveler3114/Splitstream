@@ -250,7 +250,7 @@ void ASecurityCamera::OnFullyDetected_Implementation(AActor* Detector)
     {
         if (ADefaultGameState* GS = Cast<ADefaultGameState>(GetWorld()->GetGameState()))
         {
-            GS->StartAlarm(this);
+            GS->StartAlarm(this, TimelineEra);
         }
     }
 }

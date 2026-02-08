@@ -45,7 +45,7 @@ void AMetalDetector::OnPlayerOverlap(UPrimitiveComponent* OverlappedComp, AActor
 		if (ADefaultGameState* GS = Cast<ADefaultGameState>(GetWorld()->GetGameState()))
 		{
 			// start alarm instead of immediate restart
-			GS->StartAlarm();
+			GS->StartAlarm(this, TimelineEra);
 		}
 	}
 }
