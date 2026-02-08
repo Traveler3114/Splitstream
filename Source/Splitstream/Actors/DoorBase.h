@@ -23,7 +23,7 @@ public:
     UStaticMeshComponent* DoorMesh;
 
     UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Components")
-	class UArrowComponent* ArrowComp; // Add this property
+	class UArrowComponent* ArrowComp;
 
     UPROPERTY(ReplicatedUsing = OnRep_IsOpen, EditAnywhere, BlueprintReadWrite, Category = "Door")
     bool bIsOpen = false;

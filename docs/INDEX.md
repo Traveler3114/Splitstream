@@ -31,7 +31,8 @@ All documentation is organized for easy navigation. Choose your starting point b
 1. **[ARCHITECTURE.md](ARCHITECTURE.md)** - Complete architecture overview
 2. **[SYSTEMS.md](SYSTEMS.md)** - Detailed system documentation
 3. **[CODE_REFERENCE.md](CODE_REFERENCE.md)** - Complete C++ code documentation
-4. **[BUILD_GUIDE.md](BUILD_GUIDE.md)** - Build process and optimization
+4. **[CODE_REVIEW.md](CODE_REVIEW.md)** - Code architecture review with findings and recommendations
+5. **[BUILD_GUIDE.md](BUILD_GUIDE.md)** - Build process and optimization
 
 ---
 

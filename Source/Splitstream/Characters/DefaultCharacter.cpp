@@ -184,7 +184,9 @@ void ADefaultCharacter::GrantAbilitiesFromDefaultSet()
     if (!DefaultGASet) return;
 
     ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
+    if (!PS) return;
     UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
+    if (!ASC) return;
 
     for (const TSubclassOf<UGameplayAbility>& AbilityClass : DefaultGASet->GrantedAbilities)
     {
@@ -215,7 +217,7 @@ void ADefaultCharacter::GrantAbilitiesFromInputSet()
         }
     }
 
-    if (ASC->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("Team.Solo")))
+    if (SoloGASet && ASC->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("Team.Solo")))
     {
         for (const FAbilityInputSetEntry& Entry : SoloGASet->Abilities)
         {
@@ -356,8 +358,6 @@ void ADefaultCharacter::UpdateEquippedItemMesh()
     {
         EquippedItemMeshComp->SetRelativeLocation(RelativeLocation);
         EquippedItemMeshComp->SetRelativeRotation(RelativeRotation);
-        // EquippedItemMeshComp->SetRelativeLocation(FVector(-0.000000, 0.500000, 2.208336));
-        // EquippedItemMeshComp->SetRelativeRotation(FRotator(0.528160, -3.449450, 8.694707));
         EquippedItemMeshComp->SetRelativeScale3D(RelativeScale);
     }
 

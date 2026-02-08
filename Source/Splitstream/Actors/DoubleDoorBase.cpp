@@ -3,6 +3,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/ArrowComponent.h"
 #include "Characters/GuardCharacter.h"
+#include "Characters/CivilianCharacter.h"
 #include "Net/UnrealNetwork.h"
 
 ADoubleDoorBase::ADoubleDoorBase()
@@ -166,10 +167,12 @@ void ADoubleDoorBase::OnGuardOpenEndOverlap(UPrimitiveComponent* OverlappedComp,
         return;
     if (OtherActor && OtherActor->IsA(AAICharacter::StaticClass()))
     {
-        // Check if any other guards are still overlapping
-        TArray<AActor*> Overlapping;
-        GuardOpenTrigger->GetOverlappingActors(Overlapping, AGuardCharacter::StaticClass());
-        if (Overlapping.Num() == 0)
+        // Check if any other guards or civilians are still overlapping
+        TArray<AActor*> OverlappingGuards;
+        TArray<AActor*> OverlappingCivilians;
+        GuardOpenTrigger->GetOverlappingActors(OverlappingGuards, AGuardCharacter::StaticClass());
+        GuardOpenTrigger->GetOverlappingActors(OverlappingCivilians, ACivilianCharacter::StaticClass());
+        if (OverlappingGuards.Num() == 0 && OverlappingCivilians.Num() == 0)
         {
             ForceCloseDoorForGuard(OtherActor);
         }

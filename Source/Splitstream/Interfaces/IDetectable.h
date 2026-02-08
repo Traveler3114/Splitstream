@@ -3,14 +3,13 @@
 #include "UObject/Interface.h"
 #include "IDetectable.generated.h"
 
-// Detectable.h
 UINTERFACE(MinimalAPI, Blueprintable)
 class UDetectable : public UInterface
 {
     GENERATED_BODY()
 };
 
-class IDetectable
+class SPLITSTREAM_API IDetectable
 {
     GENERATED_BODY()
 public:

@@ -81,7 +81,6 @@ int32 ADoorBase::ComputeOpenDirection(AActor* ReferenceActor) const
     }
     FVector DoorForward = ArrowComp->GetForwardVector();
     FVector ToActor = ReferenceActor->GetActorLocation() - GetActorLocation();
-    //FVector ToActor = ReferenceActor->GetActorLocation() - OpenDirectionArrow->GetComponentLocation();
     ToActor.Normalize();
     float Dot = FVector::DotProduct(DoorForward, ToActor);
     int32 Dir = (Dot < 0.f) ? 1 : -1;
@@ -162,10 +161,11 @@ void ADoorBase::OnGuardOpenEndOverlap(UPrimitiveComponent* OverlappedComp, AActo
     if (OtherActor && OtherActor->IsA(AAICharacter::StaticClass()))
     {
         // Check if any other guards or civilians are still overlapping
-        TArray<AActor*> Overlapping;
-        GuardOpenTrigger->GetOverlappingActors(Overlapping, AGuardCharacter::StaticClass());
-        GuardOpenTrigger->GetOverlappingActors(Overlapping, ACivilianCharacter::StaticClass());
-        if (Overlapping.Num() == 0)
+        TArray<AActor*> OverlappingGuards;
+        TArray<AActor*> OverlappingCivilians;
+        GuardOpenTrigger->GetOverlappingActors(OverlappingGuards, AGuardCharacter::StaticClass());
+        GuardOpenTrigger->GetOverlappingActors(OverlappingCivilians, ACivilianCharacter::StaticClass());
+        if (OverlappingGuards.Num() == 0 && OverlappingCivilians.Num() == 0)
         {
             ForceCloseDoorForGuard(OtherActor);
         }
