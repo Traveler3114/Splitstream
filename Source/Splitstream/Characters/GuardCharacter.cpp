@@ -103,7 +103,7 @@ void AGuardCharacter::OnFullyDetected_Implementation(AActor* ActorDetected)
     {
         if (ADefaultGameState* GS = Cast<ADefaultGameState>(GetWorld()->GetGameState()))
         {
-            GS->StartPreAlarm(this, PreAlarmDuration);
+            GS->StartPreAlarm(this, PreAlarmDuration, TimelineEra);
         }
     }
 }

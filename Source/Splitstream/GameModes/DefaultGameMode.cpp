@@ -79,7 +79,7 @@ void ADefaultGameMode::OnAlarmCanceled()
 	GetWorldTimerManager().ClearTimer(RestartTimerHandle);
 }
 
-void ADefaultGameMode::OnPreAlarmStarted(float PreAlarmEndTime, AActor* PreAlarmInstigator)
+void ADefaultGameMode::OnPreAlarmStarted(float PreAlarmEndTime, AActor* PreAlarmInstigator, ETimelineEra Era)
 {
 	if (!HasAuthority())
 		return;

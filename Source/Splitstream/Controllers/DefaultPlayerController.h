@@ -3,6 +3,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "TimelineEra.h"
 #include "DefaultPlayerController.generated.h"
 
 class UPauseMenuWidget;
@@ -105,7 +106,7 @@ private:
     FTimerHandle PreAlarmUpdateTimerHandle;
 
     UFUNCTION()
-    void HandlePreAlarmStarted(float InPreAlarmEndTime, AActor* PreAlarmInstigator);
+    void HandlePreAlarmStarted(float InPreAlarmEndTime, AActor* PreAlarmInstigator, ETimelineEra Era);
 
     UFUNCTION()
     void HandlePreAlarmCanceled();

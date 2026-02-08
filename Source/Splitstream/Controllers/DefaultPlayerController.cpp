@@ -77,7 +77,6 @@ void ADefaultPlayerController::SetupOverlay()
         GS->OnGuardRepairETAStarted.AddDynamic(this, &ADefaultPlayerController::HandleRepairETAStarted);
         OnMoneyCollectedChanged(GS->CurrentMoneyCollected, GS->TargetMoneyAmount);
 
-
         // --- The critical part: immediately update alarm/pre-alarm UI
         if (GS->bAlarmActive && GS->AlarmEndTime > 0.f)
         {
@@ -85,7 +84,20 @@ void ADefaultPlayerController::SetupOverlay()
         }
         else if (GS->bPreAlarmActive && GS->PreAlarmEndTime > 0.f)
         {
-            HandlePreAlarmStarted(GS->PreAlarmEndTime, GS->PreAlarmSoonestInstigator);
+            // Find Era for soonest instigator
+            ETimelineEra SoonestEra = ETimelineEra::Past;
+            if (GS->PreAlarmSoonestInstigator)
+            {
+                for (const FPreAlarmInstigatorInfo& Info : GS->PreAlarmInstigatorsInfo)
+                {
+                    if (Info.Instigator == GS->PreAlarmSoonestInstigator)
+                    {
+                        SoonestEra = Info.Era;
+                        break;
+                    }
+                }
+            }
+            HandlePreAlarmStarted(GS->PreAlarmEndTime, GS->PreAlarmSoonestInstigator, SoonestEra);
         }
         else
         {
@@ -246,16 +258,32 @@ void ADefaultPlayerController::UpdateAlarmUI()
     }
 }
 
-void ADefaultPlayerController::HandlePreAlarmStarted(float InPreAlarmEndTime, AActor* PreAlarmInstigator)
+void ADefaultPlayerController::HandlePreAlarmStarted(float InPreAlarmEndTime, AActor* PreAlarmInstigator, ETimelineEra Era)
 {
     // Only show pre-alarm if full alarm is not active
     if (AlarmEndTime > 0.f)
         return;
 
+    // --- ERA TEAM CHECK ---
+    ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
+    if (!PS)
+        return;
+
+    UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
+    if (!ASC)
+        return;
+
+    FGameplayTag TeamTag = (Era == ETimelineEra::Past)
+        ? FGameplayTag::RequestGameplayTag(TEXT("Team.Past"))
+        : FGameplayTag::RequestGameplayTag(TEXT("Team.Future"));
+
+    if (!ASC->HasMatchingGameplayTag(TeamTag))
+        return;
+
+    // Show PreAlarm only for correct team/era
     PreAlarmEndTime = InPreAlarmEndTime;
     GetWorldTimerManager().ClearTimer(PreAlarmUpdateTimerHandle);
     GetWorldTimerManager().SetTimer(PreAlarmUpdateTimerHandle, this, &ADefaultPlayerController::UpdatePreAlarmUI, 0.1f, true);
-
     UpdatePreAlarmUI();
 }
 

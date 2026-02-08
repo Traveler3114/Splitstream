@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "BaseGameState.h"
+#include "TimelineEra.h"
 #include "DefaultGameState.generated.h"
 
 class AActor;
@@ -9,7 +10,7 @@ class AActor;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAlarmStarted, float, AlarmEndTime);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAlarmCanceled);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnRestartRequested);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPreAlarmStarted, float, PreAlarmEndTime, AActor*, PreAlarmInstigator);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnPreAlarmStarted, float, PreAlarmEndTime, AActor*, PreAlarmInstigator, ETimelineEra, Era);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPreAlarmCanceled);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnMoneyCollectedChanged, int32, CurrentMoney, int32, TargetMoney);
 
@@ -38,8 +39,13 @@ struct FPreAlarmInstigatorInfo
     UPROPERTY()
     float ETA = 0.f;
 
-    FPreAlarmInstigatorInfo() : Instigator(nullptr), ETA(0.f) {}
-    FPreAlarmInstigatorInfo(AActor* InActor, float InETA) : Instigator(InActor), ETA(InETA) {}
+    UPROPERTY()
+    ETimelineEra Era = ETimelineEra::Past; // Add this
+
+    FPreAlarmInstigatorInfo() : Instigator(nullptr), ETA(0.f), Era(ETimelineEra::Past) {}
+    FPreAlarmInstigatorInfo(AActor* InActor, float InETA, ETimelineEra InEra)
+        : Instigator(InActor), ETA(InETA), Era(InEra) {
+    }
 };
 
 UCLASS()
@@ -118,7 +124,7 @@ public:
 
     // PRE-ALARM
     UFUNCTION(BlueprintCallable)
-    void StartPreAlarm(AActor* InPreAlarmInstigator, float Duration);
+    void StartPreAlarm(AActor* InPreAlarmInstigator, float Duration, ETimelineEra Era);
 
     UFUNCTION(BlueprintCallable)
     void CancelPreAlarm(AActor* InCancelingInstigator = nullptr);

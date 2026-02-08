@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "BaseGameMode.h"
+#include "TimelineEra.h"
 #include "DefaultGameMode.generated.h"
 
 UCLASS()
@@ -26,7 +27,7 @@ protected:
 	void OnAlarmCanceled();
 
 	UFUNCTION()
-	void OnPreAlarmStarted(float PreAlarmEndTime, AActor* PreAlarmInstigator);
+	void OnPreAlarmStarted(float PreAlarmEndTime, AActor* PreAlarmInstigator, ETimelineEra Era);
 
 	UFUNCTION()
 	void OnPreAlarmCanceled();
