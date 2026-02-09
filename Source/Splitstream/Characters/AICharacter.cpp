@@ -76,9 +76,12 @@ void AAICharacter::BeginPlay()
         SearchComponent->OnSearchComplete.AddDynamic(this, &AAICharacter::OnSearchComplete);
     }
 
-    if (UDetectorRegistry* Registry = GetWorld()->GetSubsystem<UDetectorRegistry>())
+    if (UWorld* World = GetWorld())
     {
-        Registry->Register(this);
+        if (UDetectorRegistry* Registry = World->GetSubsystem<UDetectorRegistry>())
+        {
+            Registry->Register(this);
+        }
     }
 }
 

@@ -1,12 +1,16 @@
 #include "Subsystems/DetectorRegistry.h"
 
+// Cleanup threshold: Remove stale weak pointers when registry grows beyond this size
+// to prevent memory bloat from destroyed actors
+static constexpr int32 CleanupThreshold = 50;
+
 void UDetectorRegistry::Register(AActor* Detector)
 {
     if (Detector)
     {
         Detectors.Add(Detector);
         // Opportunistically clean up stale references during registration
-        if (Detectors.Num() > 50) // Only cleanup if set grows large
+        if (Detectors.Num() > CleanupThreshold)
         {
             CleanupStaleReferences();
         }

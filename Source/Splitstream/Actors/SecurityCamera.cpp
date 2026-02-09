@@ -47,9 +47,12 @@ void ASecurityCamera::BeginPlay()
         GetWorldTimerManager().SetTimer(PanTimerHandle, this, &ASecurityCamera::PanUpdate, PanInterval, true);
     }
 
-    if (UDetectorRegistry* Registry = GetWorld()->GetSubsystem<UDetectorRegistry>())
+    if (UWorld* World = GetWorld())
     {
-        Registry->Register(this);
+        if (UDetectorRegistry* Registry = World->GetSubsystem<UDetectorRegistry>())
+        {
+            Registry->Register(this);
+        }
     }
 }
 
