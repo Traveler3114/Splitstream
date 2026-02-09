@@ -9,6 +9,9 @@
  * (guards, cameras, etc.) to avoid TActorIterator sweeps.
  *
  * Created automatically per-world on both server and clients.
+ * Each world (server/clients) has its own registry instance.
+ * 
+ * Uses TWeakObjectPtr to safely handle actor destruction without explicit unregistration.
  */
 UCLASS()
 class SPLITSTREAM_API UDetectorRegistry : public UWorldSubsystem
@@ -19,8 +22,9 @@ public:
     void Register(AActor* Detector);
     void Unregister(AActor* Detector);
 
-    const TSet<AActor*>& GetDetectors() const { return Detectors; }
+    /** Returns array of valid (non-destroyed) detectors. Safe for iteration. */
+    TArray<AActor*> GetValidDetectors() const;
 
 private:
-    TSet<AActor*> Detectors;
+    TSet<TWeakObjectPtr<AActor>> Detectors;
 };

@@ -290,11 +290,14 @@ void ADefaultCharacter::OnIllegalTagChanged(const FGameplayTag Tag, int32 NewCou
     UDetectorRegistry* Registry = World->GetSubsystem<UDetectorRegistry>();
     if (!Registry) return;
 
+    // Copy to array to safely iterate (prevents iterator invalidation if callbacks modify the registry)
+    TArray<AActor*> Detectors = Registry->GetValidDetectors();
+
     if (NewCount > 0)
     {
-        for (AActor* Detector : Registry->GetDetectors())
+        for (AActor* Detector : Detectors)
         {
-            if (!Detector) continue;
+            if (!IsValid(Detector)) continue;
             if (IDetectable::Execute_IsActorAlreadyDetected(Detector, this))
             {
                 IDetectable::Execute_OnDetected(this, Detector);
@@ -303,9 +306,9 @@ void ADefaultCharacter::OnIllegalTagChanged(const FGameplayTag Tag, int32 NewCou
     }
     else
     {
-        for (AActor* Detector : Registry->GetDetectors())
+        for (AActor* Detector : Detectors)
         {
-            if (!Detector) continue;
+            if (!IsValid(Detector)) continue;
             if (IDetectable::Execute_IsActorAlreadyDetected(Detector, this))
             {
                 IDetectable::Execute_OnLost(this, Detector);

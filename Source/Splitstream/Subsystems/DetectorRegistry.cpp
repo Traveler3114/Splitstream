@@ -15,3 +15,19 @@ void UDetectorRegistry::Unregister(AActor* Detector)
         Detectors.Remove(Detector);
     }
 }
+
+TArray<AActor*> UDetectorRegistry::GetValidDetectors() const
+{
+    TArray<AActor*> ValidDetectors;
+    ValidDetectors.Reserve(Detectors.Num());
+    
+    for (const TWeakObjectPtr<AActor>& WeakDetector : Detectors)
+    {
+        if (AActor* Detector = WeakDetector.Get())
+        {
+            ValidDetectors.Add(Detector);
+        }
+    }
+    
+    return ValidDetectors;
+}
