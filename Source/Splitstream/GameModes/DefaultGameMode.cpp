@@ -84,29 +84,37 @@ void ADefaultGameMode::EliminatePlayersInEra(ETimelineEra Era)
         ? FGameplayTag::RequestGameplayTag(TEXT("Team.Past"))
         : FGameplayTag::RequestGameplayTag(TEXT("Team.Future"));
 
-    for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
+    for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
     {
-        if (ADefaultPlayerController* PC = Cast<ADefaultPlayerController>(Iterator->Get()))
+        ADefaultPlayerController* PC = Cast<ADefaultPlayerController>(It->Get());
+        if (!PC) continue;
+
+        ADefaultPlayerState* PS = PC->GetPlayerState<ADefaultPlayerState>();
+        if (!PS) continue;
+
+        UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
+        if (!ASC || !ASC->HasMatchingGameplayTag(EraTag)) continue;
+
+        APawn* PawnToRemove = PC->GetPawn();
+
+        // Destroy the pawn on the server first
+        if (PawnToRemove)
         {
-            if (ADefaultPlayerState* PS = PC->GetPlayerState<ADefaultPlayerState>())
-            {
-                if (UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent())
-                {
-                    if (ASC->HasMatchingGameplayTag(EraTag))
-                    {
-                        if (APawn* PawnToRemove = PC->GetPawn())
-                        {
-                            PC->UnPossess();
-                            PawnToRemove->Destroy();
-                        }
-                        PC->ChangeState(NAME_Spectating);
-                    }
-                }
-            }
+            PawnToRemove->Destroy();
+        }
+
+        // For the listen server host, do it directly
+        if (PC->IsLocalController())
+        {
+            PC->StartSpectatingOnly();
+        }
+        else
+        {
+            // For clients, tell them via RPC to enter spectator mode
+            PC->ClientEnterSpectatorMode();
         }
     }
 }
-
 
 void ADefaultGameMode::OnAlarmCanceled()
 {

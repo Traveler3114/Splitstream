@@ -3,14 +3,16 @@
 #include "GameFramework/PlayerState.h"
 #include "GameFramework/SpectatorPawn.h"
 #include "Kismet/GameplayStatics.h"
+#include "GameFramework/GameStateBase.h"
 #include "Engine/World.h"
-
+#include "TimerManager.h"
 
 ADefaultSpectatorPawn::ADefaultSpectatorPawn()
 {
     PrimaryActorTick.bCanEverTick = false;
     bReplicates = true;
 }
+
 // Bind A/D for cycling
 void ADefaultSpectatorPawn::SetupPlayerInputComponent(UInputComponent* InInputComponent)
 {
@@ -19,34 +21,36 @@ void ADefaultSpectatorPawn::SetupPlayerInputComponent(UInputComponent* InInputCo
 
     InInputComponent->BindKey(EKeys::A, IE_Pressed, this, &ADefaultSpectatorPawn::SpectatePrevious);
     InInputComponent->BindKey(EKeys::D, IE_Pressed, this, &ADefaultSpectatorPawn::SpectateNext);
-
-    // Optional: Prevent movement/freelook
     InInputComponent->BindAxis("MoveForward", this, &ADefaultSpectatorPawn::MoveForward);
     InInputComponent->BindAxis("MoveRight", this, &ADefaultSpectatorPawn::MoveRight);
 }
 
-
 void ADefaultSpectatorPawn::BeginPlay()
 {
     Super::BeginPlay();
-    // On clients: assign camera to first spectatable player
-    if (APlayerController* PC = Cast<APlayerController>(GetController()))
+        if (APlayerController* PC = Cast<APlayerController>(GetController()))
     {
         UpdateSpectateList();
-        SetSpectateTarget(0);
+        if (SpectatablePlayers.Num() > 0)
+        {
+            SetSpectateTarget(0);
+        }
     }
 }
 
 void ADefaultSpectatorPawn::PossessedBy(AController* NewController)
 {
     Super::PossessedBy(NewController);
+
     if (APlayerController* PC = Cast<APlayerController>(NewController))
     {
         UpdateSpectateList();
-        SetSpectateTarget(0);
+        if (SpectatablePlayers.Num() > 0)
+        {
+            SetSpectateTarget(0);
+        }
     }
 }
-
 
 
 void ADefaultSpectatorPawn::SpectateNext()
@@ -55,8 +59,6 @@ void ADefaultSpectatorPawn::SpectateNext()
     if (SpectatablePlayers.Num() == 0) return;
     SetSpectateTarget((SpectateTargetIndex + 1) % SpectatablePlayers.Num());
 }
-
-
 
 void ADefaultSpectatorPawn::SpectatePrevious()
 {
@@ -68,7 +70,11 @@ void ADefaultSpectatorPawn::SpectatePrevious()
 void ADefaultSpectatorPawn::SetSpectateTarget(int32 Index)
 {
     UpdateSpectateList();
-    if (SpectatablePlayers.Num() == 0) return;
+    if (SpectatablePlayers.Num() == 0)
+    {
+        return;
+    }
+
     SpectateTargetIndex = Index % SpectatablePlayers.Num();
     if (SpectateTargetIndex < 0) SpectateTargetIndex += SpectatablePlayers.Num();
 
@@ -83,7 +89,6 @@ void ADefaultSpectatorPawn::SetSpectateTarget(int32 Index)
     }
 }
 
-
 void ADefaultSpectatorPawn::UpdateSpectateList()
 {
     SpectatablePlayers.Empty();
@@ -92,15 +97,22 @@ void ADefaultSpectatorPawn::UpdateSpectateList()
 
     APlayerController* LocalPC = Cast<APlayerController>(GetController());
 
-    for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
-    {
-        APlayerController* PC = Cast<APlayerController>(It->Get());
-        if (!PC || PC == LocalPC) continue;
+    // Use PlayerArray from GameState for replicated player list
+    AGameStateBase* GS = World->GetGameState<AGameStateBase>();
+    if (!GS) return;
 
-        APawn* Pawn = PC->GetPawn();
+    for (APlayerState* PS : GS->PlayerArray)
+    {
+        if (!PS) continue;
+        if (LocalPC && PS == LocalPC->PlayerState) continue;
+
+        APawn* Pawn = PS->GetPawn();
         if (!Pawn || Pawn->IsA<ASpectatorPawn>()) continue; // skip spectators/dead
 
-        // Optionally: Check your player is actually alive (add team/status logic here)
-        SpectatablePlayers.Add(PC->PlayerState);
+        SpectatablePlayers.Add(PS);
     }
 }
+
+// Prevent movement (overwrite movement input handler)
+void ADefaultSpectatorPawn::MoveForward(float) {}
+void ADefaultSpectatorPawn::MoveRight(float) {}

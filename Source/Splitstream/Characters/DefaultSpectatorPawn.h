@@ -25,8 +25,8 @@ public:
 protected:
 
     // Prevent movement (overwrite movement input handler)
-    virtual void MoveForward(float) {}
-    virtual void MoveRight(float) {}
+    virtual void MoveForward(float);
+    virtual void MoveRight(float);
 
     TArray<APlayerState*> SpectatablePlayers;
     int32 SpectateTargetIndex = 0;

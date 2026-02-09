@@ -28,6 +28,11 @@ ADefaultPlayerController::ADefaultPlayerController()
     PauseMenuWidget = nullptr;
 }
 
+void ADefaultPlayerController::ClientEnterSpectatorMode_Implementation()
+{
+    StartSpectatingOnly();
+}
+
 void ADefaultPlayerController::SetupOverlay()
 {
     if (!IsLocalController()) return;
