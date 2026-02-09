@@ -167,6 +167,11 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction")
     float InteractDistance = 300.f;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction")
+    float InteractHighlightInterval = 0.1f;
+
+    float InteractHighlightTimer = 0.f;
+
     UFUNCTION()
     void HandleInteractHoldStart();
 

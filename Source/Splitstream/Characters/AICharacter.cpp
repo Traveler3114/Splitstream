@@ -60,8 +60,11 @@ void AAICharacter::BeginPlay()
             }
         }
     }
-    AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute())
-        .AddUObject(this, &AAICharacter::OnHealthChanged);
+    if (AbilitySystemComponent && AttributeSet)
+    {
+        AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute())
+            .AddUObject(this, &AAICharacter::OnHealthChanged);
+    }
 
     if (AIPerceptionComponent)
     {
