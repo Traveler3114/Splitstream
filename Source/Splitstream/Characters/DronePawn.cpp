@@ -55,6 +55,7 @@ void ADronePawn::ActivateDrone(ANavNode* Node)
     LaunchStartLocation = GetActorLocation();
     LaunchTargetLocation = LaunchStartLocation + FVector(0, 0, LaunchUpDistance);
     LaunchAnimTimeElapsed = 0.f;
+    LastLaunchTimestamp = GetWorld()->GetTimeSeconds();
 
     // Start timer to lerp upward
     GetWorld()->GetTimerManager().SetTimer(
@@ -69,7 +70,11 @@ void ADronePawn::ActivateDrone(ANavNode* Node)
 // Called every tick while launching upward
 void ADronePawn::MoveUpForLaunch()
 {
-    LaunchAnimTimeElapsed += 0.02f;
+    double Now = GetWorld()->GetTimeSeconds();
+    float DeltaTime = static_cast<float>(Now - LastLaunchTimestamp);
+    LastLaunchTimestamp = Now;
+
+    LaunchAnimTimeElapsed += DeltaTime;
     float Alpha = FMath::Clamp(LaunchAnimTimeElapsed / LaunchUpDuration, 0.f, 1.f);
     float S = FMath::SmoothStep(0.f, 1.f, Alpha);
 
@@ -165,6 +170,7 @@ void ADronePawn::RequestRepair_Implementation(AActor* RepairInstigator)
         MeshAlignTargetLocation = FVector::ZeroVector;
         MeshAlignTargetRotation = FRotator::ZeroRotator;
         MeshAlignElapsed = 0.f;
+        LastMeshAlignTimestamp = GetWorld()->GetTimeSeconds();
 
         // Start timer to interpolate mesh to root
         GetWorld()->GetTimerManager().SetTimer(
@@ -204,7 +210,11 @@ void ADronePawn::RequestRepair_Implementation(AActor* RepairInstigator)
 
 void ADronePawn::UpdateMeshAlignInterp()
 {
-    MeshAlignElapsed += 0.02f;
+    double Now = GetWorld()->GetTimeSeconds();
+    float DeltaTime = static_cast<float>(Now - LastMeshAlignTimestamp);
+    LastMeshAlignTimestamp = Now;
+
+    MeshAlignElapsed += DeltaTime;
     float Alpha = FMath::Clamp(MeshAlignElapsed / MeshAlignDuration, 0.f, 1.f);
 
     if (DroneMesh)
