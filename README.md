@@ -30,7 +30,7 @@ Splitstream/
 │   ├── Splitstream/         # Primary game module (all C++ gameplay code)
 │   ├── Splitstream.Target.cs
 │   └── SplitstreamEditor.Target.cs
-├── docs/                    # Detailed project and codebase documentation
+├── docs-*.md                # Detailed project and codebase documentation
 └── Splitstream.uproject     # Project descriptor (UE 5.7)
 ```
 
@@ -56,17 +56,17 @@ Splitstream/
 
 ## Documentation
 
-Detailed documentation is available in the [`/docs`](docs/) folder:
+Detailed documentation is available in the project root:
 
 | Document | Description |
 |---|---|
-| [Architecture Overview](docs/architecture.md) | High-level system architecture and module layout |
-| [Gameplay Systems](docs/gameplay-systems.md) | Detection, alarms, timelines, puzzles, and stealth |
-| [Ability System (GAS)](docs/ability-system.md) | GAS integration, attributes, abilities, and tags |
-| [Networking & Multiplayer](docs/networking.md) | Replication, session management, and travel flow |
-| [Actors & Components](docs/actors-and-components.md) | Reference for all actors and actor components |
-| [UI & Widgets](docs/ui-widgets.md) | HUD, menus, mini-game widgets, and settings |
-| [Code Review](docs/code-review.md) | Full codebase review, strengths, improvements, and grade |
+| [Architecture Overview](docs-architecture.md) | High-level system architecture and module layout |
+| [Gameplay Systems](docs-gameplay-systems.md) | Detection, alarms, timelines, puzzles, and stealth |
+| [Ability System (GAS)](docs-ability-system.md) | GAS integration, attributes, abilities, and tags |
+| [Networking & Multiplayer](docs-networking.md) | Replication, session management, and travel flow |
+| [Actors & Components](docs-actors-and-components.md) | Reference for all actors and actor components |
+| [UI & Widgets](docs-ui-widgets.md) | HUD, menus, mini-game widgets, and settings |
+| [Code Review](docs-code-review.md) | Full codebase review, strengths, improvements, and grade |
 
 ---
 
