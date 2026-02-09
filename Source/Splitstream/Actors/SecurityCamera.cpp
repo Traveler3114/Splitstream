@@ -9,6 +9,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "GameStates/DefaultGameState.h"
 #include "DrawDebugHelpers.h" // needed for debug drawing
+#include "Subsystems/DetectorRegistry.h"
 
 ASecurityCamera::ASecurityCamera()
 {
@@ -45,10 +46,23 @@ void ASecurityCamera::BeginPlay()
     {
         GetWorldTimerManager().SetTimer(PanTimerHandle, this, &ASecurityCamera::PanUpdate, PanInterval, true);
     }
+
+    if (UWorld* World = GetWorld())
+    {
+        if (UDetectorRegistry* Registry = World->GetSubsystem<UDetectorRegistry>())
+        {
+            Registry->Register(this);
+        }
+    }
 }
 
 void ASecurityCamera::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+    if (UDetectorRegistry* Registry = GetWorld() ? GetWorld()->GetSubsystem<UDetectorRegistry>() : nullptr)
+    {
+        Registry->Unregister(this);
+    }
+
     // Clean up timers
     GetWorldTimerManager().ClearTimer(DetectionTimerHandle);
     GetWorldTimerManager().ClearTimer(PanTimerHandle);

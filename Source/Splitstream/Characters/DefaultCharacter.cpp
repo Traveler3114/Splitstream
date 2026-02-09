@@ -18,12 +18,12 @@
 #include "DefaultGameInstance.h"
 #include "AbilitySystem/SplitstreamGameplayTags.h"
 #include "Interfaces/IDetectable.h"
-#include "EngineUtils.h"
 #include "Controllers/DefaultPlayerController.h"
 #include "ActorComponents/HackComponent.h"
 #include "ActorComponents/SearchComponent.h"
 #include "ActorComponents/LockPickComponent.h"
 #include "ActorComponents/DetectionComponent.h"
+#include "Subsystems/DetectorRegistry.h"
 
 ADefaultCharacter::ADefaultCharacter()
 {
@@ -287,31 +287,33 @@ void ADefaultCharacter::OnIllegalTagChanged(const FGameplayTag Tag, int32 NewCou
     UWorld* World = GetWorld();
     if (!World) return;
 
+    UDetectorRegistry* Registry = World->GetSubsystem<UDetectorRegistry>();
+    if (!Registry) return;
+
+    // Copy to array to safely iterate (prevents iterator invalidation if callbacks modify the registry)
+    TArray<AActor*> Detectors = Registry->GetValidDetectors();
+
     if (NewCount > 0)
     {
-        // Tag ADDED: Notify all guards who are "seeing" us that we are now illegal
-        for (TActorIterator<AActor> ActorItr(World); ActorItr; ++ActorItr)
+        for (AActor* Detector : Detectors)
         {
-            if (ActorItr->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
+            if (!IsValid(Detector)) continue;
+            if (!Detector->GetClass()->ImplementsInterface(UDetectable::StaticClass())) continue;
+            if (IDetectable::Execute_IsActorAlreadyDetected(Detector, this))
             {
-                if (IDetectable::Execute_IsActorAlreadyDetected(*ActorItr, this))
-                {
-                    IDetectable::Execute_OnDetected(this, *ActorItr);
-                }
+                IDetectable::Execute_OnDetected(this, Detector);
             }
         }
     }
     else
     {
-        // Tag REMOVED: Notify all guards who are "seeing" us to cancel detection
-        for (TActorIterator<AActor> ActorItr(World); ActorItr; ++ActorItr)
+        for (AActor* Detector : Detectors)
         {
-            if (ActorItr->GetClass()->ImplementsInterface(UDetectable::StaticClass()))
+            if (!IsValid(Detector)) continue;
+            if (!Detector->GetClass()->ImplementsInterface(UDetectable::StaticClass())) continue;
+            if (IDetectable::Execute_IsActorAlreadyDetected(Detector, this))
             {
-                if (IDetectable::Execute_IsActorAlreadyDetected(*ActorItr, this))
-                {
-                    IDetectable::Execute_OnLost(this, *ActorItr);
-                }
+                IDetectable::Execute_OnLost(this, Detector);
             }
         }
     }
