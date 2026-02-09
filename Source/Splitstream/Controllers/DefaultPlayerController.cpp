@@ -87,7 +87,7 @@ void ADefaultPlayerController::SetupOverlay()
         }
         else
         {
-            // Check both eras — HandlePreAlarmStarted already filters by team tag
+            // Check both eras ï¿½ HandlePreAlarmStarted already filters by team tag
             bool bAnyPreAlarmShown = false;
 
             if (GS->PastPreAlarm.bActive && GS->PastPreAlarm.EndTime > 0.f)
@@ -110,26 +110,7 @@ void ADefaultPlayerController::SetupOverlay()
     }
 }
 
-void ADefaultPlayerController::RequestLeaveToMainMenu()
-{
-    if (HasAuthority() && IsLocalController())
-    {
-        // Host: tell GameMode
-        if (ADefaultGameMode* GM = GetWorld()->GetAuthGameMode<ADefaultGameMode>())
-        {
-            GM->HostLeaveLobby();
-        }
-    }
-    else
-    {
-        // CLIENT: only disconnect self, do NOT trigger session/network destroy
-        if (ADefaultGameState* GS = GetWorld()->GetGameState<ADefaultGameState>())
-        {
-            ClientShowLoadingScreen();
-            ClientTravel(GS->MainMenuMapPath, TRAVEL_Absolute);
-        }
-    }
-}
+
 void ADefaultPlayerController::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);
@@ -361,17 +342,6 @@ void ADefaultPlayerController::UpdatePingOnOverlay()
     }
 }
 
-void ADefaultPlayerController::ClientShowLoadingScreen_Implementation()
-{
-    if (LoadingWidgetClass)
-    {
-        LoadingWidgetInstance = CreateWidget<UUserWidget>(this, LoadingWidgetClass, TEXT("LoadingWidget"));
-        if (LoadingWidgetInstance)
-        {
-            LoadingWidgetInstance->AddToViewport();
-        }
-    }
-}
 
 
 void ADefaultPlayerController::OnRep_PlayerState()

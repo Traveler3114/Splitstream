@@ -3,6 +3,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "Controllers/BasePlayerController.h"
 #include "TimelineEra.h"
 #include "DefaultPlayerController.generated.h"
 
@@ -10,7 +11,7 @@ class UPauseMenuWidget;
 class ATerminal;
 
 UCLASS()
-class SPLITSTREAM_API ADefaultPlayerController : public APlayerController
+class SPLITSTREAM_API ADefaultPlayerController : public ABasePlayerController
 {
     GENERATED_BODY()
 public:
@@ -25,9 +26,6 @@ public:
 
     UFUNCTION(Client, Reliable)
     void ClientEnterSpectatorMode();
-    
-    UFUNCTION(BlueprintCallable)
-    void RequestLeaveToMainMenu();
 
 	void SetupOverlay();
 
@@ -45,12 +43,6 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
     TSubclassOf<class UCalendarWidget> CalendarWidgetClass;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
-    TSubclassOf<class UUserWidget> LoadingWidgetClass;
-
-    UPROPERTY()
-    UUserWidget* LoadingWidgetInstance = nullptr;
-
     UPROPERTY(BlueprintReadWrite)
     UCalendarWidget* CalendarWidgetInstance;
 
@@ -61,9 +53,6 @@ public:
 
     UFUNCTION(Client, Reliable)
     void ClientUpdateDetectionWidget(AActor* Detector, float Progress, bool bIsLocked);
-
-    UFUNCTION(Client, Reliable)
-    void ClientShowLoadingScreen();
 
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
     void OnMoneyCollectedChanged(int32 Current, int32 Target);

@@ -2,13 +2,14 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "Controllers/BasePlayerController.h"
 #include "LobbyPlayerController.generated.h"
 
 class ULobbyUI;
 class APlayerState;
 
 UCLASS()
-class SPLITSTREAM_API ALobbyPlayerController : public APlayerController
+class SPLITSTREAM_API ALobbyPlayerController : public ABasePlayerController
 {
     GENERATED_BODY()
 
@@ -18,22 +19,11 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
     TSubclassOf<class ULobbyUI> LobbyUIClass;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
-    TSubclassOf<class UUserWidget> LoadingWidgetClass;
-
     UFUNCTION(Client, Reliable)
     void ClientSetStartButtonEnabled(bool bEnabled);
 
     UFUNCTION(Server, Reliable)
     void ServerStartGame();
-
-    // Show loading screen locally on client
-    UFUNCTION(Client, Reliable)
-    void ClientShowLoadingScreen();
-
-    // Called by UI when user presses Leave
-    UFUNCTION()
-    void RequestLeaveToMainMenu();
 
     // Host-only: kick a player by PlayerState (called from PlayerLobbyInfo)
     UFUNCTION(Server, Reliable)
@@ -42,4 +32,5 @@ public:
 private:
     UPROPERTY()
     ULobbyUI* LobbyUIInstance = nullptr;
+
 };

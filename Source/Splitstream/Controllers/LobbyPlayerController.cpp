@@ -69,37 +69,6 @@ void ALobbyPlayerController::ServerStartGame_Implementation()
     }
 }
 
-void ALobbyPlayerController::ClientShowLoadingScreen_Implementation()
-{
-    if (LoadingWidgetClass)
-    {
-        if (UUserWidget* LoadingWidget = CreateWidget<UUserWidget>(this, LoadingWidgetClass, TEXT("LoadingWidget")))
-        {
-            LoadingWidget->AddToViewport();
-        }
-    }
-}
-
-void ALobbyPlayerController::RequestLeaveToMainMenu()
-{
-    if (HasAuthority() && IsLocalController())
-    {
-        // Host: tell GameMode
-        if (ALobbyGameMode* GM = GetWorld()->GetAuthGameMode<ALobbyGameMode>())
-        {
-            GM->HostLeaveLobby();
-        }
-    }
-    else
-    {
-        // CLIENT: only disconnect self, do NOT trigger session/network destroy
-        if (ALobbyGameState* GS = GetWorld()->GetGameState<ALobbyGameState>())
-        {
-            ClientShowLoadingScreen();
-            ClientTravel(GS->MainMenuMapPath, TRAVEL_Absolute);
-        }
-    }
-}
 void ALobbyPlayerController::ServerKickPlayer_Implementation(APlayerState* TargetPS)
 {
     if (!HasAuthority() || !TargetPS) return;

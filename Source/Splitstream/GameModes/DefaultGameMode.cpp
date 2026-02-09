@@ -189,7 +189,7 @@ void ADefaultGameMode::RestartLevel()
     for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
     {
         if (ADefaultPlayerController* PC = Cast<ADefaultPlayerController>(Iterator->Get()))
-            PC->ClientShowLoadingScreen();
+            PC->ClientShowLoadingWidget();
     }
 
     GetWorld()->ServerTravel(LobbyURL);

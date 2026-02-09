@@ -249,7 +249,7 @@ void ALobbyGameMode::StartGameIfAllowed(ALobbyPlayerController* RequestingPC)
         {
             if (ALobbyPlayerController* LPC = Cast<ALobbyPlayerController>(It->Get()))
             {
-                LPC->ClientShowLoadingScreen();
+                LPC->ClientShowLoadingWidget();
             }
         }
 
@@ -317,7 +317,7 @@ void ALobbyGameMode::KickPlayerByPlayerState(APlayerState* TargetPS)
                 // 1) UX: Tell client to show loading
                 if (ALobbyPlayerController* LPC = Cast<ALobbyPlayerController>(PC))
                 {
-                    LPC->ClientShowLoadingScreen();
+                    LPC->ClientShowLoadingWidget();
                 }
 
                 // 2) Travel the client to MainMenu

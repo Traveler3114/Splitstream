@@ -20,16 +20,3 @@ void AMainMenuPlayerController::BeginPlay()
         }
     }
 }
-
-// In MainMenuPlayerController.cpp:
-void AMainMenuPlayerController::ShowLoadingWidget()
-{
-    if (LoadingWidgetClass)
-    {
-        UUserWidget* LoadingWidget = CreateWidget<UUserWidget>(this, LoadingWidgetClass, TEXT("LoadingWidget"));
-        if (LoadingWidget)
-        {
-            LoadingWidget->AddToViewport();
-        }
-    }
-}
