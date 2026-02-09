@@ -24,6 +24,8 @@ public:
     virtual void OnRep_PlayerState() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
+    float GetSyncedServerTime() const;
+
     UFUNCTION(Client, Reliable)
     void ClientEnterSpectatorMode();
 

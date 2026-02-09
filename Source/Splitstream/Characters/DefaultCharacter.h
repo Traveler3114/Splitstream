@@ -218,4 +218,5 @@ public:
 private:
     void GrantAbilitiesFromInputSet();
     void GrantAbilitiesFromDefaultSet();
+    void GrantAbilitiesFromSet(UAbilitySystemComponent* ASC, const UAbilityInputSet* Set);
 };

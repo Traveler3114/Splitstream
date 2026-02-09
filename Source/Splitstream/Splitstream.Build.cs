@@ -38,7 +38,6 @@ public class Splitstream : ModuleRules
         {
             "Slate",
             "SlateCore",
-            "UMG",
             "OnlineSubsystem",
             "OnlineSubsystemUtils",
             "NetCore" // <-- needed for ENetCloseResult and related helpers

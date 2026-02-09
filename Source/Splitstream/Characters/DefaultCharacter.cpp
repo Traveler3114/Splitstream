@@ -183,6 +183,22 @@ void ADefaultCharacter::OnCrouchSpeedChanged(const FOnAttributeChangeData& Chang
     GetCharacterMovement()->MaxWalkSpeedCrouched = ChangeData.NewValue;
 }
 
+
+void ADefaultCharacter::GrantAbilitiesFromSet(UAbilitySystemComponent* ASC, const UAbilityInputSet* Set)
+{
+    if (!ASC || !Set) return;
+    for (const FAbilityInputSetEntry& Entry : Set->Abilities)
+    {
+        if (!Entry.AbilityClass) continue;
+        FGameplayAbilitySpec Spec(Entry.AbilityClass, Entry.AbilityLevel, 0);
+        if (Entry.InputTag.IsValid())
+        {
+            Spec.GetDynamicSpecSourceTags().AddTag(Entry.InputTag);
+        }
+        ASC->GiveAbility(Spec);
+    }
+}
+
 void ADefaultCharacter::GrantAbilitiesFromDefaultSet()
 {
     if (!DefaultGASet) return;
@@ -200,6 +216,8 @@ void ADefaultCharacter::GrantAbilitiesFromDefaultSet()
     }
 }
 
+
+
 void ADefaultCharacter::GrantAbilitiesFromInputSet()
 {
     ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
@@ -209,40 +227,13 @@ void ADefaultCharacter::GrantAbilitiesFromInputSet()
 
     if (FutureGASet && ASC->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("Team.Future")))
     {
-        for (const FAbilityInputSetEntry& Entry : FutureGASet->Abilities)
-        {
-            if (!Entry.AbilityClass) continue;
-            FGameplayAbilitySpec Spec(Entry.AbilityClass, Entry.AbilityLevel, 0);
-            if (Entry.InputTag.IsValid())
-            {
-                Spec.GetDynamicSpecSourceTags().AddTag(Entry.InputTag);
-            }
-            ASC->GiveAbility(Spec);
-        }
+        GrantAbilitiesFromSet(ASC, FutureGASet);
     }
 
     if (SoloGASet && ASC->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("Team.Solo")))
     {
-        for (const FAbilityInputSetEntry& Entry : SoloGASet->Abilities)
-        {
-            if (!Entry.AbilityClass) continue;
-            FGameplayAbilitySpec Spec(Entry.AbilityClass, Entry.AbilityLevel, 0);
-            if (Entry.InputTag.IsValid())
-            {
-                Spec.GetDynamicSpecSourceTags().AddTag(Entry.InputTag);
-            }
-            ASC->GiveAbility(Spec);
-        }
-        for (const FAbilityInputSetEntry& Entry : FutureGASet->Abilities)
-        {
-            if (!Entry.AbilityClass) continue;
-            FGameplayAbilitySpec Spec(Entry.AbilityClass, Entry.AbilityLevel, 0);
-            if (Entry.InputTag.IsValid())
-            {
-                Spec.GetDynamicSpecSourceTags().AddTag(Entry.InputTag);
-            }
-            ASC->GiveAbility(Spec);
-        }
+        GrantAbilitiesFromSet(ASC, SoloGASet);
+        GrantAbilitiesFromSet(ASC, FutureGASet); // If needed for Solo as designed
     }
 }
 

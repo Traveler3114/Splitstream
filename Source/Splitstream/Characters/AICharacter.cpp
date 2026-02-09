@@ -224,34 +224,23 @@ void AAICharacter::OnForceDetectionEnd_Implementation(AActor* Detector)
 {
     if (DetectionComponent) DetectionComponent->ForceImmediateDetectionEnd(Detector);
 }
+
 void AAICharacter::OnFullyDetected_Implementation(AActor* ActorDetected)
 {
     if (bIsDead) return;
     TargetActor = ActorDetected;
-    if (ActorDetected->IsA(APawn::StaticClass()))
+
+    // Select the correct tag based on Pawn/Actor
+    const FGameplayTag& DetectionTag = ActorDetected->IsA(APawn::StaticClass())
+        ? TAG_StateTree_Event_FullyDetected_Pawn
+        : TAG_StateTree_Event_FullyDetected_Actor;
+
+    if (AController* GuardController = GetController())
     {
-        AController* GuardController = GetController();
-        if (GuardController)
+        if (UStateTreeComponent* StateTreeComp = GuardController->FindComponentByClass<UStateTreeComponent>())
         {
-            UStateTreeComponent* StateTreeComp = GuardController->FindComponentByClass<UStateTreeComponent>();
-            if (StateTreeComp)
-            {
-                FStateTreeEvent MyEvent(TAG_StateTree_Event_FullyDetected_Pawn);
-                StateTreeComp->SendStateTreeEvent(MyEvent);
-            }
-        }
-    }
-    else
-    {
-        AController* GuardController = GetController();
-        if (GuardController)
-        {
-            UStateTreeComponent* StateTreeComp = GuardController->FindComponentByClass<UStateTreeComponent>();
-            if (StateTreeComp)
-            {
-                FStateTreeEvent MyEvent(TAG_StateTree_Event_FullyDetected_Actor);
-                StateTreeComp->SendStateTreeEvent(MyEvent);
-            }
+            FStateTreeEvent MyEvent(DetectionTag);
+            StateTreeComp->SendStateTreeEvent(MyEvent);
         }
     }
 }

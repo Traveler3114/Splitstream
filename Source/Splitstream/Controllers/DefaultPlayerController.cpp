@@ -216,6 +216,19 @@ void ADefaultPlayerController::HandleAlarmStarted(float InAlarmEndTime, ETimelin
     UpdateAlarmUI();
 }
 
+float ADefaultPlayerController::GetSyncedServerTime() const
+{
+    if (const UWorld* World = GetWorld())
+    {
+        if (const AGameStateBase* GS = World->GetGameState<AGameStateBase>())
+        {
+            return GS->GetServerWorldTimeSeconds();
+        }
+        return World->GetTimeSeconds();
+    }
+    return 0.f;
+}
+
 void ADefaultPlayerController::HandleAlarmCanceled()
 {
     AlarmEndTime = 0.f;
@@ -231,16 +244,7 @@ void ADefaultPlayerController::UpdateAlarmUI()
 {
     if (!CharacterHUD || !CharacterHUD->CharacterOverlay) return;
 
-    // Use network-synced server time!
-    float ServerNow = 0.f;
-    if (AGameStateBase* GS = GetWorld() ? GetWorld()->GetGameState<AGameStateBase>() : nullptr)
-    {
-        ServerNow = GS->GetServerWorldTimeSeconds();
-    }
-    else
-    {
-        ServerNow = GetWorld()->GetTimeSeconds();
-    }
+    float ServerNow = GetSyncedServerTime();
 
     float Remaining = FMath::Max(0.f, AlarmEndTime - ServerNow);
 
@@ -256,6 +260,7 @@ void ADefaultPlayerController::UpdateAlarmUI()
         AlarmEndTime = 0.f;
     }
 }
+
 
 void ADefaultPlayerController::HandlePreAlarmStarted(float InPreAlarmEndTime, AActor* PreAlarmInstigator, ETimelineEra Era)
 {
@@ -302,16 +307,7 @@ void ADefaultPlayerController::UpdatePreAlarmUI()
 {
     if (!CharacterHUD || !CharacterHUD->CharacterOverlay) return;
 
-    // Use network-synced server time!
-    float ServerNow = 0.f;
-    if (AGameStateBase* GS = GetWorld() ? GetWorld()->GetGameState<AGameStateBase>() : nullptr)
-    {
-        ServerNow = GS->GetServerWorldTimeSeconds();
-    }
-    else
-    {
-        ServerNow = GetWorld()->GetTimeSeconds();
-    }
+    float ServerNow = GetSyncedServerTime();
 
     float Remaining = FMath::Max(0.f, PreAlarmEndTime - ServerNow);
 

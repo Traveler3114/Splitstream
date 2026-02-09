@@ -303,8 +303,11 @@ void ADronePawn::BeginPlay()
 	SetRevealProgress(1.0f);
     GetWorldTimerManager().SetTimer(DetectionTimerHandle, this, &ADronePawn::DetectionUpdate, DetectionInterval, true);
     OnRep_DetectedActor();
-    AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute())
-        .AddUObject(this, &ADronePawn::OnHealthChanged);
+    if (AbilitySystemComponent && AttributeSet)
+    {
+        AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute())
+            .AddUObject(this, &ADronePawn::OnHealthChanged);
+    }
     if (HasAuthority() && AttributeInitGE)
     {
         if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
