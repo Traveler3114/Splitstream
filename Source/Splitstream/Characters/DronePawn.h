@@ -100,6 +100,7 @@ protected:
     FVector LaunchStartLocation;
     FVector LaunchTargetLocation;
     float LaunchAnimTimeElapsed = 0.f;
+    double LastLaunchTimestamp = 0.0;
 
     float LaunchLastUpdateTime = 0.f;
     float MeshAlignLastUpdateTime = 0.f;
@@ -122,6 +123,7 @@ protected:
     FVector MeshAlignTargetLocation;
     FRotator MeshAlignTargetRotation;
     float MeshAlignElapsed = 0.f;
+    double LastMeshAlignTimestamp = 0.0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drone|Visual")
     float MeshAlignDuration = 0.5f; // Blend duration in seconds (tweak as desired)
     UFUNCTION()
