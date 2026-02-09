@@ -38,6 +38,7 @@ protected:
     void DetectionUpdate();
     void PanUpdate();
 
+    float LastPanUpdateTime = 0.0f;
 public:
     // Replication
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

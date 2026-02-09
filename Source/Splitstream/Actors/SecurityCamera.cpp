@@ -36,7 +36,7 @@ void ASecurityCamera::BeginPlay()
     bPanningRight = true;
     PauseTimer = 0.0f;
     LastDetectedActors.Empty();
-
+    LastPanUpdateTime = GetWorld()->GetTimeSeconds();
     // Detection timer
     GetWorldTimerManager().SetTimer(DetectionTimerHandle, this, &ASecurityCamera::DetectionUpdate, DetectionInterval, true);
 
@@ -64,10 +64,15 @@ void ASecurityCamera::PanUpdate()
 {
     if (PanSpeed <= 0.0f) return;
 
-    const float DeltaYaw = PanSpeed * PanInterval * (bPanningRight ? 1.0f : -1.0f);
+    float CurrentTime = GetWorld()->GetTimeSeconds();
+    float DeltaTime = CurrentTime - LastPanUpdateTime;
+    LastPanUpdateTime = CurrentTime;
+
+    // Use actual DeltaTime instead of PanInterval
+    const float DeltaYaw = PanSpeed * DeltaTime * (bPanningRight ? 1.0f : -1.0f);
     if (PauseTimer > 0.0f)
     {
-        PauseTimer -= PanInterval;
+        PauseTimer -= DeltaTime;
         return;
     }
 

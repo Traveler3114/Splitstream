@@ -101,6 +101,9 @@ protected:
     FVector LaunchTargetLocation;
     float LaunchAnimTimeElapsed = 0.f;
 
+    float LaunchLastUpdateTime = 0.f;
+    float MeshAlignLastUpdateTime = 0.f;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drone|Launch")
     float LaunchUpDistance = 60.f; // How far up the drone flies after activation
 

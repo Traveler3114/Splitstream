@@ -50,18 +50,17 @@ void ADronePawn::ActivateDrone(ANavNode* Node)
     //SetActorEnableCollision(true);
     if (DroneSpotLight) DroneSpotLight->SetVisibility(true);
 
-    // Prepare to lerp from current location up
     PendingLaunchNode = Node;
     LaunchStartLocation = GetActorLocation();
     LaunchTargetLocation = LaunchStartLocation + FVector(0, 0, LaunchUpDistance);
     LaunchAnimTimeElapsed = 0.f;
+    LaunchLastUpdateTime = GetWorld()->GetTimeSeconds(); // <-- Added
 
-    // Start timer to lerp upward
     GetWorld()->GetTimerManager().SetTimer(
         LaunchMoveTimerHandle,
         this,
         &ADronePawn::MoveUpForLaunch,
-        0.02f,
+        0.01f, // Use a shorter interval for responsiveness (or keep as 0.02f)
         true
     );
 }
@@ -69,7 +68,11 @@ void ADronePawn::ActivateDrone(ANavNode* Node)
 // Called every tick while launching upward
 void ADronePawn::MoveUpForLaunch()
 {
-    LaunchAnimTimeElapsed += 0.02f;
+    float CurrentTime = GetWorld()->GetTimeSeconds();
+    float DeltaTime = CurrentTime - LaunchLastUpdateTime;
+    LaunchLastUpdateTime = CurrentTime;
+
+    LaunchAnimTimeElapsed += DeltaTime;
     float Alpha = FMath::Clamp(LaunchAnimTimeElapsed / LaunchUpDuration, 0.f, 1.f);
     float S = FMath::SmoothStep(0.f, 1.f, Alpha);
 
@@ -78,7 +81,6 @@ void ADronePawn::MoveUpForLaunch()
 
     if (Alpha >= 1.f)
     {
-        // End timer
         GetWorld()->GetTimerManager().ClearTimer(LaunchMoveTimerHandle);
 
         // Now start AI logic at node, if provided
@@ -165,10 +167,10 @@ void ADronePawn::RequestRepair_Implementation(AActor* RepairInstigator)
         MeshAlignTargetLocation = FVector::ZeroVector;
         MeshAlignTargetRotation = FRotator::ZeroRotator;
         MeshAlignElapsed = 0.f;
+        MeshAlignLastUpdateTime = GetWorld()->GetTimeSeconds(); // <-- Added
 
-        // Start timer to interpolate mesh to root
         GetWorld()->GetTimerManager().SetTimer(
-            MeshAlignTimerHandle, this, &ADronePawn::UpdateMeshAlignInterp, 0.02f, true
+            MeshAlignTimerHandle, this, &ADronePawn::UpdateMeshAlignInterp, 0.01f, true
         );
     }
     if (UCapsuleComponent* Capsule = FindComponentByClass<UCapsuleComponent>())
@@ -178,7 +180,6 @@ void ADronePawn::RequestRepair_Implementation(AActor* RepairInstigator)
         Capsule->SetCanEverAffectNavigation(true);
     }
 
-    // (Re)start AI StateTree logic as before...
     AController* C = GetController();
     if (!C)
     {
@@ -204,7 +205,11 @@ void ADronePawn::RequestRepair_Implementation(AActor* RepairInstigator)
 
 void ADronePawn::UpdateMeshAlignInterp()
 {
-    MeshAlignElapsed += 0.02f;
+    float CurrentTime = GetWorld()->GetTimeSeconds();
+    float DeltaTime = CurrentTime - MeshAlignLastUpdateTime;
+    MeshAlignLastUpdateTime = CurrentTime;
+
+    MeshAlignElapsed += DeltaTime;
     float Alpha = FMath::Clamp(MeshAlignElapsed / MeshAlignDuration, 0.f, 1.f);
 
     if (DroneMesh)
