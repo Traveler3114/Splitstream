@@ -120,6 +120,7 @@ void ADoorBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(ADoorBase, bIsOpen);
     DOREPLIFETIME(ADoorBase, bIsLocked);
+	DOREPLIFETIME(ADoorBase, OpenDirection);
 }
 
 void ADoorBase::UnlockWithAccess_Implementation(AActor* Interactor)

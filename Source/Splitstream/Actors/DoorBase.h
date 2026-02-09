@@ -85,5 +85,6 @@ public:
     void ForceCloseDoorForGuard(AActor* GuardActor);
 
 protected:
+    UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Door")
     int32 OpenDirection = 1;
 };
