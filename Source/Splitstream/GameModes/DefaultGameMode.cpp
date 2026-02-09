@@ -8,6 +8,7 @@
 #include "GameplayTagContainer.h"
 #include "TimerManager.h"
 #include "Controllers/DefaultPlayerController.h"
+#include "GameFramework/SpectatorPawn.h" 
 #include "DefaultGameInstance.h"
 
 void ADefaultGameMode::BeginPlay()
@@ -93,8 +94,12 @@ void ADefaultGameMode::EliminatePlayersInEra(ETimelineEra Era)
                 {
                     if (ASC->HasMatchingGameplayTag(EraTag))
                     {
+                        if (APawn* PawnToRemove = PC->GetPawn())
+                        {
+                            PC->UnPossess();
+                            PawnToRemove->Destroy();
+                        }
                         PC->ChangeState(NAME_Spectating);
-                        // Optionally: PC->ClientShowDefeatOverlay();
                     }
                 }
             }
