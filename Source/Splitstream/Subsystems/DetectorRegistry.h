@@ -25,6 +25,9 @@ public:
     /** Returns array of valid (non-destroyed) detectors. Safe for iteration. */
     TArray<AActor*> GetValidDetectors() const;
 
+    /** Optional: Remove stale weak pointers to reduce memory overhead. Called automatically during Register/Unregister. */
+    void CleanupStaleReferences();
+
 private:
     TSet<TWeakObjectPtr<AActor>> Detectors;
 };

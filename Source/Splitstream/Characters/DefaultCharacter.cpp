@@ -298,6 +298,7 @@ void ADefaultCharacter::OnIllegalTagChanged(const FGameplayTag Tag, int32 NewCou
         for (AActor* Detector : Detectors)
         {
             if (!IsValid(Detector)) continue;
+            if (!Detector->GetClass()->ImplementsInterface(UDetectable::StaticClass())) continue;
             if (IDetectable::Execute_IsActorAlreadyDetected(Detector, this))
             {
                 IDetectable::Execute_OnDetected(this, Detector);
@@ -309,6 +310,7 @@ void ADefaultCharacter::OnIllegalTagChanged(const FGameplayTag Tag, int32 NewCou
         for (AActor* Detector : Detectors)
         {
             if (!IsValid(Detector)) continue;
+            if (!Detector->GetClass()->ImplementsInterface(UDetectable::StaticClass())) continue;
             if (IDetectable::Execute_IsActorAlreadyDetected(Detector, this))
             {
                 IDetectable::Execute_OnLost(this, Detector);

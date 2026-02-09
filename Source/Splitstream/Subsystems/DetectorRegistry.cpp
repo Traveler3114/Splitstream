@@ -5,6 +5,11 @@ void UDetectorRegistry::Register(AActor* Detector)
     if (Detector)
     {
         Detectors.Add(Detector);
+        // Opportunistically clean up stale references during registration
+        if (Detectors.Num() > 50) // Only cleanup if set grows large
+        {
+            CleanupStaleReferences();
+        }
     }
 }
 
@@ -30,4 +35,15 @@ TArray<AActor*> UDetectorRegistry::GetValidDetectors() const
     }
     
     return ValidDetectors;
+}
+
+void UDetectorRegistry::CleanupStaleReferences()
+{
+    for (auto It = Detectors.CreateIterator(); It; ++It)
+    {
+        if (!It->IsValid())
+        {
+            It.RemoveCurrent();
+        }
+    }
 }
