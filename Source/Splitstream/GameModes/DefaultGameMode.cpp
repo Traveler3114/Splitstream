@@ -144,12 +144,15 @@ void ADefaultGameMode::OnPreAlarmStarted(float PreAlarmEndTime, AActor* PreAlarm
     }
 }
 
-void ADefaultGameMode::OnPreAlarmCanceled()
+void ADefaultGameMode::OnPreAlarmCanceled(ETimelineEra Era)
 {
+    // Do your cancellation logic for the specified era.
     if (!HasAuthority())
         return;
-    GetWorldTimerManager().ClearTimer(PreAlarmTimerHandlePast);
-    GetWorldTimerManager().ClearTimer(PreAlarmTimerHandleFuture);
+    if (Era == ETimelineEra::Past)
+        GetWorldTimerManager().ClearTimer(PreAlarmTimerHandlePast);
+    else if (Era == ETimelineEra::Future)
+        GetWorldTimerManager().ClearTimer(PreAlarmTimerHandleFuture);
 }
 
 void ADefaultGameMode::PreAlarmTimeoutPast()

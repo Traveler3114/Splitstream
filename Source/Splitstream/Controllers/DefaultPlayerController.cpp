@@ -104,7 +104,8 @@ void ADefaultPlayerController::SetupOverlay()
             if (!bAnyPreAlarmShown)
             {
                 HandleAlarmCanceled();
-                HandlePreAlarmCanceled();
+                HandlePreAlarmCanceled(ETimelineEra::Past);
+                HandlePreAlarmCanceled(ETimelineEra::Future);
             }
         }
     }
@@ -208,7 +209,7 @@ void ADefaultPlayerController::HandleAlarmStarted(float InAlarmEndTime, ETimelin
         return;
 
     // If a pre-alarm UI is active, clear it IMMEDIATELY
-    HandlePreAlarmCanceled();
+    HandlePreAlarmCanceled(Era);
 
     AlarmEndTime = InAlarmEndTime;
     GetWorldTimerManager().ClearTimer(AlarmUpdateTimerHandle);
@@ -291,8 +292,24 @@ void ADefaultPlayerController::HandlePreAlarmStarted(float InPreAlarmEndTime, AA
     UpdatePreAlarmUI();
 }
 
-void ADefaultPlayerController::HandlePreAlarmCanceled()
+void ADefaultPlayerController::HandlePreAlarmCanceled(ETimelineEra Era)
 {
+    // Only clear team pre-alarm if Era matches the player’s team tag
+    ADefaultPlayerState* MyPS = GetPlayerState<ADefaultPlayerState>();
+    if (!MyPS)
+        return;
+
+    UAbilitySystemComponent* ASC = MyPS->GetAbilitySystemComponent();
+    if (!ASC)
+        return;
+
+    FGameplayTag TeamTag = (Era == ETimelineEra::Past)
+        ? FGameplayTag::RequestGameplayTag(TEXT("Team.Past"))
+        : FGameplayTag::RequestGameplayTag(TEXT("Team.Future"));
+
+    if (!ASC->HasMatchingGameplayTag(TeamTag))
+        return;
+
     PreAlarmEndTime = 0.f;
     GetWorldTimerManager().ClearTimer(PreAlarmUpdateTimerHandle);
 

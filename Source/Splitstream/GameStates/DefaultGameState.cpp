@@ -154,7 +154,7 @@ void ADefaultGameState::RemovePreAlarmInstigator(AActor* InToRemoveInstigator, E
         State.bActive = false;
         State.EndTime = 0.f;
         State.SoonestInstigator = nullptr;
-        OnPreAlarmCanceled.Broadcast();
+        OnPreAlarmCanceled.Broadcast(Era);
     }
     else
     {
@@ -182,10 +182,9 @@ void ADefaultGameState::CancelPreAlarm(AActor* InCancelingInstigator, ETimelineE
         State.bActive = false;
         State.EndTime = 0.f;
         State.SoonestInstigator = nullptr;
-        OnPreAlarmCanceled.Broadcast();
+        OnPreAlarmCanceled.Broadcast(Era);
     }
 }
-
 float ADefaultGameState::GetRemainingPreAlarmTime(ETimelineEra Era) const
 {
     const FPerEraPreAlarmState& State = GetEraPreAlarm(Era);
@@ -214,7 +213,7 @@ void ADefaultGameState::OnRep_PastPreAlarm()
     }
     else
     {
-        OnPreAlarmCanceled.Broadcast();
+        OnPreAlarmCanceled.Broadcast(ETimelineEra::Past);
     }
 }
 
@@ -226,7 +225,7 @@ void ADefaultGameState::OnRep_FuturePreAlarm()
     }
     else
     {
-        OnPreAlarmCanceled.Broadcast();
+        OnPreAlarmCanceled.Broadcast(ETimelineEra::Future);
     }
 }
 

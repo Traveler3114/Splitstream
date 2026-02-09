@@ -37,7 +37,7 @@ protected:
     void OnPreAlarmStarted(float PreAlarmEndTime, AActor* PreAlarmInstigator, ETimelineEra Era);
 
     UFUNCTION()
-    void OnPreAlarmCanceled();
+    void OnPreAlarmCanceled(ETimelineEra Era);
 
     void PreAlarmTimeoutPast();
     void PreAlarmTimeoutFuture();

@@ -103,7 +103,7 @@ private:
     void HandlePreAlarmStarted(float InPreAlarmEndTime, AActor* PreAlarmInstigator, ETimelineEra Era);
 
     UFUNCTION()
-    void HandlePreAlarmCanceled();
+    void HandlePreAlarmCanceled(ETimelineEra Era);
 
     void UpdatePreAlarmUI();
 
