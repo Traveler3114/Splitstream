@@ -1,4 +1,5 @@
 #include "DefaultPlayerController.h"
+#include "Splitstream.h"
 #include "ActorComponents/LockPickComponent.h"
 #include "Widgets/HUD/CharacterHUD.h"
 #include "Widgets/PauseMenuWidget.h"
@@ -627,14 +628,14 @@ void ADefaultPlayerController::OnIllegalTagChanged(const FGameplayTag Tag, int32
 
 void ADefaultPlayerController::ServerExecuteAction_Implementation(UObject* Target, const FServerActionPayload& Payload)
 {
-    UE_LOG(LogTemp, Warning, TEXT("ServerExecuteAction_Implementation called! Target=%s"), *GetNameSafe(Target));
+    UE_LOG(LogSplitstream, Warning, TEXT("ServerExecuteAction_Implementation called! Target=%s"), *GetNameSafe(Target));
     if (Target && Target->GetClass()->ImplementsInterface(UServerActionInterface::StaticClass()))
     {
-        UE_LOG(LogTemp, Warning, TEXT("Target implements IServerActionInterface, invoking ExecuteServerAction..."));
+        UE_LOG(LogSplitstream, Warning, TEXT("Target implements IServerActionInterface, invoking ExecuteServerAction..."));
         IServerActionInterface::Execute_ExecuteServerAction(Target, Payload);
     }
     else
     {
-        UE_LOG(LogTemp, Error, TEXT("Target does NOT implement IServerActionInterface!"));
+        UE_LOG(LogSplitstream, Error, TEXT("Target does NOT implement IServerActionInterface!"));
     }
 }

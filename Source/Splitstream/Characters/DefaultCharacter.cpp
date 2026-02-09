@@ -1,4 +1,5 @@
 #include "DefaultCharacter.h"
+#include "Splitstream.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
@@ -123,30 +124,37 @@ void ADefaultCharacter::Tick(float DeltaTime)
 void ADefaultCharacter::InitializeAbilitySystem()
 {
     ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
-    if (PS)
+    if (!PS)
     {
-        AbilitySystemComponent = PS->GetAbilitySystemComponent();
-        if (AbilitySystemComponent)
-        {
-            AbilitySystemComponent->InitAbilityActorInfo(PS, this);
-            AbilitySystemComponent->RegisterGameplayTagEvent(
-                TAG_Character_Status_Illegal,
-                EGameplayTagEventType::NewOrRemoved
-            ).AddUObject(this, &ADefaultCharacter::OnIllegalTagChanged);
-
-            AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
-                UPlayerAttributeSet::GetWalkSpeedAttribute()
-            ).AddUObject(this, &ADefaultCharacter::OnWalkSpeedChanged);
-
-            AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
-                UPlayerAttributeSet::GetRunSpeedAttribute()
-            ).AddUObject(this, &ADefaultCharacter::OnRunSpeedChanged);
-
-            AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
-                UPlayerAttributeSet::GetCrouchSpeedAttribute()
-            ).AddUObject(this, &ADefaultCharacter::OnCrouchSpeedChanged);
-        }
+        UE_LOG(LogSplitstream, Warning, TEXT("%s: InitializeAbilitySystem - PlayerState is null"), *GetName());
+        return;
     }
+
+    AbilitySystemComponent = PS->GetAbilitySystemComponent();
+    if (!AbilitySystemComponent)
+    {
+        UE_LOG(LogSplitstream, Warning, TEXT("%s: InitializeAbilitySystem - AbilitySystemComponent is null"), *GetName());
+        return;
+    }
+
+    AbilitySystemComponent->InitAbilityActorInfo(PS, this);
+    AbilitySystemComponent->RegisterGameplayTagEvent(
+        TAG_Character_Status_Illegal,
+        EGameplayTagEventType::NewOrRemoved
+    ).AddUObject(this, &ADefaultCharacter::OnIllegalTagChanged);
+
+    AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+        UPlayerAttributeSet::GetWalkSpeedAttribute()
+    ).AddUObject(this, &ADefaultCharacter::OnWalkSpeedChanged);
+
+    AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+        UPlayerAttributeSet::GetRunSpeedAttribute()
+    ).AddUObject(this, &ADefaultCharacter::OnRunSpeedChanged);
+
+    AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+        UPlayerAttributeSet::GetCrouchSpeedAttribute()
+    ).AddUObject(this, &ADefaultCharacter::OnCrouchSpeedChanged);
+
     if (HasAuthority() && AttributeInitGE)
     {
         UAbilitySystemComponent* ServerASC = AbilitySystemComponent;
@@ -381,7 +389,7 @@ void ADefaultCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
     UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent);
     if (!EnhancedInputComponent)
     {
-        UE_LOG(LogTemp, Error, TEXT("ADefaultCharacter::SetupPlayerInputComponent - "
+        UE_LOG(LogSplitstream, Error, TEXT("ADefaultCharacter::SetupPlayerInputComponent - "
             "PlayerInputComponent is not a UEnhancedInputComponent! "
             "Ensure DefaultInputComponentClass is set to EnhancedInputComponent in project settings."));
         return;
@@ -672,7 +680,10 @@ void ADefaultCharacter::HandleInteractInstant()
 void ADefaultCharacter::ServerHandleInteract_Implementation(AActor* TargetActor)
 {
     if (!TargetActor)
+    {
+        UE_LOG(LogSplitstream, Warning, TEXT("%s: ServerHandleInteract - TargetActor is null"), *GetName());
         return;
+    }
 
     if (TargetActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
     {
