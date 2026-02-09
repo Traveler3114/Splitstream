@@ -4,6 +4,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Interfaces/IRepairable.h"
 #include "AbilitySystemComponent.h"
+#include "Subsystems/RepairableRegistry.h"
 #include "Engine/World.h"
 
 ARobotGuardCharacter::ARobotGuardCharacter()
@@ -15,20 +16,44 @@ ARobotGuardCharacter::ARobotGuardCharacter()
 void ARobotGuardCharacter::BeginPlay()
 {
     Super::BeginPlay();
-    TArray<AActor*> FoundActors;
-    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), FoundActors);
-    for (AActor* Actor : FoundActors)
+
+    if (UWorld* World = GetWorld())
     {
-        if (Actor && Actor->GetClass()->ImplementsInterface(URepairable::StaticClass()))
+        if (URepairableRegistry* Registry = World->GetSubsystem<URepairableRegistry>())
         {
-            if (IRepairable::Execute_GetTimelineEra(Actor) == TimelineEra)
+            Registry->OnRepairableRegistered.AddDynamic(this, &ARobotGuardCharacter::HandleRepairableRegistered);
+            Registry->OnRepairableUnregistered.AddDynamic(this, &ARobotGuardCharacter::HandleRepairableUnregistered);
+        }
+    }
+}
+
+// Add this handler to bind to new repairables after we've started
+void ARobotGuardCharacter::HandleRepairableRegistered(AActor* Actor)
+{
+    if (Actor && Actor->GetClass()->ImplementsInterface(URepairable::StaticClass()))
+    {
+        if (IRepairable::Execute_GetTimelineEra(Actor) == TimelineEra)
+        {
+            IRepairable* Repairable = Cast<IRepairable>(Actor);
+            if (Repairable)
             {
-                // Get the delegate (must cast here!):
-                IRepairable* Repairable = Cast<IRepairable>(Actor);
-                if (Repairable)
-                {
-                    Repairable->GetOnRepairRequested().AddDynamic(this, &ARobotGuardCharacter::OnRepairRequested);
-                }
+                Repairable->GetOnRepairRequested().AddDynamic(this, &ARobotGuardCharacter::OnRepairRequested);
+            }
+        }
+    }
+}
+
+void ARobotGuardCharacter::HandleRepairableUnregistered(AActor* Actor)
+{
+    if (Actor && Actor->GetClass()->ImplementsInterface(URepairable::StaticClass()))
+    {
+        if (IRepairable::Execute_GetTimelineEra(Actor) == TimelineEra)
+        {
+            IRepairable* Repairable = Cast<IRepairable>(Actor);
+            if (Repairable)
+            {
+                // ---- CRUCIAL: Remove dynamic binding ----
+                Repairable->GetOnRepairRequested().RemoveDynamic(this, &ARobotGuardCharacter::OnRepairRequested);
             }
         }
     }

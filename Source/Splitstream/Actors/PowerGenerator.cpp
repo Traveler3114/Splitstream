@@ -1,5 +1,6 @@
 #include "PowerGenerator.h"
 #include "ActorComponents/SearchComponent.h"
+#include "UtilityLibrary.h"
 #include "Interfaces/IPuzzleCompletionReceiver.h"
 
 APowerGenerator::APowerGenerator()
@@ -24,6 +25,13 @@ void APowerGenerator::BeginPlay()
     {
         SearchComponent->OnSearchComplete.AddDynamic(this, &APowerGenerator::OnSearchComplete);
     }
+    UUtilityLibrary::RegisterRepairable(this,this);
+}
+
+void APowerGenerator::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    UUtilityLibrary::UnregisterRepairable(this, this);
+    Super::EndPlay(EndPlayReason);
 }
 
 void APowerGenerator::OnSearchComplete()

@@ -2,6 +2,7 @@
 #include "LaserSensor.h"
 #include "TimerManager.h"
 #include "Engine/World.h"
+#include "UtilityLibrary.h"
 #include "Math/UnrealMathUtility.h" // FMath
 
 ALaserManager::ALaserManager()
@@ -23,7 +24,7 @@ void ALaserManager::OnPuzzleReset_Implementation()
 void ALaserManager::BeginPlay()
 {
     Super::BeginPlay();
-
+    UUtilityLibrary::RegisterRepairable(this,this);
     if (HasAuthority())
     {
         NumToShow = FMath::Clamp(NumToShow, 0, LaserSensors.Num());
@@ -67,6 +68,12 @@ void ALaserManager::BeginPlay()
             }
         }
     }
+}
+
+void ALaserManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    UUtilityLibrary::UnregisterRepairable(this, this);
+    Super::EndPlay(EndPlayReason);
 }
 
 void ALaserManager::OnConstruction(const FTransform& Transform)

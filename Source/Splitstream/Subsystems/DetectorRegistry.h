@@ -19,8 +19,8 @@ class SPLITSTREAM_API UDetectorRegistry : public UWorldSubsystem
     GENERATED_BODY()
 
 public:
-    void Register(AActor* Detector);
-    void Unregister(AActor* Detector);
+    void RegisterDetector(AActor* Detector);
+    void UnregisterDetector(AActor* Detector);
 
     /** Returns array of valid (non-destroyed) detectors. Safe for iteration. */
     TArray<AActor*> GetValidDetectors() const;

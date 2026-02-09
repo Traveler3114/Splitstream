@@ -7,6 +7,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "ActorComponents/SearchComponent.h"
 #include "ActorComponents/InventoryComponent.h"
+#include "UtilityLibrary.h"
 #include "TimerManager.h"
 
 ADroneSpawner::ADroneSpawner()
@@ -115,10 +116,18 @@ void ADroneSpawner::OnSearchComplete()
 	PauseAllTimers();
 }
 
+
+void ADroneSpawner::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    UUtilityLibrary::UnregisterRepairable(this, this);
+    Super::EndPlay(EndPlayReason);
+}
+
 void ADroneSpawner::BeginPlay()
 {
 	Super::BeginPlay();
 
+	UUtilityLibrary::RegisterRepairable(this, this);
 	if (PlatformMesh)
 		PlatformStartZ = PlatformMesh->GetRelativeLocation().Z;
 

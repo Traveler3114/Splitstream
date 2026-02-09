@@ -145,4 +145,7 @@ protected:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Nodes")
     ANavNode* NextNode = nullptr;
+
+private:
+    UMaterialInstanceDynamic* CachedDynMat;
 };

@@ -102,11 +102,9 @@ void ADronePawn::SetRevealProgress(float RevealAlpha)
 {
     if (DroneMesh)
     {
-        UMaterialInstanceDynamic* DynMat = DroneMesh->CreateAndSetMaterialInstanceDynamic(0);
-        if (DynMat)
-        {
-            DynMat->SetScalarParameterValue("RevealAlpha", RevealAlpha);
-        }
+        if (!CachedDynMat)
+            CachedDynMat = DroneMesh->CreateAndSetMaterialInstanceDynamic(0);
+        CachedDynMat->SetScalarParameterValue("RevealAlpha", RevealAlpha);
     }
 }
 

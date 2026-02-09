@@ -4,7 +4,7 @@
 // to prevent memory bloat from destroyed actors
 static constexpr int32 CleanupThreshold = 50;
 
-void UDetectorRegistry::Register(AActor* Detector)
+void UDetectorRegistry::RegisterDetector(AActor* Detector)
 {
     if (Detector)
     {
@@ -17,7 +17,7 @@ void UDetectorRegistry::Register(AActor* Detector)
     }
 }
 
-void UDetectorRegistry::Unregister(AActor* Detector)
+void UDetectorRegistry::UnregisterDetector(AActor* Detector)
 {
     if (Detector)
     {

@@ -25,7 +25,11 @@ public:
     UFUNCTION(BlueprintCallable)
     void TryStartNextRepair();
 
+    UFUNCTION()
+    void HandleRepairableRegistered(AActor* Repairable);
 
+    UFUNCTION()
+    void HandleRepairableUnregistered(AActor* Repairable);
 protected:
     void QueueRepair(AActor* Repairable);
     virtual void OnHealthChanged(const struct FOnAttributeChangeData& Data) override{}

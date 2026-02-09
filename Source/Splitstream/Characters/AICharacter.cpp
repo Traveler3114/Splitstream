@@ -16,6 +16,7 @@
 #include "GameStates/DefaultGameState.h"
 #include "AbilitySystem/SplitstreamGameplayTags.h"
 #include "Components/StateTreeComponent.h"
+#include "UtilityLibrary.h"
 #include "Subsystems/DetectorRegistry.h"
 
 AAICharacter::AAICharacter()
@@ -76,21 +77,12 @@ void AAICharacter::BeginPlay()
         SearchComponent->OnSearchComplete.AddDynamic(this, &AAICharacter::OnSearchComplete);
     }
 
-    if (UWorld* World = GetWorld())
-    {
-        if (UDetectorRegistry* Registry = World->GetSubsystem<UDetectorRegistry>())
-        {
-            Registry->Register(this);
-        }
-    }
+    UUtilityLibrary::RegisterDetector(this, this);
 }
 
 void AAICharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-    if (UDetectorRegistry* Registry = GetWorld() ? GetWorld()->GetSubsystem<UDetectorRegistry>() : nullptr)
-    {
-        Registry->Unregister(this);
-    }
+    UUtilityLibrary::UnregisterDetector(this, this);
 
     Super::EndPlay(EndPlayReason);
 }
