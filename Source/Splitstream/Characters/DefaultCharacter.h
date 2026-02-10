@@ -16,9 +16,11 @@
 #include "DefaultCharacter.generated.h"
 
 class UCameraComponent;
+class UInteractionComponent;
 class UInputMappingContext;
 class UInputAction;
 class UAbilitySystemComponent;
+class UDefaultAbilitySystemComponent;    // ADD THIS
 class UStaticMeshComponent;
 class UInventoryComponent;
 class UDetectionComponent;
@@ -31,12 +33,6 @@ class SPLITSTREAM_API ADefaultCharacter : public ACharacter, public IInteractabl
     GENERATED_BODY()
 public:
     ADefaultCharacter();
-
-    UPROPERTY()
-    TWeakObjectPtr<AActor> ProgressiveActor = nullptr;
-
-    UPROPERTY()
-    bool bIsHoldingInteract = false;
 
     void OnWalkSpeedChanged(const FOnAttributeChangeData& ChangeData);
     void OnRunSpeedChanged(const FOnAttributeChangeData& ChangeData);
@@ -70,6 +66,10 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ASC")
     UAbilitySystemComponent* AbilitySystemComponent;
 
+    /** Typed accessor � returns the ASC cast to our custom subclass, or nullptr */
+    UDefaultAbilitySystemComponent* GetDefaultASC() const;    // ADD THIS
+
+    // Input-to-ability routing (thin wrappers that delegate to ASC)
     UFUNCTION()
     void HandleAbilityInput(const FInputActionInstance& Instance, FGameplayTag InputTag);
     UFUNCTION()
@@ -162,34 +162,24 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detection")
     UDetectionComponent* DetectionComponent;
 
-    // Input handlers for interaction
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction")
-    float InteractDistance = 300.f;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction")
-    float InteractHighlightInterval = 0.1f;
-
-    float InteractHighlightTimer = 0.f;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
+    UInteractionComponent* InteractionComponent;
 
     UFUNCTION()
-    void HandleInteractHoldStart();
+    void OnInstantInteract();
 
     UFUNCTION()
-    void HandleInteractHoldStop();
+    void OnHoldInteractStart();
 
     UFUNCTION()
-    void HandleInteractInstant();
+    void OnHoldInteractStop();
+
+    UFUNCTION()
+    void OnDropActiveItem();
 
     // Server-side implementation
     UFUNCTION(Server, Reliable)
     void ServerHandleInteract(AActor* TargetActor);
-
-    virtual void ServerHandleInteract_Implementation(AActor* TargetActor);
-
-    UPROPERTY()
-    AActor* HighlightedActor = nullptr;
-    void UpdateInteractHighlight();
 
 
     UFUNCTION(BlueprintCallable)
@@ -204,9 +194,6 @@ public:
     UFUNCTION()
     void OnIllegalTagChanged(const FGameplayTag CallbackTag, int32 NewCount);
 
-    // Utility/Helpers
-    bool GetForwardTraceResult(float TraceDistance, FHitResult& OutHit, FVector& OutTraceEnd) const;
-
     UFUNCTION(BlueprintPure, Category = "Detection")
     static float CalculateDetectionAngle(
         const FVector& CameraLocation,
@@ -216,9 +203,8 @@ public:
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 private:
-    void GrantAbilitiesFromInputSet();
-    void GrantAbilitiesFromDefaultSet();
-    void GrantAbilitiesFromSet(UAbilitySystemComponent* ASC, const UAbilityInputSet* Set);
+    // REMOVED: GrantAbilitiesFromInputSet(), GrantAbilitiesFromDefaultSet(), GrantAbilitiesFromSet()
+    // These now live on UDefaultAbilitySystemComponent
 
     FDelegateHandle IllegalTagDelegateHandle;
     FDelegateHandle WalkSpeedDelegateHandle;

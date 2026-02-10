@@ -22,6 +22,8 @@
 #include "Controllers/DefaultPlayerController.h"
 #include "ActorComponents/HackComponent.h"
 #include "ActorComponents/SearchComponent.h"
+#include "ActorComponents/InteractionComponent.h"
+#include "AbilitySystem/DefaultAbilitySystemComponent.h"
 #include "ActorComponents/LockPickComponent.h"
 #include "ActorComponents/DetectionComponent.h"
 #include "Subsystems/DetectorRegistry.h"
@@ -37,14 +39,6 @@ ADefaultCharacter::ADefaultCharacter()
     bUseControllerRotationYaw = true;
     bUseControllerRotationRoll = false;
 
-    GetCharacterMovement()->bOrientRotationToMovement = false;
-    GetCharacterMovement()->JumpZVelocity = 300.f;
-    GetCharacterMovement()->AirControl = 0.35f;
-    GetCharacterMovement()->MaxWalkSpeed = 300.f;
-    GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
-    GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
-    GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
-
     bReplicates = true;
     SetReplicateMovement(true);
 
@@ -53,6 +47,8 @@ ADefaultCharacter::ADefaultCharacter()
     InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 
     DetectionComponent = CreateDefaultSubobject<UDetectionComponent>(TEXT("DetectionComponent"));
+
+    InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("InteractionComponent"));
 
     EquippedItemMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("EquippedItemMeshComp"));
     EquippedItemMeshComp->SetupAttachment(GetMesh(), TEXT("Hand_R"));
@@ -131,13 +127,15 @@ void ADefaultCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    if (IsLocallyControlled())
+    if (IsLocallyControlled() && InteractionComponent)
     {
-        InteractHighlightTimer += DeltaTime;
-        if (InteractHighlightTimer >= InteractHighlightInterval)
+        InteractionComponent->InteractHighlightTimer += DeltaTime;
+        if (InteractionComponent->InteractHighlightTimer >= InteractionComponent->InteractHighlightInterval)
         {
-            InteractHighlightTimer = 0.f;
-            UpdateInteractHighlight();
+            InteractionComponent->InteractHighlightTimer = 0.f;
+            FVector Start = CameraComponent->GetComponentLocation();
+            FRotator Rot = Controller ? Controller->GetControlRotation() : CameraComponent->GetComponentRotation();
+            InteractionComponent->UpdateInteractHighlight(Start, Rot);
         }
     }
 }
@@ -179,17 +177,12 @@ void ADefaultCharacter::InitializeAbilitySystem()
         UPlayerAttributeSet::GetCrouchSpeedAttribute()
     ).AddUObject(this, &ADefaultCharacter::OnCrouchSpeedChanged);
 
-    if (HasAuthority() && AttributeInitGE)
+    // Delegate attribute init to the ASC
+    if (HasAuthority())
     {
-        UAbilitySystemComponent* ServerASC = AbilitySystemComponent;
-        if (ServerASC && ServerASC->GetOwnerRole() == ROLE_Authority)
+        if (UDefaultAbilitySystemComponent* ASC = GetDefaultASC())
         {
-            FGameplayEffectContextHandle EffectContext = ServerASC->MakeEffectContext();
-            FGameplayEffectSpecHandle SpecHandle = ServerASC->MakeOutgoingSpec(AttributeInitGE, 1.f, EffectContext);
-            if (SpecHandle.IsValid())
-            {
-                ServerASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-            }
+            ASC->InitializeAttributes(AttributeInitGE);
         }
     }
 }
@@ -216,62 +209,15 @@ void ADefaultCharacter::OnCrouchSpeedChanged(const FOnAttributeChangeData& Chang
 }
 
 
-void ADefaultCharacter::GrantAbilitiesFromSet(UAbilitySystemComponent* ASC, const UAbilityInputSet* Set)
-{
-    if (!ASC || !Set) return;
-    for (const FAbilityInputSetEntry& Entry : Set->Abilities)
-    {
-        if (!Entry.AbilityClass) continue;
-        FGameplayAbilitySpec Spec(Entry.AbilityClass, Entry.AbilityLevel, 0);
-        if (Entry.InputTag.IsValid())
-        {
-            Spec.GetDynamicSpecSourceTags().AddTag(Entry.InputTag);
-        }
-        ASC->GiveAbility(Spec);
-    }
-}
-
-void ADefaultCharacter::GrantAbilitiesFromDefaultSet()
-{
-    if (!DefaultGASet) return;
-
-    ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
-    if (!PS) return;
-    UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
-    if (!ASC) return;
-
-    for (const TSubclassOf<UGameplayAbility>& AbilityClass : DefaultGASet->GrantedAbilities)
-    {
-        if (!AbilityClass) continue;
-        FGameplayAbilitySpec Spec(AbilityClass, 1, 0);
-        ASC->GiveAbility(Spec);
-    }
-}
-
-
-
-void ADefaultCharacter::GrantAbilitiesFromInputSet()
-{
-    ADefaultPlayerState* PS = GetPlayerState<ADefaultPlayerState>();
-    if (!PS) return;
-    UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
-    if (!ASC) return;
-
-    if (FutureGASet && ASC->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("Team.Future")))
-    {
-        GrantAbilitiesFromSet(ASC, FutureGASet);
-    }
-
-    if (SoloGASet && ASC->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("Team.Solo")))
-    {
-        GrantAbilitiesFromSet(ASC, SoloGASet);
-        GrantAbilitiesFromSet(ASC, FutureGASet); // If needed for Solo as designed
-    }
-}
 
 UAbilitySystemComponent* ADefaultCharacter::GetAbilitySystemComponent() const
 {
     return AbilitySystemComponent;
+}
+
+UDefaultAbilitySystemComponent* ADefaultCharacter::GetDefaultASC() const
+{
+    return Cast<UDefaultAbilitySystemComponent>(AbilitySystemComponent);
 }
 
 // ------------------ DETECTION SYSTEM EVENT-DRIVEN --------------------
@@ -427,10 +373,10 @@ void ADefaultCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
     EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &ADefaultCharacter::StopCrouching);
     EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &ADefaultCharacter::ServerStartSprint);
     EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ADefaultCharacter::ServerStopSprint);
-    EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &ADefaultCharacter::HandleInteractHoldStart);
-    EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &ADefaultCharacter::HandleInteractHoldStop);
-    EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ADefaultCharacter::HandleInteractInstant);
-    EnhancedInputComponent->BindAction(DropItemAction, ETriggerEvent::Completed, this, &ADefaultCharacter::DropActiveItem);
+    EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ADefaultCharacter::OnInstantInteract);
+    EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &ADefaultCharacter::OnHoldInteractStart);
+    EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &ADefaultCharacter::OnHoldInteractStop);
+    EnhancedInputComponent->BindAction(DropItemAction, ETriggerEvent::Completed, this, &ADefaultCharacter::OnDropActiveItem);
 
     if (InputMappingSet)
     {
@@ -456,31 +402,46 @@ void ADefaultCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
     PlayerInputComponent->BindKey(EKeys::Zero, IE_Pressed, this, &ADefaultCharacter::HandleNumberKey);
 }
 
+
+void ADefaultCharacter::OnInstantInteract()
+{
+    if (!InteractionComponent || !CameraComponent) return;
+    FVector Start = CameraComponent->GetComponentLocation();
+    FRotator Rot = Controller ? Controller->GetControlRotation() : CameraComponent->GetComponentRotation();
+    InteractionComponent->HandleInstantInteract(
+        this, Start, Rot, [this](AActor* Target){
+            ServerHandleInteract(Target); // Client always forwards instant to server
+        }
+    );
+}
+
+void ADefaultCharacter::OnHoldInteractStart()
+{
+    if (!InteractionComponent || !CameraComponent) return;
+    FVector Start = CameraComponent->GetComponentLocation();
+    FRotator Rot = Controller ? Controller->GetControlRotation() : CameraComponent->GetComponentRotation();
+    InteractionComponent->HandleHoldInteractStart(this, Start, Rot);
+}
+
+void ADefaultCharacter::OnHoldInteractStop()
+{
+    if (!InteractionComponent) return;
+    InteractionComponent->HandleHoldInteractStop(this);
+}
+
 void ADefaultCharacter::HandleAbilityInput(const FInputActionInstance& Instance, FGameplayTag InputTag)
 {
-    if (AbilitySystemComponent)
+    if (UDefaultAbilitySystemComponent* ASC = GetDefaultASC())
     {
-        for (FGameplayAbilitySpec& Spec : AbilitySystemComponent->GetActivatableAbilities())
-        {
-            if (Spec.GetDynamicSpecSourceTags().HasTagExact(InputTag))
-            {
-                AbilitySystemComponent->TryActivateAbility(Spec.Handle);
-            }
-        }
+        ASC->HandleAbilityInputPressed(InputTag);
     }
 }
 
 void ADefaultCharacter::HandleAbilityInputReleased(const FInputActionInstance& Instance, FGameplayTag InputTag)
 {
-    if (AbilitySystemComponent)
+    if (UDefaultAbilitySystemComponent* ASC = GetDefaultASC())
     {
-        for (FGameplayAbilitySpec& Spec : AbilitySystemComponent->GetActivatableAbilities())
-        {
-            if (Spec.GetDynamicSpecSourceTags().HasTagExact(InputTag) && Spec.IsActive())
-            {
-                AbilitySystemComponent->CancelAbilityHandle(Spec.Handle);
-            }
-        }
+        ASC->HandleAbilityInputReleased(InputTag);
     }
 }
 
@@ -517,170 +478,14 @@ void ADefaultCharacter::SelectInventorySlot(int32 SlotNumber)
     }
 }
 
-bool ADefaultCharacter::GetForwardTraceResult(float TraceDistance, FHitResult& OutHit, FVector& OutTraceEnd) const
+
+void ADefaultCharacter::OnDropActiveItem()
 {
-    if (!CameraComponent) return false;
-    FVector Start = CameraComponent->GetComponentLocation();
-    FRotator ControlRot = Controller ? Controller->GetControlRotation() : CameraComponent->GetComponentRotation();
-    FVector End = Start + ControlRot.Vector() * TraceDistance;
-    OutTraceEnd = End;
-    FCollisionQueryParams Params;
-    Params.AddIgnoredActor(this);
-    return GetWorld()->LineTraceSingleByChannel(OutHit, Start, End, ECC_Visibility, Params);
+    if (!InteractionComponent || !InventoryComponent || !CameraComponent) return;
+    InteractionComponent->DropEquippedItem(InventoryComponent, CameraComponent);
 }
 
-void ADefaultCharacter::DropActiveItem()
-{
-    if (!InventoryComponent) return;
 
-    FHitResult Hit;
-    FVector TraceEnd;
-    FVector DropLocation;
-
-    if (GetForwardTraceResult(InteractDistance, Hit, TraceEnd))
-    {
-        DropLocation = Hit.bBlockingHit ? Hit.ImpactPoint : TraceEnd;
-    }
-    else
-    {
-        DropLocation = TraceEnd;
-    }
-
-    FHitResult DownHit;
-    FVector DownTraceStart = DropLocation + FVector(0, 0, 50);
-    FVector DownTraceEnd = DropLocation - FVector(0, 0, 200);
-
-    FCollisionQueryParams Params;
-    Params.AddIgnoredActor(this);
-
-    if (GetWorld()->LineTraceSingleByChannel(DownHit, DownTraceStart, DownTraceEnd, ECC_Visibility, Params))
-    {
-        DropLocation = DownHit.Location;
-    }
-
-    InventoryComponent->ServerDropActiveItem(DropLocation);
-}
-
-void ADefaultCharacter::UpdateInteractHighlight()
-{
-    if (!IsLocallyControlled())
-        return;
-
-    FHitResult Hit;
-    FVector TraceEnd;
-    bool bHit = GetForwardTraceResult(InteractDistance, Hit, TraceEnd);
-
-    AActor* HitActor = bHit ? Hit.GetActor() : nullptr;
-
-    if (HighlightedActor && HighlightedActor != HitActor)
-    {
-        IInteractable::Execute_SetHighlighted(HighlightedActor, false);
-        HighlightedActor = nullptr;
-    }
-
-    if (HitActor && HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
-    {
-        if (HitActor != HighlightedActor)
-        {
-            IInteractable::Execute_SetHighlighted(HitActor, true);
-            HighlightedActor = HitActor;
-        }
-    }
-}
-
-void ADefaultCharacter::HandleInteractHoldStart()
-{
-    if (bIsHoldingInteract)
-        return;
-
-    bIsHoldingInteract = true;
-
-    FHitResult Hit;
-    FVector TraceEnd;
-    if (!GetForwardTraceResult(InteractDistance, Hit, TraceEnd))
-    {
-        return;
-    }
-    AActor* HitActor = Hit.GetActor();
-    if (!HitActor)
-    {
-        return;
-    }
-
-    ProgressiveActor = HitActor;
-
-    if (HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()) &&
-        IInteractable::Execute_IsProgressiveInteract(HitActor))
-    {
-        IInteractable::Execute_Interact(HitActor, this);
-    }
-}
-
-void ADefaultCharacter::HandleInteractHoldStop()
-{
-    if (!bIsHoldingInteract)
-        return;
-
-    bIsHoldingInteract = false;
-
-    if (ProgressiveActor.IsValid())
-    {
-        AActor* ActorPtr = ProgressiveActor.Get();
-        if (ActorPtr && ActorPtr->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
-        {
-            IInteractable::Execute_CancelInteract(ActorPtr, this);
-        }
-        ProgressiveActor = nullptr;
-    }
-}
-
-void ADefaultCharacter::HandleInteractInstant()
-{
-    FHitResult Hit;
-    FVector TraceEnd;
-    if (!GetForwardTraceResult(InteractDistance, Hit, TraceEnd))
-        return;
-
-    AActor* HitActor = Hit.GetActor();
-    if (!HitActor)
-        return;
-
-    if (!HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
-        return;
-
-    bool bRequiresItem = IInteractable::Execute_RequiresItem(HitActor);
-
-    UInventoryComponent* Inventory = FindComponentByClass<UInventoryComponent>();
-    if (Inventory && bRequiresItem)
-    {
-        FInventorySlot ActiveSlot = Inventory->GetActiveItem();
-
-        // On authority (listen server), validate the item check immediately.
-        // On client, we do an optimistic local prediction — the server will
-        // re-validate in ServerHandleInteract anyway.
-        if (HasAuthority() && !IInteractable::Execute_IsCorrectItem(HitActor, ActiveSlot))
-        {
-            return;
-        }
-
-        if (ActiveSlot.ItemAsset)
-        {
-            ActiveSlot.ItemAsset->OnUsed(this, ActiveSlot.ItemInstanceID);
-        }
-    }
-
-    // Client-side prediction: execute interact locally for responsiveness.
-    // On a listen server this is also the authoritative call, but
-    // ServerHandleInteract will no-op the duplicate thanks to idempotent
-    // interact implementations.
-    if (!IInteractable::Execute_IsProgressiveInteract(HitActor))
-    {
-        IInteractable::Execute_Interact(HitActor, this);
-    }
-
-    // Always send the server RPC (on listen server, runs locally)
-    ServerHandleInteract(HitActor);
-}
 
 void ADefaultCharacter::ServerHandleInteract_Implementation(AActor* TargetActor)
 {
@@ -875,8 +680,23 @@ void ADefaultCharacter::PossessedBy(AController* NewController)
     Super::PossessedBy(NewController);
     InitializeAbilitySystem();
     if (!HasAuthority()) return;
-    GrantAbilitiesFromInputSet();
-    GrantAbilitiesFromDefaultSet();
+
+    UDefaultAbilitySystemComponent* ASC = GetDefaultASC();
+    if (!ASC) return;
+
+    // Grant team-based input abilities
+    if (ASC->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("Team.Future")))
+    {
+        ASC->GrantAbilitiesFromSet(FutureGASet);
+    }
+    if (ASC->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("Team.Solo")))
+    {
+        ASC->GrantAbilitiesFromSet(SoloGASet);
+        ASC->GrantAbilitiesFromSet(FutureGASet);
+    }
+
+    // Grant default abilities
+    ASC->GrantAbilitiesFromDefaultSet(DefaultGASet);
 }
 
 void ADefaultCharacter::OnRep_PlayerState()
