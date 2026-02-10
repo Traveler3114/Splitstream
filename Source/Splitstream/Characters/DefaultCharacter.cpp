@@ -102,6 +102,28 @@ void ADefaultCharacter::BeginPlay()
 
 void ADefaultCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+    // Clean up GAS delegates to prevent dangling references.
+    // The ASC lives on PlayerState and can outlive this pawn.
+    if (AbilitySystemComponent)
+    {
+        AbilitySystemComponent->RegisterGameplayTagEvent(
+            TAG_Character_Status_Illegal,
+            EGameplayTagEventType::NewOrRemoved
+        ).Remove(IllegalTagDelegateHandle);
+
+        AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+            UPlayerAttributeSet::GetWalkSpeedAttribute()
+        ).Remove(WalkSpeedDelegateHandle);
+
+        AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+            UPlayerAttributeSet::GetRunSpeedAttribute()
+        ).Remove(RunSpeedDelegateHandle);
+
+        AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+            UPlayerAttributeSet::GetCrouchSpeedAttribute()
+        ).Remove(CrouchSpeedDelegateHandle);
+    }
+
     Super::EndPlay(EndPlayReason);
 }
 
@@ -138,20 +160,22 @@ void ADefaultCharacter::InitializeAbilitySystem()
     }
 
     AbilitySystemComponent->InitAbilityActorInfo(PS, this);
-    AbilitySystemComponent->RegisterGameplayTagEvent(
+
+    // Store delegate handle for cleanup
+    IllegalTagDelegateHandle = AbilitySystemComponent->RegisterGameplayTagEvent(
         TAG_Character_Status_Illegal,
         EGameplayTagEventType::NewOrRemoved
     ).AddUObject(this, &ADefaultCharacter::OnIllegalTagChanged);
 
-    AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+    WalkSpeedDelegateHandle = AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
         UPlayerAttributeSet::GetWalkSpeedAttribute()
     ).AddUObject(this, &ADefaultCharacter::OnWalkSpeedChanged);
 
-    AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+    RunSpeedDelegateHandle = AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
         UPlayerAttributeSet::GetRunSpeedAttribute()
     ).AddUObject(this, &ADefaultCharacter::OnRunSpeedChanged);
 
-    AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+    CrouchSpeedDelegateHandle = AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
         UPlayerAttributeSet::GetCrouchSpeedAttribute()
     ).AddUObject(this, &ADefaultCharacter::OnCrouchSpeedChanged);
 
@@ -462,38 +486,25 @@ void ADefaultCharacter::HandleAbilityInputReleased(const FInputActionInstance& I
 
 void ADefaultCharacter::HandleNumberKey(FKey PressedKey)
 {
-    FString KeyNameStr = PressedKey.GetFName().ToString();
-    int32 SlotIndex = -1;
+    static const TMap<FName, int32> KeyToSlot{
+        {EKeys::One.GetFName(),   0},
+        {EKeys::Two.GetFName(),   1},
+        {EKeys::Three.GetFName(), 2},
+        {EKeys::Four.GetFName(),  3},
+        {EKeys::Five.GetFName(),  4},
+        {EKeys::Six.GetFName(),   5},
+        {EKeys::Seven.GetFName(), 6},
+        {EKeys::Eight.GetFName(), 7},
+        {EKeys::Nine.GetFName(),  8},
+        {EKeys::Zero.GetFName(),  9}
+    };
 
-    if (KeyNameStr.Len() == 1 && FChar::IsDigit(KeyNameStr[0]))
+    if (const int32* Found = KeyToSlot.Find(PressedKey.GetFName()))
     {
-        if (KeyNameStr[0] == '0')
-            SlotIndex = 9;
-        else
-            SlotIndex = KeyNameStr[0] - '1'; // '1' is 0, '2' is 1, ..., '9' is 8
-    }
-    else
-    {
-        static const TMap<FName, int32> KeyToSlot{
-            {EKeys::One.GetFName(), 0},
-            {EKeys::Two.GetFName(), 1},
-            {EKeys::Three.GetFName(), 2},
-            {EKeys::Four.GetFName(), 3},
-            {EKeys::Five.GetFName(), 4},
-            {EKeys::Six.GetFName(), 5},
-            {EKeys::Seven.GetFName(), 6},
-            {EKeys::Eight.GetFName(), 7},
-            {EKeys::Nine.GetFName(), 8},
-            {EKeys::Zero.GetFName(), 9}
-        };
-        const int32* Found = KeyToSlot.Find(PressedKey.GetFName());
-        if (Found)
-            SlotIndex = *Found;
-    }
-
-    if (SlotIndex >= 0 && SlotIndex < 10 && InventoryComponent)
-    {
-        InventoryComponent->ServerSetActiveSlot(SlotIndex);
+        if (InventoryComponent)
+        {
+            InventoryComponent->ServerSetActiveSlot(*Found);
+        }
     }
 }
 
@@ -625,56 +636,50 @@ void ADefaultCharacter::HandleInteractHoldStop()
 
 void ADefaultCharacter::HandleInteractInstant()
 {
-    if (HasAuthority() && IsLocallyControlled())
-    {
-        FHitResult Hit;
-        FVector TraceEnd;
-        if (GetForwardTraceResult(InteractDistance, Hit, TraceEnd))
-        {
-            AActor* HitActor = Hit.GetActor();
-            if (HitActor)
-            {
-                ServerHandleInteract(HitActor);
-            }
-        }
-        return;
-    }
-
     FHitResult Hit;
     FVector TraceEnd;
-    if (GetForwardTraceResult(InteractDistance, Hit, TraceEnd))
+    if (!GetForwardTraceResult(InteractDistance, Hit, TraceEnd))
+        return;
+
+    AActor* HitActor = Hit.GetActor();
+    if (!HitActor)
+        return;
+
+    if (!HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
+        return;
+
+    bool bRequiresItem = IInteractable::Execute_RequiresItem(HitActor);
+
+    UInventoryComponent* Inventory = FindComponentByClass<UInventoryComponent>();
+    if (Inventory && bRequiresItem)
     {
-        AActor* HitActor = Hit.GetActor();
-        if (!HitActor)
-            return;
+        FInventorySlot ActiveSlot = Inventory->GetActiveItem();
 
-        if (HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
+        // On authority (listen server), validate the item check immediately.
+        // On client, we do an optimistic local prediction — the server will
+        // re-validate in ServerHandleInteract anyway.
+        if (HasAuthority() && !IInteractable::Execute_IsCorrectItem(HitActor, ActiveSlot))
         {
-            bool bRequiresItem = IInteractable::Execute_RequiresItem(HitActor);
+            return;
+        }
 
-            UInventoryComponent* Inventory = FindComponentByClass<UInventoryComponent>();
-            if (Inventory)
-            {
-                FInventorySlot ActiveSlot = Inventory->GetActiveItem();
-
-                if (bRequiresItem)
-                {
-                    if (HasAuthority() && !IInteractable::Execute_IsCorrectItem(HitActor, ActiveSlot))
-                    {
-                        return;
-                    }
-                    if (ActiveSlot.ItemAsset)
-                    {
-                        ActiveSlot.ItemAsset->OnUsed(this, ActiveSlot.ItemInstanceID);
-                    }
-                }
-            }
-
-            IInteractable::Execute_Interact(HitActor, this);
-
-            ServerHandleInteract(HitActor);
+        if (ActiveSlot.ItemAsset)
+        {
+            ActiveSlot.ItemAsset->OnUsed(this, ActiveSlot.ItemInstanceID);
         }
     }
+
+    // Client-side prediction: execute interact locally for responsiveness.
+    // On a listen server this is also the authoritative call, but
+    // ServerHandleInteract will no-op the duplicate thanks to idempotent
+    // interact implementations.
+    if (!IInteractable::Execute_IsProgressiveInteract(HitActor))
+    {
+        IInteractable::Execute_Interact(HitActor, this);
+    }
+
+    // Always send the server RPC (on listen server, runs locally)
+    ServerHandleInteract(HitActor);
 }
 
 void ADefaultCharacter::ServerHandleInteract_Implementation(AActor* TargetActor)

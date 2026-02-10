@@ -219,4 +219,9 @@ private:
     void GrantAbilitiesFromInputSet();
     void GrantAbilitiesFromDefaultSet();
     void GrantAbilitiesFromSet(UAbilitySystemComponent* ASC, const UAbilityInputSet* Set);
+
+    FDelegateHandle IllegalTagDelegateHandle;
+    FDelegateHandle WalkSpeedDelegateHandle;
+    FDelegateHandle RunSpeedDelegateHandle;
+    FDelegateHandle CrouchSpeedDelegateHandle;
 };
