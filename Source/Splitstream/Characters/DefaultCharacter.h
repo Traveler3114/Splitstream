@@ -20,7 +20,7 @@ class UInteractionComponent;
 class UInputMappingContext;
 class UInputAction;
 class UAbilitySystemComponent;
-class UDefaultAbilitySystemComponent;    // ADD THIS
+class UDefaultAbilitySystemComponent;
 class UStaticMeshComponent;
 class UInventoryComponent;
 class UDetectionComponent;
@@ -67,7 +67,7 @@ public:
     UAbilitySystemComponent* AbilitySystemComponent;
 
     /** Typed accessor � returns the ASC cast to our custom subclass, or nullptr */
-    UDefaultAbilitySystemComponent* GetDefaultASC() const;    // ADD THIS
+    UDefaultAbilitySystemComponent* GetDefaultASC() const;
 
     // Input-to-ability routing (thin wrappers that delegate to ASC)
     UFUNCTION()
