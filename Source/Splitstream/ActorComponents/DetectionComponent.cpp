@@ -10,6 +10,7 @@
 UDetectionComponent::UDetectionComponent()
 {
     SetIsReplicatedByDefault(true);
+    PrimaryComponentTick.TickInterval = 0.1f;
     PrimaryComponentTick.bCanEverTick = true;
 }
 

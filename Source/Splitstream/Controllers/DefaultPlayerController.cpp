@@ -88,7 +88,7 @@ void ADefaultPlayerController::SetupOverlay()
         }
         else
         {
-            // Check both eras � HandlePreAlarmStarted already filters by team tag
+            // Check both eras — HandlePreAlarmStarted already filters by team tag
             bool bAnyPreAlarmShown = false;
 
             if (GS->PastPreAlarm.bActive && GS->PastPreAlarm.EndTime > 0.f)
@@ -295,7 +295,7 @@ void ADefaultPlayerController::HandlePreAlarmStarted(float InPreAlarmEndTime, AA
 
 void ADefaultPlayerController::HandlePreAlarmCanceled(ETimelineEra Era)
 {
-    // Only clear team pre-alarm if Era matches the player’s team tag
+    // Only clear team pre-alarm if Era matches the player's team tag
     ADefaultPlayerState* MyPS = GetPlayerState<ADefaultPlayerState>();
     if (!MyPS)
         return;
@@ -466,29 +466,38 @@ void ADefaultPlayerController::ClientShowCalendarWidget_Implementation(const TAr
 void ADefaultPlayerController::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
+
+    // Update detection widget positions every frame for smooth tracking
+    UpdateAllDetectionWidgetPositions();
 }
 
-
-void ADefaultPlayerController::ClientUpdateDetectionWidget_Implementation(AActor* Detector, float Progress, bool bIsLocked)
+// --- Helper: compute screen position for a detector actor ---
+void ADefaultPlayerController::ComputeDetectorScreenPosition(AActor* Detector, FVector2D& OutScreenPos, bool& bOutIsOnScreen) const
 {
-    if (!Detector || !CharacterHUD || !CharacterHUD->CharacterOverlay)
+    if (!Detector)
+    {
+        OutScreenPos = FVector2D::ZeroVector;
+        bOutIsOnScreen = false;
         return;
+    }
 
     FVector DetectorLocation = Detector->GetActorLocation();
 
-    // For Character? Use Capsule Height for top
+    // For Character: use capsule height for top
     const ACharacter* Char = Cast<ACharacter>(Detector);
     if (Char)
     {
         const UCapsuleComponent* Capsule = Char->GetCapsuleComponent();
-        if (Capsule) {
+        if (Capsule)
+        {
             DetectorLocation += FVector(0.f, 0.f, Capsule->GetScaledCapsuleHalfHeight());
         }
     }
     else
     {
         const UPrimitiveComponent* Prim = Detector->FindComponentByClass<UPrimitiveComponent>();
-        if (Prim) {
+        if (Prim)
+        {
             FVector Origin, BoxExtent;
             Detector->GetActorBounds(true, Origin, BoxExtent);
             DetectorLocation = Origin + FVector(0.f, 0.f, BoxExtent.Z);
@@ -506,8 +515,6 @@ void ADefaultPlayerController::ClientUpdateDetectionWidget_Implementation(AActor
 
     const FVector CameraForward = CameraRot.Vector();
     float Dot = FVector::DotProduct(CameraForward, ToTarget);
-
-    // We'll use this to flag that the target is behind the camera
     bool bIsBehind = (Dot < 0.f);
 
     FVector2D ViewportSize(0, 0);
@@ -517,9 +524,9 @@ void ADefaultPlayerController::ClientUpdateDetectionWidget_Implementation(AActor
     FVector2D ScreenPos;
     ProjectWorldLocationToScreen(DetectorLocation, ScreenPos, false);
 
-    // We'll treat negative z in camera space as "behind"
-    bool bIsOnScreen = false;
     const float Margin = 1.0f;
+    bool bIsOnScreen = false;
+
     if (ScreenPos.X >= Margin && ScreenPos.X <= ViewportSize.X - Margin &&
         ScreenPos.Y >= Margin && ScreenPos.Y <= ViewportSize.Y - Margin && !bIsBehind)
     {
@@ -527,14 +534,10 @@ void ADefaultPlayerController::ClientUpdateDetectionWidget_Implementation(AActor
     }
     else
     {
-        // If behind, flip to front of camera for screen placement, then clamp to border.
         if (bIsBehind && ViewportSize.X > 1 && ViewportSize.Y > 1)
         {
-            // This maps the target to the closest border from the center using the -camera->target direction in screen space
             FVector CamToTargetWS = (DetectorLocation - CameraLoc).GetSafeNormal();
 
-            // Direction from camera, in camera space
-            FVector CamSpaceForward = CameraRot.Vector();
             FVector RightVector = FRotationMatrix(CameraRot).GetUnitAxis(EAxis::Y);
             FVector UpVector = FRotationMatrix(CameraRot).GetUnitAxis(EAxis::Z);
 
@@ -542,20 +545,15 @@ void ADefaultPlayerController::ClientUpdateDetectionWidget_Implementation(AActor
             float Y = FVector::DotProduct(UpVector, CamToTargetWS);
 
             FVector2D ToTarget2D(X, Y);
-
-            // Invert Y for screen-space (UE screen Y+ is down)
             ToTarget2D.Y *= -1.f;
 
-            // Normalize to get direction; fallback to bottom if zero
             if (ToTarget2D.IsNearlyZero())
                 ToTarget2D = FVector2D(0.f, 1.f);
 
             ToTarget2D.Normalize();
 
-            // Find how far we can go before reaching screen edge with margin
             FVector2D Center(ViewportSize.X / 2.f, ViewportSize.Y / 2.f);
 
-            // "Box cast" border
             float ScaleX = (ToTarget2D.X > 0.f) ? (ViewportSize.X - Center.X - Margin) / FMath::Max(ToTarget2D.X, 0.0001f)
                 : (0.f + Margin - Center.X) / FMath::Min(ToTarget2D.X, -0.0001f);
             float ScaleY = (ToTarget2D.Y > 0.f) ? (ViewportSize.Y - Center.Y - Margin) / FMath::Max(ToTarget2D.Y, 0.0001f)
@@ -564,16 +562,79 @@ void ADefaultPlayerController::ClientUpdateDetectionWidget_Implementation(AActor
             float Scale = FMath::Min(FMath::Abs(ScaleX), FMath::Abs(ScaleY));
             ScreenPos = Center + ToTarget2D * Scale;
 
-            // Clamp, just in case
             ScreenPos.X = FMath::Clamp(ScreenPos.X, Margin, ViewportSize.X - Margin);
             ScreenPos.Y = FMath::Clamp(ScreenPos.Y, Margin, ViewportSize.Y - Margin);
-
-            bIsOnScreen = false;
         }
+        bIsOnScreen = false;
     }
 
-    CharacterHUD->CharacterOverlay->UpdateDetectionWidget(Detector, Progress, bIsLocked, ScreenPos, bIsOnScreen);
+    OutScreenPos = ScreenPos;
+    bOutIsOnScreen = bIsOnScreen;
 }
+
+// --- Called from server at reduced tick rate: only updates progress/lock data ---
+void ADefaultPlayerController::ClientUpdateDetectionWidget_Implementation(AActor* Detector, float Progress, bool bIsLocked)
+{
+    if (!Detector) return;
+
+    // Remove tracking when progress is zero and not locked
+    if (Progress <= 0.001f && !bIsLocked)
+    {
+        TrackedDetections.Remove(Detector);
+
+        // Immediately tell overlay to remove the widget
+        if (CharacterHUD && CharacterHUD->CharacterOverlay)
+        {
+            FVector2D ScreenPos;
+            bool bIsOnScreen;
+            ComputeDetectorScreenPosition(Detector, ScreenPos, bIsOnScreen);
+            CharacterHUD->CharacterOverlay->UpdateDetectionWidget(Detector, 0.f, false, ScreenPos, bIsOnScreen);
+        }
+        return;
+    }
+
+    // Store/update tracking data — position will be computed every frame in Tick
+    FTrackedDetection& Tracked = TrackedDetections.FindOrAdd(Detector);
+    Tracked.Detector = Detector;
+    Tracked.Progress = Progress;
+    Tracked.bIsLocked = bIsLocked;
+}
+
+// --- Called every frame from Tick: recomputes screen positions for all tracked detectors ---
+void ADefaultPlayerController::UpdateAllDetectionWidgetPositions()
+{
+    if (!CharacterHUD || !CharacterHUD->CharacterOverlay) return;
+    if (TrackedDetections.Num() == 0) return;
+
+    TArray<AActor*> ToRemove;
+
+    for (auto& Pair : TrackedDetections)
+    {
+        AActor* Detector = Pair.Key;
+        FTrackedDetection& Tracked = Pair.Value;
+
+        if (!Detector || Detector->IsPendingKillPending())
+        {
+            ToRemove.Add(Detector);
+            continue;
+        }
+
+        FVector2D ScreenPos;
+        bool bIsOnScreen;
+        ComputeDetectorScreenPosition(Detector, ScreenPos, bIsOnScreen);
+
+        CharacterHUD->CharacterOverlay->UpdateDetectionWidget(
+            Detector, Tracked.Progress, Tracked.bIsLocked, ScreenPos, bIsOnScreen);
+    }
+
+    for (AActor* Actor : ToRemove)
+    {
+        // Clean up the widget for removed/dead actors
+        CharacterHUD->CharacterOverlay->UpdateDetectionWidget(Actor, 0.f, false, FVector2D::ZeroVector, false);
+        TrackedDetections.Remove(Actor);
+    }
+}
+
 
 void ADefaultPlayerController::BindAttributeDelegates()
 {

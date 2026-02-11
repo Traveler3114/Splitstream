@@ -11,6 +11,7 @@ class SPLITSTREAM_API UDetectionWidget : public UUserWidget
 public:
     UFUNCTION(BlueprintCallable, Category = "Detection")
     void SetDetectionProgress(float Progress, bool bIsLocked);
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
 protected:
     UPROPERTY(meta = (BindWidget))
@@ -27,5 +28,9 @@ protected:
     /** The brush for the full progress bar */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detection", meta = (AllowPrivateAccess = "true"))
     FSlateBrush FullBrush;
+
+    float DisplayedProgress = 0.f;
+    float TargetProgress = 0.f;
+    bool bIsLockedCached = false; // To store last lock state
 
 };
