@@ -1,5 +1,6 @@
 #include "FutureItemPickup.h"
 #include "ActorComponents/InventoryComponent.h"
+#include "GameplayTagContainer.h"
 #include "DefaultPlayerState.h"
 #include "GameFramework/PlayerController.h"
 
@@ -42,12 +43,12 @@ void AFutureItemPickup::HandleInvalidation(FGuid InvalidatedID)
 
 bool AFutureItemPickup::IsNetRelevantFor(const AActor* RealViewer, const AActor* ViewTarget, const FVector& SrcLocation) const
 {
-    // RealViewer is usually the PlayerController
     const APlayerController* PC = Cast<APlayerController>(RealViewer);
     if (!PC) return false;
 
     const ADefaultPlayerState* PS = PC->GetPlayerState<ADefaultPlayerState>();
-    if (PS && PS->GetTeamName().Equals(TEXT("Future"), ESearchCase::IgnoreCase))
+    FGameplayTag FutureTag = FGameplayTag::RequestGameplayTag(TEXT("Team.Future"));
+    if (PS && PS->GetTeamTag() == FutureTag)
     {
         return true;
     }

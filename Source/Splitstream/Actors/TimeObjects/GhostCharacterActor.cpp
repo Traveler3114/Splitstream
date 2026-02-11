@@ -1,5 +1,6 @@
 #include "GhostCharacterActor.h"
 #include "Components/SceneComponent.h"
+#include "GameplayTagContainer.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/Character.h"
@@ -27,16 +28,18 @@ AGhostCharacterActor::AGhostCharacterActor()
 bool AGhostCharacterActor::IsNetRelevantFor(const AActor* RealViewer, const AActor* ViewTarget, const FVector& SrcLocation) const
 {
     const APlayerController* PC = Cast<APlayerController>(RealViewer);
-    if (!PC)
-        return false;
+    if (!PC) return false;
 
     const ADefaultPlayerState* PS = PC->GetPlayerState<ADefaultPlayerState>();
-    if (PS && PS->GetTeamName().Equals(TEXT("Future"), ESearchCase::IgnoreCase))
+    FGameplayTag FutureTag = FGameplayTag::RequestGameplayTag(TEXT("Team.Future"));
+    if (PS && PS->GetTeamTag() == FutureTag)
     {
         return true;
     }
     return false;
 }
+
+
 
 void AGhostCharacterActor::BeginPlay()
 {

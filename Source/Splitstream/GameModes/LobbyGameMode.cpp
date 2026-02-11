@@ -36,7 +36,7 @@ void ALobbyGameMode::BeginPlay()
             if (ADefaultPlayerState* DPS = Cast<ADefaultPlayerState>(PS))
             {
                 DPS->SetReadyLocal(false); // Reset ready state
-                DPS->SetTeamLocal("Past"); // Or your default team. "Past"/"Future"
+                DPS->SetTeamLocal(FGameplayTag::RequestGameplayTag(TEXT("Team.Past"))); // Or your default team. "Past"/"Future"
                 BindReadyDelegateIfNeeded(DPS);
             }
         }

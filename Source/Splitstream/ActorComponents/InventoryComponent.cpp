@@ -21,17 +21,8 @@ FGameplayTag UInventoryComponent::GetTeamTag() const
     ADefaultPlayerState* PS = Cast<ADefaultPlayerState>(Pawn->GetPlayerState());
     if (!PS) return FGameplayTag();
 
-    FString TeamName = PS->GetTeamName();
-    if (TeamName == "Past")
-    {
-        return FGameplayTag::RequestGameplayTag(TEXT("Team.Past"));
-    }
-    else if (TeamName == "Future")
-    {
-        return FGameplayTag::RequestGameplayTag(TEXT("Team.Future"));
-    }
-
-    return FGameplayTag(); // None
+    // Directly return the canonical tag, no string conversion!
+    return PS->GetTeamTag();
 }
 
 void UInventoryComponent::BeginPlay()
