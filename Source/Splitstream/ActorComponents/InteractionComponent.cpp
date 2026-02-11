@@ -2,6 +2,8 @@
 #include "GameFramework/Pawn.h"
 #include "ActorComponents/InventoryComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "GameFramework/Character.h"
 #include "Interfaces/IInteractable.h"
 
 UInteractionComponent::UInteractionComponent()
@@ -106,36 +108,52 @@ void UInteractionComponent::HandleInstantInteract(
 }
 
 
-void UInteractionComponent::DropEquippedItem(UInventoryComponent* Inventory, UCameraComponent* Camera, float TraceDistance)
-{
-    if (!Inventory || !Camera) return;
-    float DropDist = TraceDistance > 0.f ? TraceDistance : InteractDistance;
+// In InteractionComponent.cpp
 
-    FVector Start = Camera->GetComponentLocation();
-    FRotator Rot = Camera->GetComponentRotation();
-    FVector End = Start + Rot.Vector() * DropDist;
+void UInteractionComponent::DropEquippedItem(UInventoryComponent* Inventory)
+{
+    if (!Inventory) return;
+
+    // --- Tunable Parameters ---
+    const float ForwardDistance = InteractDistance; // How far in front of character
+    const float UpwardOffset = 40.f;    // For the start of the down trace (above "head")
+    const float DownwardTrace = 200.f;  // How far to trace down to find a surface
+    const float SpawnAboveSurface = 1.f; // Final nudge above ground
+
+    // --- Capsule-based head height (no magic numbers) ---
+    ACharacter* Character = Cast<ACharacter>(GetOwner());
+    if (!Character) return;
+    UCapsuleComponent* Capsule = Character->GetCapsuleComponent();
+    if (!Capsule) return;
+
+    FVector CharLoc = Character->GetActorLocation();
+    FVector CharFwd = Character->GetActorForwardVector();
+
+    // Capsule origin is at feet; add capsule half-height for top (head)
+    float CapsuleHalfHeight = Capsule->GetScaledCapsuleHalfHeight();
+    FVector HeadLoc = CharLoc + FVector(0, 0, CapsuleHalfHeight);
+
+    // Move forward from head position
+    FVector StartPos = HeadLoc + CharFwd * ForwardDistance;
+
+    // --- Line trace DOWN to find floor ---
+    FVector TraceStart = StartPos + FVector(0, 0, UpwardOffset);
+    FVector TraceEnd = StartPos - FVector(0, 0, DownwardTrace);
 
     FHitResult Hit;
     FCollisionQueryParams Params;
-    Params.AddIgnoredActor(GetOwner());
+    Params.AddIgnoredActor(Character);
 
-    FVector DropLocation = End;
+    FVector FinalDropLocation = StartPos;
     UWorld* World = GetWorld();
-    if (World)
+    if (World && World->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, ECC_Visibility, Params))
     {
-        if (World->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, Params))
-        {
-            DropLocation = Hit.bBlockingHit ? Hit.ImpactPoint : End;
-        }
-
-        // Optionally, trace down to ground
-        FHitResult DownHit;
-        FVector DownStart = DropLocation + FVector(0,0,50);
-        FVector DownEnd = DropLocation - FVector(0,0,200);
-        if (World->LineTraceSingleByChannel(DownHit, DownStart, DownEnd, ECC_Visibility, Params))
-        {
-            DropLocation = DownHit.Location;
-        }
+        FinalDropLocation = Hit.Location + Hit.Normal * SpawnAboveSurface;
     }
-    Inventory->ServerDropActiveItem(DropLocation);
+    else
+    {
+        FinalDropLocation = StartPos + FVector(0, 0, SpawnAboveSurface);
+    }
+
+    Inventory->ServerDropActiveItem(FinalDropLocation);
 }

@@ -423,7 +423,7 @@ void ADefaultCharacter::SelectInventorySlot(int32 SlotNumber)
 void ADefaultCharacter::OnDropActiveItem()
 {
     if (!InteractionComponent || !InventoryComponent || !CameraComponent) return;
-    InteractionComponent->DropEquippedItem(InventoryComponent, CameraComponent);
+    InteractionComponent->DropEquippedItem(InventoryComponent);
 }
 
 

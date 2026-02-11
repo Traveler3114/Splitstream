@@ -39,19 +39,17 @@ void UItemBase::OnDropped(AActor* Instigator, FGuid ItemInstanceID, FVector Drop
 
     UClass* PickupClass = ItemPickupToSpawn ? ItemPickupToSpawn.Get() : AItemPickup::StaticClass();
 
-    // NEW: spawn slightly in front of character if physics enabled
-    const float ForwardDropDistance = 50.f; // <-- Tweakable
-    FVector SpawnLocation = bEnablePhysicsOnDrop
-        ? Instigator->GetActorLocation() + Instigator->GetActorForwardVector() * ForwardDropDistance
-        : DropLocation;
-
-    FTransform SpawnTransform(FRotator::ZeroRotator, SpawnLocation);
+    // Use DropLocation directly (was safely calculated in InteractionComponent)
+    FTransform SpawnTransform(FRotator::ZeroRotator, DropLocation);
     AItemPickup* Pickup = World->SpawnActorDeferred<AItemPickup>(PickupClass, SpawnTransform);
+
     if (Pickup)
     {
         Pickup->ItemData = this;
         Pickup->ItemInstanceID = ItemInstanceID;
         UGameplayStatics::FinishSpawningActor(Pickup, SpawnTransform);
+
+        // Enable physics and impulse, if desired
         if (bEnablePhysicsOnDrop && Pickup->OverrideMeshComp)
         {
             Pickup->OverrideMeshComp->SetSimulatePhysics(true);
@@ -62,27 +60,31 @@ void UItemBase::OnDropped(AActor* Instigator, FGuid ItemInstanceID, FVector Drop
     }
 }
 
+// ItemBase.cpp
+
 void UItemBase::OnDroppedWithTeam(AActor* Instigator, FGuid ItemInstanceID, FGameplayTag TeamTag, FVector DropLocation)
 {
     if (!Instigator) return;
     UWorld* World = Instigator->GetWorld();
     if (!World) return;
-    FVector SpawnLocation = bEnablePhysicsOnDrop ? Instigator->GetActorLocation() : DropLocation;
-    SpawnLocation.Z = FMath::Max(SpawnLocation.Z, 0.0f);
-    FTransform SpawnTransform(FRotator::ZeroRotator, SpawnLocation);
 
+    // Tag logic for special pickups (Past/Future), always using given drop location!
     static FGameplayTag PastTag = FGameplayTag::RequestGameplayTag(TEXT("Team.Past"));
     static FGameplayTag FutureTag = FGameplayTag::RequestGameplayTag(TEXT("Team.Future"));
+
+    FTransform SpawnTransform(FRotator::ZeroRotator, DropLocation);
 
     if (TeamTag == PastTag)
     {
         UClass* PickupClass = PastItemPickupToSpawn ? PastItemPickupToSpawn.Get() : APastItemPickup::StaticClass();
         APastItemPickup* Pickup = World->SpawnActorDeferred<APastItemPickup>(PickupClass, SpawnTransform);
+
         if (Pickup)
         {
             Pickup->ItemData = this;
             Pickup->ItemInstanceID = ItemInstanceID;
             UGameplayStatics::FinishSpawningActor(Pickup, SpawnTransform);
+
             if (bEnablePhysicsOnDrop && Pickup->OverrideMeshComp)
             {
                 Pickup->OverrideMeshComp->SetSimulatePhysics(true);
@@ -96,11 +98,13 @@ void UItemBase::OnDroppedWithTeam(AActor* Instigator, FGuid ItemInstanceID, FGam
     {
         UClass* PickupClass = FutureItemPickupToSpawn ? FutureItemPickupToSpawn.Get() : AFutureItemPickup::StaticClass();
         AFutureItemPickup* Pickup = World->SpawnActorDeferred<AFutureItemPickup>(PickupClass, SpawnTransform);
+
         if (Pickup)
         {
             Pickup->ItemData = this;
             Pickup->ItemInstanceID = ItemInstanceID;
             UGameplayStatics::FinishSpawningActor(Pickup, SpawnTransform);
+
             if (bEnablePhysicsOnDrop && Pickup->OverrideMeshComp)
             {
                 Pickup->OverrideMeshComp->SetSimulatePhysics(true);
@@ -114,11 +118,13 @@ void UItemBase::OnDroppedWithTeam(AActor* Instigator, FGuid ItemInstanceID, FGam
     {
         UClass* PickupClass = ItemPickupToSpawn ? ItemPickupToSpawn.Get() : AItemPickup::StaticClass();
         AItemPickup* Pickup = World->SpawnActorDeferred<AItemPickup>(PickupClass, SpawnTransform);
+
         if (Pickup)
         {
             Pickup->ItemData = this;
             Pickup->ItemInstanceID = ItemInstanceID;
             UGameplayStatics::FinishSpawningActor(Pickup, SpawnTransform);
+
             if (bEnablePhysicsOnDrop && Pickup->OverrideMeshComp)
             {
                 Pickup->OverrideMeshComp->SetSimulatePhysics(true);
@@ -129,7 +135,6 @@ void UItemBase::OnDroppedWithTeam(AActor* Instigator, FGuid ItemInstanceID, FGam
         }
     }
 }
-
 
 void UItemBase::OnUsed(AActor* Instigator, FGuid ItemInstanceID)
 {

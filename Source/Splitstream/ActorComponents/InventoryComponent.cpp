@@ -255,7 +255,6 @@ void UInventoryComponent::DropActiveItem(FVector DropLocation)
 {
     FInventorySlot ActiveSlot = GetActiveItem();
     if (!ActiveSlot.ItemAsset) return;
-    FGameplayTag TeamTag = GetTeamTag();
 
     // Remove granted handles before drop
     int DropIndex = ActiveSlotIndex;

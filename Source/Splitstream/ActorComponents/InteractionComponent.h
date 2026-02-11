@@ -62,5 +62,5 @@ public:
 
 
         // In InteractionComponent.h
-    void DropEquippedItem(UInventoryComponent* InventoryComponent, UCameraComponent* CameraComponent, float TraceDistance = -1.f);
+    void DropEquippedItem(UInventoryComponent* InventoryComponent);
 };
