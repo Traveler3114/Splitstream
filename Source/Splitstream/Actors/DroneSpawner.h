@@ -23,6 +23,8 @@ class SPLITSTREAM_API ADroneSpawner : public AActor, public IInteractable, publi
 public:
 	ADroneSpawner();
 
+	float LastPlatformAnimTime = 0.f;
+
 	virtual void Interact_Implementation(AActor* Interactor) override;
 	virtual void CancelInteract_Implementation(AActor* Interactor) override;
 	virtual void SetHighlighted_Implementation(bool bHighlight) override;

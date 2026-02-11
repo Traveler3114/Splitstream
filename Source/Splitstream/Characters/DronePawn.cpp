@@ -11,6 +11,7 @@
 #include "Components/SpotLightComponent.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
+#include "UtilityLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "GameStates/DefaultGameState.h"
 #include "Actors/PointActors/NavNode.h"
@@ -199,6 +200,8 @@ void ADronePawn::RequestRepair_Implementation(AActor* RepairInstigator)
     if (AbilitySystemComponent && AttributeSet)
     {
         AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute())
+            .RemoveAll(this);
+        AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute())
             .AddUObject(this, &ADronePawn::OnHealthChanged);
     }
 }
@@ -303,6 +306,7 @@ void ADronePawn::OnHealthChanged(const FOnAttributeChangeData& Data)
 void ADronePawn::BeginPlay()
 {
     Super::BeginPlay();
+    UUtilityLibrary::RegisterRepairable(this, this);
 	SetRevealProgress(1.0f);
     GetWorldTimerManager().SetTimer(DetectionTimerHandle, this, &ADronePawn::DetectionUpdate, DetectionInterval, true);
     OnRep_DetectedActor();
@@ -329,6 +333,8 @@ void ADronePawn::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     GetWorldTimerManager().ClearTimer(DetectionTimerHandle);
     GetWorldTimerManager().ClearTimer(MeshAlignTimerHandle);
+    GetWorldTimerManager().ClearTimer(LaunchMoveTimerHandle);
+    UUtilityLibrary::UnregisterRepairable(this, this);
     Super::EndPlay(EndPlayReason);
 }
 

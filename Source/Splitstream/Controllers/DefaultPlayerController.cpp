@@ -613,7 +613,7 @@ void ADefaultPlayerController::UpdateAllDetectionWidgetPositions()
         AActor* Detector = Pair.Key;
         FTrackedDetection& Tracked = Pair.Value;
 
-        if (!Detector || Detector->IsPendingKillPending())
+        if (!IsValid(Detector))
         {
             ToRemove.Add(Detector);
             continue;

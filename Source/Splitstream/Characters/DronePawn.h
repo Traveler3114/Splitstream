@@ -152,5 +152,5 @@ protected:
     ANavNode* NextNode = nullptr;
 
 private:
-    UMaterialInstanceDynamic* CachedDynMat;
+    UMaterialInstanceDynamic* CachedDynMat = nullptr;
 };

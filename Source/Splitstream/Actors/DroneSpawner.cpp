@@ -180,37 +180,40 @@ void ADroneSpawner::HandleDroneDeath(ADronePawn* DeadDrone)
 
 void ADroneSpawner::StartNextPendingSpawn()
 {
-	if (PendingSpawnCount <= 0) return;
+    if (PendingSpawnCount <= 0) return;
 
-	if (DroneClass && PlatformMesh)
-	{
-		FVector SpawnLoc = PlatformMesh->GetComponentLocation() + DroneSpawnOffset;
-		FRotator SpawnRot = GetActorRotation();
-		FActorSpawnParameters Params;
-		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		PendingDrone = GetWorld()->SpawnActor<ADronePawn>(DroneClass, SpawnLoc, SpawnRot, Params);
-		PendingDrone->TimelineEra = TimelineEra;
+    if (DroneClass && PlatformMesh)
+    {
+        FVector SpawnLoc = PlatformMesh->GetComponentLocation() + DroneSpawnOffset;
+        FRotator SpawnRot = GetActorRotation();
+        FActorSpawnParameters Params;
+        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        PendingDrone = GetWorld()->SpawnActor<ADronePawn>(DroneClass, SpawnLoc, SpawnRot, Params);
+        PendingDrone->TimelineEra = TimelineEra;
 
-		if (PendingDrone)
-		{
-			PendingDrone->DeactivateDrone();
-			PendingDrone->SetRevealProgress(0.f); // Start fully hidden
-		}
-	}
+        if (PendingDrone)
+        {
+            PendingDrone->DeactivateDrone();
+            PendingDrone->SetRevealProgress(0.f); // Start fully hidden
+        }
+    }
 
-	if (CountdownText)
-	{
-		CountdownText->SetText(FText::Format(NSLOCTEXT("DroneSpawner", "RespawnIn", "Spawning Drone in {0}"), FText::AsNumber((int32)RespawnTimeLeft)));
-		CountdownText->SetVisibility(true);
-	}
+    if (CountdownText)
+    {
+        CountdownText->SetText(FText::Format(NSLOCTEXT("DroneSpawner", "RespawnIn", "Spawning Drone in {0}"), FText::AsNumber((int32)RespawnTimeLeft)));
+        CountdownText->SetVisibility(true);
+    }
 
-	RespawnTimeLeft = RespawnDelay;
-	TimerAnimElapsed = 0.f;
-	bIsPlatformReverse = false;
+    RespawnTimeLeft = RespawnDelay;
+    TimerAnimElapsed = 0.f;
+    bIsPlatformReverse = false;
+    
+    // <-- Add this line for robust delta timing!
+    LastPlatformAnimTime = GetWorld()->GetTimeSeconds();
 
-	GetWorldTimerManager().SetTimer(RespawnTimerHandle, this, &ADroneSpawner::OnRespawnTimerFinished, RespawnDelay, false);
-	GetWorldTimerManager().SetTimer(TextUpdateTimerHandle, this, &ADroneSpawner::UpdateCountdownText, 1.0f, true);
-	GetWorldTimerManager().SetTimer(PlatformAnimTimerHandle, this, &ADroneSpawner::TickPlatformAnim, 0.02f, true);
+    GetWorldTimerManager().SetTimer(RespawnTimerHandle, this, &ADroneSpawner::OnRespawnTimerFinished, RespawnDelay, false);
+    GetWorldTimerManager().SetTimer(TextUpdateTimerHandle, this, &ADroneSpawner::UpdateCountdownText, 1.0f, true);
+    GetWorldTimerManager().SetTimer(PlatformAnimTimerHandle, this, &ADroneSpawner::TickPlatformAnim, 0.02f, true);
 }
 
 void ADroneSpawner::UpdateCountdownText()
@@ -229,54 +232,56 @@ void ADroneSpawner::UpdateCountdownText()
 
 void ADroneSpawner::TickPlatformAnim()
 {
-	const float TickInterval = 0.02f;
-	if (!bIsPlatformReverse)
-	{
-		TimerAnimElapsed += TickInterval;
-		float Alpha = FMath::Clamp(TimerAnimElapsed / RespawnDelay, 0.f, 1.f);
-		float S = FMath::SmoothStep(0.f, 1.f, Alpha);
+    float CurrentTime = GetWorld()->GetTimeSeconds();
+    float DeltaTime = CurrentTime - LastPlatformAnimTime;
+    LastPlatformAnimTime = CurrentTime;
 
-		if (PlatformMesh)
-		{
-			FVector RelLoc = PlatformMesh->GetRelativeLocation();
-			RelLoc.Z = PlatformStartZ + PlatformRiseOffset * S;
-			PlatformMesh->SetRelativeLocation(RelLoc);
-		}
+    if (!bIsPlatformReverse)
+    {
+        TimerAnimElapsed += DeltaTime;
+        float Alpha = FMath::Clamp(TimerAnimElapsed / RespawnDelay, 0.f, 1.f);
+        float S = FMath::SmoothStep(0.f, 1.f, Alpha);
 
-		if (PendingDrone && PlatformMesh)
-		{
-			FVector PlatLoc = PlatformMesh->GetComponentLocation() + DroneSpawnOffset;
-			PendingDrone->SetActorLocation(PlatLoc);
+        if (PlatformMesh)
+        {
+            FVector RelLoc = PlatformMesh->GetRelativeLocation();
+            RelLoc.Z = PlatformStartZ + PlatformRiseOffset * S;
+            PlatformMesh->SetRelativeLocation(RelLoc);
+        }
 
-			// ---- Reveal mesh gradually ----
-			if (PendingDrone)
-			{
-				PendingDrone->SetRevealProgress(S); // S goes from 0 to 1 during platform up
-			}
-		}
-	}
-	else
-	{
-		// (same as before, for platform going down)
-		float DownInterval = TickInterval * 3;
-		PlatformDownAnimElapsed += DownInterval;
-		float DownDuration = RespawnDelay / 3; // finish faster
-		float Alpha = FMath::Clamp(PlatformDownAnimElapsed / DownDuration, 0.f, 1.f);
-		float S = 1.f - FMath::SmoothStep(0.f, 1.f, Alpha);
+        if (PendingDrone && PlatformMesh)
+        {
+            FVector PlatLoc = PlatformMesh->GetComponentLocation() + DroneSpawnOffset;
+            PendingDrone->SetActorLocation(PlatLoc);
 
-		if (PlatformMesh)
-		{
-			FVector RelLoc = PlatformMesh->GetRelativeLocation();
-			RelLoc.Z = PlatformStartZ + PlatformRiseOffset * S;
-			PlatformMesh->SetRelativeLocation(RelLoc);
-		}
+            // ---- Reveal mesh gradually ----
+            if (PendingDrone)
+            {
+                PendingDrone->SetRevealProgress(S); // S goes from 0 to 1 during platform up
+            }
+        }
+    }
+    else
+    {
+        float DownInterval = DeltaTime * 3;
+        PlatformDownAnimElapsed += DownInterval;
+        float DownDuration = RespawnDelay / 3; // finish faster
+        float Alpha = FMath::Clamp(PlatformDownAnimElapsed / DownDuration, 0.f, 1.f);
+        float S = 1.f - FMath::SmoothStep(0.f, 1.f, Alpha);
 
-		if (Alpha >= 1.f)
-		{
-			ResetPlatform();
-			GetWorldTimerManager().ClearTimer(PlatformAnimTimerHandle);
-		}
-	}
+        if (PlatformMesh)
+        {
+            FVector RelLoc = PlatformMesh->GetRelativeLocation();
+            RelLoc.Z = PlatformStartZ + PlatformRiseOffset * S;
+            PlatformMesh->SetRelativeLocation(RelLoc);
+        }
+
+        if (Alpha >= 1.f)
+        {
+            ResetPlatform();
+            GetWorldTimerManager().ClearTimer(PlatformAnimTimerHandle);
+        }
+    }
 }
 void ADroneSpawner::OnRespawnTimerFinished()
 {
