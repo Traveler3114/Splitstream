@@ -69,7 +69,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ASC")
     UAbilitySystemComponent* AbilitySystemComponent;
 
-    /** Typed accessor � returns the ASC cast to our custom subclass, or nullptr */
+    /** Typed accessor — returns the ASC cast to our custom subclass, or nullptr. */
     UDefaultAbilitySystemComponent* GetDefaultASC() const;
 
     // Input-to-ability routing (thin wrappers that delegate to ASC)
@@ -206,9 +206,6 @@ public:
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 private:
-    // REMOVED: GrantAbilitiesFromInputSet(), GrantAbilitiesFromDefaultSet(), GrantAbilitiesFromSet()
-    // These now live on UDefaultAbilitySystemComponent
-
     FDelegateHandle IllegalTagDelegateHandle;
     FDelegateHandle WalkSpeedDelegateHandle;
     FDelegateHandle RunSpeedDelegateHandle;
