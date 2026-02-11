@@ -13,6 +13,14 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDroneDeath, ADronePawn*, DeadDron
 
 class UPlayerAttributeSet;
 
+/**
+ * AI-controlled drone pawn with cone-based detection, patrol via NavNodes,
+ * and IRepairable support for the robot guard repair system.
+ *
+ * Features a launch animation from DroneSpawner platforms, reveal/hide
+ * material transitions, spotlight color changes on detection, and
+ * health-based death with repair/respawn capability.
+ */
 UCLASS()
 class SPLITSTREAM_API ADronePawn : public APawn, public IAbilitySystemInterface, public IRepairable
 {

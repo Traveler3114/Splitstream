@@ -16,6 +16,13 @@
 
 class ANavNode;
 
+/**
+ * Guard AI character with NavNode-based patrol, ghost mirroring between
+ * timeline eras, and detection-triggered pre-alarm/alarm escalation.
+ *
+ * Extends AAICharacter with ghost visibility (IGhostMirrorSource),
+ * locker assignment, and configurable idle/patrol behavior.
+ */
 UCLASS()
 class SPLITSTREAM_API AGuardCharacter : public AAICharacter, public IGhostMirrorSource
 {

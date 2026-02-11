@@ -7,6 +7,7 @@
 #include "GameplayAbilitySpec.h"
 #include "InventoryComponent.generated.h"
 
+/** Represents a single inventory slot with an item asset, instance ID, and runtime GAS handles. */
 USTRUCT(BlueprintType)
 struct FInventorySlot
 {
@@ -28,6 +29,14 @@ struct FInventorySlot
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInventoryChanged, const TArray<FInventorySlot>&, Items);
 
+/**
+ * Replicated inventory component with slot-based item management.
+ *
+ * Supports adding/removing items, active slot selection, per-item GAS
+ * effect/ability grants, team-aware item spawning on drop, and
+ * future-timeline item invalidation. Changes are broadcast via
+ * OnInventoryChanged for UI updates.
+ */
 UCLASS(Blueprintable, ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class SPLITSTREAM_API UInventoryComponent : public UActorComponent
 {

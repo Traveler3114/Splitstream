@@ -27,6 +27,17 @@ class UDetectionComponent;
 class AItemPickup;
 
 
+/**
+ * Main player character for the Splitstream heist gameplay.
+ *
+ * Handles movement (walk, sprint, crouch, jump), camera control, Enhanced Input binding,
+ * GAS ability system integration (ASC lives on PlayerState), interaction delegation
+ * to UInteractionComponent, inventory mesh display, and IDetectable implementation
+ * for the security detection pipeline.
+ *
+ * Movement speeds are driven by GAS attributes (WalkSpeed, RunSpeed, CrouchSpeed).
+ * Ability granting is delegated to UDefaultAbilitySystemComponent.
+ */
 UCLASS()
 class SPLITSTREAM_API ADefaultCharacter : public ACharacter, public IInteractable, public IAbilitySystemInterface, public IDetectable
 {

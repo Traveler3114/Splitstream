@@ -15,6 +15,12 @@
 class UTextRenderComponent;
 class ADronePawn;
 
+/**
+ * Spawner actor for drones. Manages drone respawn queue, platform
+ * rise/fall animations, countdown text display, and search-based
+ * pause/resume. Implements IInteractable, IRepairable, and
+ * IPuzzleCompletionReceiver.
+ */
 UCLASS()
 class SPLITSTREAM_API ADroneSpawner : public AActor, public IInteractable, public IRepairable, public IPuzzleCompletionReceiver
 {

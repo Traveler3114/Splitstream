@@ -19,6 +19,14 @@ class UPlayerAttributeSet;
 class UDetectionComponent;
 class USearchComponent;
 
+/**
+ * Abstract base class for all AI-controlled characters (guards, civilians, etc.).
+ *
+ * Provides GAS integration (ASC + attribute set), AI perception,
+ * IInteractable (search/pickup), IDetectable (detection component),
+ * health attribute tracking, and item drop functionality.
+ * Concrete subclasses implement specific AI behaviors via StateTree.
+ */
 UCLASS(Abstract)
 class SPLITSTREAM_API AAICharacter : public ACharacter, public IAbilitySystemInterface, public IInteractable, public IDetectable
 {
