@@ -20,6 +20,14 @@ struct FDetectionState
     }
 };
 
+USTRUCT()
+struct FLastSentState
+{
+    GENERATED_BODY()
+    float Progress = 0.f;
+    bool bIsLocked = false;
+};
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDetectionBegan, AActor*, OwnerActor);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDetectionEnded, AActor*, OwnerActor);
 
@@ -82,4 +90,8 @@ public:
 protected:
     void HandleFullyDetected(AActor* Detector);
     float GetDetectionSpeedMultiplier(AActor* Detector) const;
+
+    // ------- Bandwidth optimization: throttle detection widget RPCs -------
+
+    TMap<AActor*, FLastSentState> LastSentStates;
 };

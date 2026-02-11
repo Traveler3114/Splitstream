@@ -18,12 +18,14 @@ void UDetectionComponent::BeginPlay()
 {
     Super::BeginPlay();
     DetectionStates.Empty();
+    LastSentStates.Empty();
 }
 
 void UDetectionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     Super::EndPlay(EndPlayReason);
     DetectionStates.Empty();
+    LastSentStates.Empty();
 }
 
 void UDetectionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -98,6 +100,7 @@ void UDetectionComponent::ForceImmediateDetectionEnd(AActor* Detector)
         }
 
         DetectionStates.Remove(Detector); // Remove state for this detector immediately
+        LastSentStates.Remove(Detector);  // Clean up throttling state as well
         SetComponentTickEnabled(DetectionStates.Num() > 0);
     }
 
@@ -158,10 +161,10 @@ void UDetectionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 
     bool bAnyActive = false;
 
-    for (auto& Elem : DetectionStates)
+    for (auto It = DetectionStates.CreateIterator(); It; ++It)
     {
-        AActor* Detector = Elem.Key;
-        FDetectionState& State = Elem.Value;
+        AActor* Detector = It.Key();
+        FDetectionState& State = It.Value();
 
         // If detection in progress and not fully detected
         if (State.bDetectionInProgress && !State.bFullyDetected)
@@ -201,23 +204,42 @@ void UDetectionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
             bAnyActive = true;
         }
 
-        // Propagate to all PlayerControllers every tick
+        // --- THROTTLE NETWORK: Only send to client if changed (≥1%) or lock state flips ----
         float ProgressPct = FMath::Clamp(State.Progress / FMath::Max(DetectionDuration, 0.01f), 0.f, 1.f);
         bool bIsLocked = State.bFullyDetected;
 
-        UWorld* World = GetWorld();
-        if (World)
+        FLastSentState& LastSent = LastSentStates.FindOrAdd(Detector);
+        bool bSendUpdate = false;
+
+        if (FMath::Abs(LastSent.Progress - ProgressPct) >= 0.01f || LastSent.bIsLocked != bIsLocked)
         {
-            for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
+            LastSent.Progress = ProgressPct;
+            LastSent.bIsLocked = bIsLocked;
+            bSendUpdate = true;
+        }
+
+        if (bSendUpdate)
+        {
+            UWorld* World = GetWorld();
+            if (World)
             {
-                if (APlayerController* PC = It->Get())
+                for (FConstPlayerControllerIterator PCIt = World->GetPlayerControllerIterator(); PCIt; ++PCIt)
                 {
-                    if (ADefaultPlayerController* DefaultPC = Cast<ADefaultPlayerController>(PC))
+                    if (APlayerController* PC = PCIt->Get())
                     {
-                        DefaultPC->ClientUpdateDetectionWidget(Detector, ProgressPct, bIsLocked);
+                        if (ADefaultPlayerController* DefaultPC = Cast<ADefaultPlayerController>(PC))
+                        {
+                            DefaultPC->ClientUpdateDetectionWidget(Detector, ProgressPct, bIsLocked);
+                        }
                     }
                 }
             }
+        }
+
+        // Clean up the throttling entry if this detector is cleared
+        if (ProgressPct <= 0.001f && !bIsLocked)
+        {
+            LastSentStates.Remove(Detector); // So the next detection start will always resend
         }
     }
 
