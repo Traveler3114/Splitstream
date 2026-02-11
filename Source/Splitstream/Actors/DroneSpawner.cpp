@@ -1,5 +1,6 @@
 // DroneSpawner.cpp
 #include "DroneSpawner.h"
+#include "Splitstream.h"
 #include "Characters/DronePawn.h"
 #include "Kismet/GameplayStatics.h"
 #include "Actors/PointActors/NavNode.h"
@@ -327,7 +328,7 @@ void ADroneSpawner::ActivatePendingDrone()
 		}
 		else
 		{
-			UE_LOG(LogTemp, Warning, TEXT("No NavNodes found for TimelineEra and NodeType that matches the drone! Drone will remain at spawn location."));
+			UE_LOG(LogSplitstream, Warning, TEXT("No NavNodes found for TimelineEra and NodeType that matches the drone! Drone will remain at spawn location."));
 		}
 
 		PendingDrone = nullptr;

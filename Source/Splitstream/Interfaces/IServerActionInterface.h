@@ -4,7 +4,11 @@
 #include "UObject/Interface.h"
 #include "IServerActionInterface.generated.h"
 
-// 1. Define the generic payload struct.
+/**
+ * Generic payload for server-side actions dispatched through IServerActionInterface.
+ * Contains common value types so a single RPC can carry various data without
+ * needing a unique RPC per action.
+ */
 USTRUCT(BlueprintType)
 struct FServerActionPayload
 {
@@ -24,23 +28,29 @@ struct FServerActionPayload
 
     UPROPERTY(BlueprintReadWrite)
     FString StringValue;
-
-    // Add more fields as you need for future extensibility!
 };
 
-// 2. Declare the Unreal interface type.
+/**
+ * Interface for actors that can execute a generic server-authoritative action.
+ *
+ * Allows any actor to receive a server action with a flexible payload,
+ * typically forwarded via ADefaultPlayerController::ServerExecuteAction().
+ */
 UINTERFACE(MinimalAPI)
 class UServerActionInterface : public UInterface
 {
     GENERATED_BODY()
 };
 
-// 3. Implement your pure C++ interface. 
 class SPLITSTREAM_API IServerActionInterface
 {
     GENERATED_BODY()
 
 public:
+    /**
+     * Executes a server-authoritative action with the given payload.
+     * @param Payload  A generic data payload containing the action parameters.
+     */
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
     void ExecuteServerAction(const FServerActionPayload& Payload);
 };

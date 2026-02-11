@@ -17,6 +17,14 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnReadyChanged, ADefaultPlayerState
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAvatarChanged, ADefaultPlayerState*, PS);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTeamChanged, ADefaultPlayerState*, PS);
 
+/**
+ * Player state for Splitstream. Owns the Ability System Component (ASC)
+ * and player attribute set, which persist across pawn respawns and
+ * seamless travel (via CopyProperties).
+ *
+ * Also manages replicated player metadata: display name, avatar,
+ * team assignment (FGameplayTag), and lobby ready state.
+ */
 UCLASS()
 class SPLITSTREAM_API ADefaultPlayerState : public APlayerState, public IAbilitySystemInterface
 {

@@ -6,6 +6,10 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FLobbyOnAggregateReadyChanged);
 
+/**
+ * Lobby game state that tracks aggregate player readiness.
+ * Replicated to all clients for UI display of ready/total player counts.
+ */
 UCLASS()
 class SPLITSTREAM_API ALobbyGameState : public ABaseGameState
 {

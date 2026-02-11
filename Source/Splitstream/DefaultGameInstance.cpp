@@ -1,4 +1,5 @@
 #include "DefaultGameInstance.h"
+#include "Splitstream.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/Engine.h"
 #include "OnlineSubsystem.h"
@@ -169,7 +170,7 @@ void UDefaultGameInstance::CleanupNetDriver()
         {
             if (NamedDriver.NetDriver)
             {
-                UE_LOG(LogTemp, Warning, TEXT("Destroying leftover NetDriver: %s"), *NamedDriver.NetDriver->GetName());
+                UE_LOG(LogSplitstream, Warning, TEXT("Destroying leftover NetDriver: %s"), *NamedDriver.NetDriver->GetName());
                 NamedDriver.NetDriver->SetWorld(nullptr);
                 NamedDriver.NetDriver->Shutdown();
             }

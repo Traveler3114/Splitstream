@@ -4,6 +4,7 @@
 #include "Components/ActorComponent.h"
 #include "DetectionComponent.generated.h"
 
+/** Tracks per-detector detection progress and state (building, cooling, fully detected). */
 USTRUCT()
 struct FDetectionState
 {
@@ -22,6 +23,14 @@ struct FDetectionState
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDetectionBegan, AActor*, OwnerActor);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDetectionEnded, AActor*, OwnerActor);
 
+/**
+ * Component that manages progressive detection state for its owning actor.
+ *
+ * Tracks detection progress per-detector with distance-weighted fill rates.
+ * Sends detection widget updates to player controllers via Client RPCs.
+ * Fires OnDetectionBegan/OnDetectionEnded delegates for gameplay responses.
+ * Tick interval is configurable and disabled when no detection is active.
+ */
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class SPLITSTREAM_API UDetectionComponent : public UActorComponent
 {

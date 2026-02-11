@@ -4,6 +4,12 @@
 #include "Characters/GuardCharacter.h"
 #include "RobotGuardCharacter.generated.h"
 
+/**
+ * Robot guard AI that autonomously repairs destroyed/disabled IRepairable actors.
+ * Maintains a repair queue and processes repairs sequentially via
+ * URepairableRegistry delegates. Extends AGuardCharacter but overrides
+ * health handling (cannot die).
+ */
 UCLASS()
 class SPLITSTREAM_API ARobotGuardCharacter : public AGuardCharacter
 {
