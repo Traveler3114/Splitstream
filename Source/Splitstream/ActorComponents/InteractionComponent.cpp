@@ -115,12 +115,11 @@ void UInteractionComponent::DropEquippedItem(UInventoryComponent* Inventory)
     if (!Inventory) return;
 
     // --- Tunable Parameters ---
-    const float ForwardDistance = InteractDistance; // How far in front of character
-    const float UpwardOffset = 40.f;    // For the start of the down trace (above "head")
-    const float DownwardTrace = 200.f;  // How far to trace down to find a surface
-    const float SpawnAboveSurface = 1.f; // Final nudge above ground
+    const float ForwardDistance = InteractDistance;
+    const float UpwardOffset = 40.f;
+    const float DownwardTrace = 200.f;
+    const float DefaultSpawnAboveSurface = 1.f; // For non-physics items
 
-    // --- Capsule-based head height (no magic numbers) ---
     ACharacter* Character = Cast<ACharacter>(GetOwner());
     if (!Character) return;
     UCapsuleComponent* Capsule = Character->GetCapsuleComponent();
@@ -128,15 +127,19 @@ void UInteractionComponent::DropEquippedItem(UInventoryComponent* Inventory)
 
     FVector CharLoc = Character->GetActorLocation();
     FVector CharFwd = Character->GetActorForwardVector();
-
-    // Capsule origin is at feet; add capsule half-height for top (head)
     float CapsuleHalfHeight = Capsule->GetScaledCapsuleHalfHeight();
     FVector HeadLoc = CharLoc + FVector(0, 0, CapsuleHalfHeight);
 
-    // Move forward from head position
     FVector StartPos = HeadLoc + CharFwd * ForwardDistance;
 
-    // --- Line trace DOWN to find floor ---
+    // --- Get current item properties ---
+    FInventorySlot ActiveSlot = Inventory->GetActiveItem();
+    bool bIsPhysicsDrop = ActiveSlot.ItemAsset && ActiveSlot.ItemAsset->bEnablePhysicsOnDrop;
+
+    // The height to spawn above the surface:
+    float SpawnAboveSurface = bIsPhysicsDrop ? CapsuleHalfHeight : DefaultSpawnAboveSurface;
+
+    // --- Always trace down to floor ---
     FVector TraceStart = StartPos + FVector(0, 0, UpwardOffset);
     FVector TraceEnd = StartPos - FVector(0, 0, DownwardTrace);
 
@@ -145,6 +148,7 @@ void UInteractionComponent::DropEquippedItem(UInventoryComponent* Inventory)
     Params.AddIgnoredActor(Character);
 
     FVector FinalDropLocation = StartPos;
+
     UWorld* World = GetWorld();
     if (World && World->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, ECC_Visibility, Params))
     {
@@ -152,6 +156,7 @@ void UInteractionComponent::DropEquippedItem(UInventoryComponent* Inventory)
     }
     else
     {
+        // Fallback: Still spawn above initial pos, so not embedded
         FinalDropLocation = StartPos + FVector(0, 0, SpawnAboveSurface);
     }
 
