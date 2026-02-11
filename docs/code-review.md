@@ -1,12 +1,12 @@
-# Code Review (Updated — Round 4)
+# Code Review (Updated — Round 5)
 
-This document provides a comprehensive code review of the **Splitstream** codebase under `Source/Splitstream/`, reflecting all fixes applied across review rounds, including newly verified improvements in Round 4.
+This document provides a comprehensive code review of the **Splitstream** codebase under `Source/Splitstream/`, reflecting all fixes applied across review rounds, including newly verified improvements in Round 5.
 
 ---
 
 ## Summary
 
-Splitstream is a well-architected, feature-rich Unreal Engine 5 multiplayer heist game. The project integrates the Gameplay Ability System (GAS), a server-authoritative multiplayer architecture, custom AI systems with StateTree, and multiple interactive puzzle mechanics. Significant improvements have been made since the initial review. **Round 4** confirms substantial new refactoring work: ability system logic extracted to `UDefaultAbilitySystemComponent`, interaction logic extracted to `UInteractionComponent`, EndPlay cleanup for GAS delegates, and cleaner separation of concerns — demonstrating continued engineering maturity.
+Splitstream is a well-architected, feature-rich Unreal Engine 5 multiplayer heist game. The project integrates the Gameplay Ability System (GAS), a server-authoritative multiplayer architecture, custom AI systems with StateTree, and multiple interactive puzzle mechanics. Significant improvements have been made since the initial review. **Round 5** confirms that all previously identified code-level issues have been resolved: stale development comments removed, garbled Unicode in doc comments fixed, dead commented-out code cleaned up, `CachedDynMat` properly initialized, `IsPendingKillPending()` replaced with `IsValid()`, `LaunchMoveTimerHandle` cleanup added to `EndPlay()`, remaining `LogTemp` replaced with `LogSplitstream`, and `DroneSpawner::TickPlatformAnim()` now uses actual elapsed time. The codebase is now clean of all identified technical debt.
 
 ---
 
@@ -146,16 +146,19 @@ These are properly assigned in `InitializeAbilitySystem()` and cleaned up in `En
 - **Component tick management** — Components enable/disable tick based on active state.
 - **Frame-rate-independent animation** — DronePawn timers use actual elapsed time.
 
-### 7. Code Quality & Lifecycle Management ✅ (New in Round 4)
+### 7. Code Quality & Lifecycle Management ✅ (Improved in Round 5)
 - **Delegate cleanup in EndPlay** — `ADefaultCharacter` and `ADefaultPlayerController` both properly clean up GAS delegates on destruction.
 - **Component extraction** — `UInteractionComponent` and `UDefaultAbilitySystemComponent` demonstrate proper responsibility separation.
 - **Typed ASC accessor** — `GetDefaultASC()` provides safe access to the custom component without casting throughout the class.
+- **No stale comments or dead code** — All development markers (`// ADD THIS`, `// REMOVED:`) and commented-out code have been cleaned up.
+- **Consistent log category** — All files now use `LogSplitstream`; no `LogTemp` remains.
+- **Modern UE5 API usage** — Deprecated `IsPendingKillPending()` replaced with `IsValid()` throughout.
 
 ---
 
 ## DefaultCharacter In-Depth Review
 
-`ADefaultCharacter` is the player pawn class (~741 lines in .cpp, ~210 lines in .h). After Round 4 refactoring, it now handles:
+`ADefaultCharacter` is the player pawn class (~737 lines in .cpp, ~208 lines in .h). After Round 5 cleanup, it now handles:
 
 1. **Movement** — Walk, sprint, crouch, jump with GAS attribute-driven speeds
 2. **Camera** — Look, pitch replication, ADS socket calculation
@@ -175,98 +178,40 @@ These are properly assigned in `InitializeAbilitySystem()` and cleaned up in `En
 - **Error logging** — `InitializeAbilitySystem()` and `ServerHandleInteract_Implementation()` log on failure.
 - **Clean number key handling** — Single `TMap` lookup, no redundant parsing.
 
-### Remaining Issues in DefaultCharacter
+### All DefaultCharacter Issues Resolved ✅
 
-#### 1. Stale Comments in Header 🟡
-```cpp
-class UDefaultAbilitySystemComponent;    // ADD THIS
-...
-UDefaultAbilitySystemComponent* GetDefaultASC() const;    // ADD THIS
-```
-Lines 23 and 70 in `DefaultCharacter.h` contain leftover `// ADD THIS` development comments that should be removed.
-
-#### 2. `DropActiveItem()` Hard Floor Trace 🟡
-```cpp
-FVector DownStart = DropLocation + FVector(0,0,50);
-FVector DownEnd = DropLocation - FVector(0,0,200);
-```
-Hardcoded trace offsets (50 units up, 200 units down) in `InteractionComponent.cpp`. These should be constants or `UPROPERTY` values.
+Previous round identified stale `// ADD THIS` and `// REMOVED:` development comments, and hardcoded trace offsets for `DropActiveItem()`. Development comments have been cleaned up in Round 5. The `DropEquippedItem()` method in `InteractionComponent.cpp` now uses local named constants (`UpwardOffset`, `DownwardTrace`) for trace distances rather than raw magic numbers in the trace call.
 
 ---
 
-## New Issues Found in Round 4
+## All Round 4 Issues Resolved ✅
 
-### 1. `CachedDynMat` Uninitialized Pointer 🔸 (Medium Priority)
-**File:** `DronePawn.h`, line 155
-```cpp
-private:
-    UMaterialInstanceDynamic* CachedDynMat;
-```
-`CachedDynMat` is declared as a raw pointer but not initialized to `nullptr` in the header or constructor. On first call to `SetRevealProgress()`, the `if (!CachedDynMat)` check reads an indeterminate value, which is **undefined behavior**.
+### ~~`CachedDynMat` Uninitialized Pointer~~ → **Fixed** ✅
+`CachedDynMat` is now initialized to `nullptr` in the header declaration: `UMaterialInstanceDynamic* CachedDynMat = nullptr;`
 
-**Fix:** Initialize to `nullptr`:
-```cpp
-UMaterialInstanceDynamic* CachedDynMat = nullptr;
-```
+### ~~`IsPendingKillPending()` Deprecated API~~ → **Fixed** ✅
+`DefaultPlayerController.cpp` now uses `!IsValid(Detector)` instead of the deprecated `IsPendingKillPending()`.
 
-### 2. `IsPendingKillPending()` Deprecated API 🔸 (Medium Priority)
-**File:** `DefaultPlayerController.cpp`, line 616
-```cpp
-if (!Detector || Detector->IsPendingKillPending())
-```
-`IsPendingKillPending()` is deprecated in UE5. The recommended replacement is `!IsValid(Detector)`, which already handles both null and pending-kill checks.
+### ~~`LogTemp` Still Used in Some Files~~ → **Fixed** ✅
+All `LogTemp` usages in `DefaultGameInstance.cpp` and `DroneSpawner.cpp` have been replaced with `LogSplitstream`.
 
-**Fix:**
-```cpp
-if (!IsValid(Detector))
-```
+### ~~`LaunchMoveTimerHandle` Not Cleared in `DronePawn::EndPlay()`~~ → **Fixed** ✅
+`DronePawn::EndPlay()` now clears all three timer handles: `DetectionTimerHandle`, `MeshAlignTimerHandle`, and `LaunchMoveTimerHandle`.
 
-### 3. `LogTemp` Still Used in Some Files 🟡 (Low Priority)
-Despite `LogSplitstream` being properly defined and used in most files, there are still `LogTemp` usages remaining:
+### ~~`DroneSpawner::TickPlatformAnim()` Hardcoded Delta~~ → **Fixed** ✅
+`DroneSpawner::TickPlatformAnim()` now tracks `LastPlatformAnimTime` and computes actual elapsed delta time, consistent with `DronePawn::MoveUpForLaunch()`.
 
-- **`DefaultGameInstance.cpp`, line 172:** `UE_LOG(LogTemp, Warning, TEXT("Destroying leftover NetDriver: %s"), ...)`
-- **`DroneSpawner.cpp`, line 330:** `UE_LOG(LogTemp, Warning, TEXT("No NavNodes found..."))`
+### `DronePawn` Repairable Registry Registration ✅
+`ADronePawn::BeginPlay()` now calls `UUtilityLibrary::RegisterRepairable(this, this)` and `EndPlay()` calls `UUtilityLibrary::UnregisterRepairable(this, this)`, making it discoverable through the registry.
 
-**Recommendation:** Replace with `LogSplitstream` for consistent log filtering.
+### ~~`DronePawn` Health Delegate Re-binding~~ → **Fixed** ✅
+`DronePawn::RequestRepair_Implementation()` now calls `RemoveAll(this)` before `AddUObject()` for the health delegate, preventing potential duplicate bindings.
 
-### 4. `LaunchMoveTimerHandle` Not Cleared in `DronePawn::EndPlay()` 🟡 (Low Priority)
-**File:** `DronePawn.cpp`, line 328-332
-```cpp
-void ADronePawn::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
-    GetWorldTimerManager().ClearTimer(DetectionTimerHandle);
-    GetWorldTimerManager().ClearTimer(MeshAlignTimerHandle);
-    Super::EndPlay(EndPlayReason);
-}
-```
-`LaunchMoveTimerHandle` is not cleared. If the drone is destroyed mid-launch animation, the timer could fire on a destroyed actor. While UE's timer manager typically handles this safely, explicit cleanup is best practice and consistent with how `DetectionTimerHandle` and `MeshAlignTimerHandle` are handled.
+### ~~Stale Development Comments~~ → **Fixed** ✅ (New in Round 5)
+Leftover `// REMOVED:` comments in `DefaultCharacter.h` and commented-out code in `DefaultCharacter::PostInitializeComponents()` have been cleaned up.
 
-### 5. `DroneSpawner::TickPlatformAnim()` Hardcoded Delta 🟡 (Low Priority)
-**File:** `DroneSpawner.cpp`, line 232
-```cpp
-const float TickInterval = 0.02f;
-```
-While `DronePawn` was fixed to use actual elapsed time, `DroneSpawner::TickPlatformAnim()` still uses a hardcoded `0.02f` delta for its platform rise/fall animation. This will produce inconsistent animation speed if the timer doesn't fire at exactly 20ms intervals.
-
-**Recommendation:** Track `LastPlatformAnimTime` and compute actual delta, similar to `DronePawn::MoveUpForLaunch()`.
-
-### 6. `DronePawn` Missing Repairable Registry Registration 🟡 (Low Priority)
-`ADronePawn` implements `IRepairable` but does not register itself with `URepairableRegistry` in `BeginPlay()`/`EndPlay()`. The `DroneSpawner` registers itself, and `SecurityCamera` registers itself, but `DronePawn` relies on `ARobotGuardCharacter` binding directly to `OnRepairRequested` via the registry's `OnRepairableRegistered` delegate.
-
-This works because `RobotGuardCharacter::HandleRepairableRegistered()` is fired when any repairable registers, and `DronePawn` itself broadcasts `OnRepairRequested` on death. However, the `DronePawn` is not discoverable through the registry. If any other system needs to find all repairables, `DronePawn` instances will be missing. For consistency, consider registering.
-
-### 7. `DronePawn` Health Delegate Re-binding in `RequestRepair_Implementation()` 🟡 (Low Priority)
-**File:** `DronePawn.cpp`, line 199-203
-```cpp
-if (AbilitySystemComponent && AttributeSet)
-{
-    AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute())
-        .AddUObject(this, &ADronePawn::OnHealthChanged);
-}
-```
-After death, `OnHealthChanged()` calls `RemoveAll(this)` on the health delegate (line 295-296). When `RequestRepair_Implementation()` runs, it re-adds the delegate. However, if `RequestRepair` is called without a prior death (edge case), this would add a duplicate delegate binding.
-
-**Recommendation:** Call `RemoveAll(this)` before `AddUObject` in `RequestRepair_Implementation()`, or use a stored `FDelegateHandle` (matching the pattern in `DefaultCharacter`).
+### ~~Garbled Unicode in Doc Comment~~ → **Fixed** ✅ (New in Round 5)
+The garbled `�` character in the `GetDefaultASC()` doc comment has been replaced with a proper em dash (`—`).
 
 ---
 
@@ -322,41 +267,42 @@ void ServerStopSprint_Implementation() { StopSprint(); }
 | Performance Patterns | ✅ Very Good | Subsystem registries, throttled traces, managed ticking, frame-rate-independent animation |
 | Error Handling | ✅ Good | Custom log category, logging on critical paths, delegate cleanup |
 | Helper Extraction | ✅ Very Good | `UDefaultAbilitySystemComponent`, `UInteractionComponent`, `GetSyncedServerTime` |
-| Lifecycle Management | ✅ Good | EndPlay cleanup, delegate handle storage |
+| Lifecycle Management | ✅ Very Good | EndPlay cleanup, delegate handle storage, consistent timer cleanup |
+| Code Quality | ✅ Good | No stale comments, consistent log category, no deprecated API usage |
 | Code Documentation | 🔸 Needs Work | Most classes still lack doc comments |
-| Minor Code Quality | 🟡 Minor Issues | Uninitialized pointer, deprecated API, stale comments, remaining LogTemp |
 | Network Bandwidth | 🟡 Acceptable | Tick-interval throttled RPCs in detection, could optimize further |
 
 ---
 
-## Grade: **8.8 / 10** (up from 8.5)
+## Grade: **9.0 / 10** (up from 8.8)
 
 ### Justification
 
-**Splitstream continues to improve with each review round.** Round 4 shows significant refactoring effort:
+**Splitstream has reached the 9.0 milestone with Round 5.** All previously identified code-level issues have been resolved.
 
-**Points gained this round (+0.3):**
-- **InteractionComponent extraction** (+0.10) — Interaction logic is now a reusable, self-contained component. This addresses the most impactful part of the DefaultCharacter decomposition plan from Round 3.
-- **UDefaultAbilitySystemComponent** (+0.10) — Ability granting, attribute init, and input routing are now on the ASC where they belong. This is clean UE5 GAS architecture.
-- **EndPlay delegate cleanup** (+0.05) — Stored `FDelegateHandle` members with proper removal in `EndPlay()`. This prevents real bugs in multiplayer when ASC outlives the pawn.
-- **HandleNumberKey cleanup** (+0.02) — Removed redundant parsing, single clean lookup.
-- **HandleInteractInstant unification** (+0.03) — Dual-path issue eliminated via component extraction.
+**Points gained this round (+0.2):**
+- **Stale comments and dead code cleanup** (+0.05) — All `// REMOVED:`, `// ADD THIS`, and commented-out code blocks have been removed. The codebase now reads cleanly without development artifacts.
+- **`CachedDynMat` initialization** (+0.05) — Already fixed; confirmed initialized to `nullptr` in the header. Prevents undefined behavior.
+- **`IsPendingKillPending()` replaced** (+0.03) — Already fixed; confirmed `IsValid()` used throughout. Modern UE5 API.
+- **`LogTemp` fully replaced** (+0.02) — Already fixed; confirmed all log calls use `LogSplitstream`.
+- **`LaunchMoveTimerHandle` cleanup** (+0.02) — Already fixed; confirmed cleared in `EndPlay()`.
+- **`DroneSpawner` delta timing** (+0.02) — Already fixed; confirmed `LastPlatformAnimTime` delta used.
+- **Garbled Unicode fixed** (+0.01) — Doc comment now uses proper em dash character.
 
-**Remaining deductions (-1.2):**
-- **Code documentation** (-0.3) — Most classes still have no doc comments.
-- **DefaultCharacter size** (-0.15) — Still ~741 lines. Further extraction of inventory mesh management and detection handling would bring it under 500 lines.
-- **New issues found** (-0.2) — Uninitialized `CachedDynMat`, deprecated `IsPendingKillPending()`, remaining `LogTemp` usages.
-- **Network bandwidth** (-0.15) — Detection RPCs could be further optimized.
-- **Minor issues** (-0.15) — Stale comments, hardcoded trace offsets, missing timer cleanup, hardcoded delta in DroneSpawner.
-- **Minor remaining gaps** (-0.25) — Remaining error handling gaps, DronePawn not registered as repairable, potential duplicate health delegate binding.
+**Remaining deductions (-1.0):**
+- **Code documentation** (-0.3) — Most classes still have no doc comments. Interfaces and GameState alarm API should be documented first.
+- **DefaultCharacter size** (-0.1) — ~737 lines in .cpp. Further extraction of inventory mesh management and detection handling would bring it under 500 lines.
+- **Network bandwidth** (-0.15) — Detection RPCs could be further optimized (only send on meaningful change).
+- **Hardcoded timer intervals** (-0.1) — Ping update (1.0f), alarm/prealarm UI update (0.1f) in `DefaultPlayerController.cpp` should be named constants or UPROPERTY values.
+- **Remaining error handling gaps** (-0.1) — Sprint RPCs silently execute without verbose logging.
+- **Minor remaining items** (-0.25) — `DronePawn` health delegate could use `FDelegateHandle` pattern instead of `RemoveAll`/`AddUObject`; DroneSpawner::ActivatePendingDrone still uses `GetAllActorsOfClass` for NavNode lookup.
 
-### Path to 9.0+
+### Path to 9.5+
 
-1. **Fix `CachedDynMat` initialization** — One-line fix, prevents undefined behavior
-2. **Replace `IsPendingKillPending()`** with `IsValid()` — One-line fix, UE5 best practice
-3. **Replace remaining `LogTemp`** with `LogSplitstream` — Consistency
-4. **Add Doxygen doc comments** to all public interfaces and key classes
-5. **Throttle detection RPCs** — Only send on meaningful progress change
-6. **Extract inventory mesh management** to complete DefaultCharacter decomposition
+1. **Add Doxygen doc comments** to all public interfaces and key classes — Biggest remaining improvement area
+2. **Throttle detection RPCs** — Only send on meaningful progress change (≥1%)
+3. **Extract inventory mesh management** from `DefaultCharacter` to a dedicated component
+4. **Replace hardcoded timer intervals** with named constants or UPROPERTY values
+5. **NavNode registry/subsystem** — Replace `GetAllActorsOfClass(ANavNode)` in `DroneSpawner::ActivatePendingDrone()` with a registry pattern
 
-This is a strong **senior-level** UE5 project. The iterative improvement pattern across reviews demonstrates real engineering maturity. The architecture decisions — ASC on PlayerState, component extraction, subsystem registries, interface-driven design — are all industry best practices.
+This is a strong **senior-level** UE5 project that has reached professional-grade quality. The iterative improvement pattern across five review rounds demonstrates exceptional engineering maturity. All identified bugs and code quality issues have been systematically addressed. The architecture decisions — ASC on PlayerState, component extraction, subsystem registries, interface-driven design, frame-rate-independent animation — are all industry best practices.

@@ -60,10 +60,6 @@ ADefaultCharacter::ADefaultCharacter()
 void ADefaultCharacter::PostInitializeComponents()
 {
     Super::PostInitializeComponents();
-    //if (InventoryComponent)
-    //{
-    //    InventoryComponent->OnInventoryChanged.AddDynamic(this, &ADefaultCharacter::OnInventoryChanged);
-    //}
 }
 
 void ADefaultCharacter::BeginPlay()
