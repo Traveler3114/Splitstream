@@ -53,15 +53,17 @@ ADefaultCharacter::ADefaultCharacter()
     EquippedItemMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("EquippedItemMeshComp"));
     EquippedItemMeshComp->SetupAttachment(GetMesh(), TEXT("Hand_R"));
     EquippedItemMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+    InventoryComponent->EquippedItemMeshComp = EquippedItemMeshComp;
 }
 
 void ADefaultCharacter::PostInitializeComponents()
 {
     Super::PostInitializeComponents();
-    if (InventoryComponent)
-    {
-        InventoryComponent->OnInventoryChanged.AddDynamic(this, &ADefaultCharacter::OnInventoryChanged);
-    }
+    //if (InventoryComponent)
+    //{
+    //    InventoryComponent->OnInventoryChanged.AddDynamic(this, &ADefaultCharacter::OnInventoryChanged);
+    //}
 }
 
 void ADefaultCharacter::BeginPlay()
@@ -93,7 +95,7 @@ void ADefaultCharacter::BeginPlay()
         CameraDefaultRotation = CameraComponent->GetRelativeRotation();
     }
 
-    UpdateEquippedItemMesh();
+    InventoryComponent->UpdateEquippedItemMesh(InventoryComponent->Slots);
 }
 
 void ADefaultCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -288,68 +290,7 @@ void ADefaultCharacter::OnIllegalTagChanged(const FGameplayTag Tag, int32 NewCou
     }
 }
 
-// ---------------- INVENTORY HANDLING ------------------
-void ADefaultCharacter::OnInventoryChanged(const TArray<FInventorySlot>& Slots)
-{
-    UpdateEquippedItemMesh();
-}
 
-void ADefaultCharacter::UpdateEquippedItemMesh()
-{
-    if (!InventoryComponent || !EquippedItemMeshComp)
-        return;
-
-    FInventorySlot ActiveSlot = InventoryComponent->GetActiveItem();
-    UItemBase* ItemAsset = ActiveSlot.ItemAsset;
-
-    UStaticMesh* NewMesh = nullptr;
-    FVector RelativeLocation = FVector::ZeroVector;
-    FRotator RelativeRotation = FRotator::ZeroRotator;
-    FVector RelativeScale = FVector::OneVector;
-
-    // Try to get mesh and transform from the Pickup class defaults (if set)
-    if (ItemAsset && ItemAsset->ItemPickupToSpawn)
-    {
-        // "CDO" = Class Default Object (the archetype)
-        if (const AItemPickup* PickupCDO = Cast<AItemPickup>(ItemAsset->ItemPickupToSpawn->GetDefaultObject()))
-        {
-            if (PickupCDO->OverrideMeshComp)
-            {
-                NewMesh = PickupCDO->OverrideMeshComp->GetStaticMesh();
-                RelativeLocation = PickupCDO->OverrideMeshComp->GetRelativeLocation();
-                RelativeRotation = PickupCDO->OverrideMeshComp->GetRelativeRotation();
-                RelativeScale = PickupCDO->OverrideMeshComp->GetRelativeScale3D();
-            }
-        }
-    }
-    // Only update the mesh if needed
-    if (EquippedItemMeshComp->GetStaticMesh() != NewMesh)
-    {
-        EquippedItemMeshComp->SetStaticMesh(nullptr);
-        EquippedItemMeshComp->SetStaticMesh(NewMesh);
-    }
-
-    if (NewMesh)
-    {
-        EquippedItemMeshComp->SetRelativeLocation(RelativeLocation);
-        EquippedItemMeshComp->SetRelativeRotation(RelativeRotation);
-        EquippedItemMeshComp->SetRelativeScale3D(RelativeScale);
-    }
-
-    // Compute ADS if we have a mesh
-    if (EquippedItemMeshComp->GetStaticMesh())
-    {
-        static const FName ADSSocket(TEXT("ADS"));
-        if (EquippedItemMeshComp->DoesSocketExist(ADSSocket))
-        {
-            const FTransform SocketTransform =
-                EquippedItemMeshComp->GetSocketTransform(ADSSocket, ERelativeTransformSpace::RTS_Component);
-
-            CameraAimLocation = SocketTransform.GetLocation();
-            CameraAimRotation = SocketTransform.Rotator();
-        }
-    }
-}
 
 // ---------------- INPUT ------------------
 void ADefaultCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

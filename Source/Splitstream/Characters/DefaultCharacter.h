@@ -59,14 +59,6 @@ public:
     virtual void OnRep_PlayerState() override;
     virtual void PossessedBy(AController* NewController) override;
 
-    // Inventory Functions
-    UFUNCTION(BlueprintCallable, Category = "Inventory")
-    void UpdateEquippedItemMesh();
-
-    UFUNCTION()
-    void OnInventoryChanged(const TArray<FInventorySlot>& Slots);
-
-    void DropActiveItem();
     void SelectInventorySlot(int32 SlotNumber);
     UFUNCTION()
     void HandleNumberKey(FKey PressedKey);

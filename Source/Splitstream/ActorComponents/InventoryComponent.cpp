@@ -2,6 +2,7 @@
 #include "Net/UnrealNetwork.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemInterface.h"
+#include "Components/StaticMeshComponent.h"
 #include "DefaultPlayerState.h"
 #include "Characters/CivilianCharacter.h"
 #include "GameplayTagContainer.h"
@@ -40,6 +41,8 @@ void UInventoryComponent::BeginPlay()
             }
         }
     }
+    OnInventoryChanged.RemoveDynamic(this, &UInventoryComponent::UpdateEquippedItemMesh);
+    OnInventoryChanged.AddDynamic(this, &UInventoryComponent::UpdateEquippedItemMesh);
 }
 
 void UInventoryComponent::SetActiveSlot(int32 Index)
@@ -89,6 +92,65 @@ void UInventoryComponent::SetActiveSlot(int32 Index)
 
     OnRep_ActiveSlotIndex();
 }
+
+
+void UInventoryComponent::UpdateEquippedItemMesh(const TArray<FInventorySlot>& InSlots)
+{
+    if (!EquippedItemMeshComp)
+        return;
+
+    FInventorySlot ActiveSlot = GetActiveItem();
+    UItemBase* ItemAsset = ActiveSlot.ItemAsset;
+
+    UStaticMesh* NewMesh = nullptr;
+    FVector RelativeLocation = FVector::ZeroVector;
+    FRotator RelativeRotation = FRotator::ZeroRotator;
+    FVector RelativeScale = FVector::OneVector;
+
+    // Try to get mesh and transform from the Pickup class defaults (if set)
+    if (ItemAsset && ItemAsset->ItemPickupToSpawn)
+    {
+        // "CDO" = Class Default Object (the archetype)
+        if (const AItemPickup* PickupCDO = Cast<AItemPickup>(ItemAsset->ItemPickupToSpawn->GetDefaultObject()))
+        {
+            if (PickupCDO->OverrideMeshComp)
+            {
+                NewMesh = PickupCDO->OverrideMeshComp->GetStaticMesh();
+                RelativeLocation = PickupCDO->OverrideMeshComp->GetRelativeLocation();
+                RelativeRotation = PickupCDO->OverrideMeshComp->GetRelativeRotation();
+                RelativeScale = PickupCDO->OverrideMeshComp->GetRelativeScale3D();
+            }
+        }
+    }
+    // Only update the mesh if needed
+    if (EquippedItemMeshComp->GetStaticMesh() != NewMesh)
+    {
+        EquippedItemMeshComp->SetStaticMesh(nullptr);
+        EquippedItemMeshComp->SetStaticMesh(NewMesh);
+    }
+
+    if (NewMesh)
+    {
+        EquippedItemMeshComp->SetRelativeLocation(RelativeLocation);
+        EquippedItemMeshComp->SetRelativeRotation(RelativeRotation);
+        EquippedItemMeshComp->SetRelativeScale3D(RelativeScale);
+    }
+
+    // Compute ADS if we have a mesh
+    //if (EquippedItemMeshComp->GetStaticMesh())
+    //{
+    //    static const FName ADSSocket(TEXT("ADS"));
+    //    if (EquippedItemMeshComp->DoesSocketExist(ADSSocket))
+    //    {
+    //        const FTransform SocketTransform =
+    //            EquippedItemMeshComp->GetSocketTransform(ADSSocket, ERelativeTransformSpace::RTS_Component);
+
+    //        CameraAimLocation = SocketTransform.GetLocation();
+    //        CameraAimRotation = SocketTransform.Rotator();
+    //    }
+    //}
+}
+
 
 bool UInventoryComponent::AddItem(UItemBase* ItemAsset, FGuid InstanceID)
 {

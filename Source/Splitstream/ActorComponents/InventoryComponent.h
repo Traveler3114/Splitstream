@@ -47,6 +47,12 @@ public:
     virtual void BeginDestroy() override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+    UFUNCTION()
+    void UpdateEquippedItemMesh(const TArray<FInventorySlot>& InSlots);
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory|Mesh")
+    class UStaticMeshComponent* EquippedItemMeshComp;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
     TArray<UItemBase*> DefaultItemAssets;
 
