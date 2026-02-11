@@ -3,6 +3,11 @@
 #include "GameFramework/PlayerController.h"
 #include "BasePlayerController.generated.h"
 
+/**
+ * Base player controller providing shared functionality for all game modes.
+ * Handles main menu navigation and loading screen display logic
+ * shared between ADefaultPlayerController and ALobbyPlayerController.
+ */
 UCLASS()
 class SPLITSTREAM_API ABasePlayerController : public APlayerController
 {

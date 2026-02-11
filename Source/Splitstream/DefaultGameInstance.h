@@ -7,6 +7,12 @@
 #include "Saving/UserSettingsSaveGame.h"
 #include "DefaultGameInstance.generated.h"
 
+/**
+ * Game instance for Splitstream. Manages user settings persistence
+ * (keybinds, mouse sensitivity), runtime input mapping context,
+ * and multiplayer session lifecycle (host leave, session destroy,
+ * net driver cleanup).
+ */
 UCLASS()
 class SPLITSTREAM_API UDefaultGameInstance : public UAdvancedFriendsGameInstance
 {

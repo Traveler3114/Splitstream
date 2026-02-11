@@ -10,6 +10,7 @@
 class UPauseMenuWidget;
 class ATerminal;
 
+/** Tracks per-detector detection state for UI widget positioning. */
 USTRUCT()
 struct FTrackedDetection
 {
@@ -22,6 +23,14 @@ struct FTrackedDetection
     bool bIsLocked = false;
 };
 
+/**
+ * Player controller for the default heist game mode.
+ *
+ * Manages HUD overlay setup, pause menu, alarm/pre-alarm UI updates,
+ * detection widget positioning, guard repair countdown display,
+ * server-side action forwarding, and GAS delegate binding for health
+ * and illegal tag state changes.
+ */
 UCLASS()
 class SPLITSTREAM_API ADefaultPlayerController : public ABasePlayerController
 {
