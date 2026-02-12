@@ -447,6 +447,11 @@ void ADefaultCharacter::HandleNumberKey(FKey PressedKey)
         if (InventoryComponent)
         {
             InventoryComponent->ServerSetActiveSlot(*Found);
+
+            if (InteractionComponent)
+            {
+                InteractionComponent->StopDropPreview();
+            }
         }
     }
 }
