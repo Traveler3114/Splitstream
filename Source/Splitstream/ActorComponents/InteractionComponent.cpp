@@ -55,9 +55,30 @@ void UInteractionComponent::TickDropPreview(FVector CamLoc, FRotator CamRot)
         {
             DropPreviewMesh->SetVisibility(true);
             DropPreviewMesh->SetWorldLocation(Hit.Location + Hit.Normal * 2.f);
-            FRotator Rot = FRotationMatrix::MakeFromXZ(Forward, Hit.Normal).Rotator();
+
+            // 1. Project the view/camera forward onto the surface for 'forward' alignment
+            FVector GhostForward = Forward - Hit.Normal * FVector::DotProduct(Forward, Hit.Normal);
+            if (!GhostForward.Normalize()) GhostForward = FVector::ForwardVector;
+
+            // 2. Build rotation so Z+ (up) is surface normal, X+ is toward ghost forward
+            FMatrix FloorAligned(
+                GhostForward,                                        // X (forward) axis
+                FVector::CrossProduct(Hit.Normal, GhostForward),     // Y (right) axis
+                Hit.Normal,                                          // Z (up) axis
+                FVector::ZeroVector
+            );
+            FRotator Rot = FloorAligned.Rotator();
             DropPreviewMesh->SetWorldRotation(Rot);
-            CachedDropTransform = FTransform(DropPreviewMesh->GetComponentRotation(), DropPreviewMesh->GetComponentLocation(), DropPreviewMesh->GetRelativeScale3D());
+
+            // 3. Make ALL items lie flat: add -90 degrees X rotation (local), so item face is parallel to floor
+            DropPreviewMesh->AddLocalRotation(FRotator(-90.f, 0.f, 0.f));
+
+            // 4. Update cached transform for server drop
+            CachedDropTransform = FTransform(
+                DropPreviewMesh->GetComponentRotation(),
+                DropPreviewMesh->GetComponentLocation(),
+                DropPreviewMesh->GetRelativeScale3D()
+            );
             bDropPreviewIsValid = true;
             return;
         }
