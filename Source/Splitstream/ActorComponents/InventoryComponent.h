@@ -86,7 +86,7 @@ public:
     FInventorySlot CreateSlot(UItemBase* ItemAsset, FGuid InstanceID) const;
 
     UFUNCTION(BlueprintCallable, Category = "Inventory")
-    void DropActiveItem(FVector DropLocation);
+    void DropActiveItem(FTransform DropTransform);
 
     UFUNCTION()
     void OnRep_Slots();
@@ -98,7 +98,7 @@ public:
     void ServerSetActiveSlot(int32 Index);
 
     UFUNCTION(Server, Reliable)
-    void ServerDropActiveItem(FVector DropLocation);
+    void ServerDropActiveItem(FTransform DropTransform);
 
     UFUNCTION(Server, Reliable)
     void ServerAddItem(UItemBase* ItemAsset);

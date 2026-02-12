@@ -251,7 +251,7 @@ FInventorySlot UInventoryComponent::GetActiveItem() const
     return FInventorySlot();
 }
 
-void UInventoryComponent::DropActiveItem(FVector DropLocation)
+void UInventoryComponent::DropActiveItem(FTransform DropTransform)
 {
     FInventorySlot ActiveSlot = GetActiveItem();
     if (!ActiveSlot.ItemAsset) return;
@@ -266,7 +266,7 @@ void UInventoryComponent::DropActiveItem(FVector DropLocation)
         Slots[DropIndex].GrantedAbilityHandles.Empty();
     }
 
-    ActiveSlot.ItemAsset->OnDropped(GetOwner(), ActiveSlot.ItemInstanceID, DropLocation);
+    ActiveSlot.ItemAsset->OnDropped(GetOwner(), ActiveSlot.ItemInstanceID, DropTransform);
     RemoveItem(ActiveSlotIndex);
 }
 
@@ -293,9 +293,9 @@ void UInventoryComponent::ServerSetActiveSlot_Implementation(int32 Index)
     SetActiveSlot(Index);
 }
 
-void UInventoryComponent::ServerDropActiveItem_Implementation(FVector DropLocation)
+void UInventoryComponent::ServerDropActiveItem_Implementation(FTransform DropTransform)
 {
-    DropActiveItem(DropLocation);
+    DropActiveItem(DropTransform);
 }
 
 void UInventoryComponent::ServerAddItem_Implementation(UItemBase* ItemAsset)

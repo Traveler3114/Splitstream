@@ -126,7 +126,7 @@ void ADefaultCharacter::Tick(float DeltaTime)
     Super::Tick(DeltaTime);
 
     if (IsLocallyControlled() && InteractionComponent)
-    {
+    {     
         InteractionComponent->InteractHighlightTimer += DeltaTime;
         if (InteractionComponent->InteractHighlightTimer >= InteractionComponent->InteractHighlightInterval)
         {
@@ -313,7 +313,10 @@ void ADefaultCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
     EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ADefaultCharacter::OnInstantInteract);
     EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &ADefaultCharacter::OnHoldInteractStart);
     EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &ADefaultCharacter::OnHoldInteractStop);
-    EnhancedInputComponent->BindAction(DropItemAction, ETriggerEvent::Completed, this, &ADefaultCharacter::OnDropActiveItem);
+    // SetupPlayerInputComponent()
+    EnhancedInputComponent->BindAction(DropItemAction, ETriggerEvent::Triggered, this, &ADefaultCharacter::DropPreviewUpdate);
+    EnhancedInputComponent->BindAction(DropItemAction, ETriggerEvent::Completed, this, &ADefaultCharacter::CommitDropPreview);
+    // Option: Bind cancel key (like ESC or weapon swap) to OnCancelDropPreview
 
     if (InputMappingSet)
     {
@@ -339,6 +342,48 @@ void ADefaultCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
     PlayerInputComponent->BindKey(EKeys::Zero, IE_Pressed, this, &ADefaultCharacter::HandleNumberKey);
 }
 
+
+// DefaultCharacter.cpp
+void ADefaultCharacter::DropPreviewUpdate()
+{
+    if (!InteractionComponent || !CameraComponent || !InventoryComponent) return;
+
+    // Get the active slot and check physics flag
+    FInventorySlot ActiveSlot = InventoryComponent->GetActiveItem();
+    if (ActiveSlot.ItemAsset && ActiveSlot.ItemAsset->bEnablePhysicsOnDrop)
+    {
+        // Physics item: NO preview, drop immediately in front of head
+        FVector HeadLocation = GetActorLocation();
+        UCapsuleComponent* Capsule = GetCapsuleComponent();
+        if (Capsule)
+        {
+            HeadLocation.Z += Capsule->GetScaledCapsuleHalfHeight()/2;
+        }
+        // Forward in front of face by InteractDistance
+        FVector DropLoc = HeadLocation + GetActorForwardVector() * (InteractionComponent->InteractDistance);
+        // Spawn directly at that location with no preview
+        InventoryComponent->ServerDropActiveItem(FTransform(DropLoc));
+    }
+    else
+    {
+        // Non-physics - continue regular preview system
+        if (!InteractionComponent->DropPreviewMesh)
+            InteractionComponent->StartDropPreview();
+
+        FVector CamLoc = CameraComponent->GetComponentLocation();
+        FRotator CamRot = Controller ? Controller->GetControlRotation() : FRotator::ZeroRotator;
+        InteractionComponent->TickDropPreview(CamLoc, CamRot);
+    }
+}
+
+void ADefaultCharacter::CommitDropPreview()
+{
+    if (!InteractionComponent || !InventoryComponent) return;
+
+    // On release, finalize and commit the drop if valid preview
+    InteractionComponent->OnReleaseDropPreview(InventoryComponent);
+    // (clean up is handled inside OnReleaseDropPreview)
+}
 
 void ADefaultCharacter::OnInstantInteract()
 {
@@ -413,13 +458,6 @@ void ADefaultCharacter::SelectInventorySlot(int32 SlotNumber)
     {
         InventoryComponent->ServerSetActiveSlot(SlotIndex);
     }
-}
-
-
-void ADefaultCharacter::OnDropActiveItem()
-{
-    if (!InteractionComponent || !InventoryComponent || !CameraComponent) return;
-    InteractionComponent->DropEquippedItem(InventoryComponent);
 }
 
 

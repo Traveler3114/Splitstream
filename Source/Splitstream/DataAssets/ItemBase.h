@@ -88,7 +88,7 @@ public:
 
     void OnUsed(class AActor* Instigator, FGuid ItemInstanceID);
 
-    virtual void OnDropped(class AActor* Instigator, FGuid ItemInstanceID, FVector DropLocation);
+    virtual void OnDropped(class AActor* Instigator, FGuid ItemInstanceID, FTransform DropTransform);
     virtual void OnDroppedWithTeam(class AActor* Instigator, FGuid ItemInstanceID, FGameplayTag TeamTag, FVector DropLocation);
 
     // NEW: Per-instance effect/ability handling

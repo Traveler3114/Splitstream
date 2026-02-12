@@ -4,6 +4,7 @@
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Character.h"
+#include "Actors/ItemPickup.h"
 #include "Interfaces/IInteractable.h"
 
 UInteractionComponent::UInteractionComponent()
@@ -11,6 +12,94 @@ UInteractionComponent::UInteractionComponent()
     PrimaryComponentTick.bCanEverTick = false; // Let your pawn tick and call UpdateInteractHighlight when needed.
     InteractHighlightTimer = 0.f;
 }
+
+
+
+void UInteractionComponent::StartDropPreview()
+{
+    if (DropPreviewMesh) return; // Already active
+    // Get locally equipped item
+    APawn* PawnOwner = Cast<APawn>(GetOwner());
+    UInventoryComponent* Inventory = PawnOwner ? PawnOwner->FindComponentByClass<UInventoryComponent>() : nullptr;
+    if (!Inventory) return;
+
+    FInventorySlot ActiveSlot = Inventory->GetActiveItem();
+    UItemBase* ItemAsset = ActiveSlot.ItemAsset;
+    if (!ItemAsset || !ItemAsset->ItemPickupToSpawn) return;
+
+    DropPreviewMesh = NewObject<UStaticMeshComponent>(GetOwner());
+    DropPreviewMesh->RegisterComponent();
+    DropPreviewMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    DropPreviewMesh->SetMobility(EComponentMobility::Movable);
+    DropPreviewMesh->SetMaterial(0, DropGhostMaterial);
+    DropPreviewMesh->SetStaticMesh(GetGhostMeshFromPickup(ItemAsset));
+    DropPreviewMesh->SetVisibility(false);
+    DropPreviewMesh->AttachToComponent(GetOwner()->GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);
+}
+
+void UInteractionComponent::TickDropPreview(FVector CamLoc, FRotator CamRot)
+{
+    if (!DropPreviewMesh) return;
+
+    FVector Start = CamLoc;
+    FVector Forward = CamRot.Vector();
+    FVector End = Start + Forward * DropDistance;
+    FHitResult Hit;
+    FCollisionQueryParams Params;
+    Params.AddIgnoredActor(GetOwner());
+
+    if (GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, Params))
+    {
+        float DotUp = FVector::DotProduct(Hit.Normal, FVector::UpVector);
+        if (DotUp > 0.5f)
+        {
+            DropPreviewMesh->SetVisibility(true);
+            DropPreviewMesh->SetWorldLocation(Hit.Location + Hit.Normal * 2.f);
+            FRotator Rot = FRotationMatrix::MakeFromXZ(Forward, Hit.Normal).Rotator();
+            DropPreviewMesh->SetWorldRotation(Rot);
+            CachedDropTransform = FTransform(DropPreviewMesh->GetComponentRotation(), DropPreviewMesh->GetComponentLocation(), DropPreviewMesh->GetRelativeScale3D());
+            bDropPreviewIsValid = true;
+            return;
+        }
+    }
+    DropPreviewMesh->SetVisibility(false);
+    bDropPreviewIsValid = false;
+}
+
+void UInteractionComponent::StopDropPreview()
+{
+    if (DropPreviewMesh)
+    {
+        DropPreviewMesh->DestroyComponent();
+        DropPreviewMesh = nullptr;
+        bDropPreviewIsValid = false;
+    }
+}
+
+void UInteractionComponent::OnReleaseDropPreview(UInventoryComponent* Inventory)
+{
+    if (bDropPreviewIsValid && Inventory)
+    {
+        Inventory->ServerDropActiveItem(CachedDropTransform);
+    }
+    StopDropPreview();
+}
+
+UStaticMesh* UInteractionComponent::GetGhostMeshFromPickup(UItemBase* ItemAsset)
+{
+    if (!ItemAsset) return nullptr;
+    if (const AItemPickup* PickupCDO = Cast<AItemPickup>(ItemAsset->ItemPickupToSpawn->GetDefaultObject()))
+        return PickupCDO->OverrideMeshComp ? PickupCDO->OverrideMeshComp->GetStaticMesh() : nullptr;
+    return nullptr;
+}
+
+
+
+
+
+
+
+
 
 bool UInteractionComponent::GetForwardTraceResult(
     FVector Start, FRotator Rotation, float TraceDistance,
@@ -105,60 +194,4 @@ void UInteractionComponent::HandleInstantInteract(
     {
         ServerInteractCallback(HitActor);
     }
-}
-
-
-// In InteractionComponent.cpp
-
-void UInteractionComponent::DropEquippedItem(UInventoryComponent* Inventory)
-{
-    if (!Inventory) return;
-
-    // --- Tunable Parameters ---
-    const float ForwardDistance = InteractDistance;
-    const float UpwardOffset = 40.f;
-    const float DownwardTrace = 200.f;
-    const float DefaultSpawnAboveSurface = 1.f; // For non-physics items
-
-    ACharacter* Character = Cast<ACharacter>(GetOwner());
-    if (!Character) return;
-    UCapsuleComponent* Capsule = Character->GetCapsuleComponent();
-    if (!Capsule) return;
-
-    FVector CharLoc = Character->GetActorLocation();
-    FVector CharFwd = Character->GetActorForwardVector();
-    float CapsuleHalfHeight = Capsule->GetScaledCapsuleHalfHeight();
-    FVector HeadLoc = CharLoc + FVector(0, 0, CapsuleHalfHeight);
-
-    FVector StartPos = HeadLoc + CharFwd * ForwardDistance;
-
-    // --- Get current item properties ---
-    FInventorySlot ActiveSlot = Inventory->GetActiveItem();
-    bool bIsPhysicsDrop = ActiveSlot.ItemAsset && ActiveSlot.ItemAsset->bEnablePhysicsOnDrop;
-
-    // The height to spawn above the surface:
-    float SpawnAboveSurface = bIsPhysicsDrop ? CapsuleHalfHeight : DefaultSpawnAboveSurface;
-
-    // --- Always trace down to floor ---
-    FVector TraceStart = StartPos + FVector(0, 0, UpwardOffset);
-    FVector TraceEnd = StartPos - FVector(0, 0, DownwardTrace);
-
-    FHitResult Hit;
-    FCollisionQueryParams Params;
-    Params.AddIgnoredActor(Character);
-
-    FVector FinalDropLocation = StartPos;
-
-    UWorld* World = GetWorld();
-    if (World && World->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, ECC_Visibility, Params))
-    {
-        FinalDropLocation = Hit.Location + Hit.Normal * SpawnAboveSurface;
-    }
-    else
-    {
-        // Fallback: Still spawn above initial pos, so not embedded
-        FinalDropLocation = StartPos + FVector(0, 0, SpawnAboveSurface);
-    }
-
-    Inventory->ServerDropActiveItem(FinalDropLocation);
 }

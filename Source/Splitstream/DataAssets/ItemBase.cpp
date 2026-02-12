@@ -31,7 +31,7 @@ void UItemBase::OnRemovedFromInventory(AActor* Instigator)
 }
 
 
-void UItemBase::OnDropped(AActor* Instigator, FGuid ItemInstanceID, FVector DropLocation)
+void UItemBase::OnDropped(AActor* Instigator, FGuid ItemInstanceID, FTransform DropTransform)
 {
     if (!Instigator) return;
     UWorld* World = Instigator->GetWorld();
@@ -39,15 +39,13 @@ void UItemBase::OnDropped(AActor* Instigator, FGuid ItemInstanceID, FVector Drop
 
     UClass* PickupClass = ItemPickupToSpawn ? ItemPickupToSpawn.Get() : AItemPickup::StaticClass();
 
-    // Use DropLocation directly (was safely calculated in InteractionComponent)
-    FTransform SpawnTransform(FRotator::ZeroRotator, DropLocation);
-    AItemPickup* Pickup = World->SpawnActorDeferred<AItemPickup>(PickupClass, SpawnTransform);
+    AItemPickup* Pickup = World->SpawnActorDeferred<AItemPickup>(PickupClass, DropTransform);
 
     if (Pickup)
     {
         Pickup->ItemData = this;
         Pickup->ItemInstanceID = ItemInstanceID;
-        UGameplayStatics::FinishSpawningActor(Pickup, SpawnTransform);
+        UGameplayStatics::FinishSpawningActor(Pickup, DropTransform);
 
         // Enable physics and impulse, if desired
         if (bEnablePhysicsOnDrop && Pickup->OverrideMeshComp)

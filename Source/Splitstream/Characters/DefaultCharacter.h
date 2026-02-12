@@ -43,6 +43,14 @@ class SPLITSTREAM_API ADefaultCharacter : public ACharacter, public IInteractabl
 {
     GENERATED_BODY()
 public:
+
+    UFUNCTION()
+    void DropPreviewUpdate();
+
+    UFUNCTION()
+    void CommitDropPreview();
+
+
     ADefaultCharacter();
 
     void OnWalkSpeedChanged(const FOnAttributeChangeData& ChangeData);
@@ -176,9 +184,6 @@ public:
 
     UFUNCTION()
     void OnHoldInteractStop();
-
-    UFUNCTION()
-    void OnDropActiveItem();
 
     // Server-side implementation
     UFUNCTION(Server, Reliable)
