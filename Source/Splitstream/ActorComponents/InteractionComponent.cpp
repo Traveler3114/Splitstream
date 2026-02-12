@@ -54,31 +54,39 @@ void UInteractionComponent::TickDropPreview(FVector CamLoc, FRotator CamRot)
         if (DotUp > 0.5f)
         {
             DropPreviewMesh->SetVisibility(true);
-            DropPreviewMesh->SetWorldLocation(Hit.Location + Hit.Normal * 2.f);
 
-            // 1. Project the view/camera forward onto the surface for 'forward' alignment
+            // 1. Set rotation to align flat with floor
             FVector GhostForward = Forward - Hit.Normal * FVector::DotProduct(Forward, Hit.Normal);
             if (!GhostForward.Normalize()) GhostForward = FVector::ForwardVector;
-
-            // 2. Build rotation so Z+ (up) is surface normal, X+ is toward ghost forward
             FMatrix FloorAligned(
-                GhostForward,                                        // X (forward) axis
-                FVector::CrossProduct(Hit.Normal, GhostForward),     // Y (right) axis
-                Hit.Normal,                                          // Z (up) axis
+                GhostForward,
+                FVector::CrossProduct(Hit.Normal, GhostForward),
+                Hit.Normal,
                 FVector::ZeroVector
             );
             FRotator Rot = FloorAligned.Rotator();
             DropPreviewMesh->SetWorldRotation(Rot);
-
-            // 3. Make ALL items lie flat: add -90 degrees X rotation (local), so item face is parallel to floor
             DropPreviewMesh->AddLocalRotation(FRotator(-90.f, 0.f, 0.f));
 
-            // 4. Update cached transform for server drop
+            // 2. Get socket offset in local/component space AFTER rotation
+            static const FName GroundSocketName(TEXT("GroundAlign"));
+            FVector LocalSocketOffset = FVector::ZeroVector;
+            if (DropPreviewMesh->DoesSocketExist(GroundSocketName))
+            {
+                LocalSocketOffset = DropPreviewMesh->GetSocketLocation(GroundSocketName) - DropPreviewMesh->GetComponentLocation();
+            }
+
+            // 3. Place mesh so socket sits at Hit.Location
+            FVector MeshWorldLocation = Hit.Location - LocalSocketOffset;
+            DropPreviewMesh->SetWorldLocation(MeshWorldLocation);
+
+            // 4. Update transform
             CachedDropTransform = FTransform(
                 DropPreviewMesh->GetComponentRotation(),
                 DropPreviewMesh->GetComponentLocation(),
                 DropPreviewMesh->GetRelativeScale3D()
             );
+
             bDropPreviewIsValid = true;
             return;
         }
