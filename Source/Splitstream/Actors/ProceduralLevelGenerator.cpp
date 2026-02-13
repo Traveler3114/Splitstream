@@ -606,7 +606,8 @@ void AProceduralLevelGenerator::SetupDroneSpawnerDisabler()
     // Get location offset from RefPointActor
     FVector LocationOffset = ARefPointActor::GetOffsetBetweenFirstTwoRefPoints(World);
 
-    FVector FutureLocation = Point->GetActorLocation() + LocationOffset;
+    FVector ForwardOffset = Point->GetActorForwardVector() * ForwardAmount; // ForwardAmount is float, e.g. 100.f
+    FVector FutureLocation = Point->GetActorLocation() + LocationOffset + ForwardOffset;
     FRotator FutureRotation = SpawnRotation;
 
     // This actor will only be visual in Future

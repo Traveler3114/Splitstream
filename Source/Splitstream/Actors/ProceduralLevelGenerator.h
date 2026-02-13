@@ -47,6 +47,10 @@ class SPLITSTREAM_API AProceduralLevelGenerator : public AActor
 {
     GENERATED_BODY()
 public:
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Offset")
+    float ForwardAmount = 1.f;
+
     AProceduralLevelGenerator();
     void HandlePastSpawns();
     void HandleFutureSpawns();
