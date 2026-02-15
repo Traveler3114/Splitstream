@@ -2,6 +2,7 @@
 #include "Actors/PointActors/CivilianSpawnPoint.h"
 #include "Characters/CivilianCharacter.h"
 #include "Characters/GuardCharacter.h"
+#include "Actors/ItemPickup.h"
 #include "Actors/LockerActor.h"
 #include "Actors/Computers/Computer.h"
 #include "Actors/KeypadScanner/KeypadScanner.h"
@@ -989,6 +990,9 @@ void AProceduralLevelGenerator::HandlePastSpawns()
     //SpawnCivilianDeskItems(PastCivilians);
     SpawnSecurityDocument(PastGuards);
 
+    SpawnKeycard(KeycardL1PickupBPClass, FName(TEXT("KeycardL1")), ETimelineEra::Past, KeycardL1PossibleCarriers);
+    SpawnKeycard(KeycardL2PickupBPClass, FName(TEXT("KeycardL2")), ETimelineEra::Past, KeycardL2PossibleCarriers);
+
     // After past is setup, configure future era
     HandleFutureSpawns();
 }
@@ -1031,6 +1035,104 @@ void AProceduralLevelGenerator::HandleFutureSpawns()
 // ============================================================
 // Networking
 // ============================================================
+
+
+
+void AProceduralLevelGenerator::SpawnKeycard(
+    TSubclassOf<AItemPickup> KeycardBPClass,
+    const FName& SpawnTag,
+    ETimelineEra Era,
+    const TArray<AAICharacter*>& PossibleCarriers
+)
+{
+    UWorld* World = GetWorld();
+    if (!World || !KeycardBPClass)
+    {
+        return;
+    }
+
+    // 1. Gather valid RandomPointActor spawn locations
+    TArray<AActor*> FoundPoints;
+    UGameplayStatics::GetAllActorsOfClass(World, ARandomPointActor::StaticClass(), FoundPoints);
+
+    TArray<ARandomPointActor*> ValidPoints;
+    for (AActor* Actor : FoundPoints)
+    {
+        ARandomPointActor* Point = Cast<ARandomPointActor>(Actor);
+        if (Point
+            && Point->TimelineEra == Era
+            && Point->Tags.Contains(SpawnTag))
+        {
+            ValidPoints.Add(Point);
+        }
+    }
+
+    // 2. Gather valid AI carriers (correct era)
+    TArray<AAICharacter*> ValidCarriers;
+    for (AAICharacter* Carrier : PossibleCarriers)
+    {
+        if (Carrier && Carrier->TimelineEra == Era)
+        {
+            ValidCarriers.Add(Carrier);
+        }
+    }
+
+    // Total pool = ground points + AI carriers
+    int32 TotalOptions = ValidPoints.Num() + ValidCarriers.Num();
+    if (TotalOptions == 0)
+    {
+        return;
+    }
+
+    // 3. Pick one random option from the combined pool
+    int32 ChosenIndex = FMath::RandRange(0, TotalOptions - 1);
+
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+    if (ChosenIndex < ValidPoints.Num())
+    {
+        // --- Ground spawn on a RandomPointActor ---
+        ARandomPointActor* SelectedPoint = ValidPoints[ChosenIndex];
+        UArrowComponent* PointArrow = SelectedPoint->FindComponentByClass<UArrowComponent>();
+        FVector SpawnLocation = SelectedPoint->GetActorLocation();
+        FRotator SpawnRotation = PointArrow ? PointArrow->GetComponentRotation() : SelectedPoint->GetActorRotation();
+
+        World->SpawnActor<AItemPickup>(
+            KeycardBPClass,
+            SpawnLocation,
+            SpawnRotation,
+            SpawnParams
+        );
+    }
+    else
+    {
+        // --- Attach to an AI character's belt socket ---
+        int32 CarrierIndex = ChosenIndex - ValidPoints.Num();
+        AAICharacter* ChosenCarrier = ValidCarriers[CarrierIndex];
+
+        AItemPickup* KeycardPickup = World->SpawnActor<AItemPickup>(
+            KeycardBPClass,
+            ChosenCarrier->GetActorLocation(),
+            ChosenCarrier->GetActorRotation(),
+            SpawnParams
+        );
+
+        if (KeycardPickup)
+        {
+            USkeletalMeshComponent* CarrierMesh = ChosenCarrier->GetMesh();
+            if (CarrierMesh)
+            {
+                static const FName BeltSocket(TEXT("BeltSocket"));
+                KeycardPickup->AttachToComponent(
+                    CarrierMesh,
+                    FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+                    BeltSocket
+                );
+            }
+        }
+    }
+}
 
 void AProceduralLevelGenerator::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {

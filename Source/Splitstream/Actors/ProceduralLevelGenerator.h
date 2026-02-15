@@ -143,4 +143,23 @@ protected:
     // Utility Helpers
     // ============================================================
     FString GenerateUniqueName(const TArray<FString>& FirstNames, const TArray<FString>& Surnames, TSet<FString>& UsedNames) const;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Keycard")
+    TSubclassOf<class AItemPickup> KeycardL1PickupBPClass;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Keycard")
+    TSubclassOf<class AItemPickup> KeycardL2PickupBPClass;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Keycard")
+    TArray<class AAICharacter*> KeycardL1PossibleCarriers;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Keycard")
+    TArray<class AAICharacter*> KeycardL2PossibleCarriers;
+
+    void SpawnKeycard(
+        TSubclassOf<class AItemPickup> KeycardBPClass,
+        const FName& SpawnTag,
+        ETimelineEra Era,
+        const TArray<class AAICharacter*>& PossibleCarriers
+    );
 };
