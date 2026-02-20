@@ -163,7 +163,7 @@ void UCharacterOverlay::UpdateDetectionWidget(AActor* Detector, float Progress, 
     for (auto It = DetectionWidgets.CreateIterator(); It; ++It)
     {
         AActor* KeyActor = It.Key();
-        if (!KeyActor || KeyActor->IsPendingKillPending())
+        if (!IsValid(KeyActor))
         {
             UDetectionWidget* Widget = It.Value();
             if (Widget) Widget->RemoveFromParent();

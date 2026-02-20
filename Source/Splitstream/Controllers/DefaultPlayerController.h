@@ -74,7 +74,7 @@ public:
     UFUNCTION(Client, Reliable)
     void ClientShowCalendarWidget(const TArray<FCalendarDateRecord>& CivilianDateRecords);
 
-    UFUNCTION(Client, Unreliable)
+    UFUNCTION(Client, Reliable)
     void ClientUpdateDetectionWidget(AActor* Detector, float Progress, bool bIsLocked);
 
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
