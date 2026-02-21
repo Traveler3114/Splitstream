@@ -390,11 +390,7 @@ void ADefaultCharacter::OnInstantInteract()
     if (!InteractionComponent || !CameraComponent) return;
     FVector Start = CameraComponent->GetComponentLocation();
     FRotator Rot = Controller ? Controller->GetControlRotation() : CameraComponent->GetComponentRotation();
-    InteractionComponent->HandleInstantInteract(
-        this, Start, Rot, [this](AActor* Target){
-            ServerHandleInteract(Target); // Client always forwards instant to server
-        }
-    );
+    InteractionComponent->HandleInstantInteract(this, Start, Rot);
 }
 
 void ADefaultCharacter::OnHoldInteractStart()
@@ -465,40 +461,6 @@ void ADefaultCharacter::SelectInventorySlot(int32 SlotNumber)
     }
 }
 
-
-
-void ADefaultCharacter::ServerHandleInteract_Implementation(AActor* TargetActor)
-{
-    if (!TargetActor)
-    {
-        UE_LOG(LogSplitstream, Warning, TEXT("%s: ServerHandleInteract - TargetActor is null"), *GetName());
-        return;
-    }
-
-    if (TargetActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
-    {
-        bool bRequiresItem = IInteractable::Execute_RequiresItem(TargetActor);
-
-        UInventoryComponent* Inventory = FindComponentByClass<UInventoryComponent>();
-        if (Inventory)
-        {
-            FInventorySlot ActiveSlot = Inventory->GetActiveItem();
-
-            if (bRequiresItem)
-            {
-                if (!IInteractable::Execute_IsCorrectItem(TargetActor, ActiveSlot))
-                {
-                    return;
-                }
-                if (ActiveSlot.ItemAsset)
-                {
-                    ActiveSlot.ItemAsset->OnUsed(this, ActiveSlot.ItemInstanceID);
-                }
-            }
-        }
-        IInteractable::Execute_Interact(TargetActor, this);
-    }
-}
 
 // ---------------- MOVEMENT --------------
 void ADefaultCharacter::Move(const FInputActionValue& Value)

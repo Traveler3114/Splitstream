@@ -203,24 +203,81 @@ void UInteractionComponent::HandleHoldInteractStop(AActor* Instigator)
     }
 }
 
+//void UInteractionComponent::HandleInstantInteract(
+//    AActor* Instigator, FVector Start, FRotator Rotation,
+//    TFunction<void(AActor*)> ServerInteractCallback)
+//{
+//    FHitResult Hit; FVector TraceEnd;
+//    if (!GetForwardTraceResult(Start, Rotation, InteractDistance, Hit, TraceEnd)) return;
+//    AActor* HitActor = Hit.GetActor();
+//    if (!HitActor || !HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass())) return;
+//
+//    if (!IInteractable::Execute_IsProgressiveInteract(HitActor))
+//    {
+//        IInteractable::Execute_Interact(HitActor, Instigator);
+//    }
+//
+//    // The pawn should always call its ServerHandleInteract from here (the callback).
+//    if (APawn* PawnOwner = Cast<APawn>(GetOwner()); PawnOwner && PawnOwner->IsLocallyControlled() && PawnOwner->HasAuthority()) return;
+//    if (ServerInteractCallback)
+//    {
+//        ServerInteractCallback(HitActor);
+//    }
+//}
+
+
 void UInteractionComponent::HandleInstantInteract(
-    AActor* Instigator, FVector Start, FRotator Rotation,
-    TFunction<void(AActor*)> ServerInteractCallback)
+    AActor* Instigator, FVector Start, FRotator Rotation)
 {
     FHitResult Hit; FVector TraceEnd;
     if (!GetForwardTraceResult(Start, Rotation, InteractDistance, Hit, TraceEnd)) return;
     AActor* HitActor = Hit.GetActor();
     if (!HitActor || !HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass())) return;
+    if (IInteractable::Execute_IsProgressiveInteract(HitActor)) return;
 
-    if (!IInteractable::Execute_IsProgressiveInteract(HitActor))
+    // Cosmetic-only: play a local "interact" sound/animation immediately
+    // This doesn't modify any replicated state, so there's nothing to roll back
+    if (APawn* PawnOwner = Cast<APawn>(GetOwner()))
     {
-        IInteractable::Execute_Interact(HitActor, Instigator);
+        if (PawnOwner->IsLocallyControlled())
+        {
+            // Optional: play hand animation, click sound, etc.
+            // IInteractable::Execute_OnInteractCosmetic(HitActor, Instigator);
+        }
     }
 
-    // The pawn should always call its ServerHandleInteract from here (the callback).
-    if (APawn* PawnOwner = Cast<APawn>(GetOwner()); PawnOwner && PawnOwner->IsLocallyControlled() && PawnOwner->HasAuthority()) return;
-    if (ServerInteractCallback)
+	ServerHandleInteract(HitActor);
+}
+
+
+void UInteractionComponent::ServerHandleInteract_Implementation(AActor* TargetActor)
+{
+    if (!TargetActor)
     {
-        ServerInteractCallback(HitActor);
+        return;
+    }
+
+    if (TargetActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
+    {
+        bool bRequiresItem = IInteractable::Execute_RequiresItem(TargetActor);
+
+        UInventoryComponent* Inventory = GetOwner() ? GetOwner()->FindComponentByClass<UInventoryComponent>() : nullptr;
+        if (Inventory)
+        {
+            FInventorySlot ActiveSlot = Inventory->GetActiveItem();
+
+            if (bRequiresItem)
+            {
+                if (!IInteractable::Execute_IsCorrectItem(TargetActor, ActiveSlot))
+                {
+                    return;
+                }
+                if (ActiveSlot.ItemAsset)
+                {
+                    ActiveSlot.ItemAsset->OnUsed(GetOwner(), ActiveSlot.ItemInstanceID);
+                }
+            }
+        }
+        IInteractable::Execute_Interact(TargetActor, GetOwner());
     }
 }

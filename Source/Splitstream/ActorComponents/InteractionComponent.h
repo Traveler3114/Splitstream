@@ -53,6 +53,8 @@ public:
     void UpdateInteractHighlight(FVector Start, FRotator Rotation);
     void HandleHoldInteractStart(AActor* Instigator, FVector Start, FRotator Rotation);
     void HandleHoldInteractStop(AActor* Instigator);
-    void HandleInstantInteract(AActor* Instigator, FVector Start, FRotator Rotation,
-        TFunction<void(AActor*)> ServerInteractCallback = nullptr);
+    void HandleInstantInteract(AActor* Instigator, FVector Start, FRotator Rotation);
+
+    UFUNCTION(Server, Reliable)
+    void ServerHandleInteract(AActor* TargetActor);
 };

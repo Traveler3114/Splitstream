@@ -185,11 +185,6 @@ public:
     UFUNCTION()
     void OnHoldInteractStop();
 
-    // Server-side implementation
-    UFUNCTION(Server, Reliable)
-    void ServerHandleInteract(AActor* TargetActor);
-
-
     UFUNCTION(BlueprintCallable)
     virtual void OnDetected_Implementation(AActor* Detector) override;
     UFUNCTION(BlueprintCallable)
