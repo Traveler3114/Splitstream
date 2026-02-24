@@ -135,6 +135,11 @@ void UInventoryComponent::UpdateEquippedItemMesh(const TArray<FInventorySlot>& I
         EquippedItemMeshComp->SetRelativeRotation(RelativeRotation);
         EquippedItemMeshComp->SetRelativeScale3D(RelativeScale);
     }
+    if (NewMesh && ItemAsset)
+    {
+        //EquippedItemMeshComp->SetRelativeLocation(ItemAsset->EquippedRelativeLocation);
+        EquippedItemMeshComp->SetRelativeRotation(ItemAsset->EquippedRelativeRotation);
+    }
 
     // Compute ADS if we have a mesh
     //if (EquippedItemMeshComp->GetStaticMesh())

@@ -54,6 +54,12 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item|Pickup")
     TSubclassOf<class AFutureItemPickup> FutureItemPickupToSpawn;
 
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item|Equipped")
+    FVector EquippedRelativeLocation = FVector::ZeroVector;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item|Equipped")
+    FRotator EquippedRelativeRotation = FRotator::ZeroRotator;
+
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
     bool bRemoveFromInventoryOnUse = false;
 

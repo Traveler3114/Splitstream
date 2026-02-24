@@ -51,7 +51,7 @@ ADefaultCharacter::ADefaultCharacter()
     InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("InteractionComponent"));
 
     EquippedItemMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("EquippedItemMeshComp"));
-    EquippedItemMeshComp->SetupAttachment(GetMesh(), TEXT("Hand_R"));
+    EquippedItemMeshComp->SetupAttachment(GetMesh(), TEXT("HandGrip_R"));
     EquippedItemMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
     InventoryComponent->EquippedItemMeshComp = EquippedItemMeshComp;
