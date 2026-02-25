@@ -18,7 +18,7 @@ void ABasePlayerController::RequestLeaveToMainMenu()
     {
         if (ABaseGameState* GS = GetWorld()->GetGameState<ABaseGameState>())
         {
-            ClientShowLoadingWidget();
+            //ClientShowLoadingWidget();
             ClientTravel(GS->MainMenuMapPath, TRAVEL_Absolute);
         }
     }
@@ -26,19 +26,19 @@ void ABasePlayerController::RequestLeaveToMainMenu()
 
 
 
-void ABasePlayerController::ClientShowLoadingWidget_Implementation()
-{
-    ShowLoadingWidget();
-}
-
-void ABasePlayerController::ShowLoadingWidget()
-{
-    if (LoadingWidgetClass)
-    {
-        LoadingWidgetInstance = CreateWidget<UUserWidget>(this, LoadingWidgetClass, TEXT("LoadingWidget"));
-        if (LoadingWidgetInstance)
-        {
-            LoadingWidgetInstance->AddToViewport();
-        }
-    }
-}
+//void ABasePlayerController::ClientShowLoadingWidget_Implementation()
+//{
+//    ShowLoadingWidget();
+//}
+//
+//void ABasePlayerController::ShowLoadingWidget()
+//{
+//    if (LoadingWidgetClass)
+//    {
+//        LoadingWidgetInstance = CreateWidget<UUserWidget>(this, LoadingWidgetClass, TEXT("LoadingWidget"));
+//        if (LoadingWidgetInstance)
+//        {
+//            LoadingWidgetInstance->AddToViewport();
+//        }
+//    }
+//}

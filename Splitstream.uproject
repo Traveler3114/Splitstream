@@ -57,6 +57,10 @@
 		{
 			"Name": "AIAssistant",
 			"Enabled": true
-		}
+		},
+		{
+        "Name": "CommonLoadingScreen",
+        "Enabled": true
+    	}
 	]
 }

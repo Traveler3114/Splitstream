@@ -245,13 +245,13 @@ void ALobbyGameMode::StartGameIfAllowed(ALobbyPlayerController* RequestingPC)
             return;
         }
 
-        for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
-        {
-            if (ALobbyPlayerController* LPC = Cast<ALobbyPlayerController>(It->Get()))
-            {
-                LPC->ClientShowLoadingWidget();
-            }
-        }
+        //for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+        //{
+        //    if (ALobbyPlayerController* LPC = Cast<ALobbyPlayerController>(It->Get()))
+        //    {
+        //        LPC->ClientShowLoadingWidget();
+        //    }
+        //}
 
         bTravelScheduled = true;
         GetWorld()->GetTimerManager().SetTimer(
@@ -315,10 +315,10 @@ void ALobbyGameMode::KickPlayerByPlayerState(APlayerState* TargetPS)
             if (PC->PlayerState == TargetPS)
             {
                 // 1) UX: Tell client to show loading
-                if (ALobbyPlayerController* LPC = Cast<ALobbyPlayerController>(PC))
-                {
-                    LPC->ClientShowLoadingWidget();
-                }
+                //if (ALobbyPlayerController* LPC = Cast<ALobbyPlayerController>(PC))
+                //{
+                //    LPC->ClientShowLoadingWidget();
+                //}
 
                 // 2) Travel the client to MainMenu
                 const FString MenuURL = MainMenuMapPath.IsEmpty()

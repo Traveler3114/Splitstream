@@ -74,13 +74,13 @@ void UMainMenuWidget::OnMapSelected(const FString& LevelName, const TSoftObjectP
     }
 
     // SHOW LOADING WIDGET HERE!
-    if (APlayerController* PC = GetOwningPlayer())
-    {
-        if (AMainMenuPlayerController* MainPC = Cast<AMainMenuPlayerController>(PC))
-        {
-            MainPC->ShowLoadingWidget();
-        }
-    }
+    //if (APlayerController* PC = GetOwningPlayer())
+    //{
+    //    if (AMainMenuPlayerController* MainPC = Cast<AMainMenuPlayerController>(PC))
+    //    {
+    //        MainPC->ShowLoadingWidget();
+    //    }
+    //}
 
     if (UGameInstance* GI = UGameplayStatics::GetGameInstance(this))
     {

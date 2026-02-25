@@ -16,15 +16,15 @@ public:
     UFUNCTION(BlueprintCallable)
     virtual void RequestLeaveToMainMenu();
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
-    TSubclassOf<class UUserWidget> LoadingWidgetClass;
+ //   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+ //   TSubclassOf<class UUserWidget> LoadingWidgetClass;
 
-    UPROPERTY()
-    UUserWidget* LoadingWidgetInstance = nullptr;
+ //   UPROPERTY()
+ //   UUserWidget* LoadingWidgetInstance = nullptr;
 
-    UFUNCTION(Client,Reliable)
-    void ClientShowLoadingWidget();
+ //   UFUNCTION(Client,Reliable)
+ //   void ClientShowLoadingWidget();
 
-    UFUNCTION(BlueprintCallable)
-	void ShowLoadingWidget();
+ //   UFUNCTION(BlueprintCallable)
+	//void ShowLoadingWidget();
 };
