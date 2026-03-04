@@ -137,7 +137,7 @@ void UInventoryComponent::UpdateEquippedItemMesh(const TArray<FInventorySlot>& I
     }
     if (NewMesh && ItemAsset)
     {
-        //EquippedItemMeshComp->SetRelativeLocation(ItemAsset->EquippedRelativeLocation);
+        EquippedItemMeshComp->SetRelativeLocation(ItemAsset->EquippedRelativeLocation);
         EquippedItemMeshComp->SetRelativeRotation(ItemAsset->EquippedRelativeRotation);
     }
 
