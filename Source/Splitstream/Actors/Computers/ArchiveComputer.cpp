@@ -3,7 +3,7 @@
 #include "Computer.h"
 #include "Actors/DeskActor.h"
 #include "Actors/CodeGenerator.h"
-#include "Characters/CivilianCharacter.h"
+#include "AI/Characters/CivilianCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "Controllers/DefaultPlayerController.h"
 #include "GameFramework/Pawn.h"

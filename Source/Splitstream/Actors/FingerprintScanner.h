@@ -6,7 +6,6 @@
 #include "GameFramework/Actor.h"
 #include "Interfaces/IInteractable.h"
 #include "DataAssets/ItemBase.h"
-#include "Characters/CivilianCharacter.h"
 #include "TimelineEra.h"
 #include "FingerprintScanner.generated.h"
 
@@ -31,7 +30,7 @@ public:
 
     // What type of civilian's fingerprint is required?
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fingerprint")
-    TSubclassOf<ACivilianCharacter> RequiredCivilianClass;
+    TSubclassOf<class ACivilianCharacter> RequiredCivilianClass;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
     ETimelineEra TimelineEra = ETimelineEra::Past;

@@ -5,7 +5,7 @@
 #include "Components/SceneComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Interfaces/IUnlockable.h"
-#include "Characters/CivilianCharacter.h"
+#include "AI/Characters/CivilianCharacter.h"
 
 AFingerprintScanner::AFingerprintScanner()
 {

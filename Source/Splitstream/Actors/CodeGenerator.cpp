@@ -5,7 +5,7 @@
 #include "Components/TextRenderComponent.h"
 #include "DataAssets/ItemBase.h"
 #include "Net/UnrealNetwork.h"
-#include "Characters/CivilianCharacter.h"
+#include "AI/Characters/CivilianCharacter.h"
 #include "TimerManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/Engine.h"

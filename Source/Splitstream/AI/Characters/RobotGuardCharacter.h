@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Characters/GuardCharacter.h"
+#include "GuardCharacter.h"
 #include "RobotGuardCharacter.generated.h"
 
 /**

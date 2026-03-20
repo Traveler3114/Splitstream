@@ -1,7 +1,7 @@
 // DroneSpawner.cpp
 #include "DroneSpawner.h"
 #include "Splitstream.h"
-#include "Characters/DronePawn.h"
+#include "AI/Characters/DronePawn.h"
 #include "Kismet/GameplayStatics.h"
 #include "Actors/PointActors/NavNode.h"
 #include "Components/TextRenderComponent.h"

@@ -1,5 +1,5 @@
 #include "DronePawn.h"
-#include "DefaultCharacter.h"
+#include "Characters/DefaultCharacter.h"
 #include "Components/SceneComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "AbilitySystem/AttributeSets/PlayerAttributeSet.h"

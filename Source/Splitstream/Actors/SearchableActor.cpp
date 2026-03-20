@@ -4,7 +4,7 @@
 #include "SearchableActor.h"
 #include "Components/SceneComponent.h"
 #include "ActorComponents/SearchComponent.h"
-#include "Characters/CivilianCharacter.h"
+#include "AI/Characters/CivilianCharacter.h"
 #include "ActorComponents/InventoryComponent.h"
 #include "DataAssets/ItemBase.h"
 
