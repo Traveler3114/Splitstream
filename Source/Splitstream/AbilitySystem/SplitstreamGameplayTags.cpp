@@ -3,6 +3,9 @@
 
 #include "SplitstreamGameplayTags.h"
 
+// SplitstreamGameplayTags.cpp
+
+// — existing, unchanged —
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character, "Character");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Block, "Character.Status.Block");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Block_Movement, "Character.Status.Block.Movement");
@@ -27,14 +30,17 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Illegal_Area, "Character.Status.Ille
 UE_DEFINE_GAMEPLAY_TAG(TAG_Character_Status_Teleporting, "Character.Status.Teleporting");
 UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_PastEcho_Activated, "GameplayCue.PastEcho.Activated");
 UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_PastEcho_Deactivated, "GameplayCue.PastEcho.Deactivated");
-
-
 UE_DEFINE_GAMEPLAY_TAG(TAG_Weapon_Ability_Pistol_Fire, "Weapon.Ability.Pistol.Fire");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Weapon_Ability_Pistol_Aim, "Weapon.Ability.Pistol.Aim");
 
-UE_DEFINE_GAMEPLAY_TAG(TAG_StateTree_Event_FullyDetected_Pawn, "StateTree.Event.FullyDetected.Pawn");
-UE_DEFINE_GAMEPLAY_TAG(TAG_StateTree_Event_FullyDetected_Actor, "StateTree.Event.FullyDetected.Actor");
-UE_DEFINE_GAMEPLAY_TAG(TAG_StateTree_Event_RepairNeeded, "StateTree.Event.RepairNeeded");
+// — AI: behaviors —
+UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Behavior_WalkAround, "AI.Behavior.WalkAround");
+UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Behavior_StandIdle, "AI.Behavior.StandIdle");
 
+// — AI: StateTree events —
+UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Event_FullyDetected_Pawn, "AI.Event.FullyDetected.Pawn");
+UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Event_FullyDetected_Actor, "AI.Event.FullyDetected.Actor");
+UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Event_RepairNeeded, "AI.Event.RepairNeeded");
 
-UE_DEFINE_GAMEPLAY_TAG(TAG_Guard_Status_Repair, "Guard.Status.Repair");
+// — AI: status —
+UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Status_Repair, "AI.Status.Repair");

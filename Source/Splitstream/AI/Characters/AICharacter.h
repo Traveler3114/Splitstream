@@ -9,6 +9,8 @@
 #include "DataAssets/ItemBase.h"
 #include "TimelineEra.h"
 #include "GameplayEffect.h"
+#include "StructUtils/InstancedStruct.h"
+#include "DataAssets/NPCBehaviorTypes.h"
 #include "AICharacter.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnAICharacterPickedUp, AActor*, Interactor, UItemBase*, ItemData);
@@ -96,12 +98,35 @@ public:
     UPROPERTY(BlueprintReadOnly)
     bool bIsDead = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
-	int32 MoneyToSubtract = -10000;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+    int32 MoneyToSubtract = -10000;
+
+    // ── Behavior Config ──────────────────────────────────────
+    // Assign DA_Guard_Patroller, DA_Civilian_Office etc. per instance
+    UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "AI|Behavior")
+    UNPCBehaviorConfig* BehaviorConfig = nullptr;
+
+    // Cursor for Sequential decision mode
+    int32 BehaviorSequenceIndex = 0;
+
+    // Used by StateTree tasks to get typed params for a specific behavior
+    // e.g. GetBehaviorParams<FWalkAroundBehavior>()
+    template<typename T>
+    const T* GetBehaviorParams() const
+    {
+        if (!BehaviorConfig) return nullptr;
+        for (const FInstancedStruct& Entry : BehaviorConfig->AllowedBehaviors)
+        {
+            if (const T* Params = Entry.GetPtr<T>())
+                return Params;
+        }
+        return nullptr;
+    }
 
 protected:
     /** Called from AttributeSet health delegate, handles death state */
     virtual void OnHealthChanged(const struct FOnAttributeChangeData& Data);
+
     UFUNCTION()
     virtual void OnSearchComplete();
     virtual void TryPickup(AActor* Interactor);

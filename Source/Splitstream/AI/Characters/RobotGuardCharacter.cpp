@@ -80,7 +80,7 @@ void ARobotGuardCharacter::QueueRepair(AActor* Repairable)
 
 void ARobotGuardCharacter::TryStartNextRepair()
 {
-    if (AbilitySystemComponent && AbilitySystemComponent->HasMatchingGameplayTag(TAG_Guard_Status_Repair))
+    if (AbilitySystemComponent && AbilitySystemComponent->HasMatchingGameplayTag(TAG_AI_Event_RepairNeeded))
         return;
     if (CurrentRepairTarget)
         return;
@@ -95,7 +95,7 @@ void ARobotGuardCharacter::TryStartNextRepair()
         UStateTreeComponent* StateTreeComp = GuardController->FindComponentByClass<UStateTreeComponent>();
         if (StateTreeComp)
         {
-            FStateTreeEvent MyEvent(TAG_StateTree_Event_RepairNeeded);
+            FStateTreeEvent MyEvent(TAG_AI_Event_RepairNeeded);
             StateTreeComp->SendStateTreeEvent(MyEvent);
         }
     }
@@ -105,7 +105,7 @@ void ARobotGuardCharacter::OnRepairFinished()
     CurrentRepairTarget = nullptr;
     if (AbilitySystemComponent)
     {
-        AbilitySystemComponent->RemoveLooseGameplayTag(TAG_Guard_Status_Repair);
+        AbilitySystemComponent->RemoveLooseGameplayTag(TAG_AI_Event_RepairNeeded);
     }
     TryStartNextRepair();
 }

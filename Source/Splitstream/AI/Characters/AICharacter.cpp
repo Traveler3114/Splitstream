@@ -62,6 +62,7 @@ void AAICharacter::BeginPlay()
             }
         }
     }
+
     if (AbilitySystemComponent && AttributeSet)
     {
         AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute())
@@ -72,6 +73,7 @@ void AAICharacter::BeginPlay()
     {
         AIPerceptionComponent->OnPerceptionUpdated.AddDynamic(this, &AAICharacter::OnPerceptionUpdated);
     }
+
     if (SearchComponent)
     {
         SearchComponent->OnSearchComplete.AddDynamic(this, &AAICharacter::OnSearchComplete);
@@ -83,7 +85,6 @@ void AAICharacter::BeginPlay()
 void AAICharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     UUtilityLibrary::UnregisterDetector(this, this);
-
     Super::EndPlay(EndPlayReason);
 }
 
@@ -94,6 +95,7 @@ void AAICharacter::Interact_Implementation(AActor* Interactor)
         SearchComponent->Interact(Interactor);
     }
 }
+
 void AAICharacter::CancelInteract_Implementation(AActor* Interactor)
 {
     if (SearchComponent && bIsDead)
@@ -101,6 +103,7 @@ void AAICharacter::CancelInteract_Implementation(AActor* Interactor)
         SearchComponent->CancelInteract(Interactor);
     }
 }
+
 void AAICharacter::SetHighlighted_Implementation(bool bHighlight)
 {
     USkeletalMeshComponent* SkelMesh = GetMesh();
@@ -110,6 +113,7 @@ void AAICharacter::SetHighlighted_Implementation(bool bHighlight)
         SkelMesh->CustomDepthStencilValue = bHighlight ? 1 : 0;
     }
 }
+
 void AAICharacter::OnSearchComplete()
 {
     AActor* Interactor = SearchComponent ? SearchComponent->LastInteractor.Get() : nullptr;
@@ -158,12 +162,11 @@ void AAICharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
 
         DetachFromControllerPendingDestroy();
 
-        // Stop movement
         if (GetCharacterMovement())
         {
             GetCharacterMovement()->DisableMovement();
         }
-        // Disable capsule collision
+
         if (GetCapsuleComponent())
         {
             GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -176,28 +179,27 @@ void AAICharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
                 ProxComp->DestroyComponent();
             }
         }
-        // Enable ragdoll on mesh
+
         USkeletalMeshComponent* SkelMesh = GetMesh();
         if (SkelMesh)
         {
             SkelMesh->SetCollisionProfileName(TEXT("Ragdoll"));
             SkelMesh->SetSimulatePhysics(true);
-            SkelMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics); // Traces + physics
+            SkelMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
             SkelMesh->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
         }
-        // Disable perception
+
         if (AIPerceptionComponent)
         {
             AIPerceptionComponent->Deactivate();
             AIPerceptionComponent->OnPerceptionUpdated.Clear();
         }
-        // Remove attribute change delegates
+
         if (AbilitySystemComponent && AttributeSet)
         {
             AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute())
                 .RemoveAll(this);
         }
-
     }
 }
 
@@ -206,6 +208,7 @@ void AAICharacter::OnDetected_Implementation(AActor* Detector)
     if (DetectionComponent && !DetectionComponent->IsDetectionInProgress(Detector) && !DetectionComponent->IsFullyDetected(Detector) && bIsDead)
         DetectionComponent->StartDetection(Detector);
 }
+
 void AAICharacter::OnLost_Implementation(AActor* Detector)
 {
     if (DetectionComponent && DetectionComponent->IsDetectionInProgress(Detector) && !DetectionComponent->IsFullyDetected(Detector) && bIsDead)
@@ -222,10 +225,9 @@ void AAICharacter::OnFullyDetected_Implementation(AActor* ActorDetected)
     if (bIsDead) return;
     TargetActor = ActorDetected;
 
-    // Select the correct tag based on Pawn/Actor
     const FGameplayTag& DetectionTag = ActorDetected->IsA(APawn::StaticClass())
-        ? TAG_StateTree_Event_FullyDetected_Pawn
-        : TAG_StateTree_Event_FullyDetected_Actor;
+        ? TAG_AI_Event_FullyDetected_Pawn
+        : TAG_AI_Event_FullyDetected_Actor;
 
     if (AController* GuardController = GetController())
     {
@@ -239,10 +241,9 @@ void AAICharacter::OnFullyDetected_Implementation(AActor* ActorDetected)
 
 bool AAICharacter::IsActorAlreadyDetected_Implementation(AActor* DetectingActor) const
 {
-    if (bIsDead)
-        return false;
-    if (!AIPerceptionComponent)
-        return false;
+    if (bIsDead) return false;
+    if (!AIPerceptionComponent) return false;
+
     TArray<AActor*> PerceivedActors;
     AIPerceptionComponent->GetCurrentlyPerceivedActors(UAISense_Sight::StaticClass(), PerceivedActors);
     return PerceivedActors.Contains(DetectingActor);
@@ -270,15 +271,13 @@ void AAICharacter::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
             if (bSensed)
             {
                 DetectedActor = Actor;
-                IDetectable::Execute_OnDetected(Actor, this); // Notify target it is being detected
+                IDetectable::Execute_OnDetected(Actor, this);
             }
             else
             {
-                IDetectable::Execute_OnLost(Actor, this); // Notify target it is not being detected
+                IDetectable::Execute_OnLost(Actor, this);
                 if (DetectedActor == Actor)
-                {
                     DetectedActor = nullptr;
-                }
             }
         }
     }
