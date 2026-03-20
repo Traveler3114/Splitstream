@@ -1,16 +1,16 @@
-#include "STTask_NPCBehaviorDecision.h"
+#include "STTask_BehaviorDecision.h"
 #include "StateTreeExecutionContext.h"
 #include "AI/Characters/AICharacter.h"
 #include "DataAssets/NPCBehaviorTypes.h"
 
-EStateTreeRunStatus FSTTask_NPCBehaviorDecision::EnterState(
+EStateTreeRunStatus FSTTask_BehaviorDecision::EnterState(
     FStateTreeExecutionContext& Context,
     const FStateTreeTransitionResult& Transition) const
 {
     UObject* OwnerObject = Context.GetOwner();
     if (!OwnerObject)
     {
-        UE_LOG(LogTemp, Warning, TEXT("STTask_NPCBehaviorDecision: No valid owner"));
+        UE_LOG(LogTemp, Warning, TEXT("STTask_BehaviorDecision: No valid owner"));
         return EStateTreeRunStatus::Failed;
     }
 
@@ -25,14 +25,14 @@ EStateTreeRunStatus FSTTask_NPCBehaviorDecision::EnterState(
 
     if (!NPC || !NPC->BehaviorConfig)
     {
-        UE_LOG(LogTemp, Warning, TEXT("STTask_NPCBehaviorDecision: No valid NPC or BehaviorConfig"));
+        UE_LOG(LogTemp, Warning, TEXT("STTask_BehaviorDecision: No valid NPC or BehaviorConfig"));
         return EStateTreeRunStatus::Failed;
     }
 
     const TArray<FInstancedStruct>& Behaviors = NPC->BehaviorConfig->AllowedBehaviors;
     if (Behaviors.IsEmpty())
     {
-        UE_LOG(LogTemp, Warning, TEXT("STTask_NPCBehaviorDecision: AllowedBehaviors is empty"));
+        UE_LOG(LogTemp, Warning, TEXT("STTask_BehaviorDecision: AllowedBehaviors is empty"));
         return EStateTreeRunStatus::Failed;
     }
 
@@ -52,7 +52,7 @@ EStateTreeRunStatus FSTTask_NPCBehaviorDecision::EnterState(
 
     if (!SelectedTag.IsValid())
     {
-        UE_LOG(LogTemp, Warning, TEXT("STTask_NPCBehaviorDecision: Selected behavior tag is invalid"));
+        UE_LOG(LogTemp, Warning, TEXT("STTask_BehaviorDecision: Selected behavior tag is invalid"));
         return EStateTreeRunStatus::Failed;
     }
 
@@ -60,7 +60,8 @@ EStateTreeRunStatus FSTTask_NPCBehaviorDecision::EnterState(
 
     return EStateTreeRunStatus::Succeeded;
 }
-FGameplayTag FSTTask_NPCBehaviorDecision::SelectRandomWeighted(
+
+FGameplayTag FSTTask_BehaviorDecision::SelectRandomWeighted(
     const TArray<FInstancedStruct>& Behaviors) const
 {
     float TotalWeight = 0.f;
@@ -72,19 +73,16 @@ FGameplayTag FSTTask_NPCBehaviorDecision::SelectRandomWeighted(
         }
         else
         {
-            UE_LOG(LogTemp, Warning, TEXT("SelectRandomWeighted: Invalid behavior struct in config"));
+            UE_LOG(LogTemp, Warning, TEXT("STTask_BehaviorDecision: Invalid behavior struct in config"));
         }
     }
 
     if (TotalWeight <= 0.f)
     {
-        // Fallback: return first valid behavior tag
         for (const FInstancedStruct& Entry : Behaviors)
         {
             if (const FNPCBehaviorBase* Base = Entry.GetPtr<FNPCBehaviorBase>())
-            {
                 return Base->BehaviorTag;
-            }
         }
         return FGameplayTag::EmptyTag;
     }
@@ -106,34 +104,28 @@ FGameplayTag FSTTask_NPCBehaviorDecision::SelectRandomWeighted(
     for (int32 i = Behaviors.Num() - 1; i >= 0; --i)
     {
         if (const FNPCBehaviorBase* Base = Behaviors[i].GetPtr<FNPCBehaviorBase>())
-        {
             return Base->BehaviorTag;
-        }
     }
 
     return FGameplayTag::EmptyTag;
 }
 
-FGameplayTag FSTTask_NPCBehaviorDecision::SelectSequential(
+FGameplayTag FSTTask_BehaviorDecision::SelectSequential(
     const TArray<FInstancedStruct>& Behaviors,
     int32& InOutSequenceIndex) const
 {
     if (Behaviors.Num() == 0)
-    {
         return FGameplayTag::EmptyTag;
-    }
 
-    // Ensure index is in range
     InOutSequenceIndex = InOutSequenceIndex % Behaviors.Num();
 
     const FNPCBehaviorBase* Base = Behaviors[InOutSequenceIndex].GetPtr<FNPCBehaviorBase>();
     if (!Base)
     {
-        UE_LOG(LogTemp, Warning, TEXT("SelectSequential: Invalid behavior struct at index %d"), InOutSequenceIndex);
+        UE_LOG(LogTemp, Warning, TEXT("STTask_BehaviorDecision: Invalid behavior struct at index %d"), InOutSequenceIndex);
         return FGameplayTag::EmptyTag;
     }
 
-    // Advance index for next call
     InOutSequenceIndex = (InOutSequenceIndex + 1) % Behaviors.Num();
 
     return Base->BehaviorTag;
