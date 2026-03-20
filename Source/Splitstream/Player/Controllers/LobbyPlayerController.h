@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
-#include "Controllers/BasePlayerController.h"
+#include "Player/Controllers/BasePlayerController.h"
 #include "LobbyPlayerController.generated.h"
 
 class ULobbyUI;

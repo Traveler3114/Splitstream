@@ -3,7 +3,7 @@
 #include "PastPowerGenerator.h"
 #include "Interfaces/IPuzzleCompletionReceiver.h"
 #include "Net/UnrealNetwork.h"
-#include "Controllers/DefaultPlayerController.h"
+#include "Player/Controllers/DefaultPlayerController.h"
 
 AFuturePowerGenerator::AFuturePowerGenerator()
 {

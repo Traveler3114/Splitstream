@@ -3,7 +3,7 @@
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "Widgets/HUD/SearchWidget.h"
-#include "Controllers/DefaultPlayerController.h"
+#include "Player/Controllers/DefaultPlayerController.h"
 
 USearchAbilityTask* USearchAbilityTask::StartSearchTask(UGameplayAbility* OwningAbility, USearchComponent* InSearchComp)
 {

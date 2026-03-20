@@ -3,7 +3,7 @@
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "Widgets/HUD/HackWidget.h"
-#include "Controllers/DefaultPlayerController.h"
+#include "Player/Controllers/DefaultPlayerController.h"
 
 UHackAbilityTask* UHackAbilityTask::StartHackTask(UGameplayAbility* OwningAbility, UHackComponent* InHackComp)
 {

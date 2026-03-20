@@ -5,7 +5,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/BoxComponent.h"
 #include "GameFramework/Character.h"
-#include "Characters/DefaultCharacter.h"
+#include "Player/Characters/DefaultCharacter.h"
 #include "GameStates/DefaultGameState.h"
 
 AMetalDetector::AMetalDetector()

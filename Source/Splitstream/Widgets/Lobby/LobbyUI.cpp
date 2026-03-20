@@ -1,7 +1,7 @@
 #include "LobbyUI.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
-#include "Controllers/LobbyPlayerController.h"
+#include "Player/Controllers/LobbyPlayerController.h"
 #include "DefaultPlayerState.h"
 #include "GameFramework/PlayerController.h"
 

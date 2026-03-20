@@ -7,7 +7,7 @@
 #include "GameStates/DefaultGameState.h"
 #include "GameplayTagContainer.h"
 #include "TimerManager.h"
-#include "Controllers/DefaultPlayerController.h"
+#include "Player/Controllers/DefaultPlayerController.h"
 #include "GameFramework/SpectatorPawn.h" 
 #include "DefaultGameInstance.h"
 

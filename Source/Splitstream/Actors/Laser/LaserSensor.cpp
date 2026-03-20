@@ -6,7 +6,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
 #include "GameStates/DefaultGameState.h"
-#include "Characters/DefaultCharacter.h"
+#include "Player/Characters/DefaultCharacter.h"
 
 ALaserSensor::ALaserSensor()
 {

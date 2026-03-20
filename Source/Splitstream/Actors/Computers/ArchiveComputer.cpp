@@ -5,7 +5,7 @@
 #include "Actors/CodeGenerator.h"
 #include "AI/Characters/CivilianCharacter.h"
 #include "Kismet/GameplayStatics.h"
-#include "Controllers/DefaultPlayerController.h"
+#include "Player/Controllers/DefaultPlayerController.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "Widgets/Calendar/CalendarWidget.h"

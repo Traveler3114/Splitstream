@@ -1,7 +1,7 @@
 #include "PistolGAFire.h"
 #include "AbilitySystem/SplitstreamGameplayTags.h"
 #include "Actors/Projectiles/Bullet.h"
-#include "Characters/DefaultCharacter.h"
+#include "Player/Characters/DefaultCharacter.h"
 #include "AbilitySystemComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Engine/Engine.h"

@@ -5,7 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "GameFramework/PlayerController.h"
-#include "Controllers/MainMenuPlayerController.h"
+#include "Player/Controllers/MainMenuPlayerController.h"
 #include "Widgets/Settings/SettingsWidget.h"
 #include "DefaultGameInstance.h"
 

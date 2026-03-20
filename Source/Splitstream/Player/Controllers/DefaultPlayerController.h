@@ -3,7 +3,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
-#include "Controllers/BasePlayerController.h"
+#include "Player/Controllers/BasePlayerController.h"
 #include "TimelineEra.h"
 #include "DefaultPlayerController.generated.h"
 

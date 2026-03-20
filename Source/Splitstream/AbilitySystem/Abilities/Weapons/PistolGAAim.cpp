@@ -1,6 +1,6 @@
 #include "PistolGAAim.h"
 #include "AbilitySystem/SplitstreamGameplayTags.h"
-#include "Characters/DefaultCharacter.h"
+#include "Player/Characters/DefaultCharacter.h"
 #include "Engine/Engine.h"
 
 UPistolGAAim::UPistolGAAim()

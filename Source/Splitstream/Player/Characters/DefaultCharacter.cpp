@@ -19,7 +19,7 @@
 #include "DefaultGameInstance.h"
 #include "AbilitySystem/SplitstreamGameplayTags.h"
 #include "Interfaces/IDetectable.h"
-#include "Controllers/DefaultPlayerController.h"
+#include "Player/Controllers/DefaultPlayerController.h"
 #include "ActorComponents/HackComponent.h"
 #include "ActorComponents/SearchComponent.h"
 #include "ActorComponents/InteractionComponent.h"

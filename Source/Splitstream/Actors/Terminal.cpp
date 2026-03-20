@@ -1,7 +1,7 @@
 #include "Terminal.h"
 #include "Minigames/NeonRunnerMiniGame.h"
 #include "Interfaces/IPuzzleCompletionReceiver.h"
-#include "Controllers/DefaultPlayerController.h"
+#include "Player/Controllers/DefaultPlayerController.h"
 #include "Net/UnrealNetwork.h"
 
 ATerminal::ATerminal()
