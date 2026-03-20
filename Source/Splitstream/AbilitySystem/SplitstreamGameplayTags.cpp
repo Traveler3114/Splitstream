@@ -33,14 +33,18 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_PastEcho_Deactivated, "GameplayCue.PastEc
 UE_DEFINE_GAMEPLAY_TAG(TAG_Weapon_Ability_Pistol_Fire, "Weapon.Ability.Pistol.Fire");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Weapon_Ability_Pistol_Aim, "Weapon.Ability.Pistol.Aim");
 
-// — AI: behaviors —
+
+
 UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Behavior_WalkAround, "AI.Behavior.WalkAround");
 UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Behavior_StandIdle, "AI.Behavior.StandIdle");
-
-// — AI: StateTree events —
 UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Event_FullyDetected_Pawn, "AI.Event.FullyDetected.Pawn");
 UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Event_FullyDetected_Actor, "AI.Event.FullyDetected.Actor");
 UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Event_RepairNeeded, "AI.Event.RepairNeeded");
-
-// — AI: status —
 UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Status_Repair, "AI.Status.Repair");
+
+
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_World_NavNode_Ground, "World.NavNode.Ground");
+UE_DEFINE_GAMEPLAY_TAG(TAG_World_NavNode_Sky, "World.NavNode.Sky");
+UE_DEFINE_GAMEPLAY_TAG(TAG_World_NavNode_StayPoint, "World.NavNode.StayPoint");
+UE_DEFINE_GAMEPLAY_TAG(TAG_World_NavNode_PassThrough, "World.NavNode.PassThrough");

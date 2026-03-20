@@ -34,16 +34,20 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_PastEcho_Deactivated);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Weapon_Ability_Pistol_Fire);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Weapon_Ability_Pistol_Aim);
 
-// — AI: behaviors —
+
+
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_AI_Behavior_WalkAround);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_AI_Behavior_StandIdle);
-
-// — AI: StateTree events (renamed from StateTree.Event.*) —
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_AI_Event_FullyDetected_Pawn);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_AI_Event_FullyDetected_Actor);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_AI_Event_RepairNeeded);
-
-// — AI: status (renamed from Guard.Status.*) —
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_AI_Status_Repair);
+
+
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_World_NavNode_Ground);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_World_NavNode_Sky);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_World_NavNode_StayPoint);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_World_NavNode_PassThrough);
 
 
