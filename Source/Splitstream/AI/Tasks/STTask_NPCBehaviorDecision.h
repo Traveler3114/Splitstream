@@ -3,21 +3,21 @@
 #include "CoreMinimal.h"
 #include "StateTreeTaskBase.h"
 #include "GameplayTagContainer.h"
-#include "NPCBehaviorDecisionTask.generated.h"
+#include "STTask_NPCBehaviorDecision.generated.h"
 
 // Required by UE5.7 StateTree — even if empty
 USTRUCT(BlueprintType)
-struct SPLITSTREAM_API FNPCBehaviorDecisionTaskInstanceData
+struct SPLITSTREAM_API FSTTask_NPCBehaviorDecisionInstanceData
 {
     GENERATED_BODY()
 };
 
 USTRUCT(BlueprintType, meta = (Category = "NPC|Behavior", DisplayName = "NPC Behavior Decision Task"))
-struct SPLITSTREAM_API FNPCBehaviorDecisionTask : public FStateTreeTaskBase
+struct SPLITSTREAM_API FSTTask_NPCBehaviorDecision : public FStateTreeTaskBase
 {
     GENERATED_BODY()
 
-    using FInstanceDataType = FNPCBehaviorDecisionTaskInstanceData;
+    using FInstanceDataType = FSTTask_NPCBehaviorDecisionInstanceData;
 
     virtual const UStruct* GetInstanceDataType() const override
     {

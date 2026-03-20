@@ -1,16 +1,16 @@
-#include "NPCBehaviorDecisionTask.h"
+#include "STTask_NPCBehaviorDecision.h"
 #include "StateTreeExecutionContext.h"
 #include "AI/Characters/AICharacter.h"
 #include "DataAssets/NPCBehaviorTypes.h"
 
-EStateTreeRunStatus FNPCBehaviorDecisionTask::EnterState(
+EStateTreeRunStatus FSTTask_NPCBehaviorDecision::EnterState(
     FStateTreeExecutionContext& Context,
     const FStateTreeTransitionResult& Transition) const
 {
     UObject* OwnerObject = Context.GetOwner();
     if (!OwnerObject)
     {
-        UE_LOG(LogTemp, Warning, TEXT("NPCBehaviorDecisionTask: No valid owner"));
+        UE_LOG(LogTemp, Warning, TEXT("STTask_NPCBehaviorDecision: No valid owner"));
         return EStateTreeRunStatus::Failed;
     }
 
@@ -25,14 +25,14 @@ EStateTreeRunStatus FNPCBehaviorDecisionTask::EnterState(
 
     if (!NPC || !NPC->BehaviorConfig)
     {
-        UE_LOG(LogTemp, Warning, TEXT("NPCBehaviorDecisionTask: No valid NPC or BehaviorConfig"));
+        UE_LOG(LogTemp, Warning, TEXT("STTask_NPCBehaviorDecision: No valid NPC or BehaviorConfig"));
         return EStateTreeRunStatus::Failed;
     }
 
     const TArray<FInstancedStruct>& Behaviors = NPC->BehaviorConfig->AllowedBehaviors;
     if (Behaviors.IsEmpty())
     {
-        UE_LOG(LogTemp, Warning, TEXT("NPCBehaviorDecisionTask: AllowedBehaviors is empty"));
+        UE_LOG(LogTemp, Warning, TEXT("STTask_NPCBehaviorDecision: AllowedBehaviors is empty"));
         return EStateTreeRunStatus::Failed;
     }
 
@@ -52,7 +52,7 @@ EStateTreeRunStatus FNPCBehaviorDecisionTask::EnterState(
 
     if (!SelectedTag.IsValid())
     {
-        UE_LOG(LogTemp, Warning, TEXT("NPCBehaviorDecisionTask: Selected behavior tag is invalid"));
+        UE_LOG(LogTemp, Warning, TEXT("STTask_NPCBehaviorDecision: Selected behavior tag is invalid"));
         return EStateTreeRunStatus::Failed;
     }
 
@@ -60,7 +60,7 @@ EStateTreeRunStatus FNPCBehaviorDecisionTask::EnterState(
 
     return EStateTreeRunStatus::Succeeded;
 }
-FGameplayTag FNPCBehaviorDecisionTask::SelectRandomWeighted(
+FGameplayTag FSTTask_NPCBehaviorDecision::SelectRandomWeighted(
     const TArray<FInstancedStruct>& Behaviors) const
 {
     float TotalWeight = 0.f;
@@ -114,7 +114,7 @@ FGameplayTag FNPCBehaviorDecisionTask::SelectRandomWeighted(
     return FGameplayTag::EmptyTag;
 }
 
-FGameplayTag FNPCBehaviorDecisionTask::SelectSequential(
+FGameplayTag FSTTask_NPCBehaviorDecision::SelectSequential(
     const TArray<FInstancedStruct>& Behaviors,
     int32& InOutSequenceIndex) const
 {
