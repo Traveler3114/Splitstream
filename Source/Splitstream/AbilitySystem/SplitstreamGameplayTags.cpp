@@ -34,7 +34,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Weapon_Ability_Pistol_Fire, "Weapon.Ability.Pistol.Fi
 UE_DEFINE_GAMEPLAY_TAG(TAG_Weapon_Ability_Pistol_Aim, "Weapon.Ability.Pistol.Aim");
 
 
-
+UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Behavior_Decision, "AI.Behavior.Decision");
 UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Behavior_WalkAround, "AI.Behavior.WalkAround");
 UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Behavior_StandIdle, "AI.Behavior.StandIdle");
 UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Event_FullyDetected_Pawn, "AI.Event.FullyDetected.Pawn");

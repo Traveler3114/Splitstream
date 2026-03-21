@@ -13,7 +13,7 @@ struct SPLITSTREAM_API FSTTask_BehaviorDecisionInstanceData
 };
 
 USTRUCT(BlueprintType, meta = (Category = "NPC|Behavior", DisplayName = "Behavior Decision Task"))
-struct SPLITSTREAM_API FSTTask_BehaviorDecision : public FStateTreeTaskBase
+struct SPLITSTREAM_API FSTTask_BehaviorDecision : public FStateTreeTaskCommonBase
 {
     GENERATED_BODY()
 
