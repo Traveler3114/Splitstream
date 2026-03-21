@@ -10,7 +10,6 @@
 #include "TimelineEra.h"
 #include "GameplayEffect.h"
 #include "StructUtils/InstancedStruct.h"
-#include "DataAssets/NPCBehaviorTypes.h"
 #include "AICharacter.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnAICharacterPickedUp, AActor*, Interactor, UItemBase*, ItemData);
@@ -100,11 +99,6 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
     int32 MoneyToSubtract = -10000;
-
-    // ── Behavior Config ──────────────────────────────────────
-    // Assign DA_Guard_Patroller, DA_Civilian_Office etc. per instance
-    UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "AI|Behavior")
-    UNPCBehaviorConfig* BehaviorConfig = nullptr;
 
 protected:
     /** Called from AttributeSet health delegate, handles death state */

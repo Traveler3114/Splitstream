@@ -3,6 +3,7 @@
 
 #include "CoreMinimal.h"
 #include "StateTreeTaskBase.h"
+#include "GameplayTagContainer.h"
 #include "STTask_WalkAround.generated.h"
 
 USTRUCT(BlueprintType)
@@ -29,6 +30,21 @@ struct SPLITSTREAM_API FSTTask_WalkAround : public FStateTreeTaskCommonBase
         return FInstanceDataType::StaticStruct();
     }
 
+    // Bind these to StateTree Parameters in the editor
+
+    // Which nav nodes this NPC is allowed to walk to.
+    // Leave empty to allow all nodes matching the NPC's TimelineEra.
+    UPROPERTY(EditAnywhere)
+    FGameplayTagContainer NavNodeTags;
+
+    // 0 = use character's default MaxWalkSpeed
+    UPROPERTY(EditAnywhere)
+    float MovementSpeed = 0.f;
+
+    // Chance [0-1] to stop and idle when arriving at a StayPoint node
+    UPROPERTY(EditAnywhere, meta = (ClampMin = "0.0", ClampMax = "1.0"))
+    float StopChance = 0.5f;
+
     virtual EStateTreeRunStatus EnterState(
         FStateTreeExecutionContext& Context,
         const FStateTreeTransitionResult& Transition) const override;
@@ -43,5 +59,7 @@ struct SPLITSTREAM_API FSTTask_WalkAround : public FStateTreeTaskCommonBase
 
 private:
     void MoveToNextNode(FStateTreeExecutionContext& Context) const;
-    void OnArrived(FStateTreeExecutionContext& Context) const;
+
+    // Returns true if idle roll won and walk should stop
+    bool OnArrived(FStateTreeExecutionContext& Context) const;
 };

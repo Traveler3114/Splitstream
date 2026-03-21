@@ -26,6 +26,13 @@ struct SPLITSTREAM_API FSTTask_StandIdle : public FStateTreeTaskCommonBase
         return FInstanceDataType::StaticStruct();
     }
 
+    // Bind these to StateTree Parameters in the editor
+    UPROPERTY(EditAnywhere)
+    float MinDuration = 2.f;
+
+    UPROPERTY(EditAnywhere)
+    float MaxDuration = 6.f;
+
     virtual EStateTreeRunStatus EnterState(
         FStateTreeExecutionContext& Context,
         const FStateTreeTransitionResult& Transition) const override;

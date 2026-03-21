@@ -5,8 +5,8 @@
 #include "Navigation/PathFollowingComponent.h"
 #include "AI/Characters/AICharacter.h"
 #include "Actors/PointActors/NavNode.h"
-#include "DataAssets/NPCBehaviorTypes.h"
 #include "AbilitySystem/SplitstreamGameplayTags.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "EngineUtils.h"
 
 EStateTreeRunStatus FSTTask_WalkAround::EnterState(
@@ -25,11 +25,17 @@ EStateTreeRunStatus FSTTask_WalkAround::Tick(
 
     if (!Data.bIsMoving) return EStateTreeRunStatus::Running;
 
-    AAIController* Controller = Cast<AAIController>(Context.GetOwner());
+    AAICharacter* NPC = Cast<AAICharacter>(Context.GetOwner());
+    if (!NPC) return EStateTreeRunStatus::Failed;
+
+    AAIController* Controller = Cast<AAIController>(NPC->GetController());
     if (!Controller) return EStateTreeRunStatus::Failed;
 
     if (Controller->GetMoveStatus() == EPathFollowingStatus::Idle)
-        OnArrived(Context);
+    {
+        if (OnArrived(Context))
+            return EStateTreeRunStatus::Succeeded;
+    }
 
     return EStateTreeRunStatus::Running;
 }
@@ -40,8 +46,12 @@ void FSTTask_WalkAround::ExitState(
 {
     FInstanceDataType& Data = Context.GetInstanceData(*this);
 
-    if (AAIController* Controller = Cast<AAIController>(Context.GetOwner()))
-        Controller->StopMovement();
+    AAICharacter* NPC = Cast<AAICharacter>(Context.GetOwner());
+    if (NPC)
+    {
+        if (AAIController* NPCController = Cast<AAIController>(NPC->GetController()))
+            NPCController->StopMovement();
+    }
 
     Data.bIsMoving = false;
     Data.TargetNode = nullptr;
@@ -51,33 +61,21 @@ void FSTTask_WalkAround::MoveToNextNode(FStateTreeExecutionContext& Context) con
 {
     FInstanceDataType& Data = Context.GetInstanceData(*this);
 
-    AAIController* Controller = Cast<AAIController>(Context.GetOwner());
-    if (!Controller) return;
-
-    AAICharacter* NPC = Cast<AAICharacter>(Controller->GetPawn());
+    AAICharacter* NPC = Cast<AAICharacter>(Context.GetOwner());
     if (!NPC) return;
 
-    // Get allowed nav node tags from config
-    FGameplayTagContainer AllowedTags;
-    bool bFilterByTags = false;
+    AAIController* Controller = Cast<AAIController>(NPC->GetController());
+    if (!Controller) return;
 
-    if (NPC->BehaviorConfig)
-    {
-        if (const FWalkAroundBehavior* Params = NPC->BehaviorConfig->GetBehavior<FWalkAroundBehavior>())
-        {
-            AllowedTags = Params->NavNodeTags;
-            bFilterByTags = AllowedTags.Num() > 0;
-        }
-    }
+    const bool bFilterByTags = NavNodeTags.Num() > 0;
 
-    // Gather valid nodes
     TArray<ANavNode*> ValidNodes;
     for (TActorIterator<ANavNode> It(NPC->GetWorld()); It; ++It)
     {
         ANavNode* Node = *It;
         if (!Node) continue;
         if (Node->TimelineEra != NPC->TimelineEra) continue;
-        if (bFilterByTags && !Node->NodeTags.HasAny(AllowedTags)) continue;
+        if (bFilterByTags && !Node->NodeTags.HasAny(NavNodeTags)) continue;
         if (Node == Data.TargetNode) continue;
         ValidNodes.Add(Node);
     }
@@ -87,15 +85,8 @@ void FSTTask_WalkAround::MoveToNextNode(FStateTreeExecutionContext& Context) con
     ANavNode* ChosenNode = ValidNodes[FMath::RandHelper(ValidNodes.Num())];
     Data.TargetNode = ChosenNode;
 
-    // Apply movement speed override if set
-    if (NPC->BehaviorConfig)
-    {
-        if (const FWalkAroundBehavior* Params = NPC->BehaviorConfig->GetBehavior<FWalkAroundBehavior>())
-        {
-            if (Params->MovementSpeed > 0.f)
-                NPC->GetCharacterMovement()->MaxWalkSpeed = Params->MovementSpeed;
-        }
-    }
+    if (MovementSpeed > 0.f)
+        NPC->GetCharacterMovement()->MaxWalkSpeed = MovementSpeed;
 
     FAIMoveRequest MoveRequest;
     MoveRequest.SetGoalLocation(ChosenNode->GetActorLocation());
@@ -105,7 +96,7 @@ void FSTTask_WalkAround::MoveToNextNode(FStateTreeExecutionContext& Context) con
     Data.bIsMoving = true;
 }
 
-void FSTTask_WalkAround::OnArrived(FStateTreeExecutionContext& Context) const
+bool FSTTask_WalkAround::OnArrived(FStateTreeExecutionContext& Context) const
 {
     FInstanceDataType& Data = Context.GetInstanceData(*this);
     Data.bIsMoving = false;
@@ -114,30 +105,18 @@ void FSTTask_WalkAround::OnArrived(FStateTreeExecutionContext& Context) const
     if (!Node)
     {
         MoveToNextNode(Context);
-        return;
+        return false;
     }
 
-    // Check if this is a StayPoint and roll for idle
     if (Node->NodeTags.HasTag(TAG_World_NavNode_StayPoint))
     {
-        float StopChance = 0.5f;
-
-        AAIController* Controller = Cast<AAIController>(Context.GetOwner());
-        AAICharacter* NPC = Controller ? Cast<AAICharacter>(Controller->GetPawn()) : nullptr;
-
-        if (NPC && NPC->BehaviorConfig)
-        {
-            if (const FWalkAroundBehavior* Params = NPC->BehaviorConfig->GetBehavior<FWalkAroundBehavior>())
-                StopChance = Params->StopChance;
-        }
-
         if (FMath::FRandRange(0.f, 1.f) <= StopChance)
         {
-            // Hand off to Idle state, which will send Decision when done
             Context.SendEvent(TAG_AI_Behavior_StandIdle);
-            return;
+            return true;
         }
     }
 
     MoveToNextNode(Context);
+    return false;
 }
