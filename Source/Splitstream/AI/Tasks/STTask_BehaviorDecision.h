@@ -1,3 +1,4 @@
+// STTask_BehaviorDecision.h
 #pragma once
 
 #include "CoreMinimal.h"
@@ -5,7 +6,6 @@
 #include "GameplayTagContainer.h"
 #include "STTask_BehaviorDecision.generated.h"
 
-// Required by UE5.7 StateTree — even if empty
 USTRUCT(BlueprintType)
 struct SPLITSTREAM_API FSTTask_BehaviorDecisionInstanceData
 {
@@ -29,10 +29,6 @@ struct SPLITSTREAM_API FSTTask_BehaviorDecision : public FStateTreeTaskCommonBas
         const FStateTreeTransitionResult& Transition) const override;
 
 private:
-    FGameplayTag SelectRandomWeighted(
+    FGameplayTag SelectWeightedRandom(
         const TArray<FInstancedStruct>& Behaviors) const;
-
-    FGameplayTag SelectSequential(
-        const TArray<FInstancedStruct>& Behaviors,
-        int32& InOutSequenceIndex) const;
 };

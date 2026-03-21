@@ -1,18 +1,19 @@
+// STTask_WalkAround.cpp
 #include "STTask_WalkAround.h"
 #include "StateTreeExecutionContext.h"
 #include "AIController.h"
 #include "Navigation/PathFollowingComponent.h"
-#include "EnvironmentQuery/EnvQueryManager.h"
 #include "AI/Characters/AICharacter.h"
 #include "Actors/PointActors/NavNode.h"
 #include "DataAssets/NPCBehaviorTypes.h"
 #include "AbilitySystem/SplitstreamGameplayTags.h"
+#include "EngineUtils.h"
 
 EStateTreeRunStatus FSTTask_WalkAround::EnterState(
     FStateTreeExecutionContext& Context,
     const FStateTreeTransitionResult& Transition) const
 {
-    RunEQS(Context);
+    MoveToNextNode(Context);
     return EStateTreeRunStatus::Running;
 }
 
@@ -28,9 +29,7 @@ EStateTreeRunStatus FSTTask_WalkAround::Tick(
     if (!Controller) return EStateTreeRunStatus::Failed;
 
     if (Controller->GetMoveStatus() == EPathFollowingStatus::Idle)
-    {
         OnArrived(Context);
-    }
 
     return EStateTreeRunStatus::Running;
 }
@@ -41,35 +40,16 @@ void FSTTask_WalkAround::ExitState(
 {
     FInstanceDataType& Data = Context.GetInstanceData(*this);
 
-    if (Data.ActiveQueryID != INDEX_NONE)
-    {
-        if (UEnvQueryManager* EQSManager =
-            UEnvQueryManager::GetCurrent(Context.GetOwner()->GetWorld()))
-        {
-            EQSManager->AbortQuery(Data.ActiveQueryID);
-        }
-        Data.ActiveQueryID = INDEX_NONE;
-    }
-
     if (AAIController* Controller = Cast<AAIController>(Context.GetOwner()))
-    {
         Controller->StopMovement();
-    }
 
     Data.bIsMoving = false;
     Data.TargetNode = nullptr;
 }
 
-void FSTTask_WalkAround::RunEQS(FStateTreeExecutionContext& Context) const
+void FSTTask_WalkAround::MoveToNextNode(FStateTreeExecutionContext& Context) const
 {
     FInstanceDataType& Data = Context.GetInstanceData(*this);
-
-    // ✅ FIX: use task property instead of instance data
-    if (!EQSQuery)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("STTask_WalkAround: No EQS query assigned"));
-        return;
-    }
 
     AAIController* Controller = Cast<AAIController>(Context.GetOwner());
     if (!Controller) return;
@@ -77,52 +57,52 @@ void FSTTask_WalkAround::RunEQS(FStateTreeExecutionContext& Context) const
     AAICharacter* NPC = Cast<AAICharacter>(Controller->GetPawn());
     if (!NPC) return;
 
-    UEnvQueryManager* EQSManager = UEnvQueryManager::GetCurrent(NPC->GetWorld());
-    if (!EQSManager) return;
+    // Get allowed nav node tags from config
+    FGameplayTagContainer AllowedTags;
+    bool bFilterByTags = false;
 
-    // ✅ FIX: use EQSQuery from task
-    FEnvQueryRequest QueryRequest(EQSQuery, NPC);
+    if (NPC->BehaviorConfig)
+    {
+        if (const FWalkAroundBehavior* Params = NPC->BehaviorConfig->GetBehavior<FWalkAroundBehavior>())
+        {
+            AllowedTags = Params->NavNodeTags;
+            bFilterByTags = AllowedTags.Num() > 0;
+        }
+    }
 
-    Data.ActiveQueryID = QueryRequest.Execute(
-        EEnvQueryRunMode::SingleResult,
-        FQueryFinishedSignature::CreateLambda(
-            [this, &Context](TSharedPtr<FEnvQueryResult> Result)
-            {
-                FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-                InstanceData.ActiveQueryID = INDEX_NONE;
+    // Gather valid nodes
+    TArray<ANavNode*> ValidNodes;
+    for (TActorIterator<ANavNode> It(NPC->GetWorld()); It; ++It)
+    {
+        ANavNode* Node = *It;
+        if (!Node) continue;
+        if (Node->TimelineEra != NPC->TimelineEra) continue;
+        if (bFilterByTags && !Node->NodeTags.HasAny(AllowedTags)) continue;
+        if (Node == Data.TargetNode) continue;
+        ValidNodes.Add(Node);
+    }
 
-                if (!Result.IsValid() || Result->IsAborted())
-                    return;
+    if (ValidNodes.IsEmpty()) return;
 
-                AActor* ResultActor = Result->GetItemAsActor(0);
-                if (!ResultActor) return;
+    ANavNode* ChosenNode = ValidNodes[FMath::RandHelper(ValidNodes.Num())];
+    Data.TargetNode = ChosenNode;
 
-                InstanceData.TargetNode = ResultActor;
+    // Apply movement speed override if set
+    if (NPC->BehaviorConfig)
+    {
+        if (const FWalkAroundBehavior* Params = NPC->BehaviorConfig->GetBehavior<FWalkAroundBehavior>())
+        {
+            if (Params->MovementSpeed > 0.f)
+                NPC->GetCharacterMovement()->MaxWalkSpeed = Params->MovementSpeed;
+        }
+    }
 
-                AAIController* AIController = Cast<AAIController>(Context.GetOwner());
-                if (!AIController) return;
+    FAIMoveRequest MoveRequest;
+    MoveRequest.SetGoalLocation(ChosenNode->GetActorLocation());
+    MoveRequest.SetAcceptanceRadius(50.f);
+    Controller->MoveTo(MoveRequest);
 
-                AAICharacter* NPC = Cast<AAICharacter>(AIController->GetPawn());
-                if (!NPC) return;
-
-                if (const FWalkAroundBehavior* Params =
-                    NPC->GetBehaviorParams<FWalkAroundBehavior>())
-                {
-                    if (Params->MovementSpeed > 0.f)
-                    {
-                        NPC->GetCharacterMovement()->MaxWalkSpeed =
-                            Params->MovementSpeed;
-                    }
-                }
-
-                FAIMoveRequest MoveRequest;
-                MoveRequest.SetGoalLocation(ResultActor->GetActorLocation());
-                MoveRequest.SetAcceptanceRadius(50.f);
-
-                AIController->MoveTo(MoveRequest);
-
-                InstanceData.bIsMoving = true;
-            }));
+    Data.bIsMoving = true;
 }
 
 void FSTTask_WalkAround::OnArrived(FStateTreeExecutionContext& Context) const
@@ -133,34 +113,31 @@ void FSTTask_WalkAround::OnArrived(FStateTreeExecutionContext& Context) const
     ANavNode* Node = Cast<ANavNode>(Data.TargetNode);
     if (!Node)
     {
-        RunEQS(Context);
+        MoveToNextNode(Context);
         return;
     }
 
+    // Check if this is a StayPoint and roll for idle
     if (Node->NodeTags.HasTag(TAG_World_NavNode_StayPoint))
     {
-        AAIController* Controller = Cast<AAIController>(Context.GetOwner());
-        AAICharacter* NPC = Controller
-            ? Cast<AAICharacter>(Controller->GetPawn())
-            : nullptr;
-
         float StopChance = 0.5f;
 
-        if (NPC)
+        AAIController* Controller = Cast<AAIController>(Context.GetOwner());
+        AAICharacter* NPC = Controller ? Cast<AAICharacter>(Controller->GetPawn()) : nullptr;
+
+        if (NPC && NPC->BehaviorConfig)
         {
-            if (const FWalkAroundBehavior* Params =
-                NPC->GetBehaviorParams<FWalkAroundBehavior>())
-            {
+            if (const FWalkAroundBehavior* Params = NPC->BehaviorConfig->GetBehavior<FWalkAroundBehavior>())
                 StopChance = Params->StopChance;
-            }
         }
 
         if (FMath::FRandRange(0.f, 1.f) <= StopChance)
         {
+            // Hand off to Idle state, which will send Decision when done
             Context.SendEvent(TAG_AI_Behavior_StandIdle);
             return;
         }
     }
 
-    RunEQS(Context);
+    MoveToNextNode(Context);
 }

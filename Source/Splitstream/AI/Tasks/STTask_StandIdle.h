@@ -1,3 +1,4 @@
+// STTask_StandIdle.h
 #pragma once
 
 #include "CoreMinimal.h"
@@ -9,7 +10,6 @@ struct SPLITSTREAM_API FSTTask_StandIdleInstanceData
 {
     GENERATED_BODY()
 
-    // Countdown timer — set on enter, counts down in Tick
     UPROPERTY()
     float RemainingTime = 0.f;
 };

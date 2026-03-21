@@ -106,23 +106,6 @@ public:
     UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "AI|Behavior")
     UNPCBehaviorConfig* BehaviorConfig = nullptr;
 
-    // Cursor for Sequential decision mode
-    int32 BehaviorSequenceIndex = 0;
-
-    // Used by StateTree tasks to get typed params for a specific behavior
-    // e.g. GetBehaviorParams<FWalkAroundBehavior>()
-    template<typename T>
-    const T* GetBehaviorParams() const
-    {
-        if (!BehaviorConfig) return nullptr;
-        for (const FInstancedStruct& Entry : BehaviorConfig->AllowedBehaviors)
-        {
-            if (const T* Params = Entry.GetPtr<T>())
-                return Params;
-        }
-        return nullptr;
-    }
-
 protected:
     /** Called from AttributeSet health delegate, handles death state */
     virtual void OnHealthChanged(const struct FOnAttributeChangeData& Data);

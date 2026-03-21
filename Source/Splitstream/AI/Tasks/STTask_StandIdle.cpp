@@ -1,3 +1,4 @@
+// STTask_StandIdle.cpp
 #include "STTask_StandIdle.h"
 #include "StateTreeExecutionContext.h"
 #include "AIController.h"
@@ -11,27 +12,23 @@ EStateTreeRunStatus FSTTask_StandIdle::EnterState(
 {
     FInstanceDataType& Data = Context.GetInstanceData(*this);
 
+    UObject* Owner = Context.GetOwner();
+
     // Stop any movement
-    UObject* OwnerObject = Context.GetOwner();
-    if (AAIController* Controller = Cast<AAIController>(OwnerObject))
-    {
+    if (AAIController* Controller = Cast<AAIController>(Owner))
         Controller->StopMovement();
-    }
 
     // Get duration from config
     float MinDuration = 2.f;
     float MaxDuration = 6.f;
 
     AAICharacter* NPC = nullptr;
-    if (AAIController* Controller = Cast<AAIController>(OwnerObject))
-    {
+    if (AAIController* Controller = Cast<AAIController>(Owner))
         NPC = Cast<AAICharacter>(Controller->GetPawn());
-    }
 
-    if (NPC)
+    if (NPC && NPC->BehaviorConfig)
     {
-        if (const FStandIdleBehavior* Params =
-            NPC->GetBehaviorParams<FStandIdleBehavior>())
+        if (const FStandIdleBehavior* Params = NPC->BehaviorConfig->GetBehavior<FStandIdleBehavior>())
         {
             MinDuration = Params->MinDuration;
             MaxDuration = Params->MaxDuration;
@@ -39,7 +36,6 @@ EStateTreeRunStatus FSTTask_StandIdle::EnterState(
     }
 
     Data.RemainingTime = FMath::FRandRange(MinDuration, MaxDuration);
-
     return EStateTreeRunStatus::Running;
 }
 
@@ -53,7 +49,7 @@ EStateTreeRunStatus FSTTask_StandIdle::Tick(
 
     if (Data.RemainingTime <= 0.f)
     {
-        // Idle complete — send decision event to pick next behavior
+        // Send Decision event so BehaviorDecision picks the next behavior
         Context.SendEvent(TAG_AI_Behavior_Decision);
         return EStateTreeRunStatus::Succeeded;
     }
