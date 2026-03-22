@@ -104,6 +104,9 @@ protected:
     /** Called from AttributeSet health delegate, handles death state */
     virtual void OnHealthChanged(const struct FOnAttributeChangeData& Data);
 
+    /** Pipes WalkSpeed GAS attribute into CharacterMovement->MaxWalkSpeed */
+    virtual void OnWalkSpeedChanged(const struct FOnAttributeChangeData& Data);
+
     UFUNCTION()
     virtual void OnSearchComplete();
     virtual void TryPickup(AActor* Interactor);

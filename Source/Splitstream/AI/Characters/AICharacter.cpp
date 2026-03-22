@@ -67,6 +67,9 @@ void AAICharacter::BeginPlay()
     {
         AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute())
             .AddUObject(this, &AAICharacter::OnHealthChanged);
+
+        AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetWalkSpeedAttribute())
+            .AddUObject(this, &AAICharacter::OnWalkSpeedChanged);
     }
 
     if (AIPerceptionComponent)
@@ -131,6 +134,12 @@ void AAICharacter::TryPickup(AActor* Interactor)
         OnItemPickedUp.Broadcast(Interactor, ItemData);
         Destroy();
     }
+}
+
+void AAICharacter::OnWalkSpeedChanged(const FOnAttributeChangeData& Data)
+{
+    if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+        MoveComp->MaxWalkSpeed = Data.NewValue;
 }
 
 void AAICharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
