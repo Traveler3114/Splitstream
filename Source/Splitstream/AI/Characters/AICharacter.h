@@ -28,7 +28,7 @@ class USearchComponent;
  * health attribute tracking, and item drop functionality.
  * Concrete subclasses implement specific AI behaviors via StateTree.
  */
-UCLASS(Abstract)
+UCLASS()
 class SPLITSTREAM_API AAICharacter : public ACharacter, public IAbilitySystemInterface, public IInteractable, public IDetectable
 {
     GENERATED_BODY()

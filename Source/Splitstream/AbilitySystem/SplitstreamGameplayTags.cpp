@@ -48,3 +48,8 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_World_NavNode_Ground, "World.NavNode.Ground");
 UE_DEFINE_GAMEPLAY_TAG(TAG_World_NavNode_Sky, "World.NavNode.Sky");
 UE_DEFINE_GAMEPLAY_TAG(TAG_World_NavNode_StayPoint, "World.NavNode.StayPoint");
 UE_DEFINE_GAMEPLAY_TAG(TAG_World_NavNode_PassThrough, "World.NavNode.PassThrough");
+
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_World_Floor_Basement, "World.Floor.Basement");
+UE_DEFINE_GAMEPLAY_TAG(TAG_World_Floor_Floor1, "World.Floor.Floor1");
+UE_DEFINE_GAMEPLAY_TAG(TAG_World_Floor_Floor2, "World.Floor.Floor2");
