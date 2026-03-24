@@ -7,7 +7,7 @@
 #include "AbilitySystemInterface.h"
 #include "DataAssets/ItemBase.h"
 #include "TimelineEra.h"
-#include "Actors/SearchableActor.h"
+#include "Actors/EnvironmentalObject.h"
 #include "CivilianCharacter.generated.h"
 
 class ADeskActor;
@@ -31,12 +31,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Civilian")
     ADeskActor* AssignedDesk = nullptr;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
-    TArray<EFloorLevel> AllowedFloors;
-
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Civilian")
-    ASearchableActor* CurrentSearchable = nullptr;
+    AEnvironmentalObject* CurrentSearchable = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Civilian")
-	ASearchableActor* LastSearchable = nullptr;
+	AEnvironmentalObject* LastSearchable = nullptr;
 };

@@ -71,7 +71,7 @@ public:
     TSubclassOf<class ANewspaperActor> NewspaperBPClass;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Items")
-    TArray<TSubclassOf<class ASearchableActor>> SearchableItemClasses;
+    TArray<TSubclassOf<class AEnvironmentalObject>> SearchableItemClasses;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Disabling Device")
 	TSubclassOf<class ADisablingDeviceActor> DisablingDeviceBPClass;

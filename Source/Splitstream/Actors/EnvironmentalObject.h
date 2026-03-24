@@ -6,34 +6,53 @@
 #include "GameplayTagContainer.h"
 #include "GameplayTagAssetInterface.h"
 #include "TimelineEra.h"
+#include "Interfaces/IInteractable.h"
 #include "Actors/PointActors/EnvironmentalSlot.h"
 #include "EnvironmentalObject.generated.h"
 
 class UAnimMontage;
+class USearchComponent;
+class UItemBase;
+class ACivilianCharacter;
 
 /**
- * Base class for all interactable environment objects — chairs, ATMs,
- * water machines, sofas etc.
+ * Unified base class for all interactable environment objects.
  *
- * Place slots (AEnvironmentalSlot) in the world and assign them to
- * the Slots array. The NPC interact task queries this object for a
- * free slot, walks to it, occupies it, and releases it when done.
+ * Covers both:
+ *   - NPC interaction (walk to slot, occupy, idle, release)
+ *   - Player search (SearchComponent, optional item reward)
  *
- * Subclass in Blueprint to set the mesh, tags, slots, and montage
- * per object type.
+ * Per object in the level:
+ *   - Add slots for NPC interaction (water machine, chair, etc.)
+ *   - Enable bSearchable + bGivesItem + set RewardItem for searchable objects
+ *   - Leave slots empty for pure searchable objects (no NPC interaction)
+ *   - Leave bSearchable false for pure NPC interactables
  */
 UCLASS()
-class SPLITSTREAM_API AEnvironmentalObject : public AActor, public IGameplayTagAssetInterface
+class SPLITSTREAM_API AEnvironmentalObject : public AActor, public IGameplayTagAssetInterface, public IInteractable
 {
     GENERATED_BODY()
 
 public:
     AEnvironmentalObject();
 
+    virtual void BeginPlay() override;
+
+    // ── IGameplayTagAssetInterface ────────────────────────────────────────────
+
     virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override
     {
         TagContainer.AppendTags(ObjectTags);
     }
+
+    // ── IInteractable ─────────────────────────────────────────────────────────
+
+    virtual void Interact_Implementation(AActor* Interactor) override;
+    virtual void CancelInteract_Implementation(AActor* Interactor) override;
+    virtual void SetHighlighted_Implementation(bool bHighlight) override;
+    virtual bool IsProgressiveInteract_Implementation() override { return true; }
+
+    // ── General ───────────────────────────────────────────────────────────────
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
     ETimelineEra TimelineEra = ETimelineEra::Past;
@@ -46,10 +65,11 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     FGameplayTagContainer ObjectTags;
 
-    // ── Slots ────────────────────────────────────────────────────────────────
+    // ── NPC Interaction ───────────────────────────────────────────────────────
 
     // World-placed AEnvironmentalSlot actors belonging to this object.
     // Assign in the level — one per seat/position.
+    // Leave empty if this object is not used for NPC interaction.
     UPROPERTY(EditInstanceOnly, BlueprintReadOnly)
     TArray<TObjectPtr<AEnvironmentalSlot>> Slots;
 
@@ -61,14 +81,33 @@ public:
     UFUNCTION(BlueprintPure)
     bool HasAvailableSlot() const { return GetAvailableSlot() != nullptr; }
 
-    // ── Animation (stubbed — not used yet) ───────────────────────────────────
-
-    // Montage the NPC plays when interacting with this object
+    // Montage the NPC plays when interacting with this object (stubbed — not used yet)
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     TObjectPtr<UAnimMontage> InteractionMontage;
+
+    // ── Player Search ─────────────────────────────────────────────────────────
+    // If true, gives RewardItem to the player on search complete
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Searchable",
+        meta = (EditCondition = "bSearchable"))
+    bool bGivesItem = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Searchable",
+        meta = (EditCondition = "bSearchable && bGivesItem"))
+    TObjectPtr<UItemBase> RewardItem = nullptr;
+
+    // Set by NPC Interact_Implementation when a civilian unlocks this for player searching
+    UPROPERTY()
+    TObjectPtr<ACivilianCharacter> PendingOwnerCivilian = nullptr;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Searchable")
+    TObjectPtr<USearchComponent> SearchComponent = nullptr;
 
     // ── Mesh ─────────────────────────────────────────────────────────────────
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     TObjectPtr<UStaticMeshComponent> Mesh;
+
+protected:
+    UFUNCTION()
+    virtual void OnSearchComplete();
 };
