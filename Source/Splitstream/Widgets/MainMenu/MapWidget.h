@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "MapSelectionWidget.h"
+#include "DataAssets/WidgetData/MapListData.h"
 #include "MapWidget.generated.h"
 
 class UTextBlock;
@@ -29,17 +29,13 @@ public:
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UButton> SelectButton;
 
-    /** Optional thumbnail image on the card itself */
     UPROPERTY(meta = (BindWidgetOptional))
     TObjectPtr<UImage> MapThumbnailImage;
 
     FLevelData LevelData;
 
-    /** Fired on click — travels to lobby */
     FOnMapSelect OnSelectClicked;
-
-    /** Fired on hover — updates the detail panel */
-    FOnMapHover OnMapHovered;
+    FOnMapHover  OnMapHovered;
 
     void Setup(const FLevelData& InData);
 

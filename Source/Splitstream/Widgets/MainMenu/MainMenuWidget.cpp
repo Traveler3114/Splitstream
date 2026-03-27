@@ -16,7 +16,7 @@ void UMainMenuWidget::NativeConstruct()
     Super::NativeConstruct();
     BuildTabBar();
 
-    if (TabRegistry.Num() > 0)
+    if (TabsData && TabsData->Tabs.Num() > 0)
     {
         SwitchToTab(0);
     }
@@ -24,7 +24,7 @@ void UMainMenuWidget::NativeConstruct()
 
 void UMainMenuWidget::BuildTabBar()
 {
-    if (!TabBar || TabRegistry.IsEmpty() || !TabButtonClass)
+    if (!TabBar || !TabsData || TabsData->Tabs.IsEmpty())
     {
         return;
     }
@@ -32,13 +32,11 @@ void UMainMenuWidget::BuildTabBar()
     TabBar->ClearChildren();
     TabButtons.Reset();
 
-    for (int32 i = 0; i < TabRegistry.Num(); ++i)
+    for (int32 i = 0; i < TabsData->Tabs.Num(); ++i)
     {
-        const FTabEntry& Entry = TabRegistry[i];
+        const FMenuTabEntry& Entry = TabsData->Tabs[i];
 
-        // CreateWidget works in PreConstruct for UUserWidget children —
-        // unlike content widgets, UUserWidgets have their own construction flow.
-        UTabButton* Btn = CreateWidget<UTabButton>(this, TabButtonClass);
+        UTabButton* Btn = CreateWidget<UTabButton>(this, TabsData->TabButtonClass);
         if (!Btn)
         {
             continue;
@@ -69,7 +67,7 @@ void UMainMenuWidget::OnTabButtonClicked(int32 TabIndex)
 
 void UMainMenuWidget::SwitchToTab(int32 TabIndex)
 {
-    if (!TabRegistry.IsValidIndex(TabIndex) || !ContentBox)
+    if (!TabsData || !TabsData->Tabs.IsValidIndex(TabIndex) || !ContentBox)
     {
         return;
     }
@@ -81,7 +79,7 @@ void UMainMenuWidget::SwitchToTab(int32 TabIndex)
 
     ContentBox->ClearChildren();
 
-    if (TSubclassOf<UUserWidget> WidgetClass = TabRegistry[TabIndex].TabWidgetClass)
+    if (TSubclassOf<UUserWidget> WidgetClass = TabsData->Tabs[TabIndex].TabWidgetClass)
     {
         if (APlayerController* PC = GetOwningPlayer())
         {

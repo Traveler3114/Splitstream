@@ -27,18 +27,15 @@ void USettingsWidget::NativeConstruct()
         BackButton->OnClicked.AddDynamic(this, &USettingsWidget::OnBackClicked);
     }
 
-    if (SettingsTabRegistry.Num() > 0)
+    if (TabsData && TabsData->Tabs.Num() > 0)
     {
         SwitchToTab(0);
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  BuildTabBar  —  identical pattern to UMainMenuWidget
-// ─────────────────────────────────────────────────────────────────────────────
 void USettingsWidget::BuildTabBar()
 {
-    if (!TabBar || SettingsTabRegistry.IsEmpty() || !TabButtonClass)
+    if (!TabBar || !TabsData || TabsData->Tabs.IsEmpty())
     {
         return;
     }
@@ -46,11 +43,11 @@ void USettingsWidget::BuildTabBar()
     TabBar->ClearChildren();
     TabButtons.Reset();
 
-    for (int32 i = 0; i < SettingsTabRegistry.Num(); ++i)
+    for (int32 i = 0; i < TabsData->Tabs.Num(); ++i)
     {
-        const FSettingsTabEntry& Entry = SettingsTabRegistry[i];
+        const FSettingsTabEntry& Entry = TabsData->Tabs[i];
 
-        UTabButton* Btn = CreateWidget<UTabButton>(this, TabButtonClass);
+        UTabButton* Btn = CreateWidget<UTabButton>(this, TabsData->TabButtonClass);
         if (!Btn)
         {
             continue;
@@ -79,12 +76,9 @@ void USettingsWidget::OnTabButtonClicked(int32 TabIndex)
     SwitchToTab(TabIndex);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  SwitchToTab
-// ─────────────────────────────────────────────────────────────────────────────
 void USettingsWidget::SwitchToTab(int32 TabIndex)
 {
-    if (!SettingsTabRegistry.IsValidIndex(TabIndex) || !ContentBox)
+    if (!TabsData || !TabsData->Tabs.IsValidIndex(TabIndex) || !ContentBox)
     {
         return;
     }
@@ -97,7 +91,7 @@ void USettingsWidget::SwitchToTab(int32 TabIndex)
     ContentBox->ClearChildren();
     ActiveContentWidget = nullptr;
 
-    if (TSubclassOf<UUserWidget> WidgetClass = SettingsTabRegistry[TabIndex].TabWidgetClass)
+    if (TSubclassOf<UUserWidget> WidgetClass = TabsData->Tabs[TabIndex].TabWidgetClass)
     {
         if (APlayerController* PC = GetOwningPlayer())
         {
@@ -126,11 +120,6 @@ void USettingsWidget::SwitchToTab(int32 TabIndex)
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  OnApplyClicked
-//  Calls ApplySettings on the active tab via the interface.
-//  No hardcoded casts — works for any tab widget that implements the interface.
-// ─────────────────────────────────────────────────────────────────────────────
 void USettingsWidget::OnApplyClicked()
 {
     if (!ActiveContentWidget)
