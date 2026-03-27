@@ -27,11 +27,6 @@ void USettingsWidget::NativeConstruct()
         ApplyButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnApplyClicked);
         ApplyButton->OnClicked.AddDynamic(this, &USettingsWidget::OnApplyClicked);
     }
-    if (BackButton)
-    {
-        BackButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnBackClicked);
-        BackButton->OnClicked.AddDynamic(this, &USettingsWidget::OnBackClicked);
-    }
 
     // Start on the Graphics tab by default
     if (SettingsSwitcher)

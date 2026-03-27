@@ -48,9 +48,6 @@ protected:
     UPROPERTY(meta = (BindWidget))
     UButton* ApplyButton;
 
-    UPROPERTY(meta = (BindWidget))
-    UButton* BackButton;
-
     // --- Tab Switch Handlers ---
     UFUNCTION()
     void OnGraphicsTabClicked();
