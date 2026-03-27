@@ -44,6 +44,9 @@ public:
     UPROPERTY(meta = (BindWidget))
     UHorizontalBox* MapSelectionBox;
 
+    UPROPERTY(meta = (BindWidget))
+    UHorizontalBox* MapDetailsBox;
+
     // The Array of levels to display, settable in BP or code
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level Data")
     TArray<FLevelData> LevelsData;

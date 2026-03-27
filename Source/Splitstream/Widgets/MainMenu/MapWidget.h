@@ -24,14 +24,9 @@ class SPLITSTREAM_API UMapWidget : public UUserWidget
 {
     GENERATED_BODY()
 public:
-    UPROPERTY(meta = (BindWidget))
-    UVerticalBox* MapBox;
 
     UPROPERTY(meta = (BindWidget))
     UTextBlock* MapNameText;
-
-    UPROPERTY(meta = (BindWidget))
-    UImage* MapThumbnailImage;
 
     UPROPERTY(meta = (BindWidget))
     UButton* SelectButton;

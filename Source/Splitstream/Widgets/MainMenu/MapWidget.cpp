@@ -20,8 +20,8 @@ void UMapWidget::Setup(const FLevelData& InData)
     LevelData = InData;
     if (MapNameText)
         MapNameText->SetText(FText::FromString(LevelData.LevelName));
-    if (MapThumbnailImage && LevelData.Thumbnail)
-        MapThumbnailImage->SetBrushFromTexture(LevelData.Thumbnail);
+    //if (MapThumbnailImage && LevelData.Thumbnail)
+    //    MapThumbnailImage->SetBrushFromTexture(LevelData.Thumbnail);
 }
 
 void UMapWidget::OnSelect()
