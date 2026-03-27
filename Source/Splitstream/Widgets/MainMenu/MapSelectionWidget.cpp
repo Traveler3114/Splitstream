@@ -4,6 +4,7 @@
 #include "Components/HorizontalBox.h"
 #include "Components/HorizontalBoxSlot.h"
 #include "Components/TextBlock.h"
+#include "DefaultGameInstance.h"
 #include "Components/Image.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -80,5 +81,11 @@ void UMapSelectionWidget::MapChosen(const FString& LevelName, const TSoftObjectP
 {
     // Broadcast so anything else listening (e.g. game mode) can react
     OnMapSelected.Broadcast(LevelName, LevelAsset, LobbyLevelAsset);
-
+    if (UGameInstance* GI = UGameplayStatics::GetGameInstance(this))
+    {
+        if (UDefaultGameInstance* DGI = Cast<UDefaultGameInstance>(GI))
+        {
+            DGI->CreateSession(LevelName, LevelAsset, LobbyLevelAsset);
+        }
+    }
 }
