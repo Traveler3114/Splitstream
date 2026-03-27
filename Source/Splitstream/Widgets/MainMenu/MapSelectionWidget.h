@@ -1,15 +1,15 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "MapSelectionWidget.generated.h"
+#include "Engine/Texture2D.h"          // ← ADD: needed for UTexture2D* in the struct
+#include "MapSelectionWidget.generated.h"  // ← must be LAST include
 
 class UHorizontalBox;
 class UMapWidget;
+class UTextBlock;
+class UImage;
 
-// Data struct for Levels
 USTRUCT(BlueprintType)
 struct FLevelData
 {
@@ -19,7 +19,13 @@ struct FLevelData
     FString LevelName;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level Data")
-    UTexture2D* Thumbnail;
+    FString HeistInfo;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level Data")
+    FString Possibility;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level Data")
+    TObjectPtr<UTexture2D> Thumbnail = nullptr;  // ← use TObjectPtr instead of raw pointer
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level Data")
     TSoftObjectPtr<UWorld> LevelAsset;
@@ -28,7 +34,6 @@ struct FLevelData
     TSoftObjectPtr<UWorld> LobbyLevelAsset;
 };
 
-// Declares the delegate type for map selection events
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnMapSelectedSignature,
     const FString&, LevelName,
     const TSoftObjectPtr<UWorld>&, LevelAsset,
@@ -40,27 +45,35 @@ class SPLITSTREAM_API UMapSelectionWidget : public UUserWidget
     GENERATED_BODY()
 
 public:
-    // This should be bound to a HorizontalBox in your BP
     UPROPERTY(meta = (BindWidget))
-    UHorizontalBox* MapSelectionBox;
+    TObjectPtr<UHorizontalBox> MapSelectionBox;
 
     UPROPERTY(meta = (BindWidget))
-    UHorizontalBox* MapDetailsBox;
+    TObjectPtr<UHorizontalBox> MapDetailsBox;
 
-    // The Array of levels to display, settable in BP or code
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<UTextBlock> DetailMapName;
+
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<UTextBlock> DetailHeistInfo;
+
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<UTextBlock> DetailPossibility;
+
+    UPROPERTY(meta = (BindWidgetOptional))
+    TObjectPtr<UImage> DetailThumbnail;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level Data")
     TArray<FLevelData> LevelsData;
 
-    // The widget class for each item (assign in BP)
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Levels")
     TSubclassOf<UMapWidget> MapWidgetClass;
 
-    // Broadcast when a map is selected
     UPROPERTY(BlueprintAssignable, Category = "Map Selection")
     FOnMapSelectedSignature OnMapSelected;
 
     virtual void NativeConstruct() override;
     void PopulateLevelList();
-    // Called by child widgets to notify selection
+    void ShowMapDetails(const FLevelData& Data);
     void MapChosen(const FString& LevelName, const TSoftObjectPtr<UWorld>& LevelAsset, const TSoftObjectPtr<UWorld>& LobbyLevelAsset);
 };

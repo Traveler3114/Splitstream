@@ -1,14 +1,22 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "MapSelectionWidget.h"
+
+#include "MapWidget.h"
 #include "Components/HorizontalBox.h"
 #include "Components/HorizontalBoxSlot.h"
-#include "MapWidget.h"
+#include "Components/TextBlock.h"
+#include "Components/Image.h"
+#include "Kismet/GameplayStatics.h"
 
 void UMapSelectionWidget::NativeConstruct()
 {
     Super::NativeConstruct();
     PopulateLevelList();
+
+    // Hide the detail panel until something is hovered
+    if (MapDetailsBox)
+    {
+        MapDetailsBox->SetVisibility(ESlateVisibility::Hidden);
+    }
 }
 
 void UMapSelectionWidget::PopulateLevelList()
@@ -17,20 +25,60 @@ void UMapSelectionWidget::PopulateLevelList()
 
     MapSelectionBox->ClearChildren();
 
-    for (const FLevelData& LevelData : LevelsData)
+    for (const FLevelData& Data : LevelsData)
     {
-        UMapWidget* MapItem = CreateWidget<UMapWidget>(GetWorld(), MapWidgetClass);
-        if (MapItem)
-        {
-            MapItem->Setup(LevelData);
-            MapItem->OnSelectClicked.BindUObject(this, &UMapSelectionWidget::MapChosen);
+        UMapWidget* MapItem = CreateWidget<UMapWidget>(this, MapWidgetClass);
+        if (!MapItem) continue;
 
-            MapSelectionBox->AddChild(MapItem);
-        }
+        MapItem->Setup(Data);
+
+        // Hover → update detail panel
+        MapItem->OnMapHovered.BindUObject(this, &UMapSelectionWidget::ShowMapDetails);
+
+        // Click → travel to lobby
+        MapItem->OnSelectClicked.BindUObject(this, &UMapSelectionWidget::MapChosen);
+
+        MapSelectionBox->AddChild(MapItem);
     }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  ShowMapDetails  —  called by the hovered map card
+// ─────────────────────────────────────────────────────────────────────────────
+void UMapSelectionWidget::ShowMapDetails(const FLevelData& Data)
+{
+    if (MapDetailsBox)
+    {
+        MapDetailsBox->SetVisibility(ESlateVisibility::Visible);
+    }
+
+    if (DetailMapName)
+    {
+        DetailMapName->SetText(FText::FromString(Data.LevelName));
+    }
+
+    if (DetailHeistInfo)
+    {
+        DetailHeistInfo->SetText(FText::FromString(Data.HeistInfo));
+    }
+
+    if (DetailPossibility)
+    {
+        DetailPossibility->SetText(FText::FromString(Data.Possibility));
+    }
+
+    if (DetailThumbnail && Data.Thumbnail)
+    {
+        DetailThumbnail->SetBrushFromTexture(Data.Thumbnail.Get());
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  MapChosen  —  travel to the lobby level
+// ─────────────────────────────────────────────────────────────────────────────
 void UMapSelectionWidget::MapChosen(const FString& LevelName, const TSoftObjectPtr<UWorld>& LevelAsset, const TSoftObjectPtr<UWorld>& LobbyLevelAsset)
 {
+    // Broadcast so anything else listening (e.g. game mode) can react
     OnMapSelected.Broadcast(LevelName, LevelAsset, LobbyLevelAsset);
+
 }
