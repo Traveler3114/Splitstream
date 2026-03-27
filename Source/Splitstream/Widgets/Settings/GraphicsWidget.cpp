@@ -9,7 +9,6 @@ void UGraphicsWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    // --- Option Data ---
     ResolutionOptions = { FIntPoint(1280,720), FIntPoint(1920,1080), FIntPoint(2560,1440), FIntPoint(3840,2160) };
     ResolutionLabels = { TEXT("1280x720"), TEXT("1920x1080"), TEXT("2560x1440"), TEXT("3840x2160") };
     ResolutionIndex = 1;
@@ -37,7 +36,6 @@ void UGraphicsWidget::NativeConstruct()
     bFPSUnlimited = true;
     bVSyncEnabled = false;
 
-    // --- Load Settings from GameUserSettings ---
     UGameUserSettings* Settings = GEngine->GetGameUserSettings();
     if (Settings)
     {
@@ -48,29 +46,19 @@ void UGraphicsWidget::NativeConstruct()
             if (ResolutionOptions[i] == CurrentRes) { ResolutionIndex = i; break; }
 
         WindowModeIndex = WindowModeOptions.IndexOfByKey(Settings->GetFullscreenMode());
-
         RenderScale = FMath::Clamp(Settings->GetResolutionScaleNormalized(), RenderScaleMin, RenderScaleMax);
         if (RenderScale <= 0.0f) RenderScale = RenderScaleMax;
 
-        ShadowsIndex = FMath::Clamp(Settings->GetShadowQuality(), 0, ShadowsOptions.Num() - 1);
-        TexturesIndex = FMath::Clamp(Settings->GetTextureQuality(), 0, TexturesOptions.Num() - 1);
-        AAIndex = FMath::Clamp(Settings->GetAntiAliasingQuality(), 0, AAOptions.Num() - 1);
-        PPIndex = FMath::Clamp(Settings->GetPostProcessingQuality(), 0, PPOptions.Num() - 1);
-
+        ShadowsIndex  = FMath::Clamp(Settings->GetShadowQuality(),         0, ShadowsOptions.Num()  - 1);
+        TexturesIndex = FMath::Clamp(Settings->GetTextureQuality(),         0, TexturesOptions.Num() - 1);
+        AAIndex       = FMath::Clamp(Settings->GetAntiAliasingQuality(),    0, AAOptions.Num()       - 1);
+        PPIndex       = FMath::Clamp(Settings->GetPostProcessingQuality(),  0, PPOptions.Num()       - 1);
         bVSyncEnabled = Settings->IsVSyncEnabled();
 
         IConsoleVariable* MaxFPSVar = IConsoleManager::Get().FindConsoleVariable(TEXT("t.MaxFPS"));
         float CurrentMaxFPS = MaxFPSVar ? MaxFPSVar->GetFloat() : 0.0f;
-        if (CurrentMaxFPS <= 0.0f)
-        {
-            bFPSUnlimited = true;
-            FPSLimit = FPSMax;
-        }
-        else
-        {
-            bFPSUnlimited = false;
-            FPSLimit = FMath::Clamp(CurrentMaxFPS, FPSMin, FPSMax);
-        }
+        if (CurrentMaxFPS <= 0.0f) { bFPSUnlimited = true;  FPSLimit = FPSMax; }
+        else                       { bFPSUnlimited = false; FPSLimit = FMath::Clamp(CurrentMaxFPS, FPSMin, FPSMax); }
     }
 
     SetupWidgets();
@@ -78,11 +66,10 @@ void UGraphicsWidget::NativeConstruct()
 
 void UGraphicsWidget::SetupWidgets()
 {
-    // For each delegate add, remove it first!
     if (ResolutionWidget)
     {
         ResolutionWidget->Setup(FText::FromString(TEXT("Resolution")), ResolutionLabels, ResolutionIndex);
-        ResolutionWidget->OnEnumChanged.RemoveDynamic(this, &UGraphicsWidget::OnResolutionChanged); // <-- ADD THIS!
+        ResolutionWidget->OnEnumChanged.RemoveDynamic(this, &UGraphicsWidget::OnResolutionChanged);
         ResolutionWidget->OnEnumChanged.AddDynamic(this, &UGraphicsWidget::OnResolutionChanged);
     }
     if (WindowModeWidget)
@@ -135,14 +122,15 @@ void UGraphicsWidget::SetupWidgets()
     }
 }
 
-void UGraphicsWidget::OnResolutionChanged(int32 Index) { ResolutionIndex = Index; }
-void UGraphicsWidget::OnWindowModeChanged(int32 Index) { WindowModeIndex = Index; }
-void UGraphicsWidget::OnRenderScaleChanged(float Value) { RenderScale = Value; }
-void UGraphicsWidget::OnShadowsChanged(int32 Index) { ShadowsIndex = Index; }
-void UGraphicsWidget::OnTexturesChanged(int32 Index) { TexturesIndex = Index; }
-void UGraphicsWidget::OnAAChanged(int32 Index) { AAIndex = Index; }
-void UGraphicsWidget::OnPPChanged(int32 Index) { PPIndex = Index; }
-void UGraphicsWidget::OnVSyncChanged(bool bChecked) { bVSyncEnabled = bChecked; }
+void UGraphicsWidget::OnResolutionChanged(int32 Index)  { ResolutionIndex  = Index; }
+void UGraphicsWidget::OnWindowModeChanged(int32 Index)  { WindowModeIndex  = Index; }
+void UGraphicsWidget::OnRenderScaleChanged(float Value) { RenderScale      = Value; }
+void UGraphicsWidget::OnShadowsChanged(int32 Index)     { ShadowsIndex     = Index; }
+void UGraphicsWidget::OnTexturesChanged(int32 Index)    { TexturesIndex    = Index; }
+void UGraphicsWidget::OnAAChanged(int32 Index)          { AAIndex          = Index; }
+void UGraphicsWidget::OnPPChanged(int32 Index)          { PPIndex          = Index; }
+void UGraphicsWidget::OnVSyncChanged(bool bChecked)     { bVSyncEnabled    = bChecked; }
+
 void UGraphicsWidget::OnFPSLimitChanged(float Value)
 {
     if (FMath::Abs(Value - FPSMax) < KINDA_SMALL_NUMBER)
@@ -157,10 +145,14 @@ void UGraphicsWidget::OnFPSLimitChanged(float Value)
     }
 }
 
-void UGraphicsWidget::ApplySettings()
+// ─────────────────────────────────────────────────────────────────────────────
+//  ISettingsTabInterface implementation
+// ─────────────────────────────────────────────────────────────────────────────
+void UGraphicsWidget::ApplySettings_Implementation()
 {
     UGameUserSettings* Settings = GEngine->GetGameUserSettings();
     if (!Settings) return;
+
     Settings->SetScreenResolution(ResolutionOptions[ResolutionIndex]);
     Settings->SetFullscreenMode(WindowModeOptions[WindowModeIndex]);
     Settings->SetResolutionScaleNormalized(RenderScale);

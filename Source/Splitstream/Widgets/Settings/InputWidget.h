@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Interfaces/ISettingsTabInterface.h"
 #include "InputWidget.generated.h"
 
 class USliderWidget;
@@ -24,18 +25,21 @@ struct FKeybindDefinition
 };
 
 UCLASS()
-class SPLITSTREAM_API UInputWidget : public UUserWidget
+class SPLITSTREAM_API UInputWidget : public UUserWidget, public ISettingsTabInterface
 {
     GENERATED_BODY()
 
 public:
     virtual void NativeConstruct() override;
     virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
-    void ApplySettings();
+
+    // ISettingsTabInterface
+    virtual void ApplySettings_Implementation() override;
 
 protected:
     UPROPERTY(meta = (BindWidget))
-    USliderWidget* MouseSensitivityWidget; // place in UMG
+    USliderWidget* MouseSensitivityWidget;
+
     UPROPERTY(meta = (BindWidget))
     UVerticalBox* KeybindsList;
 
@@ -55,13 +59,11 @@ protected:
 
     void SetupWidgets();
     void BuildKeybindList();
-    UFUNCTION()
-    void OnMouseSensitivityChanged(float Value);
+
+    UFUNCTION() void OnMouseSensitivityChanged(float Value);
+    UFUNCTION() void HandleRowClicked(UKeybindWidget* Source);
+
     void UpdateKeybindDisplay(UInputAction* InputAction);
-
-    UFUNCTION()
-    void HandleRowClicked(UKeybindWidget* Source);
-
     void SaveUserSettingsToGameInstance();
     void LoadUserSettingsFromGameInstance();
     void UpdateTexts();
