@@ -54,6 +54,9 @@ public:
     UPROPERTY(meta = (BindWidgetOptional))
     TObjectPtr<UImage> DetailThumbnail;
 
+    UPROPERTY(meta = (BindWidgetOptional))
+    TObjectPtr<UTextBlock> OptionalText;
+
     // ── Events ────────────────────────────────────────────────────────────────
 
     UPROPERTY(BlueprintAssignable, Category = "Map Selection")

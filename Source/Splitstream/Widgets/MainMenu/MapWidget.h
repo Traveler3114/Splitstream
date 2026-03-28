@@ -29,9 +29,6 @@ public:
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UButton> SelectButton;
 
-    UPROPERTY(meta = (BindWidgetOptional))
-    TObjectPtr<UImage> MapThumbnailImage;
-
     FLevelData LevelData;
 
     FOnMapSelect OnSelectClicked;

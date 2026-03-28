@@ -69,6 +69,13 @@ void UMapSelectionWidget::ShowMapDetails(const FLevelData& Data)
     if (DetailThumbnail && Data.Thumbnail)
     {
         DetailThumbnail->SetBrushFromTexture(Data.Thumbnail.Get());
+        OptionalText->SetVisibility(ESlateVisibility::Hidden);
+    }
+    else if (DetailThumbnail && !Data.Thumbnail)
+    {
+        OptionalText->SetVisibility(ESlateVisibility::Visible);
+        DetailThumbnail->SetColorAndOpacity(FLinearColor::Gray);
+        DetailThumbnail->SetBrushFromTexture(nullptr);
     }
 }
 

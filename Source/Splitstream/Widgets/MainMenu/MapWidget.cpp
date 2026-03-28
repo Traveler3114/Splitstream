@@ -23,9 +23,23 @@ void UMapWidget::Setup(const FLevelData& InData)
         MapNameText->SetText(FText::FromString(LevelData.LevelName));
     }
 
-    if (MapThumbnailImage && LevelData.Thumbnail)
+    if (SelectButton && LevelData.Thumbnail)
     {
-        MapThumbnailImage->SetBrushFromTexture(LevelData.Thumbnail.Get());  // ← .Get()
+        FSlateBrush Brush;
+        Brush.SetResourceObject(LevelData.Thumbnail.Get());
+        Brush.ImageSize = FVector2D(LevelData.Thumbnail->GetSizeX(), LevelData.Thumbnail->GetSizeY());
+        Brush.DrawAs = ESlateBrushDrawType::Image;
+
+        FSlateBrush NormalBrush = Brush;
+        NormalBrush.TintColor = FSlateColor(FLinearColor(1.f, 1.f, 1.f, 0.5f));
+
+        FSlateBrush HoveredBrush = Brush;
+        HoveredBrush.TintColor = FSlateColor(FLinearColor(1.f, 1.f, 1.f, 1.f));
+
+        FButtonStyle Style = SelectButton->GetStyle();
+        Style.Normal = NormalBrush;
+        Style.Hovered = HoveredBrush;
+        SelectButton->SetStyle(Style);
     }
 }
 
