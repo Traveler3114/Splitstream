@@ -1,6 +1,8 @@
 #include "MapSelectionWidget.h"
 
 #include "MapWidget.h"
+#include "Components/ScrollBox.h"
+#include "Components/ScrollBoxSlot.h"
 #include "Components/HorizontalBox.h"
 #include "Components/HorizontalBoxSlot.h"
 #include "Components/TextBlock.h"
@@ -21,20 +23,14 @@ void UMapSelectionWidget::NativeConstruct()
 
 void UMapSelectionWidget::PopulateLevelList()
 {
-    if (!MapSelectionBox || !MapWidgetClass || !MapsData)
-    {
-        return;
-    }
+    if (!MapSelectionBox || !MapWidgetClass || !MapsData) return;
 
     MapSelectionBox->ClearChildren();
 
     for (const FLevelData& Data : MapsData->Maps)
     {
         UMapWidget* MapItem = CreateWidget<UMapWidget>(this, MapWidgetClass);
-        if (!MapItem)
-        {
-            continue;
-        }
+        if (!MapItem) continue;
 
         MapItem->Setup(Data);
         MapItem->OnMapHovered.BindUObject(this, &UMapSelectionWidget::ShowMapDetails);
@@ -42,6 +38,8 @@ void UMapSelectionWidget::PopulateLevelList()
 
         MapSelectionBox->AddChild(MapItem);
     }
+
+    MapSelectionBox->ScrollToStart();
 }
 
 void UMapSelectionWidget::ShowMapDetails(const FLevelData& Data)

@@ -5,6 +5,7 @@
 #include "DataAssets/WidgetData/MapListData.h"
 #include "MapSelectionWidget.generated.h"
 
+class UScrollBox;
 class UHorizontalBox;
 class UMapWidget;
 class UTextBlock;
@@ -34,7 +35,7 @@ public:
 
     /** Horizontal list of map cards on the left */
     UPROPERTY(meta = (BindWidget))
-    TObjectPtr<UHorizontalBox> MapSelectionBox;
+    TObjectPtr<UScrollBox> MapSelectionBox;
 
     /** Right-side detail panel — updated on hover */
     UPROPERTY(meta = (BindWidget))
