@@ -5,7 +5,7 @@
 #include "Components/Button.h"
 #include "Components/SlateWrapperTypes.h"
 #include "Kismet/GameplayStatics.h"
-#include "Controllers/LobbyPlayerController.h"
+#include "Player/Controllers/LobbyPlayerController.h"
 #include "DefaultPlayerState.h"
 
 void UPlayerLobbyInfo::NativeConstruct()

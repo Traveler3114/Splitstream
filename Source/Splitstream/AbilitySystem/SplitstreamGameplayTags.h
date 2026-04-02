@@ -4,6 +4,9 @@
 
 #include "NativeGameplayTags.h"
 
+// SplitstreamGameplayTags.h
+
+// — existing, unchanged —
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Status_Block);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Status_Block_Movement);
@@ -16,27 +19,42 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Ability_Solo_Teleport);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Status_PastEcho);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Status_LockPicking);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Status_Hacking);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Status_ProximityHacking)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Status_ProximityHacking);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Status_Searching);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Status_Illegal);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Status_Aiming);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Status_Firing);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Status_Private);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Status_Private_Area);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Status_Illegal);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Status_Illegal_Action);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Status_Illegal_Area);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Character_Status_Teleporting);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_PastEcho_Activated);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_PastEcho_Deactivated);
-
-
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Weapon_Ability_Pistol_Fire);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Weapon_Ability_Pistol_Aim);
 
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_StateTree_Event_FullyDetected_Pawn);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_StateTree_Event_FullyDetected_Actor);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_StateTree_Event_RepairNeeded);
 
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Guard_Status_Repair);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_AI_Behavior_Decision);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_AI_Behavior_WalkAround);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_AI_Behavior_StandIdle);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_AI_Event_FullyDetected_Pawn);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_AI_Event_FullyDetected_Actor);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_AI_Event_RepairNeeded);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_AI_Status_Repair);
+
+
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_World_NavNode_Ground);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_World_NavNode_Sky);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_World_NavNode_StayPoint);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_World_NavNode_PassThrough);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_World_Object_WaterMachine);
+
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_World_Floor_Basement);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_World_Floor_Floor1);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_World_Floor_Floor2);
 
 

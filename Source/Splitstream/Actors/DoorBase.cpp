@@ -4,8 +4,8 @@
 #include "ActorComponents/LockPickComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/ArrowComponent.h"
-#include "Characters/GuardCharacter.h"
-#include "Characters/CivilianCharacter.h"
+#include "AI/Characters/GuardCharacter.h"
+#include "AI/Characters/CivilianCharacter.h"
 #include "Net/UnrealNetwork.h"
 
 ADoorBase::ADoorBase()

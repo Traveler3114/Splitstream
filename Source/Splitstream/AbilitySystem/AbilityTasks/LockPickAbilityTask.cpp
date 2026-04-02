@@ -4,7 +4,7 @@
 #include "GameFramework/PlayerController.h"
 #include "Widgets/HUD/LockPickWidget.h"
 #include "Interfaces/IServerActionInterface.h"
-#include "Controllers/DefaultPlayerController.h"
+#include "Player/Controllers/DefaultPlayerController.h"
 
 ULockPickAbilityTask* ULockPickAbilityTask::StartLockPickTask(UGameplayAbility* OwningAbility, ULockPickComponent* InLockComp)
 {

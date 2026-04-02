@@ -5,8 +5,8 @@
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "GameFramework/PlayerController.h"
-#include "Characters/DefaultCharacter.h"
-#include "Controllers/DefaultPlayerController.h"
+#include "Player/Characters/DefaultCharacter.h"
+#include "Player/Controllers/DefaultPlayerController.h"
 
 UDetectionComponent::UDetectionComponent()
 {

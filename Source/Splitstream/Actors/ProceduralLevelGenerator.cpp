@@ -1,7 +1,7 @@
 #include "ProceduralLevelGenerator.h"
 #include "Actors/PointActors/CivilianSpawnPoint.h"
-#include "Characters/CivilianCharacter.h"
-#include "Characters/GuardCharacter.h"
+#include "AI/Characters/CivilianCharacter.h"
+#include "AI/Characters/GuardCharacter.h"
 #include "Actors/ItemPickup.h"
 #include "Actors/LockerActor.h"
 #include "Actors/Computers/Computer.h"
@@ -10,9 +10,8 @@
 #include "Actors/PointActors/RefPointActor.h"
 #include "Actors/PointActors/RandomPointActor.h"
 #include "Actors/PointActors/SearchableItemSpawnPoint.h"
-#include "Actors/SearchableActor.h"
+#include "Actors/EnvironmentalObject.h"
 #include "Kismet/GameplayStatics.h"
-#include "Characters/GuardCharacter.h"
 #include "Net/UnrealNetwork.h"
 #include "Actors/DroneSpawner.h"
 #include "TimelineEra.h"
@@ -353,12 +352,12 @@ FRandomDate AProceduralLevelGenerator::GenerateFutureDate(const FRandomDate& Min
 
     //        // Randomly pick which actor class to spawn (cup, file, etc)
     //        int32 RandomClassIdx = FMath::RandRange(0, SearchableItemClasses.Num() - 1);
-    //        TSubclassOf<ASearchableActor> ChosenClass = SearchableItemClasses[RandomClassIdx];
+    //        TSubclassOf<AEnvironmentalObject> ChosenClass = SearchableItemClasses[RandomClassIdx];
 
     //        FActorSpawnParameters SpawnParams;
     //        SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
-    //        ASearchableActor* NewItem = GetWorld()->SpawnActor<ASearchableActor>(
+    //        AEnvironmentalObject* NewItem = GetWorld()->SpawnActor<AEnvironmentalObject>(
     //            ChosenClass,
     //            SpawnPoint->GetActorLocation(),
     //            SpawnPoint->GetActorRotation(),

@@ -2,7 +2,7 @@
 #include "Components/Button.h"
 #include "Widgets/Settings/SettingsWidget.h"
 #include "Kismet/GameplayStatics.h"
-#include "Controllers/DefaultPlayerController.h"
+#include "Player/Controllers/DefaultPlayerController.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 void UPauseMenuWidget::NativeConstruct()

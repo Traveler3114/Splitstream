@@ -1,13 +1,14 @@
 // DroneSpawner.cpp
 #include "DroneSpawner.h"
 #include "Splitstream.h"
-#include "Characters/DronePawn.h"
+#include "AI/Characters/DronePawn.h"
 #include "Kismet/GameplayStatics.h"
 #include "Actors/PointActors/NavNode.h"
 #include "Components/TextRenderComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "ActorComponents/SearchComponent.h"
 #include "ActorComponents/InventoryComponent.h"
+#include "AbilitySystem/SplitstreamGameplayTags.h"
 #include "UtilityLibrary.h"
 #include "TimerManager.h"
 
@@ -317,7 +318,7 @@ void ADroneSpawner::ActivatePendingDrone()
 		for (AActor* Actor : FoundNodes)
 		{
 			ANavNode* Node = Cast<ANavNode>(Actor);
-			if (Node && Node->TimelineEra == PendingDrone->TimelineEra && Node->NodeType == ENavNodeType::Sky)
+			if (Node && Node->TimelineEra == PendingDrone->TimelineEra && Node->NodeTags.HasTag(TAG_World_NavNode_Sky))
 			{
 				MatchingNodes.Add(Node);
 			}

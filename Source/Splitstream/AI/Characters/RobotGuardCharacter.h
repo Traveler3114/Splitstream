@@ -1,0 +1,42 @@
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GuardCharacter.h"
+#include "RobotGuardCharacter.generated.h"
+
+/**
+ * Robot guard AI that autonomously repairs destroyed/disabled IRepairable actors.
+ * Maintains a repair queue and processes repairs sequentially via
+ * URepairableRegistry delegates. Extends AGuardCharacter but overrides
+ * health handling (cannot die).
+ */
+UCLASS()
+class SPLITSTREAM_API ARobotGuardCharacter : public AGuardCharacter
+{
+    GENERATED_BODY()
+
+public:
+    ARobotGuardCharacter();
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere)
+    TArray<AActor*> RepairQueue;
+    UPROPERTY(BlueprintReadWrite)
+    AActor* CurrentRepairTarget = nullptr;
+
+    virtual void BeginPlay() override;
+    UFUNCTION()
+    void OnRepairRequested(AActor* Repairable);
+    UFUNCTION(BlueprintCallable)
+    void OnRepairFinished();
+    UFUNCTION(BlueprintCallable)
+    void TryStartNextRepair();
+
+    UFUNCTION()
+    void HandleRepairableRegistered(AActor* Repairable);
+
+    UFUNCTION()
+    void HandleRepairableUnregistered(AActor* Repairable);
+protected:
+    void QueueRepair(AActor* Repairable);
+    virtual void OnHealthChanged(const struct FOnAttributeChangeData& Data) override{}
+};

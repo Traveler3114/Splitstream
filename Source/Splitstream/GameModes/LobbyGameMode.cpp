@@ -2,7 +2,7 @@
 #include "GameStates/LobbyGameState.h"
 #include "Actors/LobbyPlatformActor.h"
 #include "DefaultPlayerState.h"
-#include "Controllers/LobbyPlayerController.h"
+#include "Player/Controllers/LobbyPlayerController.h"
 #include "DefaultGameInstance.h"
 #include "EngineUtils.h"
 #include "TimerManager.h"

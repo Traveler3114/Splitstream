@@ -4,7 +4,7 @@
 #include "AbilitySystemInterface.h"
 #include "Components/StaticMeshComponent.h"
 #include "DefaultPlayerState.h"
-#include "Characters/CivilianCharacter.h"
+#include "AI/Characters/CivilianCharacter.h"
 #include "GameplayTagContainer.h"
 #include "Actors/TimeObjects/FutureItemPickup.h"
 
