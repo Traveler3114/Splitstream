@@ -2,67 +2,70 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Interfaces/ISettingsTabInterface.h"
+#include "Widgets/MainMenu/TabButton.h"
+#include "DataAssets/WidgetData/SettingsTabsData.h"
 #include "SettingsWidget.generated.h"
 
-class UButton;
-class UTextBlock;
-class UWidgetSwitcher;
-class UGraphicsWidget;
-class UInputWidget;
-
-UCLASS()
+// ─────────────────────────────────────────────────────────────────────────────
+//  USettingsWidget
+//
+//  • Name UMG widgets "TabBar" (VerticalBox), "ContentBox" (Overlay),
+//    "ApplyButton" (Button) and optionally "BackButton" (Button).
+//  • Set TabButtonClass to WBP_TabButton in the Details panel.
+//  • Assign a USettingsTabsData asset (DA_SettingsTabs) to TabsData — all
+//    tab config lives there. No C++ or Blueprint changes needed to add tabs.
+// ─────────────────────────────────────────────────────────────────────────────
+UCLASS(Abstract)
 class SPLITSTREAM_API USettingsWidget : public UUserWidget
 {
     GENERATED_BODY()
 
 public:
-    virtual void NativeConstruct() override;
+    /** Assign DA_SettingsTabs here. All tab entries live in that asset. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Tabs")
+    TObjectPtr<USettingsTabsData> TabsData;
+
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<class UVerticalBox> TabBar;
+
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<class UOverlay> ContentBox;
+
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<class UButton> ApplyButton;
+
+    UPROPERTY(meta = (BindWidgetOptional))
+    TObjectPtr<class UButton> BackButton;
+
+    UFUNCTION(BlueprintCallable, Category = "Settings")
+    void SwitchToTab(int32 TabIndex);
+
+    UFUNCTION(BlueprintPure, Category = "Settings")
+    int32 GetActiveTabIndex() const { return ActiveTabIndex; }
 
 protected:
-    // --- Tab Buttons ---
-    UPROPERTY(meta = (BindWidget))
-    UButton* GraphicsTabButton;
+    virtual void NativePreConstruct() override;
+    virtual void NativeConstruct() override;
 
-    UPROPERTY(meta = (BindWidget))
-    UButton* InputTabButton;
+private:
+    void BuildTabBar();
 
-    // --- Tab Labels (optional) ---
-    UPROPERTY(meta = (BindWidgetOptional))
-    UTextBlock* GraphicsTabLabel;
-
-    UPROPERTY(meta = (BindWidgetOptional))
-    UTextBlock* InputTabLabel;
-
-    // --- Widget Switcher Container for Tabs ---
-    UPROPERTY(meta = (BindWidget))
-    UWidgetSwitcher* SettingsSwitcher;
-
-    // --- Subwidgets ---
-    UPROPERTY(meta = (BindWidget))
-    UGraphicsWidget* GraphicsWidget;
-
-    UPROPERTY(meta = (BindWidget))
-    UInputWidget* InputWidget;
-
-    // --- Apply/Back (if you want main apply/cancel at top level) ---
-    UPROPERTY(meta = (BindWidget))
-    UButton* ApplyButton;
-
-    UPROPERTY(meta = (BindWidget))
-    UButton* BackButton;
-
-    // --- Tab Switch Handlers ---
     UFUNCTION()
-    void OnGraphicsTabClicked();
-    UFUNCTION()
-    void OnInputTabClicked();
+    void OnTabButtonClicked(int32 TabIndex);
 
-    // --- (Optional) Apply/Back Handlers ---
     UFUNCTION()
     void OnApplyClicked();
+
     UFUNCTION()
     void OnBackClicked();
 
-    // -- Utility --
-    void UpdateTabHighlight();
+    int32 ActiveTabIndex = -1;
+
+    /** Kept so we can call ApplySettings on it without hardcoded casts. */
+    UPROPERTY()
+    TObjectPtr<UUserWidget> ActiveContentWidget;
+
+    UPROPERTY()
+    TArray<TObjectPtr<UTabButton>> TabButtons;
 };

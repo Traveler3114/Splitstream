@@ -16,7 +16,7 @@ void UInputWidget::NativeConstruct()
 
     MouseSensitivityMin = 0.1f;
     MouseSensitivityMax = 10.0f;
-    MouseSensitivity = 1.0f;
+    MouseSensitivity    = 1.0f;
     PendingRebindAction = nullptr;
     PendingRebindWidget = nullptr;
 
@@ -32,10 +32,7 @@ void UInputWidget::SetupWidgets()
     {
         MouseSensitivityWidget->Setup(
             FText::FromString(TEXT("Mouse Sensitivity")),
-            MouseSensitivityMin,
-            MouseSensitivityMax,
-            MouseSensitivity,
-            2
+            MouseSensitivityMin, MouseSensitivityMax, MouseSensitivity, 2
         );
         MouseSensitivityWidget->OnValueChanged.RemoveDynamic(this, &UInputWidget::OnMouseSensitivityChanged);
         MouseSensitivityWidget->OnValueChanged.AddDynamic(this, &UInputWidget::OnMouseSensitivityChanged);
@@ -53,6 +50,7 @@ void UInputWidget::BuildKeybindList()
 {
     UDefaultGameInstance* GI = GetWorld() ? GetWorld()->GetGameInstance<UDefaultGameInstance>() : nullptr;
     if (!KeybindsList || !GI || !GI->GetCurrentInputMappingContext() || !KeybindWidgetClass) return;
+
     KeybindsList->ClearChildren();
     KeybindWidgets.Empty();
 
@@ -83,7 +81,6 @@ void UInputWidget::BuildKeybindList()
     }
 }
 
-
 void UInputWidget::HandleRowClicked(UKeybindWidget* Source)
 {
     PendingRebindAction = Source->InputAction;
@@ -96,8 +93,6 @@ void UInputWidget::HandleRowClicked(UKeybindWidget* Source)
     {
         FInputModeUIOnly UIOnly;
         PC->SetInputMode(UIOnly);
-
-        // Set focus directly to this widget for this player
         SetUserFocus(PC);
         SetKeyboardFocus();
     }
@@ -107,6 +102,7 @@ void UInputWidget::UpdateKeybindDisplay(UInputAction* InputAction)
 {
     UDefaultGameInstance* GI = GetWorld() ? GetWorld()->GetGameInstance<UDefaultGameInstance>() : nullptr;
     if (!GI || !GI->GetCurrentInputMappingContext() || !InputAction) return;
+
     FString KeyStr = TEXT("None");
     for (const FEnhancedActionKeyMapping& Mapping : GI->GetCurrentInputMappingContext()->GetMappings())
     {
@@ -116,6 +112,7 @@ void UInputWidget::UpdateKeybindDisplay(UInputAction* InputAction)
             break;
         }
     }
+
     for (UKeybindWidget* Widget : KeybindWidgets)
     {
         if (Widget->InputAction == InputAction && Widget->KeyInsideButton)
@@ -125,9 +122,6 @@ void UInputWidget::UpdateKeybindDisplay(UInputAction* InputAction)
     }
 }
 
-
-
-// Handles input rebinding event for a key
 FReply UInputWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
 {
     UDefaultGameInstance* GI = GetWorld() ? GetWorld()->GetGameInstance<UDefaultGameInstance>() : nullptr;
@@ -139,31 +133,23 @@ FReply UInputWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEven
         FKey NewKey = InKeyEvent.GetKey();
         UInputMappingContext* MappingContext = GI->GetCurrentInputMappingContext();
 
-        // Remove all mappings for this action in runtime context
-        TArray<FEnhancedActionKeyMapping> OldMappings = MappingContext->GetMappings();
-        for (const FEnhancedActionKeyMapping& Mapping : OldMappings)
+        for (const FEnhancedActionKeyMapping& Mapping : TArray<FEnhancedActionKeyMapping>(MappingContext->GetMappings()))
         {
             if (Mapping.Action == PendingRebindAction)
-            {
                 MappingContext->UnmapKey(PendingRebindAction, Mapping.Key);
-            }
         }
-        // Defensive: Remove also in default context
+
         if (GI->DefaultMappingContext && GI->DefaultMappingContext != MappingContext)
         {
-            TArray<FEnhancedActionKeyMapping> DefMappings = GI->DefaultMappingContext->GetMappings();
-            for (const FEnhancedActionKeyMapping& Mapping : DefMappings)
+            for (const FEnhancedActionKeyMapping& Mapping : TArray<FEnhancedActionKeyMapping>(GI->DefaultMappingContext->GetMappings()))
             {
                 if (Mapping.Action == PendingRebindAction)
-                {
                     GI->DefaultMappingContext->UnmapKey(PendingRebindAction, Mapping.Key);
-                }
             }
         }
-        // Add new mapping
+
         MappingContext->MapKey(PendingRebindAction, NewKey);
 
-        // Clear all input contexts, re-add only runtime context!
         if (APlayerController* PC = GetOwningPlayer())
         {
             if (ULocalPlayer* LP = Cast<ULocalPlayer>(PC->Player))
@@ -175,20 +161,23 @@ FReply UInputWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEven
                 }
             }
         }
+
         UpdateKeybindDisplay(PendingRebindAction);
         PendingRebindAction = nullptr;
         PendingRebindWidget = nullptr;
         SaveUserSettingsToGameInstance();
         return FReply::Handled();
     }
+
     return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
 }
-void UInputWidget::UpdateTexts()
-{
-    // No-op, slider widget handles its own value text already
-}
 
-void UInputWidget::ApplySettings()
+void UInputWidget::UpdateTexts() { /* slider widget handles its own value text */ }
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  ISettingsTabInterface implementation
+// ─────────────────────────────────────────────────────────────────────────────
+void UInputWidget::ApplySettings_Implementation()
 {
     SaveUserSettingsToGameInstance();
 }
@@ -205,12 +194,12 @@ void UInputWidget::SaveUserSettingsToGameInstance()
         {
             FSavedKeybind Saved;
             Saved.ActionName = Mapping.Action->GetFName();
-            Saved.Key = Mapping.Key;
+            Saved.Key        = Mapping.Key;
             Keybinds.Add(Saved);
         }
     }
+
     GI->SaveUserSettings(Keybinds, MouseSensitivity);
-    // Optionally reload GameInstance to reflect new context.
     GI->LoadUserSettings();
 }
 
@@ -218,15 +207,12 @@ void UInputWidget::LoadUserSettingsFromGameInstance()
 {
     UDefaultGameInstance* GI = GetWorld() ? GetWorld()->GetGameInstance<UDefaultGameInstance>() : nullptr;
     MouseSensitivity = GI ? GI->GetMouseSensitivity() : 1.0f;
-    // No other action needed; all mappings read from runtime context.
+
     if (MouseSensitivityWidget)
     {
         MouseSensitivityWidget->Setup(
             FText::FromString(TEXT("Mouse Sensitivity")),
-            MouseSensitivityMin,
-            MouseSensitivityMax,
-            MouseSensitivity,
-            2
+            MouseSensitivityMin, MouseSensitivityMax, MouseSensitivity, 2
         );
     }
 }

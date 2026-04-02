@@ -1,90 +1,136 @@
 #include "SettingsWidget.h"
+
 #include "Components/Button.h"
-#include "Components/TextBlock.h"
-#include "Components/WidgetSwitcher.h"
-#include "Widgets/Settings/GraphicsWidget.h"
-#include "Widgets/Settings/InputWidget.h"
+#include "Components/VerticalBox.h"
+#include "Components/VerticalBoxSlot.h"
+#include "Components/Overlay.h"
+#include "Components/OverlaySlot.h"
+
+void USettingsWidget::NativePreConstruct()
+{
+    Super::NativePreConstruct();
+    BuildTabBar();
+}
 
 void USettingsWidget::NativeConstruct()
 {
     Super::NativeConstruct();
+    BuildTabBar();
 
-    // Bind tab switches
-    if (GraphicsTabButton)
-    {
-        GraphicsTabButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnGraphicsTabClicked);
-        GraphicsTabButton->OnClicked.AddDynamic(this, &USettingsWidget::OnGraphicsTabClicked);
-    }
-    if (InputTabButton)
-    {
-        InputTabButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnInputTabClicked);
-        InputTabButton->OnClicked.AddDynamic(this, &USettingsWidget::OnInputTabClicked);
-    }
-
-    // Apply/Back Buttons (if you expose them at top-level)
     if (ApplyButton)
     {
-        ApplyButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnApplyClicked);
         ApplyButton->OnClicked.AddDynamic(this, &USettingsWidget::OnApplyClicked);
     }
+
     if (BackButton)
     {
-        BackButton->OnClicked.RemoveDynamic(this, &USettingsWidget::OnBackClicked);
         BackButton->OnClicked.AddDynamic(this, &USettingsWidget::OnBackClicked);
     }
 
-    // Start on the Graphics tab by default
-    if (SettingsSwitcher)
+    if (TabsData && TabsData->Tabs.Num() > 0)
     {
-        SettingsSwitcher->SetActiveWidgetIndex(0); // 0 = Graphics, 1 = Input
-        UpdateTabHighlight();
+        SwitchToTab(0);
     }
 }
 
-void USettingsWidget::OnGraphicsTabClicked()
+void USettingsWidget::BuildTabBar()
 {
-    if (SettingsSwitcher)
+    if (!TabBar || !TabsData || TabsData->Tabs.IsEmpty())
     {
-        SettingsSwitcher->SetActiveWidgetIndex(0);
-        UpdateTabHighlight();
+        return;
+    }
+
+    TabBar->ClearChildren();
+    TabButtons.Reset();
+
+    for (int32 i = 0; i < TabsData->Tabs.Num(); ++i)
+    {
+        const FSettingsTabEntry& Entry = TabsData->Tabs[i];
+
+        UTabButton* Btn = CreateWidget<UTabButton>(this, TabsData->TabButtonClass);
+        if (!Btn)
+        {
+            continue;
+        }
+
+        Btn->TabIndex = i;
+        Btn->SetTabLabel(Entry.TabName);
+        Btn->OnTabButtonClicked.AddDynamic(this, &USettingsWidget::OnTabButtonClicked);
+
+        UVerticalBoxSlot* VBSlot = TabBar->AddChildToVerticalBox(Btn);
+        if (VBSlot)
+        {
+            FSlateChildSize Fill;
+            Fill.SizeRule = ESlateSizeRule::Fill;
+            Fill.Value    = 1.f;
+            VBSlot->SetSize(Fill);
+            VBSlot->SetPadding(FMargin(4.f, 0.f));
+        }
+
+        TabButtons.Add(Btn);
     }
 }
 
-void USettingsWidget::OnInputTabClicked()
+void USettingsWidget::OnTabButtonClicked(int32 TabIndex)
 {
-    if (SettingsSwitcher)
-    {
-        SettingsSwitcher->SetActiveWidgetIndex(1);
-        UpdateTabHighlight();
-    }
+    SwitchToTab(TabIndex);
 }
 
-void USettingsWidget::UpdateTabHighlight()
+void USettingsWidget::SwitchToTab(int32 TabIndex)
 {
-    if (!SettingsSwitcher) return;
-    int32 Index = SettingsSwitcher->GetActiveWidgetIndex();
+    if (!TabsData || !TabsData->Tabs.IsValidIndex(TabIndex) || !ContentBox)
+    {
+        return;
+    }
 
-    // For label highlight (optional)
-    if (GraphicsTabLabel)
+    if (TabIndex == ActiveTabIndex)
     {
-        GraphicsTabLabel->SetColorAndOpacity(Index == 0 ? FSlateColor(FLinearColor::Yellow) : FSlateColor(FLinearColor::White));
+        return;
     }
-    if (InputTabLabel)
+
+    ContentBox->ClearChildren();
+    ActiveContentWidget = nullptr;
+
+    if (TSubclassOf<UUserWidget> WidgetClass = TabsData->Tabs[TabIndex].TabWidgetClass)
     {
-        InputTabLabel->SetColorAndOpacity(Index == 1 ? FSlateColor(FLinearColor::Yellow) : FSlateColor(FLinearColor::White));
+        if (APlayerController* PC = GetOwningPlayer())
+        {
+            UUserWidget* NewContent = CreateWidget<UUserWidget>(PC, WidgetClass);
+            if (NewContent)
+            {
+                UOverlaySlot* OSlot = ContentBox->AddChildToOverlay(NewContent);
+                if (OSlot)
+                {
+                    OSlot->SetHorizontalAlignment(HAlign_Fill);
+                    OSlot->SetVerticalAlignment(VAlign_Fill);
+                }
+                ActiveContentWidget = NewContent;
+            }
+        }
     }
-    // You can also change button images here if you want.
+
+    ActiveTabIndex = TabIndex;
+
+    for (int32 i = 0; i < TabButtons.Num(); ++i)
+    {
+        if (TabButtons[i])
+        {
+            TabButtons[i]->SetActive(i == TabIndex);
+        }
+    }
 }
 
 void USettingsWidget::OnApplyClicked()
 {
-    // Propagate apply to visible tab
-    if (GraphicsWidget && SettingsSwitcher->GetActiveWidgetIndex() == 0)
-        GraphicsWidget->ApplySettings();
-    if (InputWidget && SettingsSwitcher->GetActiveWidgetIndex() == 1)
-        InputWidget->ApplySettings();
+    if (!ActiveContentWidget)
+    {
+        return;
+    }
 
-    // You can close or notify success here if wanted
+    if (ActiveContentWidget->Implements<USettingsTabInterface>())
+    {
+        ISettingsTabInterface::Execute_ApplySettings(ActiveContentWidget);
+    }
 }
 
 void USettingsWidget::OnBackClicked()

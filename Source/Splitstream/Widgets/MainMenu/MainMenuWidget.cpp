@@ -1,92 +1,108 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "MainMenuWidget.h"
-#include "Components/Button.h"
-#include "Kismet/GameplayStatics.h"
-#include "Kismet/KismetSystemLibrary.h"
-#include "GameFramework/PlayerController.h"
-#include "Player/Controllers/MainMenuPlayerController.h"
-#include "Widgets/Settings/SettingsWidget.h"
-#include "DefaultGameInstance.h"
+
+#include "Components/HorizontalBox.h"
+#include "Components/HorizontalBoxSlot.h"
+#include "Components/Overlay.h"
+#include "Components/OverlaySlot.h"
+
+void UMainMenuWidget::NativePreConstruct()
+{
+    Super::NativePreConstruct();
+    BuildTabBar();
+}
 
 void UMainMenuWidget::NativeConstruct()
 {
     Super::NativeConstruct();
+    BuildTabBar();
 
-    if (host_btn)
+    if (TabsData && TabsData->Tabs.Num() > 0)
     {
-        host_btn->OnClicked.RemoveDynamic(this, &UMainMenuWidget::OnHostClicked);
-        host_btn->OnClicked.AddDynamic(this, &UMainMenuWidget::OnHostClicked);
-    }
-    if (settings_btn) {
-        settings_btn->OnClicked.RemoveDynamic(this, &UMainMenuWidget::OnSettingsClicked);
-        settings_btn->OnClicked.AddDynamic(this, &UMainMenuWidget::OnSettingsClicked);
-    }
-    if (quit_btn)
-    {
-        quit_btn->OnClicked.RemoveDynamic(this, &UMainMenuWidget::OnQuitClicked);
-        quit_btn->OnClicked.AddDynamic(this, &UMainMenuWidget::OnQuitClicked);
+        SwitchToTab(0);
     }
 }
 
-void UMainMenuWidget::OnHostClicked()
+void UMainMenuWidget::BuildTabBar()
 {
-    if (!MapSelectionWidgetInstance && MapSelectionWidgetClass)
+    if (!TabBar || !TabsData || TabsData->Tabs.IsEmpty())
     {
-        MapSelectionWidgetInstance = CreateWidget<UMapSelectionWidget>(GetWorld(), MapSelectionWidgetClass);
-        if (MapSelectionWidgetInstance)
+        return;
+    }
+
+    TabBar->ClearChildren();
+    TabButtons.Reset();
+
+    for (int32 i = 0; i < TabsData->Tabs.Num(); ++i)
+    {
+        const FMenuTabEntry& Entry = TabsData->Tabs[i];
+
+        UTabButton* Btn = CreateWidget<UTabButton>(this, TabsData->TabButtonClass);
+        if (!Btn)
         {
-            MapSelectionWidgetInstance->AddToViewport(200);
+            continue;
+        }
 
-            // Bind callback for when map is selected
-            MapSelectionWidgetInstance->OnMapSelected.AddDynamic(this, &UMainMenuWidget::OnMapSelected);
+        Btn->TabIndex = i;
+        Btn->SetTabLabel(Entry.TabName);
+        Btn->OnTabButtonClicked.AddDynamic(this, &UMainMenuWidget::OnTabButtonClicked);
 
-            // Optional: hide MainMenuWidget if you want only selection visible
-            SetVisibility(ESlateVisibility::Collapsed);
+        UHorizontalBoxSlot* HBSlot = TabBar->AddChildToHorizontalBox(Btn);
+        if (HBSlot)
+        {
+            FSlateChildSize Fill;
+            Fill.SizeRule = ESlateSizeRule::Fill;
+            Fill.Value    = 1.f;
+            HBSlot->SetSize(Fill);
+            HBSlot->SetPadding(FMargin(4.f, 0.f));
+        }
+
+        TabButtons.Add(Btn);
+    }
+}
+
+void UMainMenuWidget::OnTabButtonClicked(int32 TabIndex)
+{
+    SwitchToTab(TabIndex);
+}
+
+void UMainMenuWidget::SwitchToTab(int32 TabIndex)
+{
+    if (!TabsData || !TabsData->Tabs.IsValidIndex(TabIndex) || !ContentBox)
+    {
+        return;
+    }
+
+    if (TabIndex == ActiveTabIndex)
+    {
+        return;
+    }
+
+    ContentBox->ClearChildren();
+
+    if (TSubclassOf<UUserWidget> WidgetClass = TabsData->Tabs[TabIndex].TabWidgetClass)
+    {
+        if (APlayerController* PC = GetOwningPlayer())
+        {
+            UUserWidget* NewContent = CreateWidget<UUserWidget>(PC, WidgetClass);
+            if (NewContent)
+            {
+                UOverlaySlot* OSlot = ContentBox->AddChildToOverlay(NewContent);
+                if (OSlot)
+                {
+                    OSlot->SetHorizontalAlignment(HAlign_Fill);
+                    OSlot->SetVerticalAlignment(VAlign_Fill);
+                }
+            }
         }
     }
-    else if (MapSelectionWidgetInstance)
+
+    ActiveTabIndex = TabIndex;
+
+    for (int32 i = 0; i < TabButtons.Num(); ++i)
     {
-        MapSelectionWidgetInstance->SetVisibility(ESlateVisibility::Visible);
-        SetVisibility(ESlateVisibility::Collapsed);
-    }
-}
-
-void UMainMenuWidget::OnSettingsClicked()
-{
-    if (SettingsWidget)
-        SettingsWidget->SetVisibility(ESlateVisibility::Visible);
-}
-
-void UMainMenuWidget::OnQuitClicked()
-{
-    APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
-    UKismetSystemLibrary::QuitGame(this, PC, EQuitPreference::Quit, true);
-}
-
-void UMainMenuWidget::OnMapSelected(const FString& LevelName, const TSoftObjectPtr<UWorld>& LevelAsset, const TSoftObjectPtr<UWorld>& LobbyLevelAsset)
-{
-    // Return MainMenu visible
-    SetVisibility(ESlateVisibility::Visible);
-    if (MapSelectionWidgetInstance)
-    {
-        MapSelectionWidgetInstance->SetVisibility(ESlateVisibility::Collapsed);
-    }
-
-    // SHOW LOADING WIDGET HERE!
-    //if (APlayerController* PC = GetOwningPlayer())
-    //{
-    //    if (AMainMenuPlayerController* MainPC = Cast<AMainMenuPlayerController>(PC))
-    //    {
-    //        MainPC->ShowLoadingWidget();
-    //    }
-    //}
-
-    if (UGameInstance* GI = UGameplayStatics::GetGameInstance(this))
-    {
-        if (UDefaultGameInstance* DGI = Cast<UDefaultGameInstance>(GI))
+        if (TabButtons[i])
         {
-            DGI->CreateSession(LevelName, LevelAsset, LobbyLevelAsset);
+            TabButtons[i]->SetActive(i == TabIndex);
         }
     }
 }

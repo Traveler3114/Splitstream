@@ -1,36 +1,91 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "MapSelectionWidget.h"
+
+#include "MapWidget.h"
+#include "Components/ScrollBox.h"
+#include "Components/ScrollBoxSlot.h"
 #include "Components/HorizontalBox.h"
 #include "Components/HorizontalBoxSlot.h"
-#include "MapWidget.h"
+#include "Components/TextBlock.h"
+#include "Components/Image.h"
+#include "DefaultGameInstance.h"
+#include "Kismet/GameplayStatics.h"
 
 void UMapSelectionWidget::NativeConstruct()
 {
     Super::NativeConstruct();
     PopulateLevelList();
+
+    if (MapDetailsBox)
+    {
+        MapDetailsBox->SetVisibility(ESlateVisibility::Hidden);
+    }
 }
 
 void UMapSelectionWidget::PopulateLevelList()
 {
-    if (!MapSelectionBox || !MapWidgetClass) return;
+    if (!MapSelectionBox || !MapWidgetClass || !MapsData) return;
 
     MapSelectionBox->ClearChildren();
 
-    for (const FLevelData& LevelData : LevelsData)
+    for (const FLevelData& Data : MapsData->Maps)
     {
-        UMapWidget* MapItem = CreateWidget<UMapWidget>(GetWorld(), MapWidgetClass);
-        if (MapItem)
-        {
-            MapItem->Setup(LevelData);
-            MapItem->OnSelectClicked.BindUObject(this, &UMapSelectionWidget::MapChosen);
+        UMapWidget* MapItem = CreateWidget<UMapWidget>(this, MapWidgetClass);
+        if (!MapItem) continue;
 
-            MapSelectionBox->AddChild(MapItem);
-        }
+        MapItem->Setup(Data);
+        MapItem->OnMapHovered.BindUObject(this, &UMapSelectionWidget::ShowMapDetails);
+        MapItem->OnSelectClicked.BindUObject(this, &UMapSelectionWidget::MapChosen);
+
+        MapSelectionBox->AddChild(MapItem);
+    }
+
+    MapSelectionBox->ScrollToStart();
+}
+
+void UMapSelectionWidget::ShowMapDetails(const FLevelData& Data)
+{
+    if (MapDetailsBox)
+    {
+        MapDetailsBox->SetVisibility(ESlateVisibility::Visible);
+    }
+
+    if (DetailMapName)
+    {
+        DetailMapName->SetText(FText::FromString(Data.LevelName));
+    }
+
+    if (DetailHeistInfo)
+    {
+        DetailHeistInfo->SetText(FText::FromString(Data.HeistInfo));
+    }
+
+    if (DetailPossibility)
+    {
+        DetailPossibility->SetText(FText::FromString(Data.Possibility));
+    }
+
+    if (DetailThumbnail && Data.Thumbnail)
+    {
+        DetailThumbnail->SetBrushFromTexture(Data.Thumbnail.Get());
+        OptionalText->SetVisibility(ESlateVisibility::Hidden);
+    }
+    else if (DetailThumbnail && !Data.Thumbnail)
+    {
+        OptionalText->SetVisibility(ESlateVisibility::Visible);
+        DetailThumbnail->SetColorAndOpacity(FLinearColor::Gray);
+        DetailThumbnail->SetBrushFromTexture(nullptr);
     }
 }
 
 void UMapSelectionWidget::MapChosen(const FString& LevelName, const TSoftObjectPtr<UWorld>& LevelAsset, const TSoftObjectPtr<UWorld>& LobbyLevelAsset)
 {
     OnMapSelected.Broadcast(LevelName, LevelAsset, LobbyLevelAsset);
+
+    if (UGameInstance* GI = UGameplayStatics::GetGameInstance(this))
+    {
+        if (UDefaultGameInstance* DGI = Cast<UDefaultGameInstance>(GI))
+        {
+            DGI->CreateSession(LevelName, LevelAsset, LobbyLevelAsset);
+        }
+    }
 }

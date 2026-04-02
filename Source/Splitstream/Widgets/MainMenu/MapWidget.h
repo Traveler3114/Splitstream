@@ -1,51 +1,43 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "MapSelectionWidget.h" // For FLevelData and Forward Decls
+#include "DataAssets/WidgetData/MapListData.h"
 #include "MapWidget.generated.h"
 
-class UVerticalBox;
 class UTextBlock;
 class UImage;
 class UButton;
 
 DECLARE_DELEGATE_ThreeParams(FOnMapSelect,
-    const FString&,            // LevelName
-    const TSoftObjectPtr<UWorld>&, // LevelAsset
-    const TSoftObjectPtr<UWorld>&  // LobbyLevelAsset
-);
+    const FString&,
+    const TSoftObjectPtr<UWorld>&,
+    const TSoftObjectPtr<UWorld>&);
 
+DECLARE_DELEGATE_OneParam(FOnMapHover,
+    const FLevelData&);
 
 UCLASS()
 class SPLITSTREAM_API UMapWidget : public UUserWidget
 {
     GENERATED_BODY()
+
 public:
     UPROPERTY(meta = (BindWidget))
-    UVerticalBox* MapBox;
+    TObjectPtr<UTextBlock> MapNameText;
 
     UPROPERTY(meta = (BindWidget))
-    UTextBlock* MapNameText;
+    TObjectPtr<UButton> SelectButton;
 
-    UPROPERTY(meta = (BindWidget))
-    UImage* MapThumbnailImage;
-
-    UPROPERTY(meta = (BindWidget))
-    UButton* SelectButton;
-
-    // Store data for this widget
     FLevelData LevelData;
 
-    // Delegate called when select is clicked
     FOnMapSelect OnSelectClicked;
+    FOnMapHover  OnMapHovered;
 
-    // Setup the widget given level data
     void Setup(const FLevelData& InData);
 
     virtual void NativeConstruct() override;
+    virtual void NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 
 protected:
     UFUNCTION()

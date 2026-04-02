@@ -1,34 +1,16 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "DataAssets/WidgetData/MapListData.h"
 #include "MapSelectionWidget.generated.h"
 
+class UScrollBox;
 class UHorizontalBox;
 class UMapWidget;
+class UTextBlock;
+class UImage;
 
-// Data struct for Levels
-USTRUCT(BlueprintType)
-struct FLevelData
-{
-    GENERATED_BODY()
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level Data")
-    FString LevelName;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level Data")
-    UTexture2D* Thumbnail;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level Data")
-    TSoftObjectPtr<UWorld> LevelAsset;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level Data")
-    TSoftObjectPtr<UWorld> LobbyLevelAsset;
-};
-
-// Declares the delegate type for map selection events
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnMapSelectedSignature,
     const FString&, LevelName,
     const TSoftObjectPtr<UWorld>&, LevelAsset,
@@ -40,24 +22,55 @@ class SPLITSTREAM_API UMapSelectionWidget : public UUserWidget
     GENERATED_BODY()
 
 public:
-    // This should be bound to a HorizontalBox in your BP
-    UPROPERTY(meta = (BindWidget))
-    UHorizontalBox* MapSelectionBox;
+    // ── Config ────────────────────────────────────────────────────────────────
 
-    // The Array of levels to display, settable in BP or code
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level Data")
-    TArray<FLevelData> LevelsData;
+    /** Assign DA_Maps here. All map entries live in that asset. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Maps")
+    TObjectPtr<UMapListData> MapsData;
 
-    // The widget class for each item (assign in BP)
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Levels")
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Maps")
     TSubclassOf<UMapWidget> MapWidgetClass;
 
-    // Broadcast when a map is selected
+    // ── Tab content area ──────────────────────────────────────────────────────
+
+    /** Horizontal list of map cards on the left */
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<UScrollBox> MapSelectionBox;
+
+    /** Right-side detail panel — updated on hover */
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<UHorizontalBox> MapDetailsBox;
+
+    // ── Detail panel widgets (inside MapDetailsBox) ───────────────────────────
+
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<UTextBlock> DetailMapName;
+
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<UTextBlock> DetailHeistInfo;
+
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<UTextBlock> DetailPossibility;
+
+    UPROPERTY(meta = (BindWidgetOptional))
+    TObjectPtr<UImage> DetailThumbnail;
+
+    UPROPERTY(meta = (BindWidgetOptional))
+    TObjectPtr<UTextBlock> OptionalText;
+
+    // ── Events ────────────────────────────────────────────────────────────────
+
     UPROPERTY(BlueprintAssignable, Category = "Map Selection")
     FOnMapSelectedSignature OnMapSelected;
 
+    // ── API ───────────────────────────────────────────────────────────────────
+
     virtual void NativeConstruct() override;
     void PopulateLevelList();
-    // Called by child widgets to notify selection
+
+    /** Called by UMapWidget on hover — updates the detail panel. */
+    void ShowMapDetails(const FLevelData& Data);
+
+    /** Called by UMapWidget on click — triggers session creation. */
     void MapChosen(const FString& LevelName, const TSoftObjectPtr<UWorld>& LevelAsset, const TSoftObjectPtr<UWorld>& LobbyLevelAsset);
 };
