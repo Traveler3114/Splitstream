@@ -15,6 +15,10 @@ struct SPLITSTREAM_API FSTTask_InteractInstanceData
     UPROPERTY()
     TObjectPtr<class AEnvironmentalSlot> OccupiedSlot = nullptr;
 
+    // The environmental object that owns OccupiedSlot
+    UPROPERTY()
+    TObjectPtr<class AEnvironmentalObject> TargetObject = nullptr;
+
     // Remaining idle time once NPC has arrived at the slot
     UPROPERTY()
     float RemainingTime = 0.f;
@@ -22,6 +26,11 @@ struct SPLITSTREAM_API FSTTask_InteractInstanceData
     // Whether the NPC has arrived at the slot and is now idling
     UPROPERTY()
     bool bArrived = false;
+
+    // True once the AIController has confirmed movement has started.
+    // Guards against treating the pre-move Idle status as "arrived".
+    UPROPERTY()
+    bool bMovementStarted = false;
 };
 
 /**
@@ -75,6 +84,9 @@ struct SPLITSTREAM_API FSTTask_Interact : public FStateTreeTaskCommonBase
         const FStateTreeTransitionResult& Transition) const override;
 
 private:
-    // Finds the nearest available object matching both tag filters
-    class AEnvironmentalSlot* FindBestSlot(class AAICharacter* NPC) const;
+    // Finds the nearest available object matching both tag filters.
+    // Skips ACivilianCharacter's LastSearchable to prevent revisiting.
+    // Returns the chosen slot and sets OutObject to its parent.
+    class AEnvironmentalSlot* FindBestSlot(class AAICharacter* NPC,
+        class AEnvironmentalObject*& OutObject) const;
 };
