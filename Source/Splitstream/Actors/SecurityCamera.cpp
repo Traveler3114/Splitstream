@@ -102,12 +102,12 @@ void ASecurityCamera::DetectionUpdate()
 
     FVector CamLoc = SceneCapture ? SceneCapture->GetComponentLocation() : GetActorLocation();
 
+#if !UE_BUILD_SHIPPING
     // ----- Debug Cone Drawing -----
     if (bDrawDebugDetectionCone)
     {
         FVector CamForward = SceneCapture ? SceneCapture->GetForwardVector() : GetActorForwardVector();
         const float HalfFOVRadians = FMath::DegreesToRadians(ViewConeAngle * 0.5f);
-        // DrawDebugCone args: UWorld, Origin, Dir, Length, AngleWidth, AngleHeight, Segments, Color, PersistentLines, LifeTime, DepthPriority
         DrawDebugCone(
             GetWorld(),
             CamLoc,
@@ -118,12 +118,11 @@ void ASecurityCamera::DetectionUpdate()
             24,
             FColor::Green,
             false,
-            DetectionInterval * 1.1f, // Keep visible a bit longer than interval
+            DetectionInterval * 1.1f,
             0,
             2.0f
         );
 
-        // Optionally: draw center line showing forward vector
         DrawDebugLine(
             GetWorld(),
             CamLoc,
@@ -136,6 +135,7 @@ void ASecurityCamera::DetectionUpdate()
         );
     }
     // ----- End Debug Drawing -----
+#endif
 
     TArray<AActor*> OverlappedActors;
     TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;

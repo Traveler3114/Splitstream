@@ -466,8 +466,6 @@ void ADefaultPlayerController::ClientShowCalendarWidget_Implementation(const TAr
 void ADefaultPlayerController::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
-
-    // Update detection widget positions every frame for smooth tracking
     UpdateAllDetectionWidgetPositions();
 }
 

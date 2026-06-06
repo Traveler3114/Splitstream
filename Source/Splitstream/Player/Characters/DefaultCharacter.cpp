@@ -30,7 +30,7 @@
 
 ADefaultCharacter::ADefaultCharacter()
 {
-    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bCanEverTick = false;
 
     GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
     GetMesh()->SetOwnerNoSee(false);
@@ -92,10 +92,22 @@ void ADefaultCharacter::BeginPlay()
     }
 
     InventoryComponent->UpdateEquippedItemMesh(InventoryComponent->Slots);
+
+    if (IsLocallyControlled() && InteractionComponent)
+    {
+        GetWorldTimerManager().SetTimer(
+            InteractionHighlightTimerHandle,
+            this,
+            &ADefaultCharacter::TickInteractionHighlight,
+            InteractionComponent->InteractHighlightInterval,
+            true);
+    }
 }
 
 void ADefaultCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+    GetWorldTimerManager().ClearTimer(InteractionHighlightTimerHandle);
+
     // Clean up GAS delegates to prevent dangling references.
     // The ASC lives on PlayerState and can outlive this pawn.
     if (AbilitySystemComponent)
@@ -121,21 +133,14 @@ void ADefaultCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
     Super::EndPlay(EndPlayReason);
 }
 
-void ADefaultCharacter::Tick(float DeltaTime)
+void ADefaultCharacter::TickInteractionHighlight()
 {
-    Super::Tick(DeltaTime);
+    if (!IsLocallyControlled() || !InteractionComponent || !CameraComponent)
+        return;
 
-    if (IsLocallyControlled() && InteractionComponent)
-    {     
-        InteractionComponent->InteractHighlightTimer += DeltaTime;
-        if (InteractionComponent->InteractHighlightTimer >= InteractionComponent->InteractHighlightInterval)
-        {
-            InteractionComponent->InteractHighlightTimer = 0.f;
-            FVector Start = CameraComponent->GetComponentLocation();
-            FRotator Rot = Controller ? Controller->GetControlRotation() : CameraComponent->GetComponentRotation();
-            InteractionComponent->UpdateInteractHighlight(Start, Rot);
-        }
-    }
+    FVector Start = CameraComponent->GetComponentLocation();
+    FRotator Rot = Controller ? Controller->GetControlRotation() : CameraComponent->GetComponentRotation();
+    InteractionComponent->UpdateInteractHighlight(Start, Rot);
 }
 
 // ---------------- ABILITY SYSTEM ------------------
@@ -503,7 +508,12 @@ void ADefaultCharacter::Look(const FInputActionValue& Value)
         AddControllerYawInput(LookAxisVector.X * Sensitivity);
         AddControllerPitchInput(LookAxisVector.Y * Sensitivity);
         if (CameraComponent) {
-            ServerCameraRotationUpdate(CameraComponent->GetComponentRotation().Pitch);
+            float NewPitch = CameraComponent->GetComponentRotation().Pitch;
+            if (FMath::Abs(NewPitch - LastSentPitch) > 0.5f)
+            {
+                LastSentPitch = NewPitch;
+                ServerCameraRotationUpdate(NewPitch);
+            }
         }
     }
 }

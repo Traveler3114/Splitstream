@@ -79,4 +79,6 @@ protected:
 
     void ApplyProximityTagTo(ACharacter* Player);
     void RemoveProximityTagFrom(ACharacter* Player);
+
+    TWeakObjectPtr<APlayerController> CachedFirstPC;
 };

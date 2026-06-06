@@ -38,7 +38,7 @@ public:
     float DropDistance = 300.f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction")
-    float InteractHighlightInterval = 0.1f;
+    float InteractHighlightInterval = 0.033f;
 
     UPROPERTY(BlueprintReadOnly, Category = "Interaction")
     AActor* HighlightedActor = nullptr;

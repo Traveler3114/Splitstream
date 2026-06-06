@@ -4,6 +4,9 @@
 #include "Components/ActorComponent.h"
 #include "DetectionComponent.generated.h"
 
+class ADefaultCharacter;
+class ADefaultPlayerController;
+
 /** Tracks per-detector detection progress and state (building, cooling, fully detected). */
 USTRUCT()
 struct FDetectionState
@@ -94,4 +97,7 @@ protected:
     // ------- Bandwidth optimization: throttle detection widget RPCs -------
 
     TMap<AActor*, FLastSentState> LastSentStates;
+
+    TWeakObjectPtr<ADefaultCharacter> CachedOwner;
+    TWeakObjectPtr<ADefaultPlayerController> CachedController;
 };

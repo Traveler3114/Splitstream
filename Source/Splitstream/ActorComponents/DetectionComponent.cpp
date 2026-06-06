@@ -11,7 +11,6 @@
 UDetectionComponent::UDetectionComponent()
 {
     SetIsReplicatedByDefault(true);
-    PrimaryComponentTick.TickInterval = 0.1f;
     PrimaryComponentTick.bCanEverTick = true;
 }
 
@@ -20,6 +19,7 @@ void UDetectionComponent::BeginPlay()
     Super::BeginPlay();
     DetectionStates.Empty();
     LastSentStates.Empty();
+    CachedOwner = Cast<ADefaultCharacter>(GetOwner());
 }
 
 void UDetectionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -221,46 +221,24 @@ void UDetectionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 
         if (bSendUpdate)
         {
-			if (ADefaultCharacter* MyChar = Cast<ADefaultCharacter>(GetOwner()))
-            {             
-                ADefaultPlayerController* DefaultPC = Cast<ADefaultPlayerController>(MyChar->GetController());
+            if (!CachedOwner.IsValid())
+            {
+                CachedOwner = Cast<ADefaultCharacter>(GetOwner());
+                CachedController = nullptr;
+            }
+            if (CachedOwner.IsValid())
+            {
+                ADefaultPlayerController* DefaultPC = CachedController.IsValid() ? CachedController.Get() : nullptr;
+                if (!DefaultPC)
+                {
+                    DefaultPC = Cast<ADefaultPlayerController>(CachedOwner->GetController());
+                    CachedController = DefaultPC;
+                }
                 if (DefaultPC)
                 {
                     DefaultPC->ClientUpdateDetectionWidget(Detector, ProgressPct, bIsLocked);
-				}
-            }
-            else
-            {
-                UWorld* World = GetWorld();
-                if (World)
-                {
-                    for (FConstPlayerControllerIterator PCIt = World->GetPlayerControllerIterator(); PCIt; ++PCIt)
-                    {
-                        if (APlayerController* PC = PCIt->Get())
-                        {
-                            if (ADefaultPlayerController* DefaultPC = Cast<ADefaultPlayerController>(PC))
-                            {
-                                DefaultPC->ClientUpdateDetectionWidget(Detector, ProgressPct, bIsLocked);
-                            }
-                        }
-                    }
                 }
             }
-
-            //UWorld* World = GetWorld();
-            //if (World)
-            //{
-            //    for (FConstPlayerControllerIterator PCIt = World->GetPlayerControllerIterator(); PCIt; ++PCIt)
-            //    {
-            //        if (APlayerController* PC = PCIt->Get())
-            //        {
-            //            if (ADefaultPlayerController* DefaultPC = Cast<ADefaultPlayerController>(PC))
-            //            {
-            //                DefaultPC->ClientUpdateDetectionWidget(Detector, ProgressPct, bIsLocked);
-            //            }
-            //        }
-            //    }
-            //}
         }
 
         // Clean up the throttling entry if this detector is cleared

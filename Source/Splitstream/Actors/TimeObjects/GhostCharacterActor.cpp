@@ -12,6 +12,7 @@
 AGhostCharacterActor::AGhostCharacterActor()
 {
     PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.TickInterval = 0.1f;
 
     DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
     RootComponent = DefaultSceneRoot;
@@ -52,53 +53,55 @@ void AGhostCharacterActor::BeginPlay()
         GhostMesh->bOnlyOwnerSee = false;
         GhostMesh->bOwnerNoSee = false;
     }
+
+    ACharacter* CharacterToMirror = Cast<ACharacter>(GetOwner());
+    if (CharacterToMirror)
+    {
+        if (CharacterToMirror->GetClass()->ImplementsInterface(UGhostMirrorSource::StaticClass()))
+        {
+            CachedSourceMesh = IGhostMirrorSource::Execute_GetMirrorMesh(CharacterToMirror);
+        }
+        if (!CachedSourceMesh)
+        {
+            CachedSourceMesh = CharacterToMirror->FindComponentByClass<USkeletalMeshComponent>();
+        }
+    }
 }
 
 void AGhostCharacterActor::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    // Always update mesh/pose/material on ALL instances, not just server!
-    ACharacter* CharacterToMirror = Cast<ACharacter>(GetOwner());
-    if (!CharacterToMirror || !GhostMesh)
+    if (!GhostMesh)
         return;
 
-    USkeletalMeshComponent* SourceMesh = nullptr;
-    if (CharacterToMirror->GetClass()->ImplementsInterface(UGhostMirrorSource::StaticClass()))
+    if (CachedSourceMesh)
     {
-        SourceMesh = IGhostMirrorSource::Execute_GetMirrorMesh(CharacterToMirror);
-    }
-    if (!SourceMesh)
-    {
-        SourceMesh = CharacterToMirror->FindComponentByClass<USkeletalMeshComponent>();
-    }
-
-    if (SourceMesh)
-    {
-        if (GhostMesh->GetSkeletalMeshAsset() != SourceMesh->GetSkeletalMeshAsset())
+        if (GhostMesh->GetSkeletalMeshAsset() != CachedSourceMesh->GetSkeletalMeshAsset())
         {
-            GhostMesh->SetSkeletalMeshAsset(SourceMesh->GetSkeletalMeshAsset());
+            GhostMesh->SetSkeletalMeshAsset(CachedSourceMesh->GetSkeletalMeshAsset());
         }
-        SourceMesh->RefreshBoneTransforms();
-        SourceMesh->UpdateComponentToWorld();
-        GhostMesh->SetLeaderPoseComponent(SourceMesh, true, true);
+        CachedSourceMesh->RefreshBoneTransforms();
+        CachedSourceMesh->UpdateComponentToWorld();
+        GhostMesh->SetLeaderPoseComponent(CachedSourceMesh, true, true);
     }
     else
     {
-        // If no source mesh, reset leader pose
         GhostMesh->SetLeaderPoseComponent(nullptr, true, true);
     }
 
-    if (GhostMaterial && GhostMesh->GetMaterial(0) != GhostMaterial)
+    if (!bMaterialApplied && GhostMaterial && GhostMesh->GetMaterial(0) != GhostMaterial)
     {
         const int32 NumMaterials = GhostMesh->GetNumMaterials();
         for (int32 i = 0; i < NumMaterials; ++i)
         {
             GhostMesh->SetMaterial(i, GhostMaterial);
         }
+        bMaterialApplied = true;
     }
 
-    if (HasAuthority())
+    ACharacter* CharacterToMirror = Cast<ACharacter>(GetOwner());
+    if (HasAuthority() && CharacterToMirror)
     {
         GhostTargetLocation = CharacterToMirror->GetActorLocation() + GhostOffset;
         GhostTargetRotation = CharacterToMirror->GetActorRotation();

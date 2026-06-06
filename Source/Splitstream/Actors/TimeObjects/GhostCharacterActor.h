@@ -54,4 +54,7 @@ public:
     void OnRep_GhostTargetLocation();
     UFUNCTION()
     void OnRep_GhostTargetRotation();
+
+    USkeletalMeshComponent* CachedSourceMesh = nullptr;
+    bool bMaterialApplied = false;
 };

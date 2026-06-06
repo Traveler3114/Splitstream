@@ -62,8 +62,10 @@ public:
     virtual void PostInitializeComponents() override;
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-    virtual void Tick(float DeltaTime) override;
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+    UFUNCTION()
+    void TickInteractionHighlight();
     virtual void OnRep_PlayerState() override;
     virtual void PossessedBy(AController* NewController) override;
 
@@ -160,6 +162,7 @@ public:
     void ServerCameraRotationUpdate(float NewPitch);
     UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Pitch)
     float Pitch = 0.0f;
+    float LastSentPitch = 0.0f;
     UFUNCTION()
     void OnRep_Pitch();
 
@@ -210,4 +213,5 @@ private:
     FDelegateHandle WalkSpeedDelegateHandle;
     FDelegateHandle RunSpeedDelegateHandle;
     FDelegateHandle CrouchSpeedDelegateHandle;
+    FTimerHandle InteractionHighlightTimerHandle;
 };

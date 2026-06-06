@@ -17,6 +17,7 @@ UProximityHackComponent::UProximityHackComponent()
 {
     SetIsReplicatedByDefault(true);
     PrimaryComponentTick.bCanEverTick = true;
+    PrimaryComponentTick.TickInterval = 0.05f;
     PrimaryComponentTick.SetTickFunctionEnable(true);
 
     ProximityHackingTag = TAG_Character_Status_ProximityHacking;
@@ -83,6 +84,8 @@ void UProximityHackComponent::BeginPlay()
             }
         }
     }
+
+    CachedFirstPC = GetWorld() ? GetWorld()->GetFirstPlayerController() : nullptr;
 }
 
 void UProximityHackComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -94,18 +97,19 @@ void UProximityHackComponent::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 
 bool UProximityHackComponent::IsLocallyViewedByActiveHacker() const
 {
-    if (!ActiveHacker || !GetWorld())
+    if (!ActiveHacker)
     {
         return false;
     }
 
-    if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+    APlayerController* PC = CachedFirstPC.IsValid() ? CachedFirstPC.Get() : nullptr;
+    if (!PC)
     {
-        APawn* LocalPawn = PC->GetPawn();
-        return (LocalPawn == ActiveHacker);
+        return false;
     }
 
-    return false;
+    APawn* LocalPawn = PC->GetPawn();
+    return (LocalPawn == ActiveHacker);
 }
 
 void UProximityHackComponent::HandleHackComplete()
