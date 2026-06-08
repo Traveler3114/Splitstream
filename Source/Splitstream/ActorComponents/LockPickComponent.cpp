@@ -30,16 +30,6 @@ void ULockPickComponent::BeginPlay()
     Super::BeginPlay();
     if (GetOwner()->HasAuthority())
     {
-        GeneratePins(); // Only on server!
-    }
-    PinSetStates.Init(false, Pins.Num());
-}
-
-void ULockPickComponent::OnComponentCreated()
-{
-    Super::OnComponentCreated();
-    if (GetOwner()->HasAuthority())
-    {
         GeneratePins();
     }
     PinSetStates.Init(false, Pins.Num());
@@ -191,7 +181,6 @@ bool ULockPickComponent::AdvancePin()
             bUnlocked = true;
             bPickingInProgress = false;
             OnUnlock.Broadcast();
-            OnRep_Unlocked();
             return true;
         }
         return false;
@@ -211,27 +200,6 @@ void ULockPickComponent::OnRep_Unlocked()
     if (bUnlocked)
     {
         OnUnlock.Broadcast();
-    }
-}
-
-// In LockPickComponent.cpp
-
-void ULockPickComponent::ExecuteServerAction_Implementation(const FServerActionPayload& Payload)
-{
-    // interpret Payload fields as appropriate for your component
-    ServerTrySetPin(Payload.FloatValue); // for lockpicking, FloatValue is the angle.
-    // For more advanced mechanics, parse more fields—IntValue, ObjectValue, etc.
-}
-
-void ULockPickComponent::ServerTrySetPin_Implementation(float InputAngle)
-{
-    if (TrySetCurrentPin(InputAngle))
-    {
-        if (AdvancePin())
-        {
-            EndLockPicking();
-            OnUnlock.Broadcast();
-        }
     }
 }
 

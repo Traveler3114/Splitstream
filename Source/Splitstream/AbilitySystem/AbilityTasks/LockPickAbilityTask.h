@@ -47,6 +47,4 @@ protected:
 
     void FinishTask(bool bSuccess);
 
-    UFUNCTION(Server, Reliable)
-    void ServerConfirmPin(float Angle); // Kept for possible future use
 };

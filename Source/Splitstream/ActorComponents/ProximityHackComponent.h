@@ -4,6 +4,7 @@
 #include "CoreMinimal.h"
 #include "HackComponent.h"
 #include "GameplayTagContainer.h"
+#include "ActiveGameplayEffectHandle.h"
 #include "ProximityHackComponent.generated.h"
 
 class ACharacter;
@@ -12,6 +13,7 @@ class UWidgetComponent;
 class UProximityHackWidget;
 class USphereComponent;
 class UItemBase;
+struct FGameplayEffectRemovalInfo;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class SPLITSTREAM_API UProximityHackComponent : public UHackComponent
@@ -40,6 +42,8 @@ public:
 protected:
     UFUNCTION()
     void HandleHackComplete();
+
+    void OnTimerRemoved(const FGameplayEffectRemovalInfo& RemovalInfo);
 
     UPROPERTY()
     USphereComponent* DetectionSphere = nullptr;
@@ -80,5 +84,17 @@ protected:
     void ApplyProximityTagTo(ACharacter* Player);
     void RemoveProximityTagFrom(ACharacter* Player);
 
+    /** Apply or re-apply the GE_Timer on the active hacker's ASC */
+    void ApplyTimerEffect();
+
     TWeakObjectPtr<APlayerController> CachedFirstPC;
+
+    // Local timer state for fill/drain visual (GE_Timer handles server-side completion)
+    float HackElapsed = 0.f;
+    bool bHackingInProgress = false;
+    FActiveGameplayEffectHandle TimerEffectHandle;
+
+    void CancelHacking();
+    UFUNCTION(NetMulticast, Reliable)
+    void MulticastResetHackElapsed();
 };

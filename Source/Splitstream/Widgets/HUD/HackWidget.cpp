@@ -11,7 +11,7 @@ void UHackWidget::NativeConstruct()
 void UHackWidget::InitializeHackWidget(UHackComponent* InHackComp)
 {
     HackComp = InHackComp;
-    LastProgress = HackComp ? HackComp->GetHackProgress() : 0.f;
+    LastProgress = 0.f;
 }
 
 void UHackWidget::UpdateProgress(float Progress)

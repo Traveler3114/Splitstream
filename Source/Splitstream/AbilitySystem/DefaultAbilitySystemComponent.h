@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemComponent.h"
+
 #include "DataAssets/AbilitySets/AbilityInputSet.h"
 #include "DataAssets/AbilitySets/DefaultGASet.h"
 #include "DefaultAbilitySystemComponent.generated.h"
@@ -30,4 +31,8 @@ public:
 
 	/** Find and cancel active abilities matching InputTag */
 	void HandleAbilityInputReleased(FGameplayTag InputTag);
+
+	/** Client → Server RPC: fire a gameplay event on the server's ASC */
+	UFUNCTION(Server, Reliable)
+	void ServerHandleClientEvent(FGameplayTag EventTag, FGameplayEventData EventData);
 };

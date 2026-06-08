@@ -28,6 +28,9 @@ public:
     UFUNCTION()
     void OnSearchTaskFinished(bool bSuccess);
 
+    UFUNCTION()
+    void OnTimerRemoved(const FGameplayEffectRemovalInfo& RemovalInfo);
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Search|UI")
     TSubclassOf<class USearchWidget> SearchWidgetClass;
 
@@ -37,4 +40,6 @@ protected:
 
     UPROPERTY()
     class USearchComponent* ActiveSearchComp = nullptr;
+
+    FActiveGameplayEffectHandle ActiveTimerHandle;
 };

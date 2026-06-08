@@ -1,6 +1,5 @@
 #include "DefaultPlayerController.h"
 #include "Splitstream.h"
-#include "ActorComponents/LockPickComponent.h"
 #include "Widgets/HUD/CharacterHUD.h"
 #include "Widgets/PauseMenuWidget.h"
 #include "Widgets/Calendar/CalendarWidget.h"

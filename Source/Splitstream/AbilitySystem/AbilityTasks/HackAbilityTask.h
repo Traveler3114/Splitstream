@@ -19,6 +19,9 @@ public:
 
     static UHackAbilityTask* StartHackTask(UGameplayAbility* OwningAbility, UHackComponent* InHackComp);
 
+    void SetTimerHandle(FActiveGameplayEffectHandle InHandle) { TimerEffectHandle = InHandle; }
+    void SetTaskDuration(float InDuration) { TaskDuration = InDuration; }
+
     virtual void Activate() override;
     virtual void TickTask(float DeltaTime) override;
     virtual void OnDestroy(bool bInOwnerFinished) override;
@@ -32,6 +35,11 @@ public:
 protected:
     UPROPERTY()
     UHackComponent* HackComp = nullptr;
+
+    FActiveGameplayEffectHandle TimerEffectHandle;
+
+    float TaskStartTime = 0.f;
+    float TaskDuration = 0.f;
 
     bool bIsHacking = false;
 

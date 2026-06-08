@@ -1,7 +1,9 @@
 #include "DefaultGASearch.h"
 #include "AbilitySystemComponent.h"
-#include "AbilitySystem/AbilityTasks/SearchAbilityTask.h"
+#include "AbilitySystem/GE_Timer.h"
 #include "AbilitySystem/SplitstreamGameplayTags.h"
+#include "AbilitySystem/AbilityTasks/SearchAbilityTask.h"
+#include "Abilities/Tasks/AbilityTask_WaitGameplayEffectRemoved.h"
 #include "ActorComponents/SearchComponent.h"
 #include "Widgets/HUD/SearchWidget.h"
 
@@ -50,22 +52,44 @@ void UDefaultGASearch::ActivateAbility(
         return;
     }
 
-    // LocalPredicted: open prediction window and start local predicted logic, server is authoritative.
-    if (IsLocallyControlled() && ActorInfo && ActorInfo->AbilitySystemComponent.IsValid())
+    if (CurrentActorInfo->IsNetAuthority())
     {
-        FScopedPredictionWindow ScopedPred(ActorInfo->AbilitySystemComponent.Get(), /*bCreateNewPredictionKeyIfNotAvailable=*/true);
-        ActiveSearchComp->StartSearching(); // Start predicted search (UI/progress) locally
-    }
-    else
-    {
-        if (ActorInfo && ActorInfo->IsNetAuthority())
+        if (TriggerEventData && TriggerEventData->Instigator)
         {
-            ActiveSearchComp->StartSearching(); // Start authoritative search on the server
+            AActor* InstigatorPtr = const_cast<AActor*>(TriggerEventData->Instigator.Get());
+            ActiveSearchComp->LastInteractor = InstigatorPtr;
         }
+        if (ActiveSearchComp->bAllowMultipleSearches)
+        {
+            ActiveSearchComp->bSearched = false;
+        }
+    }
+
+    UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get();
+    if (!ASC)
+    {
+        EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+        return;
+    }
+
+    FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(UGE_Timer::StaticClass());
+    if (SpecHandle.IsValid())
+    {
+        SpecHandle.Data->SetSetByCallerMagnitude(TAG_SetByCaller_Duration, ActiveSearchComp->SearchDuration);
+        ActiveTimerHandle = ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
+    }
+
+    UAbilityTask_WaitGameplayEffectRemoved* WaitTask = UAbilityTask_WaitGameplayEffectRemoved::WaitForGameplayEffectRemoved(this, ActiveTimerHandle);
+    if (WaitTask)
+    {
+        WaitTask->OnRemoved.AddDynamic(this, &UDefaultGASearch::OnTimerRemoved);
+        WaitTask->ReadyForActivation();
     }
 
     ActiveSearchTask = USearchAbilityTask::StartSearchTask(this, ActiveSearchComp);
     ActiveSearchTask->SearchWidgetClass = SearchWidgetClass;
+    ActiveSearchTask->SetTimerHandle(ActiveTimerHandle);
+    ActiveSearchTask->SetTaskDuration(ActiveSearchComp->SearchDuration);
     ActiveSearchTask->OnFinished.AddDynamic(this, &UDefaultGASearch::OnSearchTaskFinished);
     ActiveSearchTask->ReadyForActivation();
 }
@@ -76,13 +100,21 @@ void UDefaultGASearch::EndAbility(
     const FGameplayAbilityActivationInfo ActivationInfo,
     bool bReplicateEndAbility, bool bWasCancelled)
 {
-    // Only cancel searching if the ability was actually cancelled (not on success)
-    if (ActiveSearchComp && bWasCancelled)
+    if (ActiveTimerHandle.IsValid() && ActorInfo && ActorInfo->AbilitySystemComponent.IsValid())
     {
-        ActiveSearchComp->CancelSearching();
+        ActorInfo->AbilitySystemComponent->RemoveActiveGameplayEffect(ActiveTimerHandle);
     }
+    ActiveTimerHandle.Invalidate();
     ActiveSearchComp = nullptr;
     Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+}
+
+void UDefaultGASearch::OnTimerRemoved(const FGameplayEffectRemovalInfo& RemovalInfo)
+{
+    if (!RemovalInfo.bPrematureRemoval && ActiveSearchComp && CurrentActorInfo->IsNetAuthority())
+    {
+        ActiveSearchComp->SetSearched();
+    }
 }
 
 void UDefaultGASearch::OnSearchTaskFinished(bool bSuccess)

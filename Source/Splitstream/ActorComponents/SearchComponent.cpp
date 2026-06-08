@@ -7,11 +7,8 @@
 USearchComponent::USearchComponent()
 {
     SetIsReplicatedByDefault(true);
-    PrimaryComponentTick.bCanEverTick = true;
-    bSearchingInProgress = false;
     bSearched = false;
     SearchDuration = 10.f;
-    SearchElapsed = 0.f;
 }
 
 void USearchComponent::BeginPlay()
@@ -19,83 +16,20 @@ void USearchComponent::BeginPlay()
     Super::BeginPlay();
 }
 
-void USearchComponent::StartSearching()
+void USearchComponent::SetSearched()
 {
-    if (bSearchingInProgress)
+    if (GetOwner() && !GetOwner()->HasAuthority()) return;
+
+    if (bAllowMultipleSearches)
     {
-        if (bAllowMultipleSearches)
-        {
-            if (GetOwner() && GetOwner()->HasAuthority())
-            {
-                MulticastResetSearchElapsed();
-            }
-            SearchElapsed = 0.f;
-            SetComponentTickEnabled(true);
-        }
-        else
-        {
-            return;
-        }
+        bSearched = !bSearched;
     }
     else
     {
-        if (bSearched && !bAllowMultipleSearches)
-        {
-            return;
-        }
-
-        bSearchingInProgress = true;
-        if (GetOwner() && GetOwner()->HasAuthority())
-        {
-            MulticastResetSearchElapsed();
-        }
-        SetComponentTickEnabled(true);
+        if (bSearched) return;
+        bSearched = true;
     }
-}
-
-void USearchComponent::CancelSearching()
-{
-    bSearchingInProgress = false;
-    SetComponentTickEnabled(false);
-    if (GetOwner() && GetOwner()->HasAuthority())
-    {
-        MulticastResetSearchElapsed();
-    }
-}
-
-void USearchComponent::MulticastResetSearchElapsed_Implementation()
-{
-    SearchElapsed = 0.f;
-}
-
-float USearchComponent::GetSearchProgress() const
-{
-    float Progress = (!bSearchingInProgress || SearchDuration <= 0.f) ? 0.f
-        : FMath::Clamp(SearchElapsed / SearchDuration, 0.f, 1.f);
-    return Progress;
-}
-
-void USearchComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-    if (bSearchingInProgress)
-    {
-        SearchElapsed += DeltaTime;
-        if (SearchElapsed >= SearchDuration)
-        {
-            bSearchingInProgress = false;
-            if (bAllowMultipleSearches)
-            {
-                bSearched = !bSearched;
-            }
-            else
-            {
-                bSearched = true;
-            }
-            SetComponentTickEnabled(false);
-            OnSearchComplete.Broadcast();
-        }
-    }
+    OnSearchComplete.Broadcast();
 }
 
 void USearchComponent::OnRep_Searched()
@@ -105,12 +39,7 @@ void USearchComponent::OnRep_Searched()
 
 void USearchComponent::Interact(AActor* Interactor)
 {
-    if (GetOwner() && GetOwner()->HasAuthority())
-    {
-        LastInteractor = Interactor;
-    }
-
-    if ((bSearched || bSearchingInProgress) && !bAllowMultipleSearches)
+    if (bSearched && !bAllowMultipleSearches)
     {
         return;
     }
@@ -137,7 +66,6 @@ void USearchComponent::Interact(AActor* Interactor)
 
 void USearchComponent::CancelInteract(AActor* Interactor)
 {
-    CancelSearching();
     if (Interactor)
     {
         if (IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(Interactor))
@@ -156,5 +84,4 @@ void USearchComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(USearchComponent, bSearched);
-    DOREPLIFETIME(USearchComponent, bSearchingInProgress);
 }

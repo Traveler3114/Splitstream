@@ -2,8 +2,8 @@
 #include "ActorComponents/SearchComponent.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
+#include "AbilitySystemComponent.h"
 #include "Widgets/HUD/SearchWidget.h"
-#include "Player/Controllers/DefaultPlayerController.h"
 
 USearchAbilityTask* USearchAbilityTask::StartSearchTask(UGameplayAbility* OwningAbility, USearchComponent* InSearchComp)
 {
@@ -18,13 +18,6 @@ void USearchAbilityTask::Activate()
     {
         FinishTask(false);
         return;
-    }
-
-    InitialSearchedState = SearchComp->bSearched; // <-- store the initial searched state for toggle-based completion
-
-    if (GetAvatarActor()->HasAuthority())
-    {
-        SearchComp->StartSearching();
     }
 
     if (APlayerController* PC = Cast<APlayerController>(GetAvatarActor()->GetInstigatorController()))
@@ -43,6 +36,7 @@ void USearchAbilityTask::Activate()
         }
     }
 
+    TaskStartTime = GetWorld()->GetTimeSeconds();
     bIsSearching = true;
     BindInput();
     bTickingTask = true;
@@ -70,19 +64,16 @@ void USearchAbilityTask::TickTask(float DeltaTime)
         return;
     }
 
-    if (SearchWidget)
+    if (SearchWidget && TaskDuration > 0.f)
     {
-        SearchWidget->UpdateProgress(SearchComp->GetSearchProgress());
+        float Elapsed = GetWorld()->GetTimeSeconds() - TaskStartTime;
+        float Progress = FMath::Clamp(Elapsed / TaskDuration, 0.f, 1.f);
+        SearchWidget->UpdateProgress(Progress);
     }
 
-    // Only complete when search state toggles from original (supports alternating multi-search)
-    if (SearchComp->bSearched != InitialSearchedState)
+    if (SearchComp->bSearched)
     {
         FinishTask(true);
-    }
-    else if (!SearchComp->bSearchingInProgress)
-    {
-        FinishTask(false);
     }
 }
 
@@ -97,7 +88,6 @@ void USearchAbilityTask::BindInput()
 
 void USearchAbilityTask::UnbindInput()
 {
-    // Unreal InputComponent handles cleanup; explicit unbinding is not needed.
 }
 
 void USearchAbilityTask::OnCancel()
@@ -105,10 +95,6 @@ void USearchAbilityTask::OnCancel()
     if (!bIsSearching) return;
     bIsSearching = false;
 
-    if (GetAvatarActor()->HasAuthority())
-    {
-        if (SearchComp) SearchComp->CancelSearching();
-    }
     OnFinished.Broadcast(false);
     EndTask();
 }

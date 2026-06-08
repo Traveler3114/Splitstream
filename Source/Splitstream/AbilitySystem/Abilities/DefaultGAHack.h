@@ -28,6 +28,9 @@ public:
     UFUNCTION()
     void OnHackTaskFinished(bool bSuccess);
 
+    UFUNCTION()
+    void OnTimerRemoved(const FGameplayEffectRemovalInfo& RemovalInfo);
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hack|UI")
     TSubclassOf<class UHackWidget> HackWidgetClass;
 
@@ -37,4 +40,6 @@ protected:
 
     UPROPERTY()
     class UHackComponent* ActiveHackComp = nullptr;
+
+    FActiveGameplayEffectHandle ActiveTimerHandle;
 };

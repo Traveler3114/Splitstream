@@ -19,10 +19,7 @@ public:
     FOnHackComplete OnHackComplete;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hacking")
-    float HackDuration = 10.f; // seconds
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "Hacking")
-    bool bHackingInProgress = false;
+    float HackDuration = 10.f;
 
     UPROPERTY(ReplicatedUsing = OnRep_Hacked, EditAnywhere, BlueprintReadWrite, Category = "Hacking")
     bool bHacked = false;
@@ -30,17 +27,7 @@ public:
     UFUNCTION()
     void OnRep_Hacked();
 
-    UFUNCTION(BlueprintCallable, Category = "Hacking")
-    void StartHacking();
-
-    UFUNCTION(NetMulticast, Reliable)
-    void MulticastResetHackElapsed();
-
-    UFUNCTION(BlueprintCallable, Category = "Hacking")
-    void CancelHacking();
-
-    UFUNCTION(BlueprintCallable, Category = "Hacking")
-    float GetHackProgress() const;
+    void SetHacked();
 
     UFUNCTION(BlueprintCallable, Category = "Hacking")
     void Interact(AActor* Interactor);
@@ -50,7 +37,4 @@ public:
 
 protected:
     virtual void BeginPlay() override;
-    virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-    float HackElapsed = 0.f;
 };

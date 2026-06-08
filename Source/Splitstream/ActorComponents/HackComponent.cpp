@@ -7,12 +7,8 @@
 UHackComponent::UHackComponent()
 {
     SetIsReplicatedByDefault(true);
-    PrimaryComponentTick.bCanEverTick = true;
-    PrimaryComponentTick.SetTickFunctionEnable(true);
-    bHackingInProgress = false;
     bHacked = false;
     HackDuration = 10.f;
-    HackElapsed = 0.f;
 }
 
 void UHackComponent::BeginPlay()
@@ -20,45 +16,12 @@ void UHackComponent::BeginPlay()
     Super::BeginPlay();
 }
 
-void UHackComponent::StartHacking()
+void UHackComponent::SetHacked()
 {
-    if (bHackingInProgress || bHacked) return;
-    if (GetOwnerRole() == ROLE_Authority)
-    {
-        MulticastResetHackElapsed();
-    }
-    bHackingInProgress = true;
-    SetComponentTickEnabled(true);
-}
-void UHackComponent::CancelHacking()
-{
-    bHackingInProgress = false;
-    SetComponentTickEnabled(false);
-    if (GetOwnerRole() == ROLE_Authority)
-    {
-        MulticastResetHackElapsed();
-    }
-}
-float UHackComponent::GetHackProgress() const
-{
-    if (!bHackingInProgress || HackDuration <= 0.f) return 0.f;
-    return FMath::Clamp(HackElapsed / HackDuration, 0.f, 1.f);
-}
-
-void UHackComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-    if (bHackingInProgress)
-    {
-        HackElapsed += DeltaTime;
-        if (HackElapsed >= HackDuration)
-        {
-            bHackingInProgress = false;
-            bHacked = true;
-            SetComponentTickEnabled(false);
-            OnHackComplete.Broadcast();
-        }
-    }
+    if (GetOwnerRole() != ROLE_Authority) return;
+    if (bHacked) return;
+    bHacked = true;
+    OnHackComplete.Broadcast();
 }
 
 void UHackComponent::OnRep_Hacked()
@@ -69,23 +32,17 @@ void UHackComponent::OnRep_Hacked()
     }
 }
 
-void UHackComponent::MulticastResetHackElapsed_Implementation()
-{
-    HackElapsed = 0.f;
-}
-
 void UHackComponent::Interact(AActor* Interactor)
 {
-    if (bHacked || bHackingInProgress) return;
+    if (bHacked) return;
 
-    // Fire gameplay event for GAS
     if (IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(Interactor))
     {
         if (UAbilitySystemComponent* ASC = AbilityInterface->GetAbilitySystemComponent())
         {
             FGameplayEventData EventData;
             EventData.Instigator = Interactor;
-            EventData.OptionalObject = GetOwner(); // This is the hackable actor, needed for GAS ability
+            EventData.OptionalObject = GetOwner();
 
             ASC->HandleGameplayEvent(
                 TAG_Character_Ability_Hack,
@@ -94,12 +51,11 @@ void UHackComponent::Interact(AActor* Interactor)
         }
     }
 }
+
 void UHackComponent::CancelInteract(AActor* Interactor)
 {
-    CancelHacking();
     if (Interactor)
     {
-        // Get AbilitySystemComponent from the interactor
         if (IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(Interactor))
         {
             if (UAbilitySystemComponent* ASC = AbilityInterface->GetAbilitySystemComponent())
@@ -116,6 +72,4 @@ void UHackComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(UHackComponent, bHacked);
-    DOREPLIFETIME(UHackComponent, bHackingInProgress);
-    // Replicate other relevant properties if needed
 }

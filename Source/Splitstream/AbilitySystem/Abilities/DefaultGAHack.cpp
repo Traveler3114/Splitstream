@@ -1,15 +1,15 @@
 #include "DefaultGAHack.h"
 #include "AbilitySystemComponent.h"
+#include "AbilitySystem/GE_Timer.h"
 #include "AbilitySystem/SplitstreamGameplayTags.h"
 #include "AbilitySystem/AbilityTasks/HackAbilityTask.h"
+#include "Abilities/Tasks/AbilityTask_WaitGameplayEffectRemoved.h"
 #include "ActorComponents/HackComponent.h"
 #include "Widgets/HUD/HackWidget.h"
 
 UDefaultGAHack::UDefaultGAHack()
 {
     InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
-
-    // Make this ability local-predicted so clients run ActivateAbility immediately for snappy UI.
     NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
 
     FGameplayTagContainer Tags;
@@ -48,34 +48,37 @@ void UDefaultGAHack::ActivateAbility(
 
     if (!ActiveHackComp)
     {
-        // Nothing to hack; finish ability immediately.
         EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
         return;
     }
 
-    // If this ability is LocalPredicted, the client will execute this function locally immediately.
-    // Create a scoped prediction window on the owning ASC so this activation has a PredictionKey.
-    if (IsLocallyControlled() && ActorInfo && ActorInfo->AbilitySystemComponent.IsValid())
+    UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get();
+    if (!ASC)
     {
-        // Create a scoped prediction window so this activation carries a PredictionKey.
-        // This allows future predicted effects/operations to be reconciled by the server.
-        FScopedPredictionWindow ScopedPred(ActorInfo->AbilitySystemComponent.Get(), /*bCreateNewPredictionKeyIfNotAvailable=*/true);
-
-        // Start local predicted hack so UI appears instantly.
-        ActiveHackComp->StartHacking();
-    }
-    else
-    {
-        // Server/authority side: start authoritative hacking (server validation can be added here).
-        if (ActorInfo && ActorInfo->IsNetAuthority())
-        {
-            ActiveHackComp->StartHacking();
-        }
+        EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+        return;
     }
 
-    // Start the ability task that manages the UI and cancellation input.
+    // Apply GE_Timer with SetByCaller duration
+    FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(UGE_Timer::StaticClass());
+    if (SpecHandle.IsValid())
+    {
+        SpecHandle.Data->SetSetByCallerMagnitude(TAG_SetByCaller_Duration, ActiveHackComp->HackDuration);
+        ActiveTimerHandle = ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
+    }
+
+    // Wait for GE removal to detect natural expiry vs cancel
+    UAbilityTask_WaitGameplayEffectRemoved* WaitTask = UAbilityTask_WaitGameplayEffectRemoved::WaitForGameplayEffectRemoved(this, ActiveTimerHandle);
+    if (WaitTask)
+    {
+        WaitTask->OnRemoved.AddDynamic(this, &UDefaultGAHack::OnTimerRemoved);
+        WaitTask->ReadyForActivation();
+    }
+
     ActiveHackTask = UHackAbilityTask::StartHackTask(this, ActiveHackComp);
     ActiveHackTask->HackWidgetClass = HackWidgetClass;
+    ActiveHackTask->SetTimerHandle(ActiveTimerHandle);
+    ActiveHackTask->SetTaskDuration(ActiveHackComp->HackDuration);
     ActiveHackTask->OnFinished.AddDynamic(this, &UDefaultGAHack::OnHackTaskFinished);
     ActiveHackTask->ReadyForActivation();
 }
@@ -86,12 +89,21 @@ void UDefaultGAHack::EndAbility(
     const FGameplayAbilityActivationInfo ActivationInfo,
     bool bReplicateEndAbility, bool bWasCancelled)
 {
-    if (ActiveHackComp && bWasCancelled)
+    if (ActiveTimerHandle.IsValid() && ActorInfo && ActorInfo->AbilitySystemComponent.IsValid())
     {
-        ActiveHackComp->CancelHacking();
+        ActorInfo->AbilitySystemComponent->RemoveActiveGameplayEffect(ActiveTimerHandle);
     }
+    ActiveTimerHandle.Invalidate();
     ActiveHackComp = nullptr;
     Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+}
+
+void UDefaultGAHack::OnTimerRemoved(const FGameplayEffectRemovalInfo& RemovalInfo)
+{
+    if (!RemovalInfo.bPrematureRemoval && ActiveHackComp && CurrentActorInfo->IsNetAuthority())
+    {
+        ActiveHackComp->SetHacked();
+    }
 }
 
 void UDefaultGAHack::OnHackTaskFinished(bool bSuccess)

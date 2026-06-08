@@ -60,3 +60,8 @@ void UDefaultAbilitySystemComponent::HandleAbilityInputReleased(FGameplayTag Inp
         }
     }
 }
+
+void UDefaultAbilitySystemComponent::ServerHandleClientEvent_Implementation(FGameplayTag EventTag, FGameplayEventData EventData)
+{
+    HandleGameplayEvent(EventTag, &EventData);
+}

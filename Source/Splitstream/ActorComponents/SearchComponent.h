@@ -19,10 +19,7 @@ public:
     FOnSearchComplete OnSearchComplete;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Searching")
-    float SearchDuration = 10.f; // seconds
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "Searching")
-    bool bSearchingInProgress = false;
+    float SearchDuration = 10.f;
 
     UPROPERTY(ReplicatedUsing = OnRep_Searched, VisibleAnywhere, BlueprintReadOnly, Category = "Searching")
     bool bSearched = false;
@@ -33,15 +30,7 @@ public:
     UFUNCTION()
     void OnRep_Searched();
 
-    UFUNCTION(BlueprintCallable, Category = "Searching")
-    void StartSearching();
-
-
-    UFUNCTION(BlueprintCallable, Category = "Searching")
-    void CancelSearching();
-
-    UFUNCTION(BlueprintCallable, Category = "Searching")
-    float GetSearchProgress() const;
+    void SetSearched();
 
     UFUNCTION(BlueprintCallable, Category = "Searching")
     void Interact(AActor* Interactor);
@@ -51,12 +40,6 @@ public:
 
     TWeakObjectPtr<AActor> LastInteractor;
 
-    UFUNCTION(NetMulticast, Reliable)
-    void MulticastResetSearchElapsed();
-
 protected:
     virtual void BeginPlay() override;
-    virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-    float SearchElapsed = 0.f;
 };

@@ -2,8 +2,8 @@
 #include "ActorComponents/HackComponent.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
+#include "AbilitySystemComponent.h"
 #include "Widgets/HUD/HackWidget.h"
-#include "Player/Controllers/DefaultPlayerController.h"
 
 UHackAbilityTask* UHackAbilityTask::StartHackTask(UGameplayAbility* OwningAbility, UHackComponent* InHackComp)
 {
@@ -18,11 +18,6 @@ void UHackAbilityTask::Activate()
     {
         FinishTask(false);
         return;
-    }
-
-    if (GetAvatarActor()->HasAuthority())
-    {
-        HackComp->StartHacking();
     }
 
     if (APlayerController* PC = Cast<APlayerController>(GetAvatarActor()->GetInstigatorController()))
@@ -41,6 +36,7 @@ void UHackAbilityTask::Activate()
         }
     }
 
+    TaskStartTime = GetWorld()->GetTimeSeconds();
     bIsHacking = true;
     BindInput();
     bTickingTask = true;
@@ -68,18 +64,16 @@ void UHackAbilityTask::TickTask(float DeltaTime)
         return;
     }
 
-    if (HackWidget)
+    if (HackWidget && TaskDuration > 0.f)
     {
-        HackWidget->UpdateProgress(HackComp->GetHackProgress());
+        float Elapsed = GetWorld()->GetTimeSeconds() - TaskStartTime;
+        float Progress = FMath::Clamp(Elapsed / TaskDuration, 0.f, 1.f);
+        HackWidget->UpdateProgress(Progress);
     }
 
     if (HackComp->bHacked)
     {
         FinishTask(true);
-    }
-    else if (!HackComp->bHackingInProgress)
-    {
-        FinishTask(false);
     }
 }
 
@@ -94,7 +88,6 @@ void UHackAbilityTask::BindInput()
 
 void UHackAbilityTask::UnbindInput()
 {
-    // Unreal InputComponent handles cleanup; explicit unbinding is not needed.
 }
 
 void UHackAbilityTask::OnCancel()
@@ -102,10 +95,6 @@ void UHackAbilityTask::OnCancel()
     if (!bIsHacking) return;
     bIsHacking = false;
 
-    if (GetAvatarActor()->HasAuthority())
-    {
-        if (HackComp) HackComp->CancelHacking();
-    }
     OnFinished.Broadcast(false);
     EndTask();
 }

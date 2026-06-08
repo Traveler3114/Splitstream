@@ -8,6 +8,7 @@
 #include "AbilitySystemInterface.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/SplitstreamGameplayTags.h"
+#include "AbilitySystem/GE_Timer.h"
 #include "Engine/World.h"
 #include "Blueprint/UserWidget.h"
 #include "ActorComponents/InventoryComponent.h"
@@ -141,6 +142,14 @@ void UProximityHackComponent::HandleHackComplete()
     RemoveProximityTagFrom(ActiveHacker);
 }
 
+void UProximityHackComponent::OnTimerRemoved(const FGameplayEffectRemovalInfo& RemovalInfo)
+{
+    if (!RemovalInfo.bPrematureRemoval && GetOwnerRole() == ROLE_Authority)
+    {
+        SetHacked();
+    }
+}
+
 void UProximityHackComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
@@ -162,11 +171,15 @@ void UProximityHackComponent::TickComponent(float DeltaTime, ELevelTick TickType
         Server_UpdateProximity();
     }
 
-    // --- DRAINING LOGIC: opposite of filling, runs on any machine with this component ---
+    // --- FILLING LOGIC (server only for source of truth) ---
+    if (bIsServer && bHackingInProgress && !bDrainingHack && !bHacked && HackDuration > 0.f)
+    {
+        HackElapsed = FMath::Min(HackDuration, HackElapsed + DeltaTime);
+    }
+
+    // --- DRAINING LOGIC: opposite of filling ---
     if (bDrainingHack && HackDuration > 0.f)
     {
-        // Filling is HackElapsed += DeltaTime (in UHackComponent::TickComponent when bHackingInProgress).
-        // Here we do the opposite.
         HackElapsed = FMath::Max(0.f, HackElapsed - DeltaTime);
 
         if (HackElapsed <= 0.f)
@@ -174,7 +187,6 @@ void UProximityHackComponent::TickComponent(float DeltaTime, ELevelTick TickType
             HackElapsed = 0.f;
             bDrainingHack = false;
             bHackingInProgress = false;
-            bHacked = false; // make sure it's not marked completed
 
             RemoveProximityTagFrom(ActiveHacker);
             ActiveHacker = nullptr;
@@ -190,7 +202,7 @@ void UProximityHackComponent::TickComponent(float DeltaTime, ELevelTick TickType
         }
     }
 
-    // Compute local progress from HackElapsed instead of GetHackProgress()
+    // Compute local progress from HackElapsed
     float Progress = 0.f;
     if (HackDuration > 0.f)
     {
@@ -223,7 +235,7 @@ void UProximityHackComponent::OnDetectionBeginOverlap(UPrimitiveComponent* Overl
     if (GetOwnerRole() != ROLE_Authority || !OtherActor)
         return;
 
-    if (bHacked)      // <--- PREVENT any further hacking/overlap effect if already hacked
+    if (bHacked)
         return;
 
     ACharacter* Character = Cast<ACharacter>(OtherActor);
@@ -255,7 +267,6 @@ void UProximityHackComponent::OnDetectionEndOverlap(UPrimitiveComponent* Overlap
 
     if (Character == ActiveHacker)
     {
-        // Start draining instead of hard reset
         BeginDrainForActiveHacker();
     }
 }
@@ -285,6 +296,7 @@ void UProximityHackComponent::Server_UpdateProximity()
             {
                 bDrainingHack = false;
                 bHackingInProgress = true;
+                ApplyTimerEffect();
                 SetComponentTickEnabled(true);
             }
         }
@@ -294,11 +306,9 @@ void UProximityHackComponent::Server_UpdateProximity()
             ACharacter* NewHacker = FindFirstPlayerInRange();
             if (NewHacker && NewHacker != ActiveHacker)
             {
-                // New player in range while old one is draining -> throw away old progress and start fresh.
                 FullyCancelAndReset();
                 StartHackingForPlayer(NewHacker);
             }
-            // If no one else, we just keep draining until HackElapsed hits 0.
         }
 
         return;
@@ -347,15 +357,65 @@ void UProximityHackComponent::StartHackingForPlayer(ACharacter* NewHacker)
     // Stop any drain and start forward fill
     bDrainingHack = false;
     bHackingInProgress = true;
+    ApplyTimerEffect();
     SetComponentTickEnabled(true);
+}
 
-    // IMPORTANT: do NOT call StartHacking() here, because that would reset HackElapsed to 0 on all machines.
-    // We either already reset via FullyCancelAndReset, or we continue from current HackElapsed.
+void UProximityHackComponent::ApplyTimerEffect()
+{
+    if (!ActiveHacker) return;
+
+    if (IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(ActiveHacker))
+    {
+        if (UAbilitySystemComponent* ASC = AbilityInterface->GetAbilitySystemComponent())
+        {
+            // Unbind and remove existing timer if any
+            if (TimerEffectHandle.IsValid())
+            {
+                if (FOnActiveGameplayEffectRemoved_Info* RemovedDel = ASC->OnGameplayEffectRemoved_InfoDelegate(TimerEffectHandle))
+                {
+                    RemovedDel->RemoveAll(this);
+                }
+                ASC->RemoveActiveGameplayEffect(TimerEffectHandle);
+                TimerEffectHandle.Invalidate();
+            }
+
+            float RemainingDuration = FMath::Max(0.001f, HackDuration - HackElapsed);
+
+            FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+            FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(UGE_Timer::StaticClass(), 1.f, Context);
+            if (Spec.IsValid())
+            {
+                Spec.Data->SetSetByCallerMagnitude(TAG_SetByCaller_Duration, RemainingDuration);
+                TimerEffectHandle = ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+                if (FOnActiveGameplayEffectRemoved_Info* RemovedDel = ASC->OnGameplayEffectRemoved_InfoDelegate(TimerEffectHandle))
+                {
+                    RemovedDel->AddUObject(this, &UProximityHackComponent::OnTimerRemoved);
+                }
+            }
+        }
+    }
 }
 
 void UProximityHackComponent::BeginDrainForActiveHacker()
 {
-    // Switch from forward fill to drain, keep current HackElapsed
+    // Remove GE timer (premature removal, completion handler will ignore it)
+    if (TimerEffectHandle.IsValid() && ActiveHacker)
+    {
+        if (IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(ActiveHacker))
+        {
+            if (UAbilitySystemComponent* ASC = AbilityInterface->GetAbilitySystemComponent())
+            {
+                if (FOnActiveGameplayEffectRemoved_Info* RemovedDel = ASC->OnGameplayEffectRemoved_InfoDelegate(TimerEffectHandle))
+                {
+                    RemovedDel->RemoveAll(this);
+                }
+                ASC->RemoveActiveGameplayEffect(TimerEffectHandle);
+            }
+        }
+        TimerEffectHandle.Invalidate();
+    }
+
     bHackingInProgress = false;
     bDrainingHack = true;
     SetComponentTickEnabled(true);
@@ -364,9 +424,40 @@ void UProximityHackComponent::BeginDrainForActiveHacker()
 void UProximityHackComponent::FullyCancelAndReset()
 {
     bDrainingHack = false;
+    CancelHacking();
     RemoveProximityTagFrom(ActiveHacker);
     ActiveHacker = nullptr;
-    CancelHacking(); // this calls MulticastResetHackElapsed and stops UHackComponent tick
+}
+
+void UProximityHackComponent::CancelHacking()
+{
+    // Remove GE timer
+    if (TimerEffectHandle.IsValid())
+    {
+        if (ActiveHacker)
+        {
+            if (IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(ActiveHacker))
+            {
+                if (UAbilitySystemComponent* ASC = AbilityInterface->GetAbilitySystemComponent())
+                    {
+                        if (FOnActiveGameplayEffectRemoved_Info* RemovedDel = ASC->OnGameplayEffectRemoved_InfoDelegate(TimerEffectHandle))
+                        {
+                            RemovedDel->RemoveAll(this);
+                        }
+                        ASC->RemoveActiveGameplayEffect(TimerEffectHandle);
+                    }
+            }
+        }
+        TimerEffectHandle.Invalidate();
+    }
+
+    bHackingInProgress = false;
+    MulticastResetHackElapsed();
+}
+
+void UProximityHackComponent::MulticastResetHackElapsed_Implementation()
+{
+    HackElapsed = 0.f;
 }
 
 void UProximityHackComponent::ApplyProximityTagTo(ACharacter* Player)

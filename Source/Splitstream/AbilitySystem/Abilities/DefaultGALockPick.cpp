@@ -1,9 +1,10 @@
 #include "DefaultGALockPick.h"
+#include "AbilitySystemComponent.h"
+
 #include "AbilitySystem/AbilityTasks/LockPickAbilityTask.h"
 #include "ActorComponents/LockPickComponent.h"
 #include "Widgets/HUD/LockPickWidget.h"
 #include "AbilitySystem/SplitstreamGameplayTags.h"
-#include "Engine/Engine.h"
 
 UDefaultGALockPick::UDefaultGALockPick()
 {
@@ -49,22 +50,20 @@ void UDefaultGALockPick::ActivateAbility(
         return;
     }
 
-    if (IsLocallyControlled() && ActorInfo && ActorInfo->AbilitySystemComponent.IsValid())
-    {
-        FScopedPredictionWindow ScopedPred(ActorInfo->AbilitySystemComponent.Get(), true);
+    ActiveLockComp->StartLockPicking();
 
-        ActiveLockPickTask = ULockPickAbilityTask::StartLockPickTask(this, ActiveLockComp);
-        ActiveLockPickTask->LockPickWidgetClass = LockPickWidgetClass;
-        ActiveLockPickTask->OnFinished.AddDynamic(this, &UDefaultGALockPick::OnLockPickTaskFinished);
-        ActiveLockPickTask->ReadyForActivation();
-    }
-    else
+    // Listen for pin confirmation relayed from client via ASC server RPC
+    UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get();
+    if (ASC)
     {
-        ActiveLockPickTask = ULockPickAbilityTask::StartLockPickTask(this, ActiveLockComp);
-        ActiveLockPickTask->LockPickWidgetClass = LockPickWidgetClass;
-        ActiveLockPickTask->OnFinished.AddDynamic(this, &UDefaultGALockPick::OnLockPickTaskFinished);
-        ActiveLockPickTask->ReadyForActivation();
+        FGameplayEventMulticastDelegate& PinEvent = ASC->GenericGameplayEventCallbacks.FindOrAdd(TAG_LockPick_PinConfirmed);
+        PinEvent.AddUObject(this, &UDefaultGALockPick::OnPinConfirmed);
     }
+
+    ActiveLockPickTask = ULockPickAbilityTask::StartLockPickTask(this, ActiveLockComp);
+    ActiveLockPickTask->LockPickWidgetClass = LockPickWidgetClass;
+    ActiveLockPickTask->OnFinished.AddDynamic(this, &UDefaultGALockPick::OnLockPickTaskFinished);
+    ActiveLockPickTask->ReadyForActivation();
 }
 
 void UDefaultGALockPick::EndAbility(
@@ -73,12 +72,37 @@ void UDefaultGALockPick::EndAbility(
     const FGameplayAbilityActivationInfo ActivationInfo,
     bool bReplicateEndAbility, bool bWasCancelled)
 {
+    // Unbind pin event
+    if (ActorInfo && ActorInfo->AbilitySystemComponent.IsValid())
+    {
+        UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get();
+        if (FGameplayEventMulticastDelegate* PinEvent = ASC->GenericGameplayEventCallbacks.Find(TAG_LockPick_PinConfirmed))
+        {
+            PinEvent->RemoveAll(this);
+        }
+    }
+
     if (ActiveLockComp)
     {
         ActiveLockComp->EndLockPicking();
         ActiveLockComp = nullptr;
     }
+
     Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+}
+
+void UDefaultGALockPick::OnPinConfirmed(const FGameplayEventData* EventData)
+{
+    if (!CurrentActorInfo->IsNetAuthority()) return;
+    if (!ActiveLockComp) return;
+
+    ULockPickComponent* LockComp = Cast<ULockPickComponent>(const_cast<UObject*>(EventData->OptionalObject.Get()));
+    if (!LockComp || LockComp != ActiveLockComp) return;
+
+    if (LockComp->TrySetCurrentPin(EventData->EventMagnitude) && LockComp->AdvancePin())
+    {
+        LockComp->EndLockPicking();
+    }
 }
 
 void UDefaultGALockPick::OnLockPickTaskFinished(bool bSuccess)

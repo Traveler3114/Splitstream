@@ -2,9 +2,9 @@
 #include "ActorComponents/LockPickComponent.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
+#include "AbilitySystem/DefaultAbilitySystemComponent.h"
+#include "AbilitySystem/SplitstreamGameplayTags.h"
 #include "Widgets/HUD/LockPickWidget.h"
-#include "Interfaces/IServerActionInterface.h"
-#include "Player/Controllers/DefaultPlayerController.h"
 
 ULockPickAbilityTask* ULockPickAbilityTask::StartLockPickTask(UGameplayAbility* OwningAbility, ULockPickComponent* InLockComp)
 {
@@ -21,7 +21,6 @@ void ULockPickAbilityTask::Activate()
         return;
     }
 
-    LockComp->StartLockPicking();
     if (APlayerController* PC = Cast<APlayerController>(GetAvatarActor()->GetInstigatorController()))
     {
         if (LockPickWidgetClass && !LockPickWidget)
@@ -43,8 +42,7 @@ void ULockPickAbilityTask::Activate()
     bIsLockPicking = true;
 
     BindInput();
-
-    bTickingTask = true; // Enable ticking
+    bTickingTask = true;
 }
 
 void ULockPickAbilityTask::OnDestroy(bool bInOwnerFinished)
@@ -52,7 +50,6 @@ void ULockPickAbilityTask::OnDestroy(bool bInOwnerFinished)
     UnbindInput();
     bTickingTask = false;
     bIsLockPicking = false;
-
 
     if (LockPickWidget)
     {
@@ -99,7 +96,6 @@ void ULockPickAbilityTask::BindInput()
 
 void ULockPickAbilityTask::UnbindInput()
 {
-    // Unreal handles InputComponent cleanup; explicit unbinding is unnecessary.
 }
 
 void ULockPickAbilityTask::OnMouseX(float Axis)
@@ -122,27 +118,23 @@ void ULockPickAbilityTask::OnMouseY(float Axis)
 
 void ULockPickAbilityTask::OnConfirm()
 {
-    if (!LockComp) return;
-    APawn* Pawn = Cast<APawn>(GetAvatarActor());
-    if (!Pawn) return;
-    ADefaultPlayerController* PC = Cast<ADefaultPlayerController>(Pawn->GetController());
-    if (!PC) return;
-
-    FServerActionPayload Payload;
-    Payload.FloatValue = LockPickDialAngle;
-    PC->ServerExecuteAction(LockComp, Payload);
-}
-void ULockPickAbilityTask::ServerConfirmPin_Implementation(float Angle)
-{
     if (!LockComp || !bIsLockPicking) return;
-    bool bCorrect = LockComp->TrySetCurrentPin(Angle);
-    if (bCorrect)
+
+    FGameplayEventData EventData;
+    EventData.EventMagnitude = LockPickDialAngle;
+    EventData.OptionalObject = LockComp;
+    EventData.Instigator = GetAvatarActor();
+
+    if (GetAvatarActor()->HasAuthority())
     {
-        bool bUnlocked = LockComp->AdvancePin();
-        if (bUnlocked)
+        if (AbilitySystemComponent.IsValid())
         {
-            LockComp->EndLockPicking();
+            AbilitySystemComponent->HandleGameplayEvent(TAG_LockPick_PinConfirmed, &EventData);
         }
+    }
+    else if (UDefaultAbilitySystemComponent* DefaultASC = Cast<UDefaultAbilitySystemComponent>(AbilitySystemComponent))
+    {
+        DefaultASC->ServerHandleClientEvent(TAG_LockPick_PinConfirmed, EventData);
     }
 }
 
@@ -151,10 +143,6 @@ void ULockPickAbilityTask::OnCancel()
     if (!bIsLockPicking) return;
     bIsLockPicking = false;
 
-    if (GetAvatarActor()->HasAuthority())
-    {
-        if (LockComp) LockComp->EndLockPicking();
-    }
     OnFinished.Broadcast(false);
     EndTask();
 }

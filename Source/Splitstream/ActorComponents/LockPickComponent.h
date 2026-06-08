@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Interfaces/IServerActionInterface.h"
 #include "LockPickComponent.generated.h"
 
 // Delegate for when the lock is unlocked
@@ -29,7 +28,7 @@ struct FLockPinData
 };
 
 UCLASS(Blueprintable, ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
-class SPLITSTREAM_API ULockPickComponent : public UActorComponent, public IServerActionInterface
+class SPLITSTREAM_API ULockPickComponent : public UActorComponent
 {
     GENERATED_BODY()
 
@@ -89,12 +88,6 @@ public:
     UFUNCTION(BlueprintCallable, Category = "LockPick")
     void EndLockPicking();
 
-    // --- RPCs ---
-    UFUNCTION(Server, Reliable)
-    void ServerTrySetPin(float InputAngle);
-
-    virtual void ExecuteServerAction_Implementation(const FServerActionPayload& Payload) override;
-
     UFUNCTION()
     void OnRep_Unlocked();
 
@@ -112,7 +105,6 @@ public:
     void CancelInteract(AActor* Interactor);
 protected:
     virtual void BeginPlay() override;
-    virtual void OnComponentCreated() override;
 #if WITH_EDITOR
     virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif

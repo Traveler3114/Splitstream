@@ -19,6 +19,9 @@ public:
 
     static USearchAbilityTask* StartSearchTask(UGameplayAbility* OwningAbility, USearchComponent* InSearchComp);
 
+    void SetTimerHandle(FActiveGameplayEffectHandle InHandle) { TimerEffectHandle = InHandle; }
+    void SetTaskDuration(float InDuration) { TaskDuration = InDuration; }
+
     virtual void Activate() override;
     virtual void TickTask(float DeltaTime) override;
     virtual void OnDestroy(bool bInOwnerFinished) override;
@@ -33,8 +36,12 @@ protected:
     UPROPERTY()
     USearchComponent* SearchComp = nullptr;
 
+    FActiveGameplayEffectHandle TimerEffectHandle;
+
+    float TaskStartTime = 0.f;
+    float TaskDuration = 0.f;
+
     bool bIsSearching = false;
-    bool InitialSearchedState = false; // <-- added for toggle-based completion
 
     void BindInput();
     void UnbindInput();

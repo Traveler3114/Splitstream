@@ -33,6 +33,11 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_PastEcho_Deactivated, "GameplayCue.PastEc
 UE_DEFINE_GAMEPLAY_TAG(TAG_Weapon_Ability_Pistol_Fire, "Weapon.Ability.Pistol.Fire");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Weapon_Ability_Pistol_Aim, "Weapon.Ability.Pistol.Aim");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_LockPick_PinConfirmed, "LockPick.PinConfirmed");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Hack_Complete, "Ability.Hack.Complete");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Search_Complete, "Ability.Search.Complete");
+UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Duration, "SetByCaller.Duration");
+
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Behavior_Decision, "AI.Behavior.Decision");
 UE_DEFINE_GAMEPLAY_TAG(TAG_AI_Behavior_WalkAround, "AI.Behavior.WalkAround");

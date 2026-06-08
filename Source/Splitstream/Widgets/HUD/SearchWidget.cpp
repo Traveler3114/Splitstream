@@ -11,7 +11,7 @@ void USearchWidget::NativeConstruct()
 void USearchWidget::InitializeSearchWidget(USearchComponent* InSearchComp)
 {
     SearchComp = InSearchComp;
-    LastProgress = SearchComp ? SearchComp->GetSearchProgress() : 0.f;
+    LastProgress = 0.f;
 }
 
 void USearchWidget::UpdateProgress(float Progress)

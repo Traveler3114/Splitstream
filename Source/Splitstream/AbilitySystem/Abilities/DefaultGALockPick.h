@@ -4,8 +4,6 @@
 #include "Abilities/GameplayAbility.h"
 #include "DefaultGALockPick.generated.h"
 
-
-// Forward declare the task
 class ULockPickAbilityTask;
 
 UCLASS()
@@ -29,6 +27,8 @@ public:
 
     UFUNCTION()
     void OnLockPickTaskFinished(bool bSuccess);
+
+    void OnPinConfirmed(const FGameplayEventData* EventData);
 
     UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "LockPick|UI")
     TSubclassOf<class ULockPickWidget> LockPickWidgetClass;
