@@ -386,7 +386,7 @@ void UProximityHackComponent::ApplyTimerEffect()
             FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(UGE_Timer::StaticClass(), 1.f, Context);
             if (Spec.IsValid())
             {
-                Spec.Data->SetSetByCallerMagnitude(TAG_SetByCaller_Duration, RemainingDuration);
+                Spec.Data->SetSetByCallerMagnitude(TAG_Effect_Timer, RemainingDuration);
                 TimerEffectHandle = ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
                 if (FOnActiveGameplayEffectRemoved_Info* RemovedDel = ASC->OnGameplayEffectRemoved_InfoDelegate(TimerEffectHandle))
                 {

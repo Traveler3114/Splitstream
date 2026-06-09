@@ -1,5 +1,6 @@
 #include "DefaultGALockPick.h"
 #include "AbilitySystemComponent.h"
+#include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 
 #include "AbilitySystem/AbilityTasks/LockPickAbilityTask.h"
 #include "ActorComponents/LockPickComponent.h"
@@ -52,12 +53,12 @@ void UDefaultGALockPick::ActivateAbility(
 
     ActiveLockComp->StartLockPicking();
 
-    // Listen for pin confirmation relayed from client via ASC server RPC
-    UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get();
-    if (ASC)
+    // Listen for pin confirmation via WaitGameplayEvent task
+    UAbilityTask_WaitGameplayEvent* WaitPinTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, TAG_LockPick_PinConfirmed, nullptr, false, true);
+    if (WaitPinTask)
     {
-        FGameplayEventMulticastDelegate& PinEvent = ASC->GenericGameplayEventCallbacks.FindOrAdd(TAG_LockPick_PinConfirmed);
-        PinEvent.AddUObject(this, &UDefaultGALockPick::OnPinConfirmed);
+        WaitPinTask->EventReceived.AddDynamic(this, &UDefaultGALockPick::OnPinConfirmed);
+        WaitPinTask->ReadyForActivation();
     }
 
     ActiveLockPickTask = ULockPickAbilityTask::StartLockPickTask(this, ActiveLockComp);
@@ -72,15 +73,7 @@ void UDefaultGALockPick::EndAbility(
     const FGameplayAbilityActivationInfo ActivationInfo,
     bool bReplicateEndAbility, bool bWasCancelled)
 {
-    // Unbind pin event
-    if (ActorInfo && ActorInfo->AbilitySystemComponent.IsValid())
-    {
-        UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get();
-        if (FGameplayEventMulticastDelegate* PinEvent = ASC->GenericGameplayEventCallbacks.Find(TAG_LockPick_PinConfirmed))
-        {
-            PinEvent->RemoveAll(this);
-        }
-    }
+    // No manual unbind needed — WaitGameplayEvent cleans up automatically on ability end
 
     if (ActiveLockComp)
     {
@@ -91,15 +84,15 @@ void UDefaultGALockPick::EndAbility(
     Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
-void UDefaultGALockPick::OnPinConfirmed(const FGameplayEventData* EventData)
+void UDefaultGALockPick::OnPinConfirmed(FGameplayEventData EventData)
 {
     if (!CurrentActorInfo->IsNetAuthority()) return;
     if (!ActiveLockComp) return;
 
-    ULockPickComponent* LockComp = Cast<ULockPickComponent>(const_cast<UObject*>(EventData->OptionalObject.Get()));
+    ULockPickComponent* LockComp = Cast<ULockPickComponent>(const_cast<UObject*>(EventData.OptionalObject.Get()));
     if (!LockComp || LockComp != ActiveLockComp) return;
 
-    if (LockComp->TrySetCurrentPin(EventData->EventMagnitude) && LockComp->AdvancePin())
+    if (LockComp->TrySetCurrentPin(EventData.EventMagnitude) && LockComp->AdvancePin())
     {
         LockComp->EndLockPicking();
     }

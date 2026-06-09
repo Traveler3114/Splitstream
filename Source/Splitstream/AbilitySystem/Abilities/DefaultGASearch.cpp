@@ -75,7 +75,7 @@ void UDefaultGASearch::ActivateAbility(
     FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(UGE_Timer::StaticClass());
     if (SpecHandle.IsValid())
     {
-        SpecHandle.Data->SetSetByCallerMagnitude(TAG_SetByCaller_Duration, ActiveSearchComp->SearchDuration);
+        SpecHandle.Data->SetSetByCallerMagnitude(TAG_Effect_Timer, ActiveSearchComp->SearchDuration);
         ActiveTimerHandle = ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
     }
 
@@ -90,6 +90,7 @@ void UDefaultGASearch::ActivateAbility(
     ActiveSearchTask->SearchWidgetClass = SearchWidgetClass;
     ActiveSearchTask->SetTimerHandle(ActiveTimerHandle);
     ActiveSearchTask->SetTaskDuration(ActiveSearchComp->SearchDuration);
+    ActiveSearchTask->SetInitialSearchedState(false);
     ActiveSearchTask->OnFinished.AddDynamic(this, &UDefaultGASearch::OnSearchTaskFinished);
     ActiveSearchTask->ReadyForActivation();
 }
@@ -111,6 +112,7 @@ void UDefaultGASearch::EndAbility(
 
 void UDefaultGASearch::OnTimerRemoved(const FGameplayEffectRemovalInfo& RemovalInfo)
 {
+    ActiveTimerHandle.Invalidate();
     if (!RemovalInfo.bPrematureRemoval && ActiveSearchComp && CurrentActorInfo->IsNetAuthority())
     {
         ActiveSearchComp->SetSearched();

@@ -28,7 +28,8 @@ public:
     UFUNCTION()
     void OnLockPickTaskFinished(bool bSuccess);
 
-    void OnPinConfirmed(const FGameplayEventData* EventData);
+    UFUNCTION()
+    void OnPinConfirmed(FGameplayEventData EventData);
 
     UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "LockPick|UI")
     TSubclassOf<class ULockPickWidget> LockPickWidgetClass;

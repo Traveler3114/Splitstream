@@ -63,7 +63,7 @@ void UDefaultGAHack::ActivateAbility(
     FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(UGE_Timer::StaticClass());
     if (SpecHandle.IsValid())
     {
-        SpecHandle.Data->SetSetByCallerMagnitude(TAG_SetByCaller_Duration, ActiveHackComp->HackDuration);
+        SpecHandle.Data->SetSetByCallerMagnitude(TAG_Effect_Timer, ActiveHackComp->HackDuration);
         ActiveTimerHandle = ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
     }
 
@@ -100,6 +100,7 @@ void UDefaultGAHack::EndAbility(
 
 void UDefaultGAHack::OnTimerRemoved(const FGameplayEffectRemovalInfo& RemovalInfo)
 {
+    ActiveTimerHandle.Invalidate();
     if (!RemovalInfo.bPrematureRemoval && ActiveHackComp && CurrentActorInfo->IsNetAuthority())
     {
         ActiveHackComp->SetHacked();

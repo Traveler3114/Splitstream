@@ -3,6 +3,7 @@
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "AbilitySystemComponent.h"
+#include "AbilitySystem/SplitstreamGameplayTags.h"
 #include "Widgets/HUD/SearchWidget.h"
 
 USearchAbilityTask* USearchAbilityTask::StartSearchTask(UGameplayAbility* OwningAbility, USearchComponent* InSearchComp)
@@ -36,7 +37,6 @@ void USearchAbilityTask::Activate()
         }
     }
 
-    TaskStartTime = GetWorld()->GetTimeSeconds();
     bIsSearching = true;
     BindInput();
     bTickingTask = true;
@@ -66,12 +66,17 @@ void USearchAbilityTask::TickTask(float DeltaTime)
 
     if (SearchWidget && TaskDuration > 0.f)
     {
-        float Elapsed = GetWorld()->GetTimeSeconds() - TaskStartTime;
-        float Progress = FMath::Clamp(Elapsed / TaskDuration, 0.f, 1.f);
-        SearchWidget->UpdateProgress(Progress);
+        FGameplayEffectQuery Query = FGameplayEffectQuery::MakeQuery_MatchAnyOwningTags(
+            FGameplayTagContainer(TAG_Effect_Timer));
+        TArray<float> TimeRemaining = AbilitySystemComponent->GetActiveEffectsTimeRemaining(Query);
+        if (TimeRemaining.Num() > 0)
+        {
+            float Progress = FMath::Clamp(1.f - (TimeRemaining[0] / TaskDuration), 0.f, 1.f);
+            SearchWidget->UpdateProgress(Progress);
+        }
     }
 
-    if (SearchComp->bSearched)
+    if (SearchComp->bSearched != InitialSearchedState)
     {
         FinishTask(true);
     }

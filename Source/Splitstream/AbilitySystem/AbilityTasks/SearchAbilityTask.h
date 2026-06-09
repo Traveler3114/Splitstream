@@ -21,6 +21,7 @@ public:
 
     void SetTimerHandle(FActiveGameplayEffectHandle InHandle) { TimerEffectHandle = InHandle; }
     void SetTaskDuration(float InDuration) { TaskDuration = InDuration; }
+    void SetInitialSearchedState(bool bState) { InitialSearchedState = bState; }
 
     virtual void Activate() override;
     virtual void TickTask(float DeltaTime) override;
@@ -38,10 +39,10 @@ protected:
 
     FActiveGameplayEffectHandle TimerEffectHandle;
 
-    float TaskStartTime = 0.f;
     float TaskDuration = 0.f;
 
     bool bIsSearching = false;
+    bool InitialSearchedState = false;
 
     void BindInput();
     void UnbindInput();
