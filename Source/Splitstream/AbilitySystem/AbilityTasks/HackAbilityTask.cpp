@@ -3,7 +3,6 @@
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "AbilitySystemComponent.h"
-#include "AbilitySystem/SplitstreamGameplayTags.h"
 #include "Widgets/HUD/HackWidget.h"
 
 UHackAbilityTask* UHackAbilityTask::StartHackTask(UGameplayAbility* OwningAbility, UHackComponent* InHackComp)
@@ -37,6 +36,7 @@ void UHackAbilityTask::Activate()
         }
     }
 
+    TaskStartTime = GetWorld()->GetTimeSeconds();
     bIsHacking = true;
     BindInput();
     bTickingTask = true;
@@ -66,14 +66,9 @@ void UHackAbilityTask::TickTask(float DeltaTime)
 
     if (HackWidget && TaskDuration > 0.f)
     {
-        FGameplayEffectQuery Query = FGameplayEffectQuery::MakeQuery_MatchAnyOwningTags(
-            FGameplayTagContainer(TAG_Effect_Timer));
-        TArray<float> TimeRemaining = AbilitySystemComponent->GetActiveEffectsTimeRemaining(Query);
-        if (TimeRemaining.Num() > 0)
-        {
-            float Progress = FMath::Clamp(1.f - (TimeRemaining[0] / TaskDuration), 0.f, 1.f);
-            HackWidget->UpdateProgress(Progress);
-        }
+        float Elapsed = GetWorld()->GetTimeSeconds() - TaskStartTime;
+        float Progress = FMath::Clamp(Elapsed / TaskDuration, 0.f, 1.f);
+        HackWidget->UpdateProgress(Progress);
     }
 
     if (HackComp->bHacked)

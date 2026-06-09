@@ -40,6 +40,7 @@ protected:
     FActiveGameplayEffectHandle TimerEffectHandle;
 
     float TaskDuration = 0.f;
+    float TaskStartTime = 0.f;
 
     bool bIsSearching = false;
     bool InitialSearchedState = false;

@@ -39,6 +39,7 @@ protected:
     FActiveGameplayEffectHandle TimerEffectHandle;
 
     float TaskDuration = 0.f;
+    float TaskStartTime = 0.f;
 
     bool bIsHacking = false;
 
