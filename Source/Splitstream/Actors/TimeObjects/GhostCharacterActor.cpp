@@ -75,6 +75,22 @@ void AGhostCharacterActor::Tick(float DeltaTime)
     if (!GhostMesh)
         return;
 
+    if (!CachedSourceMesh)
+    {
+        ACharacter* CharacterToMirror = Cast<ACharacter>(GetOwner());
+        if (CharacterToMirror)
+        {
+            if (CharacterToMirror->GetClass()->ImplementsInterface(UGhostMirrorSource::StaticClass()))
+            {
+                CachedSourceMesh = IGhostMirrorSource::Execute_GetMirrorMesh(CharacterToMirror);
+            }
+            if (!CachedSourceMesh)
+            {
+                CachedSourceMesh = CharacterToMirror->FindComponentByClass<USkeletalMeshComponent>();
+            }
+        }
+    }
+
     if (CachedSourceMesh)
     {
         if (GhostMesh->GetSkeletalMeshAsset() != CachedSourceMesh->GetSkeletalMeshAsset())
@@ -138,18 +154,20 @@ void AGhostCharacterActor::UpdateGhostVisibility()
     bool bPastEchoLocal = bIsPastEchoAbilityActive;
 
     ACharacter* CharacterToMirror = Cast<ACharacter>(GetOwner());
-    FString OwnerName = CharacterToMirror ? CharacterToMirror->GetName() : TEXT("NONE");
 
     if (CharacterToMirror && CharacterToMirror->GetClass()->ImplementsInterface(UGhostMirrorSource::StaticClass()))
     {
         bIsInCameraViewLocal = IGhostMirrorSource::Execute_ShouldGhostBeVisible(CharacterToMirror);
         bShouldShow = bIsInCameraViewLocal && bPastEchoLocal;
     }
+    else
+    {
+        bShouldShow = bPastEchoLocal;
+    }
 
     if (GhostMesh)
     {
         GhostMesh->SetVisibility(bShouldShow, true);
-        GhostMesh->SetHiddenInGame(false); // Always unhide for debug
     }
 }
 
@@ -170,5 +188,5 @@ void AGhostCharacterActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 
     DOREPLIFETIME(AGhostCharacterActor, GhostTargetLocation);
     DOREPLIFETIME(AGhostCharacterActor, GhostTargetRotation);
-    // No need to replicate bIsPastEchoAbilityActive!
+    // bIsPastEchoAbilityActive is NOT replicated - set locally via Client RPC
 }

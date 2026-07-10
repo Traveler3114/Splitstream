@@ -6,9 +6,9 @@
 #include "FutureGAPastEcho.generated.h"
 
 /**
- * Toggle PastEcho presentation via Gameplay Cues.
- * - On 1st press: Execute GameplayCue.PastEcho.Activated (show locally) and add Character.Status.PastEcho.
- * - On 2nd press: Execute GameplayCue.PastEcho.Deactivated (hide locally) and remove Character.Status.PastEcho.
+ * Toggle PastEcho ghost visibility.
+ * - On 1st press: Set bIsPastEchoAbilityActive=true on all GhostCharacterActors.
+ * - On 2nd press: Set bIsPastEchoAbilityActive=false on all GhostCharacterActors.
  */
 UCLASS()
 class SPLITSTREAM_API UFutureGAPastEcho : public UGameplayAbility
@@ -31,10 +31,7 @@ public:
 		bool bWasCancelled) override;
 
 private:
-	// State tag we toggle on/off to track "is showing"
 	FGameplayTag StatusTag;
-
-	// Cue tags for show/hide
 	FGameplayTag CueActivatedTag;
 	FGameplayTag CueDeactivatedTag;
 };
